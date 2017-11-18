@@ -1,0 +1,9 @@
+
+fatal error C1083: 无法打开包括文件:“stdint.h”: No such file or directory
+stdint.h是c99标准的头文件，vc不支持，所以肯定会提示“No such file or directory”的。
+解决办法：
+
+解压后会得到三个文件，把inttypes.h和stdint.h放到vc的include目录就可以了。
+我安装的是VS2008，安装到的默认位置，因此include的路径就是：
+C:\Program Files\Microsoft Visual Studio 9.0\VC\include
+通过以上方法，成功解决编译错误。
