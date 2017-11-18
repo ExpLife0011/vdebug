@@ -1,0 +1,29 @@
+{
+    "globalCfg": {
+        "lineNumber": 1,
+        "defTextColour": "0,0,255",
+        "defBackColour": "null",
+        "viewBackColour": "0,0,0",
+        "curLineColour": "50,50,50"
+    },
+    "SyntaxCfg": {
+        "addr": {
+            "textColour": "0,0,255",
+            "backColour": "null",
+            "bold": 1,
+            "italic": 1
+        },
+		"error": {
+            "textColour": "255,0,0",
+            "backColour": "null",
+            "bold": 1,
+            "italic": 1
+        },
+		"msg": {
+            "textColour": "0,254,231",
+            "backColour": "null",
+            "bold": 1,
+            "italic": 1
+        }
+    }
+}

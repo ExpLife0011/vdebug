@@ -1,0 +1,220 @@
+// Microsoft Visual C++ generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include "afxres.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// 中文(中华人民共和国) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_CHS)
+#ifdef _WIN32
+LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED
+#pragma code_page(936)
+#endif //_WIN32
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE 
+BEGIN
+    "#include ""afxres.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE 
+BEGIN
+    "\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_MAINVIEW DIALOGEX 0, 0, 647, 326
+STYLE DS_SYSMODAL | DS_SETFONT | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
+EXSTYLE WS_EX_WINDOWEDGE
+CAPTION "VDebug"
+MENU IDR_MAIN
+FONT 8, "微软雅黑", 400, 0, 0x86
+BEGIN
+    EDITTEXT        IDC_EDT_COMMAND,61,314,585,12,ES_MULTILINE | ES_AUTOHSCROLL,WS_EX_CLIENTEDGE | WS_EX_LEFTSCROLLBAR | WS_EX_STATICEDGE
+    EDITTEXT        IDC_EDT_STATUS,0,314,59,12,ES_AUTOHSCROLL | ES_READONLY,WS_EX_CLIENTEDGE | WS_EX_LEFTSCROLLBAR | WS_EX_STATICEDGE
+END
+
+IDD_PROC_ATTACH DIALOGEX 0, 0, 445, 260
+STYLE DS_SETFONT | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
+CAPTION "选择进程"
+FONT 8, "宋体", 400, 0, 0x86
+BEGIN
+    DEFPUSHBUTTON   "附加进程",IDC_BTN_ATTACH,389,236,50,18
+    CONTROL         "",IDC_LIST_PROC,"SysListView32",LVS_REPORT | LVS_SHOWSELALWAYS | LVS_ALIGNLEFT | LVS_OWNERDATA | WS_BORDER | WS_TABSTOP,7,7,431,224
+    EDITTEXT        IDC_EDT_FILTER,14,237,290,15,ES_AUTOHSCROLL | NOT WS_VISIBLE
+    DEFPUSHBUTTON   "刷新列表",IDC_BTN_REFUSH,330,236,50,18
+END
+
+IDD_PROC_OPEN DIALOGEX 0, 0, 329, 101
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+EXSTYLE WS_EX_ACCEPTFILES
+CAPTION "打开调试进程"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    PUSHBUTTON      "选择程序",IDC_BTN_PEOPEN_SELECT,209,79,50,14
+    EDITTEXT        IDC_EDT_PEOPEN_PATH,61,10,253,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDT_PEOPEN_CMD,61,33,253,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDT_PEOPEN_WORKDIR,61,56,253,14,ES_AUTOHSCROLL
+    LTEXT           "程序路径",IDC_STATIC,10,12,40,8
+    LTEXT           "命令行参数",IDC_STATIC,10,35,40,8
+    LTEXT           "工作目录",IDC_STATIC,11,58,40,8
+    PUSHBUTTON      "开始调试",IDC_BTN_PEOPEN_DEBUG,265,79,50,14
+    EDITTEXT        IDC_EDT_PEOPEN_STATUS,11,79,183,14,ES_AUTOHSCROLL | ES_READONLY | NOT WS_BORDER
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO 
+BEGIN
+    IDD_MAINVIEW, DIALOG
+    BEGIN
+        TOPMARGIN, 7
+    END
+
+    IDD_PROC_ATTACH, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 438
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 254
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+IDI_MAIN                ICON                    "res\\main.ico"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Bitmap
+//
+
+IDB_TOOLBAR             BITMAP                  "res\\toolbar.bmp"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION 1,0,0,1
+ PRODUCTVERSION 1,0,0,1
+ FILEFLAGSMASK 0x17L
+#ifdef _DEBUG
+ FILEFLAGS 0x1L
+#else
+ FILEFLAGS 0x0L
+#endif
+ FILEOS 0x4L
+ FILETYPE 0x1L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "080404b0"
+        BEGIN
+            VALUE "CompanyName", "lougdhr@126.com"
+            VALUE "FileDescription", "VDebug调试器"
+            VALUE "FileVersion", "1, 0, 0, 1"
+            VALUE "InternalName", "VDebug"
+            VALUE "LegalCopyright", "Copyright (C) 2017"
+            VALUE "OriginalFilename", "VDebug.exe"
+            VALUE "ProductName", "VDebug调试器"
+            VALUE "ProductVersion", "1, 0, 0, 1"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x804, 1200
+    END
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Menu
+//
+
+IDR_MAIN MENU 
+BEGIN
+    POPUP "文件(&F)"
+    BEGIN
+        MENUITEM "打开程序",                        IDC_CMD_OPEN
+        MENUITEM "附加进程",                        IDC_CMD_ATTACH
+        MENUITEM "分析dump文件",                    IDC_CMD_OPEN_DUMP
+        MENUITEM "符号设置",                        IDC_CMD_SET_SYMBOL
+        MENUITEM "设为默认调试器",                     ID_40024
+    END
+    POPUP "配置(&S)"
+    BEGIN
+        MENUITEM "颜色配置",                        IDC_CMD_SET_COLOUR
+    END
+    POPUP "调试(&D)"
+    BEGIN
+        MENUITEM "重新开始",                        IDC_CMD_RESTART
+        MENUITEM "脱离调试",                        IDC_CMD_DETACH
+        MENUITEM "生成dump文件",                    IDC_CMD_CREATE_DUMP
+    END
+    POPUP "帮助(&H)"
+    BEGIN
+        MENUITEM "帮助",                          IDC_CMD_HELP
+        MENUITEM "关于VDebug",                    IDC_CMD_ABOUT
+    END
+END
+
+#endif    // 中文(中华人民共和国) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+
