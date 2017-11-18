@@ -107,6 +107,7 @@ void CPeFileOpenView::OnCommand(HWND hwnd, WPARAM wp, LPARAM lp)
 
         if (GetCurrentDbgger()->Connect(wszBuffer, NULL))
         {
+            EndDialog(m_hwnd, 0);
         }
         else
         {

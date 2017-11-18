@@ -36,12 +36,38 @@ DbgCmdResult CCmdBase::RunCommand(const ustring &wstrCmd, BOOL bShow, const CmdU
     return res;
 }
 
-BOOL CCmdBase::AddProcMsg(const ustring &wstrIdex, DWORD64 dwAddr)
+BOOL CCmdBase::InsertFunMsg(const ustring &wstrIndex, const DbgFunInfo &vProcInfo)
 {
-    ustring wstr = wstrIdex;
-    wstr.makelower();
-    m_vProcMap[wstr] = dwAddr;
+    m_vProcMap[wstrIndex] = vProcInfo;
     return TRUE;
+}
+
+DWORD64 CCmdBase::GetFunAddr(const ustring &wstr)
+{
+    ustring wstrContent(wstr);
+    wstrContent.makelower();
+    wstrContent.trim();
+    ustring wstrFun;
+    ustring wstrOffset;
+    size_t pos = 0;
+    if (ustring::npos != (pos = wstrContent.find(L"+")))
+    {
+        wstrFun = wstrContent.substr(0, pos);
+        wstrOffset = (wstrContent.c_str() + pos + 1);
+    }
+    else
+    {
+        wstrFun = wstrContent;
+    }
+
+    DWORD64 dwOffset = 0;
+    GetNumFromStr(wstrOffset, dwOffset);
+    map<ustring, DbgFunInfo>::const_iterator it;
+    if (m_vProcMap.end() == (it = m_vProcMap.find(wstrFun)))
+    {
+        return 0;
+    }
+    return (it->second.m_dwProcAddr + dwOffset);
 }
 
 //0x43fdad12

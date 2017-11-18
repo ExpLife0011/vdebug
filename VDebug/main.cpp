@@ -10,7 +10,8 @@ HINSTANCE g_hInstance = NULL;
 
 int WINAPI WinMain(HINSTANCE m, HINSTANCE p, LPSTR cmd, int show)
 {
-    InitSymbolHlpr(L"SRV*F:\\mysymbol*http://msdl.microsoft.com/download/symbols/");
+    //InitSymbolHlpr(L"SRV*F:\\mysymbol*http://msdl.microsoft.com/download/symbols/");
+    InitSymbolHlpr(L"F:\\mysymbol");
 
     //WCHAR wsz[MAX_PATH] = {0};
     //GetModuleFileNameW(NULL, wsz, MAX_PATH);

@@ -45,10 +45,10 @@
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
-				RuntimeLibrary="3"
+				RuntimeLibrary="1"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
-				DebugInformationFormat="4"
+				DebugInformationFormat="1"
 				DisableSpecificWarnings="4996"
 			/>
 			<Tool
@@ -64,6 +64,7 @@
 				Name="VCLinkerTool"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="capstone"
+				GenerateManifest="false"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				TargetMachine="1"
@@ -181,6 +182,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\CmdBase.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\Command.cpp"
 				>
 			</File>
@@ -209,6 +214,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\ProcDbg.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\Script.cpp"
 				>
 			</File>
@@ -224,10 +233,6 @@
 			>
 			<File
 				RelativePath=".\BreakPoint.h"
-				>
-			</File>
-			<File
-				RelativePath=".\CmdBase.cpp"
 				>
 			</File>
 			<File
@@ -268,10 +273,6 @@
 			</File>
 			<File
 				RelativePath=".\minidump.h"
-				>
-			</File>
-			<File
-				RelativePath=".\ProcDbg.cpp"
 				>
 			</File>
 			<File

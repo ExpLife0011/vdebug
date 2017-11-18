@@ -23,7 +23,7 @@ enum DbdProcStatus
     em_dbgproc_stat_free
 };
 
-typedef void (__stdcall *pfnDebuggerStart)();
+typedef void (__cdecl *pfnDebuggerStart1)();
 
 struct DbgProcUserContext
 {
@@ -41,7 +41,7 @@ struct DbgProcInfo
     DWORD m_dwPid;
     HANDLE m_hProcess;
     BOOL m_bIsx64Proc;
-    pfnDebuggerStart m_pfn;
+    pfnDebuggerStart1 m_pfn;
 
     DbgProcInfo()
     {
@@ -130,22 +130,24 @@ public:
     void Run();
     DbgProcModuleInfo GetModuleFromAddr(DWORD64 dwAddr);
     ustring GetSymFromAddr(DWORD64 dwAddr);
+    HANDLE GetDbgProc();
 
 protected:
-    static void __stdcall OnCreateProcess(CREATE_PROCESS_DEBUG_INFO* pCreateProcessInfo);
-    static void __stdcall OnExitProcess(EXIT_PROCESS_DEBUG_INFO* ExitProcess);
-    static void __stdcall OnCreateThread(CREATE_THREAD_DEBUG_INFO* CreateThread);
-    static void __stdcall OnExitThread(EXIT_THREAD_DEBUG_INFO* ExitThread);
-    static void __stdcall OnSystemBreakpoint(void* ExceptionData);
-    static void __stdcall OnLoadDll(LOAD_DLL_DEBUG_INFO* LoadDll);
-    static void __stdcall OnUnloadDll(UNLOAD_DLL_DEBUG_INFO* UnloadDll);
-    static void __stdcall OnOutputDebugString(OUTPUT_DEBUG_STRING_INFO* DebugString);
-    static void __stdcall OnException(EXCEPTION_DEBUG_INFO* ExceptionData);
-    static void __stdcall OnDebugEvent(DEBUG_EVENT* DebugEvent);
-    static void __stdcall CustomBreakPoint();
+    static void __cdecl OnCreateProcess(CREATE_PROCESS_DEBUG_INFO* pCreateProcessInfo);
+    static void __cdecl OnExitProcess(EXIT_PROCESS_DEBUG_INFO* ExitProcess);
+    static void __cdecl OnCreateThread(CREATE_THREAD_DEBUG_INFO* CreateThread);
+    static void __cdecl OnExitThread(EXIT_THREAD_DEBUG_INFO* ExitThread);
+    static void __cdecl OnSystemBreakpoint(void* ExceptionData);
+    static void __cdecl OnLoadDll(LOAD_DLL_DEBUG_INFO* LoadDll);
+    static void __cdecl OnUnloadDll(UNLOAD_DLL_DEBUG_INFO* UnloadDll);
+    static void __cdecl OnOutputDebugString(OUTPUT_DEBUG_STRING_INFO* DebugString);
+    static void __cdecl OnException(EXCEPTION_DEBUG_INFO* ExceptionData);
+    static void __cdecl OnDebugEvent(DEBUG_EVENT* DebugEvent);
+    static void __cdecl CustomBreakPoint();
 
-protected:
+public:
     static VOID InitEngine();
+protected:
     static DWORD __stdcall DebugThread(LPVOID pParam);
 
 protected:

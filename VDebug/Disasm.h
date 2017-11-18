@@ -12,12 +12,15 @@ struct DisasmInfo
     DWORD64 m_dwAddr;
     ustring m_wstrOpt;
     ustring m_wstrContent;
-    BYTE m_vData[16];
+    ustring m_wstrByteCode;
+    int m_iByteCount;
+    BYTE m_vByteData[16];
 
     DisasmInfo()
     {
         m_dwAddr = 0;
-        ZeroMemory(m_vData, sizeof(m_vData));
+        m_iByteCount = 0;
+        ZeroMemory(m_vByteData, sizeof(m_vByteData));
     }
 };
 

@@ -47,13 +47,24 @@ struct DbgCmdResult
     }
 };
 
+struct DbgFunInfo
+{
+    ustring m_wstrModule;
+    ustring m_wstrFunName;
+    DWORD64 m_dwModuleBase;
+    DWORD64 m_dwProcOffset;
+    DWORD64 m_dwProcAddr;
+};
+
 class CCmdBase
 {
 public:
     CCmdBase();
     virtual ~CCmdBase();
     DbgCmdResult RunCommand(const ustring &wstrCmd, BOOL bShow = TRUE, const CmdUserParam *pParam = NULL);
-    BOOL AddProcMsg(const ustring &wstrIdex, DWORD64 dwAddr);
+    BOOL InsertFunMsg(const ustring &wstrIndex, const DbgFunInfo &vProcInfo);
+    //eg: kernel32!createfilew+0x1234
+    DWORD64 GetFunAddr(const ustring &wstr);
 
     //Tools
 protected:
@@ -63,6 +74,6 @@ protected:
     virtual DbgCmdResult OnCommand(const ustring &wstrCmd, const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
 
 protected:
-    map<ustring, DWORD64> m_vProcMap;
+    map<ustring, DbgFunInfo> m_vProcMap;
 };
 #endif

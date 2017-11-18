@@ -6,6 +6,7 @@
 #include "Command.h"
 #include "symbol.h"
 #include "BreakPoint.h"
+#include "Disasm.h"
 
 #if WIN64 || _WIN64
 #pragma comment(lib, "TitanEngine/TitanEngine_x64.lib")
@@ -94,7 +95,9 @@ DWORD CProcDbgger::DebugThread(LPVOID pParam)
 {
     if (em_dbgproc_attach == GetProcDbgger()->m_vDbgProcInfo.m_eType)
     {
-        AttachDebugger((DWORD)GetProcDbgger()->m_vDbgProcInfo.m_dwPid, true, NULL, NULL);
+        DWORD dwPid = GetProcDbgger()->m_vDbgProcInfo.m_dwPid;
+        GetProcDbgger()->m_vDbgProcInfo.m_hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, dwPid);
+        AttachDebugger(dwPid, true, NULL, NULL);
     }
     else if (em_dbgproc_open == GetProcDbgger()->m_vDbgProcInfo.m_eType)
     {
@@ -109,6 +112,7 @@ DWORD CProcDbgger::DebugThread(LPVOID pParam)
             GetProcDbgger()->m_vDbgProcInfo.m_wstrCmd.c_str(),
             NULL
             );
+        GetProcDbgger()->m_vDbgProcInfo.m_hProcess = process->hProcess;
         DebugLoop();
     }
     return 0;
@@ -174,6 +178,11 @@ ustring CProcDbgger::GetSymFromAddr(DWORD64 dwAddr)
         wstr.erase(pos, wstr.size() - pos);
     }
     return FormatW(L"%ls!%ls", wstr.c_str(), task.m_wstrSymbol.c_str());
+}
+
+HANDLE CProcDbgger::GetDbgProc()
+{
+    return m_vDbgProcInfo.m_hProcess;
 }
 
 void CProcDbgger::OnCreateProcess(CREATE_PROCESS_DEBUG_INFO* pCreateProcessInfo)
@@ -273,10 +282,8 @@ void CProcDbgger::OnLoadDll(LOAD_DLL_DEBUG_INFO* LoadDll)
 
 void CProcDbgger::OnUnloadDll(UNLOAD_DLL_DEBUG_INFO* UnloadDll)
 {
-    //CSyntaxDescHlpr hlpr;
-    //hlpr.FormatDesc(L"Ä£¿éÐ¶ÔØ", COLOUR_MSG, 10);
-
-    //DeleteIndex(UnloadDll->lpBaseOfDll);
+    CSyntaxDescHlpr hlpr;
+    hlpr.FormatDesc(L"Ä£¿éÐ¶ÔØ", COLOUR_MSG, 10);
 }
 
 void CProcDbgger::OnOutputDebugString(OUTPUT_DEBUG_STRING_INFO* DebugString)
@@ -354,11 +361,7 @@ DbgCmdResult CProcDbgger::OnCmdBp(const ustring &wstrCmdParam, BOOL bShow, const
     DWORD64 dwProcAddr = 0;
     if (!GetNumFromStr(wstr, dwProcAddr))
     {
-        map<ustring, DWORD64>::const_iterator it = m_vProcMap.find(wstr);
-        if (it != m_vProcMap.end())
-        {
-            dwProcAddr = it->second;
-        }
+        dwProcAddr = GetFunAddr(wstr);
     }
 
     if (dwProcAddr)
@@ -373,8 +376,35 @@ DbgCmdResult CProcDbgger::OnCmdBp(const ustring &wstrCmdParam, BOOL bShow, const
 
 DbgCmdResult CProcDbgger::OnCmdDisass(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam)
 {
-    DbgCmdResult res;
-    return res;
+    ustring wstr(wstrCmdParam);
+    wstr.makelower();
+
+    DWORD64 dwAddr = 0;
+    if (!GetNumFromStr(wstr, dwAddr))
+    {
+        dwAddr = GetFunAddr(wstr);
+    }
+
+    if (!dwAddr)
+    {
+        return DbgCmdResult();
+    }
+    CDisasmParser Disasm(GetDbgProc());
+    vector<DisasmInfo> vDisasmSet;
+    if (Disasm.Disasm(dwAddr, 1024, vDisasmSet))
+    {
+        CSyntaxDescHlpr hlpr;
+        for (vector<DisasmInfo>::const_iterator it = vDisasmSet.begin() ; it != vDisasmSet.end() ; it++)
+        {
+            hlpr.FormatDesc(it->m_wstrAddr, COLOUR_MSG, 10);
+            hlpr.FormatDesc(it->m_wstrByteCode, COLOUR_MSG, 18);
+            hlpr.FormatDesc(it->m_wstrOpt, COLOUR_MSG, 8);
+            hlpr.FormatDesc(it->m_wstrContent, COLOUR_MSG);
+            hlpr.NextLine();
+        }
+        GetSyntaxView()->AppendSyntaxDesc(hlpr.GetResult());
+    }
+    return DbgCmdResult(em_dbgstat_succ, L"");
 }
 
 DbgCmdResult CProcDbgger::OnCmdGo(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam)
@@ -397,8 +427,25 @@ DbgCmdResult CProcDbgger::OnCmdDu(const ustring &wstrCmdParam, BOOL bShow, const
 
 DbgCmdResult CProcDbgger::OnCmdReg(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam)
 {
-    DbgCmdResult res;
-    return res;
+    TITAN_ENGINE_CONTEXT_t context = GetCurrentDbgger()->GetCurrentContext();
+    if (bShow)
+    {
+        CSyntaxDescHlpr vDescHlpr;
+        vDescHlpr.FormatDesc(FormatW(L"CAX=0x%016x ", context.cax), COLOUR_MSG);
+        vDescHlpr.FormatDesc(FormatW(L"CBX=0x%016x ", context.cbx), COLOUR_MSG);
+        vDescHlpr.FormatDesc(FormatW(L"CCX=0x%016x ", context.ccx), COLOUR_MSG);
+        vDescHlpr.NextLine();
+
+        vDescHlpr.FormatDesc(FormatW(L"CDX=0x%016x ", context.cdx), COLOUR_MSG);
+        vDescHlpr.FormatDesc(FormatW(L"CSI=0x%016x ", context.csi), COLOUR_MSG);
+        vDescHlpr.FormatDesc(FormatW(L"CDI=0x%016x ", context.cdi), COLOUR_MSG);
+        vDescHlpr.NextLine();
+
+        vDescHlpr.FormatDesc(FormatW(L"CSP=0x%016x ", context.csp), COLOUR_MSG);
+        vDescHlpr.FormatDesc(FormatW(L"CBP=0x%016x ", context.cbp), COLOUR_MSG);
+        GetSyntaxView()->AppendSyntaxDesc(vDescHlpr.GetResult());
+    }
+    return DbgCmdResult(em_dbgstat_succ, L"");
 }
 
 DbgCmdResult CProcDbgger::OnCmdScript(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam)

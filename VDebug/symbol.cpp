@@ -4,6 +4,7 @@
 #include "Debugger.h"
 #include "common.h"
 #include "Command.h"
+#include "view/MainView.h"
 
 CSymbolHlpr::CSymbolHlpr(const ustring &wstrSymbolPath)
 {
@@ -77,7 +78,13 @@ BOOL CSymbolHlpr::EnumSymbolProc(PSYMBOL_INFOW pSymInfo, ULONG uSymbolSize, PVOI
     }
     wstr += L"!";
     wstr += pSymInfo->Name;
-    ptr->m_pCmdEngine->AddProcMsg(wstr, pSymInfo->Address);
+    DbgFunInfo info;
+    info.m_dwModuleBase = ptr->m_ModuleInfo.m_dwBaseOfImage;
+    info.m_dwProcAddr = pSymInfo->Address;
+    info.m_dwProcOffset = (info.m_dwProcAddr - info.m_dwModuleBase);
+    info.m_wstrModule = ptr->m_ModuleInfo.m_wstrDllName;
+    info.m_wstrFunName = pSymInfo->Name;
+    GetCurrentDbgger()->InsertFunMsg(wstr.makelower(), info);
     return TRUE;
 }
 
@@ -95,13 +102,20 @@ bool CSymbolHlpr::LoadSymbol(CTaskLoadSymbol *pModuleInfo)
         0
         );
 
+    if (ustring::npos != wstrDll.find(L"kernel32.dll"))
+    {
+        SYMBOL_INFOW info = {0};
+        SymFromNameW(NULL, L"kernel32!CreateFileW", &info);
+        int e = 0;
+    }
+
     IMAGEHLP_MODULEW64 info = {0};
     info.SizeOfStruct = sizeof(info);
     SymGetModuleInfoW64(NULL, (DWORD64)dwBaseAddr, &info);
 
-    ModuleInfo module;
-    module.m_wstrDllPath = wstrDll;
-    module.m_wstrDllName = PathFindFileNameW(wstrDll.c_str());
+    ModuleInfo *pModule = &(pModuleInfo->m_ModuleInfo);
+    pModule->m_wstrDllPath = wstrDll;
+    pModule->m_wstrDllName = PathFindFileNameW(wstrDll.c_str());
     SymEnumSymbolsW(
         NULL,
         dwBaseAddr,
@@ -110,11 +124,10 @@ bool CSymbolHlpr::LoadSymbol(CTaskLoadSymbol *pModuleInfo)
         pModuleInfo
         );
 
-    module.m_dwBaseOfImage = dwBaseAddr;
-    module.m_dwModuleSize = info.ImageSize;
-    module.m_dwEndAddr = (module.m_dwBaseOfImage + module.m_dwModuleSize);
-    module.m_hModule = (HMODULE)dwBaseAddr;
-    pModuleInfo->m_ModuleInfo = module;
+    pModule->m_dwBaseOfImage = dwBaseAddr;
+    pModule->m_dwModuleSize = info.ImageSize;
+    pModule->m_dwEndAddr = (pModule->m_dwBaseOfImage + pModule->m_dwModuleSize);
+    pModule->m_hModule = (HMODULE)dwBaseAddr;
     SymUnloadModule64(NULL, pModuleInfo->m_dwBaseOfModule);
     return true;
 }

@@ -18,7 +18,7 @@ enum DebuggerStatus
 class CDbgBase
 {
 public:
-    CDbgBase()
+    CDbgBase() : m_bX64(FALSE)
     {}
 
     virtual ~CDbgBase()
@@ -44,9 +44,14 @@ public:
         return m_bConnected;
     }
 
-    virtual DebuggerStatus GetStatus()
+    DebuggerStatus GetStatus()
     {
         return m_eStatus;
+    }
+
+    void SetStatus(DebuggerStatus eStatus)
+    {
+        m_eStatus = eStatus;
     }
 
     virtual TITAN_ENGINE_CONTEXT_t GetCurrentContext()
@@ -67,6 +72,11 @@ public:
     virtual list<STACKFRAME64> GetStackFrame(STACKFRAME64 context)
     {
         return list<STACKFRAME64>();
+    }
+
+    BOOL IsDbgProcx64()
+    {
+        return m_bX64;
     }
 
 protected:

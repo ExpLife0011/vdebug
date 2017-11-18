@@ -274,8 +274,9 @@ static LRESULT CALLBACK _CommandProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 
 static VOID _OnInitDialog(HWND hwnd, WPARAM wp, LPARAM lp)
 {
-    gs_pProcDbgger = new CProcDbgger();
+    gs_pProcDbgger = GetProcDbgger();
     gs_pCurDbgger = gs_pProcDbgger;
+    CProcDbgger::InitEngine();
 
     SendMessageW(hwnd, WM_SETICON, (WPARAM)ICON_BIG, (LPARAM)LoadIconW(g_hInstance, MAKEINTRESOURCEW(IDI_MAIN)));
     SendMessageW(hwnd, WM_SETICON, (WPARAM)ICON_SMALL, (LPARAM)LoadIconW(g_hInstance, MAKEINTRESOURCEW(IDI_MAIN)));
@@ -532,6 +533,7 @@ VOID SetCmdNotify(DebuggerStatus uStatus, const ustring &wstrShowMsg)
         SendMessageW(gs_hCommand, EM_SETREADONLY, 1, 0);
         _DisableCtrls();
     }
+    GetCurrentDbgger()->SetStatus(uStatus);
 }
 
 VOID SetMainviewTitle(const ustring &wstrTitle)

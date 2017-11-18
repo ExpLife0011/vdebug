@@ -2,9 +2,13 @@
 #include "memory.h"
 #include "capstone/capstone.h"
 #include "Debugger.h"
+#include "MainView.h"
+#include "common.h"
 
 CDisasmParser::CDisasmParser(HANDLE hProcess)
-{}
+{
+    m_hProcess = hProcess;
+}
 
 CDisasmParser::~CDisasmParser()
 {}
@@ -24,14 +28,14 @@ bool CDisasmParser::Disasm(DWORD64 dwAddr, DWORD dwMaxSize, vector<DisasmInfo> &
     }
 
     csh mHandle = NULL;
-    //if (GetDebugger()->GetDebuggerInfo().m_bIsx64Proc)
-    //{
-    //    cs_open(CS_ARCH_X86, CS_MODE_64, &mHandle);
-    //}
-    //else
-    //{
-    //    cs_open(CS_ARCH_X86, CS_MODE_32, &mHandle);
-    //}
+    if (GetCurrentDbgger()->IsDbgProcx64())
+    {
+        cs_open(CS_ARCH_X86, CS_MODE_64, &mHandle);
+    }
+    else
+    {
+        cs_open(CS_ARCH_X86, CS_MODE_32, &mHandle);
+    }
     cs_option(mHandle, CS_OPT_DETAIL, CS_OPT_ON);
 
     size_t codeSize = dwReadSize;
@@ -47,7 +51,12 @@ bool CDisasmParser::Disasm(DWORD64 dwAddr, DWORD dwMaxSize, vector<DisasmInfo> &
 
         WCHAR wszBuf[64] = {0};
         _ui64tow(info.m_dwAddr, wszBuf, 16);
-        info.m_wstrAddr.format(L"%016ls", wszBuf);
+        info.m_wstrAddr.format(L"%08ls", wszBuf);
+
+        for (int i = 0 ; i < asmabcd->size ; i++)
+        {
+            info.m_wstrByteCode += FormatW(L"%02x", asmabcd->bytes[i]);
+        }
         vInfo.push_back(info);
     }
     cs_close(&mHandle);
