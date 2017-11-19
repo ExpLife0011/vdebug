@@ -31,6 +31,13 @@ enum SymbolTask
     em_task_findfile    //在本地下载dump中的模块
 };
 
+struct SymbolLoadInfo   //已加载模块的符号信息
+{
+    ustring m_wstrModulePath;
+    ustring m_wstrMuduleName;
+    DWORD64 m_dwBaseOfModule;
+};
+
 struct CTaskLoadSymbol
 {
     HANDLE m_hImgaeFile;        //IN
@@ -42,6 +49,7 @@ struct CTaskLoadSymbol
 
 struct CTaskSymbolFromAddr
 {
+    DbgModuleInfo m_ModuleInfo; //IN
     DWORD64 m_dwAddr;           //IN
     ustring m_wstrSymbol;       //OUT
 };
@@ -124,6 +132,19 @@ protected:
     static DWORD WINAPI WorkThread(LPVOID pParam);
 
 protected:
+    //符号是否已经被加载
+    bool IsSymbolLoaded(const ustring &wstrDll, DWORD64 dwBaseOfModule);
+    //重新加载指定模块
+    bool ReloadModule(const ustring &wstrDll, DWORD64 dwBaseOfModule);
+    //卸载指定模块
+    bool UnLoadModule(const ustring &wstrDllName);
+    //加载符号
+    bool LoadModule(HANDLE hFile, const ustring &wstrDllPath, DWORD64 dwBaseOfModule);
+    //卸载当前所有的模块
+    bool UnloadModules();
+
+protected:
+    list<SymbolLoadInfo> m_vSymbolInfo;
     list<CSymbolTaskHeader *> m_vTaskQueue;
     HANDLE m_hNotifyEvent;
     HANDLE m_hInitEvent;

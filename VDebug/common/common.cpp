@@ -52,6 +52,28 @@ void ErrMessage(const wchar_t *format, ...)
     MessageBoxW(0, szText, L"Error", MB_TOPMOST);
 }
 
+ustring GetStdErrorStr()
+{
+    LPVOID lpMsgBuf = NULL;
+    FormatMessageW(  
+        FORMAT_MESSAGE_ALLOCATE_BUFFER |  
+        FORMAT_MESSAGE_FROM_SYSTEM |  
+        FORMAT_MESSAGE_IGNORE_INSERTS, 
+        NULL,
+        GetLastError(),  
+        MAKELANGID(LANG_NEUTRAL,SUBLANG_DEFAULT), //Default language  
+        (LPWSTR)&lpMsgBuf,  
+        0,  
+        NULL  
+        ); 
+    ustring wstrMsg((LPWSTR)lpMsgBuf);
+    if (lpMsgBuf)
+    {
+        LocalFlags(lpMsgBuf);
+    }
+    return wstrMsg;
+}
+
 VOID PrintDbgInternal(LPCWSTR wszTarget, LPCSTR szFile, DWORD dwLine, LPCWSTR wszFormat, ...)
 {
     WCHAR wszFormat1[1024] = {0};

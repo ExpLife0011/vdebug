@@ -67,6 +67,58 @@ bool CSymbolHlpr::PostTask(CSymbolTaskHeader *pTask, BOOL bAtOnce)
     return true;
 }
 
+bool CSymbolHlpr::IsSymbolLoaded(const ustring &wstrDll, DWORD64 dwBaseOfModule)
+{
+    CScopedLocker lock(this);
+    for (list<SymbolLoadInfo>::iterator it = m_vSymbolInfo.begin() ; it != m_vSymbolInfo.end() ; it++)
+    {
+        if (it->m_dwBaseOfModule == dwBaseOfModule && (0 == it->m_wstrMuduleName.comparei(wstrDll)))
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool CSymbolHlpr::UnLoadModule(const ustring &wstrDllName)
+{
+    CScopedLocker lock(this);
+    for (list<SymbolLoadInfo>::iterator it = m_vSymbolInfo.begin() ; it != m_vSymbolInfo.end() ; it++)
+    {
+        if (0 == it->m_wstrMuduleName.comparei(wstrDllName))
+        {
+            m_vSymbolInfo.erase(it);
+            return true;
+        }
+    }
+    return false;
+}
+
+bool CSymbolHlpr::LoadModule(HANDLE hFile, const ustring &wstrDllPath, DWORD64 dwBaseOfModule)
+{
+    CScopedLocker lock(this);
+    DWORD64 dwBaseAddr = SymLoadModuleExW(
+        NULL,
+        hFile,
+        wstrDllPath.c_str(),
+        0,
+        dwBaseOfModule,
+        0,
+        0,
+        0
+        );
+    if (dwBaseAddr)
+    {
+        SymbolLoadInfo info;
+        info.m_dwBaseOfModule = dwBaseAddr;
+        info.m_wstrModulePath = wstrDllPath;
+        info.m_wstrMuduleName = PathFindFileNameW(wstrDllPath.c_str());
+        m_vSymbolInfo.push_back(info);
+        return true;
+    }
+    return false;
+}
+
 BOOL CSymbolHlpr::EnumSymbolProc(PSYMBOL_INFOW pSymInfo, ULONG uSymbolSize, PVOID pUserContext)
 {
     CTaskLoadSymbol *ptr = (CTaskLoadSymbol *)pUserContext;
@@ -91,22 +143,26 @@ BOOL CSymbolHlpr::EnumSymbolProc(PSYMBOL_INFOW pSymInfo, ULONG uSymbolSize, PVOI
 bool CSymbolHlpr::LoadSymbol(CTaskLoadSymbol *pModuleInfo)
 {
     ustring wstrDll = GetFilePathFromHandle(pModuleInfo->m_hImgaeFile);
-    DWORD64 dwBaseAddr = SymLoadModuleExW(
-        NULL,
-        pModuleInfo->m_hImgaeFile,
-        PathFindFileNameW(wstrDll.c_str()),
-        0,
-        (DWORD64)pModuleInfo->m_dwBaseOfModule,
-        0,
-        0,
-        0
-        );
+    ustring wstrName = PathFindFileNameW(wstrDll.c_str());
+    SetLastError(0);
+    DWORD64 dwBaseOfModule = (DWORD64)pModuleInfo->m_dwBaseOfModule;
+    DWORD64 dwBaseAddr = dwBaseOfModule;
+    if (!GetSymbolHlpr()->IsSymbolLoaded(wstrName, dwBaseOfModule))
+    {
+        GetSymbolHlpr()->UnLoadModule(wstrName);
+        if (!GetSymbolHlpr()->LoadModule(pModuleInfo->m_hImgaeFile, wstrDll, dwBaseOfModule))
+        {
+            return false;
+        }
+    }
 
-    if (ustring::npos != wstrDll.find(L"kernel32.dll"))
+    ustring wstr1(wstrDll);
+    wstr1.makelower();
+    if (ustring::npos != wstr1.find(L"kernelbase.dll"))
     {
         SYMBOL_INFOW info = {0};
-        SymFromNameW(NULL, L"kernel32!CreateFileW", &info);
-        int e = 0;
+        ustring wstrError = GetStdErrorStr();
+        int e = 1;
     }
 
     IMAGEHLP_MODULEW64 info = {0};
@@ -128,7 +184,6 @@ bool CSymbolHlpr::LoadSymbol(CTaskLoadSymbol *pModuleInfo)
     pModule->m_dwModuleSize = info.ImageSize;
     pModule->m_dwEndAddr = (pModule->m_dwBaseOfImage + pModule->m_dwModuleSize);
     pModule->m_hModule = (HMODULE)dwBaseAddr;
-    SymUnloadModule64(NULL, pModuleInfo->m_dwBaseOfModule);
     return true;
 }
 
@@ -144,11 +199,27 @@ bool CSymbolHlpr::GetSymbolFromAddr(CTaskSymbolFromAddr *pSymbolInfo)
     pSymbol->SizeOfStruct = sizeof(SYMBOL_INFO);
     pSymbol->MaxNameLen = MAX_SYM_NAME;
 
-    if (!SymFromAddrW(NULL, pSymbolInfo->m_dwAddr, &dwOffset, pSymbol))
+    DWORD64 dwBaseOfModule = (DWORD64)pSymbolInfo->m_ModuleInfo.m_dwBaseOfImage;
+    if (!GetSymbolHlpr()->IsSymbolLoaded(pSymbolInfo->m_ModuleInfo.m_wstrDllName, dwBaseOfModule))
     {
         return false;
     }
-    pSymbolInfo->m_wstrSymbol = FormatW(L"%ls+0x%08x", pSymbol->Name, dwOffset);
+
+    if (!SymFromAddrW(NULL, pSymbolInfo->m_dwAddr, &dwOffset, pSymbol))
+    {
+        ustring wstrErr = GetStdErrorStr();
+        pSymbolInfo->m_wstrSymbol = FormatW(L"0x%x", pSymbolInfo->m_dwAddr - dwBaseOfModule);
+        return false;
+    }
+
+    if (dwOffset)
+    {
+        pSymbolInfo->m_wstrSymbol = FormatW(L"%ls+0x%x", pSymbol->Name, dwOffset);
+    }
+    else
+    {
+        pSymbolInfo->m_wstrSymbol = pSymbol->Name;
+    }
     return true;
 }
 

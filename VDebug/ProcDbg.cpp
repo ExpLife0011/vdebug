@@ -207,14 +207,15 @@ ustring CProcDbgger::GetSymFromAddr(DWORD64 dwAddr)
     CSymbolTaskHeader header;
     header.m_dwSize = sizeof(CTaskSymbolFromAddr) + sizeof(CSymbolTaskHeader);
     header.m_eTaskType = em_task_symaddr;
-    header.m_pParam = &task;
-    GetSymbolHlpr()->SendTask(&header);
 
     DbgModuleInfo module = GetModuleFromAddr(dwAddr);
     if (module.m_wstrDllName.empty())
     {
         return L"";
     }
+    task.m_ModuleInfo = module;
+    header.m_pParam = &task;
+    GetSymbolHlpr()->SendTask(&header);
 
     ustring wstr = module.m_wstrDllName;
     size_t pos = wstr.rfind(L'.');
@@ -503,12 +504,23 @@ DbgCmdResult CProcDbgger::OnCmdKv(const ustring &wstrCmdParam, BOOL bShow, const
     }
 
     CSyntaxDescHlpr hlpr;
-    hlpr.FormatDesc(L"函数返回地址 ", COLOUR_MSG, 17);
-    hlpr.FormatDesc(L"参数列表", COLOUR_MSG, 17 * 4);
+    hlpr.NextLine();
+    hlpr.FormatDesc(L"返回地址 ", COLOUR_MSG, 8);
+    hlpr.FormatDesc(L"参数列表 ", COLOUR_MSG, 8);
     hlpr.FormatDesc(L"函数位置", COLOUR_MSG);
+    hlpr.NextLine();
     for (list<STACKFRAME64>::const_iterator it = vStack.begin() ; it != vStack.end() ; it++)
     {
+        hlpr.FormatDesc(FormatW(L"%08x ", (DWORD)it->AddrReturn.Offset), COLOUR_MSG);
+        for (int j = 0 ; j < 4 ; j++)
+        {
+            hlpr.FormatDesc(FormatW(L"%08x ", (DWORD)it->Params[j]), COLOUR_MSG);
+        }
+
+        hlpr.FormatDesc(FormatW(L"%ls", GetProcDbgger()->GetSymFromAddr(it->AddrPC.Offset).c_str()), COLOUR_MSG);
+        hlpr.NextLine();
     }
+    GetSyntaxView()->AppendSyntaxDesc(hlpr.GetResult());
     return DbgCmdResult(em_dbgstat_succ, L"");
 }
 
