@@ -4,10 +4,10 @@
 #include "../global.h"
 
 /*语法高亮配置 开始*/
-#define COLOUR_ADDR              GetSyntaxCfg(L"addr")
-#define COLOUR_REGISTER        GetSyntaxCfg(L"register")
+#define COLOUR_ADDR             GetSyntaxCfg(L"addr")
+#define COLOUR_REGISTER         GetSyntaxCfg(L"register")
 #define COLOUR_ERROR            GetSyntaxCfg(L"error")
-#define COLOUR_MSG               GetSyntaxCfg(L"msg")
+#define COLOUR_MSG              GetSyntaxCfg(L"msg")
 /*语法高亮配置 结束*/
 
 struct SyntaxColourDesc

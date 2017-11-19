@@ -398,6 +398,13 @@ DbgCmdResult CProcDbgger::OnCommand(const ustring &wstrCmd, const ustring &wstrC
     {
         return OnCmdKv(wstrCmdParam, bShow, pParam);
     }
+    else if (wstrCmd == L"db")
+    {
+    }
+    else if (wstrCmd == L"dd")
+    {
+        OnCmdDd(wstrCmdParam, bShow, pParam);
+    }
     else if (wstrCmd == L"du")
     {
         return OnCmdDu(wstrCmdParam, bShow, pParam);
@@ -538,6 +545,56 @@ DbgCmdResult CProcDbgger::OnCmdKv(const ustring &wstrCmdParam, BOOL bShow, const
         hlpr.NextLine();
     }
     GetSyntaxView()->AppendSyntaxDesc(hlpr.GetResult());
+    return DbgCmdResult(em_dbgstat_succ, L"");
+}
+
+DbgCmdResult CProcDbgger::OnCmdDb(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam)
+{
+    return DbgCmdResult();
+}
+
+DbgCmdResult CProcDbgger::OnCmdDd(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam)
+{
+    CScriptEngine script;
+    script.SetContext(GetProcDbgger()->GetCurrentContext(), ReadDbgProcMemory, WriteDbgProcMemory);
+
+    DWORD64 dwAddr = script.Compile(wstrCmdParam);
+    if (!dwAddr)
+    {
+        return DbgCmdResult();
+    }
+
+    DWORD dwDataSize = 64;
+    CSyntaxDescHlpr desc;
+    CMemoryOperator mhlpr(GetProcDbgger()->GetDbgProc());
+    desc.FormatDesc(L"数据地址  ", COLOUR_MSG);
+    desc.FormatDesc(L"数据内容", COLOUR_MSG);
+    desc.NextLine();
+    for (int i = 0 ; i < (int)dwDataSize ; i += 16)
+    {
+        char szData[16] = {0};
+        DWORD dwReadSize = 0;
+        mhlpr.MemoryReadSafe(dwAddr, szData, sizeof(szData), &dwReadSize);
+        if (!dwReadSize)
+        {
+            break;
+        }
+        desc.FormatDesc(FormatW(L"%08x  ", dwAddr), COLOUR_MSG);
+        for (int j = 0 ; j < (int)dwReadSize / 4 ; j += 1)
+        {
+            desc.FormatDesc(FormatW(L"%08x ", *((DWORD *)szData + j)), COLOUR_MSG);
+        }
+        desc.NextLine();
+        dwAddr += 16;
+    }
+    GetSyntaxView()->AppendSyntaxDesc(desc.GetResult());
+
+    //CMemoryOperator mhlpr(GetProcDbgger()->GetDbgProc());
+    //ustring wstrData = mhlpr.MemoryReadStrUnicode(dwAddr, MAX_PATH);
+
+    //CSyntaxDescHlpr desc;
+    //desc.FormatDesc(wstrData.c_str(), COLOUR_MSG);
+    //GetSyntaxView()->AppendSyntaxDesc(desc.GetResult());
     return DbgCmdResult(em_dbgstat_succ, L"");
 }
 
