@@ -85,7 +85,7 @@ CScriptEngine::CScriptEngine()
     ZeroMemory(&m_vContex, sizeof(m_vContex));
 }
 
-void CScriptEngine::SetContext(TITAN_ENGINE_CONTEXT_t &vContext)
+void CScriptEngine::SetContext(TITAN_ENGINE_CONTEXT_t &vContext, pfnReadMemoryProc pfnRead, pfnWriteMemoryProc pfnWrite)
 {
     m_vContex = vContext;
     ScriptStrInfo info;
@@ -103,6 +103,8 @@ void CScriptEngine::SetContext(TITAN_ENGINE_CONTEXT_t &vContext)
     m_vStrMap[L"csp"] = info;
     info.m_dwAddr = m_vContex.cbp;
     m_vStrMap[L"cbp"] = info;
+    m_pfnReadProc = pfnRead;
+    m_pfnWriteProc = pfnWrite;
 }
 
 CScriptEngine::~CScriptEngine()
@@ -163,25 +165,24 @@ BOOL CScriptEngine::IsRegisterStr(const ustring &wstr, DWORD64 &dwData) const
 
 ustring CScriptEngine::GetPointerData(const ustring &wstrPointer) const
 {
-    //CMemoryOperator hlpr(GetDebugger()->GetDebuggerInfo().m_hProcess);
     DWORD64 dwData = 0;
-    //DWORD64 dwAddr = 0;
-    //DWORD dwRead = 0;
-    //DWORD dwSize = 4;
+    DWORD64 dwAddr = 0;
+    DWORD dwRead = 0;
+    DWORD dwSize = 4;
 
-    //if (!IsRegisterStr(wstrPointer, dwData))
-    //{
-    //    if (!GetNumFromStr(wstrPointer, dwAddr))
-    //    {
-    //        return L"";
-    //    }
-    //}
+    if (!IsRegisterStr(wstrPointer, dwData))
+    {
+        if (!GetNumFromStr(wstrPointer, dwAddr))
+        {
+            return L"";
+        }
+    }
 
-    //if (GetDebugger()->GetDebuggerInfo().m_bIsx64Proc)
-    //{
-    //    dwSize = 8;
-    //}
-    //hlpr.MemoryReadSafe(dwAddr, (char *)&dwData, dwSize, &dwRead);
+    if (GetCurrentDbgger()->IsDbgProcx64())
+    {
+        dwSize = 8;
+    }
+    m_pfnReadProc(dwAddr, dwSize, (char *)&dwData);
 
     WCHAR wszBuf[128] = {0};
     ustring wstrResult = L"0x";

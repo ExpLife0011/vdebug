@@ -5,6 +5,7 @@
 #include "mstring.h"
 #include "TitanEngine/TitanEngine.h"
 #include "LockBase.h"
+#include "DbgBase.h"
 
 extern "C"
 {
@@ -47,18 +48,14 @@ class CScriptEngine : public CCriticalSectionLockable
 {
 public:
     CScriptEngine();
-
     virtual ~CScriptEngine();
-
-    void SetContext(TITAN_ENGINE_CONTEXT_t &vContext);
+    void SetContext(TITAN_ENGINE_CONTEXT_t &vContext, pfnReadMemoryProc pfnRead = NULL, pfnWriteMemoryProc pfnWrite = NULL);
 
     //[esp + 4]
     //0xffabcd + 0x1234
     //0x123 + [esp + 4] + eax * (4 + 0x1122)
     DWORD64 Compile(const ustring &wstrScript) const;
-
     void InsertProc(LPCWSTR wszModule, LPCWSTR wszProc, DWORD64 dwAddr);
-
     //lua script
     BOOL RunScript(const ustring &wstrScript) const;
 protected:
@@ -106,8 +103,9 @@ static int DbgReadStr(lua_State *pLuaState);
 static int DbgReadInt32(lua_State *pLuaState);
 
 protected:
+    pfnReadMemoryProc m_pfnReadProc;
+    pfnWriteMemoryProc m_pfnWriteProc;
     TITAN_ENGINE_CONTEXT_t m_vContex;
-
     map<ustring, ScriptStrInfo> m_vStrMap;
 };
 

@@ -8,6 +8,9 @@
 
 using namespace std;
 
+typedef DWORD (__stdcall *pfnReadMemoryProc)(IN DWORD64 dwAddr, IN DWORD dwReadLength, OUT char *pBuffer);
+typedef DWORD (__stdcall *pfnWriteMemoryProc)(IN DWORD64 dwAddr, IN DWORD dwWriteLength, IN const char *pBuffer);
+
 enum DebuggerStatus
 {
     em_dbg_status_init,

@@ -7,6 +7,8 @@
 #include "symbol.h"
 #include "BreakPoint.h"
 #include "Disasm.h"
+#include "Script.h"
+#include "memory.h"
 
 #if WIN64 || _WIN64
 #pragma comment(lib, "TitanEngine/TitanEngine_x64.lib")
@@ -229,6 +231,21 @@ ustring CProcDbgger::GetSymFromAddr(DWORD64 dwAddr)
 HANDLE CProcDbgger::GetDbgProc()
 {
     return m_vDbgProcInfo.m_hProcess;
+}
+
+//读调试进程内存
+DWORD CProcDbgger::ReadDbgProcMemory(IN DWORD64 dwAddr, IN DWORD dwReadLength, OUT char *pBuffer)
+{
+    CMemoryOperator memory(GetProcDbgger()->GetDbgProc());
+    DWORD dwReadSize = 0;
+    memory.MemoryReadSafe(dwAddr, pBuffer, dwReadLength, &dwReadSize);
+    return dwReadSize;
+}
+
+//写调试进程内存
+DWORD CProcDbgger::WriteDbgProcMemory(IN DWORD64 dwAddr, IN DWORD dwWriteLength, IN const char *pBuffer)
+{
+    return 0;
 }
 
 void CProcDbgger::OnCreateProcess(CREATE_PROCESS_DEBUG_INFO* pCreateProcessInfo)
@@ -526,8 +543,22 @@ DbgCmdResult CProcDbgger::OnCmdKv(const ustring &wstrCmdParam, BOOL bShow, const
 
 DbgCmdResult CProcDbgger::OnCmdDu(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam)
 {
-    DbgCmdResult res;
-    return res;
+    CScriptEngine script;
+    script.SetContext(GetProcDbgger()->GetCurrentContext(), ReadDbgProcMemory, WriteDbgProcMemory);
+
+    DWORD64 dwAddr = script.Compile(wstrCmdParam);
+    if (!dwAddr)
+    {
+        return DbgCmdResult();
+    }
+
+    CMemoryOperator mhlpr(GetProcDbgger()->GetDbgProc());
+    ustring wstrData = mhlpr.MemoryReadStrUnicode(dwAddr, MAX_PATH);
+
+    CSyntaxDescHlpr desc;
+    desc.FormatDesc(wstrData.c_str(), COLOUR_MSG);
+    GetSyntaxView()->AppendSyntaxDesc(desc.GetResult());
+    return DbgCmdResult(em_dbgstat_succ, L"");
 }
 
 DbgCmdResult CProcDbgger::OnCmdReg(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam)

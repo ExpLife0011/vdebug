@@ -86,6 +86,7 @@ protected:
     static CommandResult WINAPI CmdKv(const ustring &pCmdParam, BOOL bShow, CmdUserContext *pUserCountext = NULL);
     static CommandResult WINAPI CmdDu(const ustring &pCmdParam, BOOL bShow, CmdUserContext *pUserCountext = NULL);
     static CommandResult WINAPI CmdScript(const ustring &wstrCmdParam, BOOL bShow, CmdUserContext *pUserContext = NULL);
+
 protected:
     map<ustring, pfnCmdCallbackProc> m_vCmdCallback;
 

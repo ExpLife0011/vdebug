@@ -100,6 +100,11 @@ public:
     HANDLE GetCurrentThread();
 
 protected:
+    //读写调试进程内存
+    static DWORD __stdcall ReadDbgProcMemory(IN DWORD64 dwAddr, IN DWORD dwReadLength, OUT char *pBuffer);
+    static DWORD __stdcall WriteDbgProcMemory(IN DWORD64 dwAddr, IN DWORD dwWriteLength, IN const char *pBuffer);
+
+protected:
     static void __cdecl OnCreateProcess(CREATE_PROCESS_DEBUG_INFO* pCreateProcessInfo);
     static void __cdecl OnExitProcess(EXIT_PROCESS_DEBUG_INFO* ExitProcess);
     static void __cdecl OnCreateThread(CREATE_THREAD_DEBUG_INFO* CreateThread);
