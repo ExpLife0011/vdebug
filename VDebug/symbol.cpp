@@ -113,7 +113,7 @@ bool CSymbolHlpr::LoadSymbol(CTaskLoadSymbol *pModuleInfo)
     info.SizeOfStruct = sizeof(info);
     SymGetModuleInfoW64(NULL, (DWORD64)dwBaseAddr, &info);
 
-    ModuleInfo *pModule = &(pModuleInfo->m_ModuleInfo);
+    DbgModuleInfo *pModule = &(pModuleInfo->m_ModuleInfo);
     pModule->m_wstrDllPath = wstrDll;
     pModule->m_wstrDllName = PathFindFileNameW(wstrDll.c_str());
     SymEnumSymbolsW(
@@ -167,14 +167,14 @@ bool CSymbolHlpr::StackWalk(CTaskStackWalkInfo *pStackWalkInfo)
     {
         if (StackWalk64(
             machineType,
-            NULL,
-            NULL,
+            pStackWalkInfo->m_hDstProcess,
+            pStackWalkInfo->m_hDstThread,
             pFrame,
             NULL,
             pStackWalkInfo->m_pfnReadMemoryProc,
             SymFunctionTableAccess64,
             pStackWalkInfo->m_pfnGetModuleBaseProc,
-            NULL
+            pStackWalkInfo->m_pfnStackTranslateProc
             ))
         {
             pStackWalkInfo->m_FrameSet.push_back(*pFrame);

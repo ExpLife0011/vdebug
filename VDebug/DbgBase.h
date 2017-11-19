@@ -15,6 +15,40 @@ enum DebuggerStatus
     em_dbg_status_free
 };
 
+struct DbgProcModuleProcInfo
+{
+    ustring m_wstrName;     //名称
+    DWORD64 m_dwBaseAddr;   //模块基址
+    DWORD64 m_dwProcAddr;   //函数名称
+    DWORD64 m_dwType;       //类型
+
+    DbgProcModuleProcInfo()
+    {
+        m_dwBaseAddr = 0;
+        m_dwProcAddr = 0;
+        m_dwType = 0;
+    }
+};
+
+struct DbgModuleInfo
+{
+    ustring m_wstrDllPath;      //dll路径
+    ustring m_wstrDllName;      //dll名称
+    DWORD64 m_dwBaseOfImage;    //dll基址
+    DWORD64 m_dwEndAddr;        //模块结束地址
+    DWORD64 m_dwModuleSize;     //模块大小
+    HMODULE m_hModule;          //模块句柄
+    map<DWORD64, DbgProcModuleProcInfo> m_vProcInfo;   //函数信息
+
+    DbgModuleInfo()
+    {
+        m_dwBaseOfImage = 0;
+        m_dwEndAddr = 0;
+        m_dwModuleSize = 0;
+        m_hModule = NULL;
+    }
+};
+
 class CDbgBase
 {
 public:
@@ -64,12 +98,7 @@ public:
         return L"";
     }
 
-    virtual DWORD64 GetModuelBaseFromAddr()
-    {
-        return 0;
-    }
-
-    virtual list<STACKFRAME64> GetStackFrame(STACKFRAME64 context)
+    virtual list<STACKFRAME64> GetStackFrame(const ustring &wstrParam)
     {
         return list<STACKFRAME64>();
     }

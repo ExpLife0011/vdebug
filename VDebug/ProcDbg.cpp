@@ -39,6 +39,7 @@ VOID CProcDbgger::Wait()
 
 void CProcDbgger::Run()
 {
+    SetCmdNotify(em_dbg_status_busy, L"正在运行");
     SetEvent(m_hRunNotify);
 }
 
@@ -118,6 +119,24 @@ DWORD CProcDbgger::DebugThread(LPVOID pParam)
     return 0;
 }
 
+DWORD64 CProcDbgger::GetModuelBaseFromAddr(HANDLE hProcress, DWORD64 dwAddr)
+{
+    CProcDbgger *ptr = GetProcDbgger();
+    for (map<DWORD64, DbgModuleInfo>::const_iterator it = ptr->m_vModuleInfo.begin() ; it != ptr->m_vModuleInfo.end() ; it++)
+    {
+        if (dwAddr >= it->second.m_dwBaseOfImage && dwAddr <= it->second.m_dwEndAddr)
+        {
+            return it->second.m_dwBaseOfImage;
+        }
+    }
+    return 0;
+}
+
+DWORD64 CProcDbgger::StackTranslateAddressProc64(HANDLE hProcess, HANDLE hThread, LPADDRESS64 lpaddr)
+{
+    return 0;
+}
+
 void CProcDbgger::CustomBreakPoint()
 {
     return;
@@ -126,6 +145,19 @@ void CProcDbgger::CustomBreakPoint()
 DEBUG_EVENT *CProcDbgger::GetDebugProcData()
 {
     return (DEBUG_EVENT *)GetDebugData();
+}
+
+HANDLE CProcDbgger::GetThreadHandle(DWORD dwThreadId)
+{
+    map<DWORD, DbgProcThreadInfo>::const_iterator it = m_vThreadMap.find(dwThreadId);
+    if (m_vThreadMap.end() == it)
+    {
+        return NULL;
+    }
+    else
+    {
+        return it->second.m_hThread;
+    }
 }
 
 TITAN_ENGINE_CONTEXT_t CProcDbgger::GetCurrentContext()
@@ -142,9 +174,22 @@ TITAN_ENGINE_CONTEXT_t CProcDbgger::GetCurrentContext()
     return context;
 }
 
-DbgProcModuleInfo CProcDbgger::GetModuleFromAddr(DWORD64 dwAddr)
+HANDLE CProcDbgger::GetCurrentThread()
 {
-    for (map<DWORD64, DbgProcModuleInfo>::const_iterator it = m_vModuleInfo.begin() ; it != m_vModuleInfo.end() ; it++)
+    DEBUG_EVENT *ptr = GetDebugProcData();
+
+    TITAN_ENGINE_CONTEXT_t context = {0};
+    map<DWORD, DbgProcThreadInfo>::const_iterator it = m_vThreadMap.find(ptr->dwThreadId);
+    if (it != m_vThreadMap.end())
+    {
+        return it->second.m_hThread;
+    }
+    return NULL;
+}
+
+DbgModuleInfo CProcDbgger::GetModuleFromAddr(DWORD64 dwAddr)
+{
+    for (map<DWORD64, DbgModuleInfo>::const_iterator it = m_vModuleInfo.begin() ; it != m_vModuleInfo.end() ; it++)
     {
         if (dwAddr >= it->second.m_dwBaseOfImage && dwAddr <= it->second.m_dwEndAddr)
         {
@@ -152,7 +197,7 @@ DbgProcModuleInfo CProcDbgger::GetModuleFromAddr(DWORD64 dwAddr)
         }
     }
 
-    return DbgProcModuleInfo();
+    return DbgModuleInfo();
 }
 
 ustring CProcDbgger::GetSymFromAddr(DWORD64 dwAddr)
@@ -165,7 +210,7 @@ ustring CProcDbgger::GetSymFromAddr(DWORD64 dwAddr)
     header.m_pParam = &task;
     GetSymbolHlpr()->SendTask(&header);
 
-    DbgProcModuleInfo module = GetModuleFromAddr(dwAddr);
+    DbgModuleInfo module = GetModuleFromAddr(dwAddr);
     if (module.m_wstrDllName.empty())
     {
         return L"";
@@ -261,6 +306,8 @@ bool CProcDbgger::LoadModuleInfo(HANDLE hFile, DWORD64 dwBaseOfModule)
     task.m_eTaskType = em_task_loadsym;
 
     GetSymbolHlpr()->SendTask(&task);
+    //两个结构完全一样，考虑到和dump可能有区别分别命名
+    m_vModuleInfo[dwBaseOfModule] = loadInfo.m_ModuleInfo;
 
     CSyntaxDescHlpr hlpr;
     WCHAR wszStart[64] = {0};
@@ -268,7 +315,7 @@ bool CProcDbgger::LoadModuleInfo(HANDLE hFile, DWORD64 dwBaseOfModule)
     _i64tow_s(loadInfo.m_ModuleInfo.m_dwBaseOfImage, wszStart, 64, 16);
     _i64tow_s(loadInfo.m_ModuleInfo.m_dwEndAddr, wszEnd, 16, 16);
     hlpr.FormatDesc(
-        FormatW(L"模块加载 0x%016ls 0x%016ls  %ls", wszStart, wszEnd, loadInfo.m_ModuleInfo.m_wstrDllName.c_str()).c_str(),
+        FormatW(L"模块加载 0x%08ls 0x%08ls  %ls", wszStart, wszEnd, loadInfo.m_ModuleInfo.m_wstrDllName.c_str()).c_str(),
         COLOUR_MSG
         );
     GetSyntaxView()->AppendSyntaxDesc(hlpr.GetResult());
@@ -380,7 +427,10 @@ DbgCmdResult CProcDbgger::OnCmdDisass(const ustring &wstrCmdParam, BOOL bShow, c
     wstr.makelower();
 
     DWORD64 dwAddr = 0;
-    if (!GetNumFromStr(wstr, dwAddr))
+    if (GetNumFromStr(wstr, dwAddr))
+    {
+    }
+    else
     {
         dwAddr = GetFunAddr(wstr);
     }
@@ -409,14 +459,57 @@ DbgCmdResult CProcDbgger::OnCmdDisass(const ustring &wstrCmdParam, BOOL bShow, c
 
 DbgCmdResult CProcDbgger::OnCmdGo(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam)
 {
-    DbgCmdResult res;
-    return res;
+    Run();
+    return DbgCmdResult(em_dbgstat_succ, L"");
+}
+
+list<STACKFRAME64> CProcDbgger::GetStackFrame(const ustring &wstrParam)
+{
+    const int iMaxWalks = 1024;
+    TITAN_ENGINE_CONTEXT_t context = GetProcDbgger()->GetCurrentContext();
+    STACKFRAME64 frame = {0};
+
+    DWORD machineType = IMAGE_FILE_MACHINE_I386;
+    frame.AddrPC.Offset = context.cip;
+    frame.AddrPC.Mode = AddrModeFlat;
+    frame.AddrFrame.Offset = context.cbp;
+    frame.AddrFrame.Mode = AddrModeFlat;
+    frame.AddrStack.Offset = context.csp;
+    frame.AddrStack.Mode = AddrModeFlat;
+
+    CTaskStackWalkInfo info;
+    info.m_context = frame;
+    info.m_dwMachineType = IMAGE_FILE_MACHINE_I386;
+    info.m_pfnGetModuleBaseProc = GetModuelBaseFromAddr;
+    info.m_pfnReadMemoryProc = NULL;
+    info.m_pfnStackTranslateProc = StackTranslateAddressProc64;
+    info.m_hDstProcess = GetProcDbgger()->GetDbgProc();
+    info.m_hDstThread = GetProcDbgger()->GetCurrentThread();
+
+    CSymbolTaskHeader header;
+    header.m_dwSize = sizeof(CTaskStackWalkInfo) + sizeof(CSymbolTaskHeader);
+    header.m_eTaskType = em_task_stackwalk;
+    header.m_pParam = &info;
+    GetSymbolHlpr()->SendTask(&header);
+    return info.m_FrameSet;
 }
 
 DbgCmdResult CProcDbgger::OnCmdKv(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam)
 {
-    DbgCmdResult res;
-    return res;
+    list<STACKFRAME64> vStack = GetCurrentDbgger()->GetStackFrame(wstrCmdParam);
+    if (vStack.empty())
+    {
+        return DbgCmdResult();
+    }
+
+    CSyntaxDescHlpr hlpr;
+    hlpr.FormatDesc(L"函数返回地址 ", COLOUR_MSG, 17);
+    hlpr.FormatDesc(L"参数列表", COLOUR_MSG, 17 * 4);
+    hlpr.FormatDesc(L"函数位置", COLOUR_MSG);
+    for (list<STACKFRAME64>::const_iterator it = vStack.begin() ; it != vStack.end() ; it++)
+    {
+    }
+    return DbgCmdResult(em_dbgstat_succ, L"");
 }
 
 DbgCmdResult CProcDbgger::OnCmdDu(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam)
@@ -431,18 +524,18 @@ DbgCmdResult CProcDbgger::OnCmdReg(const ustring &wstrCmdParam, BOOL bShow, cons
     if (bShow)
     {
         CSyntaxDescHlpr vDescHlpr;
-        vDescHlpr.FormatDesc(FormatW(L"CAX=0x%016x ", context.cax), COLOUR_MSG);
-        vDescHlpr.FormatDesc(FormatW(L"CBX=0x%016x ", context.cbx), COLOUR_MSG);
-        vDescHlpr.FormatDesc(FormatW(L"CCX=0x%016x ", context.ccx), COLOUR_MSG);
+        vDescHlpr.FormatDesc(FormatW(L"CAX=0x%08x ", context.cax), COLOUR_MSG);
+        vDescHlpr.FormatDesc(FormatW(L"CBX=0x%08x ", context.cbx), COLOUR_MSG);
+        vDescHlpr.FormatDesc(FormatW(L"CCX=0x%08x ", context.ccx), COLOUR_MSG);
         vDescHlpr.NextLine();
 
-        vDescHlpr.FormatDesc(FormatW(L"CDX=0x%016x ", context.cdx), COLOUR_MSG);
-        vDescHlpr.FormatDesc(FormatW(L"CSI=0x%016x ", context.csi), COLOUR_MSG);
-        vDescHlpr.FormatDesc(FormatW(L"CDI=0x%016x ", context.cdi), COLOUR_MSG);
+        vDescHlpr.FormatDesc(FormatW(L"CDX=0x%08x ", context.cdx), COLOUR_MSG);
+        vDescHlpr.FormatDesc(FormatW(L"CSI=0x%08x ", context.csi), COLOUR_MSG);
+        vDescHlpr.FormatDesc(FormatW(L"CDI=0x%08x ", context.cdi), COLOUR_MSG);
         vDescHlpr.NextLine();
 
-        vDescHlpr.FormatDesc(FormatW(L"CSP=0x%016x ", context.csp), COLOUR_MSG);
-        vDescHlpr.FormatDesc(FormatW(L"CBP=0x%016x ", context.cbp), COLOUR_MSG);
+        vDescHlpr.FormatDesc(FormatW(L"CSP=0x%08x ", context.csp), COLOUR_MSG);
+        vDescHlpr.FormatDesc(FormatW(L"CBP=0x%08x ", context.cbp), COLOUR_MSG);
         GetSyntaxView()->AppendSyntaxDesc(vDescHlpr.GetResult());
     }
     return DbgCmdResult(em_dbgstat_succ, L"");

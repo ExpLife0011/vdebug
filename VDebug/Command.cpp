@@ -36,7 +36,8 @@ BOOL CCmdEngine::CmdIsValid(const ustring &wstrCmd)
 
 DWORD64 CCmdEngine::GetModuelBaseFromAddr(HANDLE hProcess, DWORD64 dwAddr)
 {
-    return GetCurrentDbgger()->GetModuelBaseFromAddr();
+    //return GetCurrentDbgger()->GetModuelBaseFromAddr();
+    return 0;
 }
 
 //0x43fdad12
@@ -268,7 +269,7 @@ static DWORD64 CALLBACK StackTranslateAddressProc64(HANDLE hProcess, HANDLE hThr
     return 0;
 }
 
-CommandResult CCmdEngine::CmdKv(const ustring &pParam, BOOL bShow, CmdUserContext *pUserCountext)
+CommandResult CCmdEngine::CmdKv(const ustring &wstrParam, BOOL bShow, CmdUserContext *pUserCountext)
 {
     const int iMaxWalks = 1024;
 
@@ -318,7 +319,7 @@ CommandResult CCmdEngine::CmdKv(const ustring &pParam, BOOL bShow, CmdUserContex
     //}
     //hlpr.AddEmptyLine();
     //GetSyntaxView()->AppendSyntaxDesc(hlpr.GetResult());
-    list<STACKFRAME64> vStack = GetCurrentDbgger()->GetStackFrame(frame);
+    list<STACKFRAME64> vStack = GetCurrentDbgger()->GetStackFrame(wstrParam);
     return CommandResult();
 }
 

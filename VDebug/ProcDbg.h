@@ -81,40 +81,6 @@ struct DbgProcThreadInfo
     }
 };
 
-struct DbgProcModuleProcInfo
-{
-    ustring m_wstrName;     //名称
-    DWORD64 m_dwBaseAddr;   //模块基址
-    DWORD64 m_dwProcAddr;   //函数名称
-    DWORD64 m_dwType;       //类型
-
-    DbgProcModuleProcInfo()
-    {
-        m_dwBaseAddr = 0;
-        m_dwProcAddr = 0;
-        m_dwType = 0;
-    }
-};
-
-struct DbgProcModuleInfo
-{
-    ustring m_wstrDllPath;      //dll路径
-    ustring m_wstrDllName;      //dll名称
-    DWORD64 m_dwBaseOfImage;    //dll基址
-    DWORD64 m_dwEndAddr;        //模块结束地址
-    DWORD64 m_dwModuleSize;     //模块大小
-    HMODULE m_hModule;          //模块句柄
-    map<DWORD64, DbgProcModuleProcInfo> m_vProcInfo;   //函数信息
-
-    DbgProcModuleInfo()
-    {
-        m_dwBaseOfImage = 0;
-        m_dwEndAddr = 0;
-        m_dwModuleSize = 0;
-        m_hModule = NULL;
-    }
-};
-
 class CProcDbgger : public CDbggerProxy
 {
 public:
@@ -128,9 +94,10 @@ public:
     virtual TITAN_ENGINE_CONTEXT_t GetCurrentContext();
     VOID Wait();
     void Run();
-    DbgProcModuleInfo GetModuleFromAddr(DWORD64 dwAddr);
+    DbgModuleInfo GetModuleFromAddr(DWORD64 dwAddr);
     ustring GetSymFromAddr(DWORD64 dwAddr);
     HANDLE GetDbgProc();
+    HANDLE GetCurrentThread();
 
 protected:
     static void __cdecl OnCreateProcess(CREATE_PROCESS_DEBUG_INFO* pCreateProcessInfo);
@@ -149,15 +116,19 @@ public:
     static VOID InitEngine();
 protected:
     static DWORD __stdcall DebugThread(LPVOID pParam);
+    static DWORD64 CALLBACK GetModuelBaseFromAddr(HANDLE hProcess, DWORD64 dwAddr);
+    static DWORD64 CALLBACK StackTranslateAddressProc64(HANDLE hProcess, HANDLE hThread, LPADDRESS64 lpaddr);
 
 protected:
     DEBUG_EVENT *GetDebugProcData();
+    HANDLE GetThreadHandle(DWORD dwThreadId);
     bool LoadModuleInfo(HANDLE hFile, DWORD64 dwBaseOfModule);
     void ResetCache();
+    virtual list<STACKFRAME64> GetStackFrame(const ustring &wstrParam);
 
 protected:
     map<DWORD, DbgProcThreadInfo> m_vThreadMap;
-    map<DWORD64, DbgProcModuleInfo> m_vModuleInfo;
+    map<DWORD64, DbgModuleInfo> m_vModuleInfo;
     DWORD m_dwCurDebugProc;
     DbgProcInfo m_vDbgProcInfo;
     DWORD m_dwCurrentThreadId;

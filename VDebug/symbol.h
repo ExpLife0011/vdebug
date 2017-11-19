@@ -6,6 +6,7 @@
 #include "LockBase.h"
 #include "Debugger.h"
 #include "CmdBase.h"
+#include "DbgBase.h"
 
 using namespace std;
 
@@ -18,6 +19,8 @@ typedef BOOL (CALLBACK *pfnReadDumpMemoryProc64)(
     );
 
 typedef DWORD64 (CALLBACK *pfnGetModuelBaseFromAddr)(HANDLE hProcess, DWORD64 dwAddr);
+
+typedef DWORD64 (CALLBACK *pfnStackTranslateAddressProc64)(HANDLE hProcess, HANDLE hThread, LPADDRESS64 lpaddr);
 
 enum SymbolTask
 {
@@ -33,7 +36,7 @@ struct CTaskLoadSymbol
     HANDLE m_hImgaeFile;        //IN
     DWORD64 m_dwBaseOfModule;   //IN
 
-    ModuleInfo m_ModuleInfo;    //OUT
+    DbgModuleInfo m_ModuleInfo; //OUT
     CCmdBase *m_pCmdEngine;     //OUT
 };
 
@@ -54,15 +57,19 @@ struct CTaskStackWalkInfo
     {
         m_dwMachineType = IMAGE_FILE_MACHINE_I386;
         m_hDstProcess = NULL;
+        m_hDstThread = NULL;
         m_pfnReadMemoryProc = NULL;
         m_pfnGetModuleBaseProc = NULL;
+        m_pfnStackTranslateProc = NULL;
     }
 
     DWORD m_dwMachineType;      //IN
     STACKFRAME64 m_context;     //IN
     HANDLE m_hDstProcess;       //IN
+    HANDLE m_hDstThread;        //IN
     pfnReadDumpMemoryProc64 m_pfnReadMemoryProc;    //IN
     pfnGetModuelBaseFromAddr m_pfnGetModuleBaseProc;//IN
+    pfnStackTranslateAddressProc64 m_pfnStackTranslateProc; //IN
 
     list<STACKFRAME64> m_FrameSet;  //OUT
 };
