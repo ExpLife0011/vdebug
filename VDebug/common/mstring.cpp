@@ -345,6 +345,15 @@ leave:
     return ret;
 }
 
+bool mstring::startwith(const char *start)
+{
+    if (!start || !start[0])
+    {
+        return false;
+    }
+    return (0 == find_in_range(start, 0, lstrlenA(start)));
+}
+
 bool mstring::endwith(const char *tail)
 {
     if (!tail || !tail[0])
@@ -1459,6 +1468,15 @@ mstring ustring::w2a()
         }
     }
     return ret;
+}
+
+bool ustring::startwith(const wchar_t *start)
+{
+    if (!start || !start[0])
+    {
+        return false;
+    }
+    return (0 == find_in_range(start, 0, lstrlenW(start)));
 }
 
 bool ustring::endwith(const wchar_t *tail)

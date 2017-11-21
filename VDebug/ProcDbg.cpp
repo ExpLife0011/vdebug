@@ -400,6 +400,7 @@ DbgCmdResult CProcDbgger::OnCommand(const ustring &wstrCmd, const ustring &wstrC
     }
     else if (wstrCmd == L"db")
     {
+        return OnCmdDb(wstrCmdParam, bShow, pParam);
     }
     else if (wstrCmd == L"dd")
     {
@@ -550,6 +551,79 @@ DbgCmdResult CProcDbgger::OnCmdKv(const ustring &wstrCmdParam, BOOL bShow, const
 
 DbgCmdResult CProcDbgger::OnCmdDb(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam)
 {
+    DWORD64 dwDataSize = 64;
+    DWORD64 dwAddr = 0;
+    ustring wstr(wstrCmdParam);
+    wstr.makelower();
+    wstr.trim();
+    ustring wstrAddr;
+    if (wstr.startwith(L"l"))
+    {
+        size_t pos = wstr.find(L" ");
+        ustring wstrSize = wstr.substr(1, pos - 1);
+        GetNumFromStr(wstrSize.c_str(), dwDataSize);
+        wstrAddr = wstr.c_str() + pos;
+    }
+    else
+    {
+        wstrAddr = wstrCmdParam;
+    }
+    wstrAddr.trim();
+
+    CScriptEngine script;
+    script.SetContext(GetProcDbgger()->GetCurrentContext(), ReadDbgProcMemory, WriteDbgProcMemory);
+    dwAddr = script.Compile(wstrAddr);
+
+    CSyntaxDescHlpr desc;
+    CMemoryOperator mhlpr(GetProcDbgger()->GetDbgProc());
+    for (int i = 0 ; i < dwDataSize ; i += 16)
+    {
+        DWORD dwReadSize = 0;
+        if (dwDataSize < (i + 16))
+        {
+            dwReadSize = ((DWORD)dwDataSize - i);
+        }
+        else
+        {
+            dwReadSize = 16;
+        }
+
+        char szData[32] = {0};
+        DWORD dwRead = 0;
+        mhlpr.MemoryReadSafe(dwAddr, szData, dwReadSize, &dwRead);
+        if (!dwRead)
+        {
+            break;
+        }
+
+        desc.FormatDesc(FormatW(L"%08x  ", dwAddr), COLOUR_MSG);
+        int j = 0;
+        for (j = 0 ; j < 16 ; j++)
+        {
+            if (j < (int)dwRead)
+            {
+                desc.FormatDesc(FormatW(L"%02x ", (BYTE)szData[j]), COLOUR_MSG);
+            }
+            else
+            {
+                desc.FormatDesc(L"   ", COLOUR_MSG);
+            }
+        }
+
+        desc.FormatDesc(L" ", COLOUR_MSG);
+        for (j = 0 ; j < (int)dwRead ; j++)
+        {
+            desc.FormatDesc(FormatW(L"%c", (char)szData[j]), COLOUR_MSG);
+        }
+        desc.NextLine();
+
+        if (dwRead != dwReadSize)
+        {
+            break;
+        }
+        dwAddr += 16;
+    }
+    GetSyntaxView()->AppendSyntaxDesc(desc.GetResult());
     return DbgCmdResult();
 }
 
@@ -588,13 +662,6 @@ DbgCmdResult CProcDbgger::OnCmdDd(const ustring &wstrCmdParam, BOOL bShow, const
         dwAddr += 16;
     }
     GetSyntaxView()->AppendSyntaxDesc(desc.GetResult());
-
-    //CMemoryOperator mhlpr(GetProcDbgger()->GetDbgProc());
-    //ustring wstrData = mhlpr.MemoryReadStrUnicode(dwAddr, MAX_PATH);
-
-    //CSyntaxDescHlpr desc;
-    //desc.FormatDesc(wstrData.c_str(), COLOUR_MSG);
-    //GetSyntaxView()->AppendSyntaxDesc(desc.GetResult());
     return DbgCmdResult(em_dbgstat_succ, L"");
 }
 

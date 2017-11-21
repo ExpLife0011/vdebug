@@ -190,6 +190,7 @@ namespace std
 
         ustring u2w();
 
+        bool startwith(const char *start);
         bool endwith(const char *tail);
 
         mstring &path_append(const char *more);
@@ -373,6 +374,8 @@ namespace std
         mstring w2u();
 
         mstring w2a();
+
+        bool startwith(const wchar_t *start);
 
         bool endwith(const wchar_t *tail);
 

@@ -62,7 +62,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				LinkIncremental="1"
+				LinkIncremental="2"
 				AdditionalLibraryDirectories="capstone"
 				GenerateManifest="false"
 				GenerateDebugInformation="true"
