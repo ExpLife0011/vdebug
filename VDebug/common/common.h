@@ -136,7 +136,7 @@ typedef BOOL (WINAPI* pfnModuleHandlerW)(PMODULEENTRY32W, void*);
 void IterateModulesW(DWORD procId, pfnModuleHandlerW handler, void* lpParam);
 
 void ErrMessage(const wchar_t *format, ...);
-ustring GetStdErrorStr();
+ustring GetStdErrorStr(DWORD dwErr = GetLastError());
 
 ustring GetProcessCommandLine(_In_ DWORD dwPid, BOOL bx64);
 void test();

@@ -111,6 +111,40 @@ public:
         return m_bX64;
     }
 
+    mstring GetPrintStr(const char *szBuffer, int iSize)
+    {
+        mstring strOut;
+        for (int i = 0 ; i < iSize ;)
+        {
+            byte letter = szBuffer[i];
+            //×Ö·û
+            if (letter >= 0x20 && letter <= 0x7e)
+            {
+                strOut += (char)letter;
+                i++;
+                continue;
+            }
+            //ºº×Ö
+            else if (letter >= 0xb0 && letter <= 0xf7)
+            {
+                if (i < iSize)
+                {
+                    byte next = szBuffer[i + 1];
+                    if (next >= 0xa1 && next <= 0xfe)
+                    {
+                        strOut += (char)letter;
+                        strOut += (char)next;
+                        i += 2;
+                        continue;
+                    }
+                }
+            }
+            //²»¿É´òÓ¡
+            strOut += '.';
+            i++;
+        }
+        return strOut;
+    }
 protected:
     BOOL ReadMemory(DWORD64 dwAddr, IN OUT DWORD dwLength, LPSTR pBuffer);
     BOOL WriteMemory(DWORD64 dwAddr, LPCSTR pBuffer, DWORD dwLength);

@@ -611,10 +611,7 @@ DbgCmdResult CProcDbgger::OnCmdDb(const ustring &wstrCmdParam, BOOL bShow, const
         }
 
         desc.FormatDesc(L" ", COLOUR_MSG);
-        for (j = 0 ; j < (int)dwRead ; j++)
-        {
-            desc.FormatDesc(FormatW(L"%c", (char)szData[j]), COLOUR_MSG);
-        }
+        desc.FormatDesc(FormatW(L"%hs", GetPrintStr(szData, dwRead).c_str()), COLOUR_MSG);
         desc.NextLine();
 
         if (dwRead != dwReadSize)

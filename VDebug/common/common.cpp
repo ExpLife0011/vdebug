@@ -52,7 +52,7 @@ void ErrMessage(const wchar_t *format, ...)
     MessageBoxW(0, szText, L"Error", MB_TOPMOST);
 }
 
-ustring GetStdErrorStr()
+ustring GetStdErrorStr(DWORD dwErr)
 {
     LPVOID lpMsgBuf = NULL;
     FormatMessageW(  
@@ -60,7 +60,7 @@ ustring GetStdErrorStr()
         FORMAT_MESSAGE_FROM_SYSTEM |  
         FORMAT_MESSAGE_IGNORE_INSERTS, 
         NULL,
-        GetLastError(),  
+        dwErr,
         MAKELANGID(LANG_NEUTRAL,SUBLANG_DEFAULT), //Default language  
         (LPWSTR)&lpMsgBuf,  
         0,  
