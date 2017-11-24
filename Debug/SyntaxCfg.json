@@ -3,24 +3,78 @@
         "lineNumber": 1,
         "defTextColour": "0,0,255",
         "defBackColour": "null",
-        "viewBackColour": "0,0,0",
-        "curLineColour": "50,50,50"
+        "viewBackColour": "40,40,40",
+        "curLineColour": "60,56,54"
     },
     "SyntaxCfg": {
         "addr": {
-            "textColour": "0,0,255",
+            "textColour": "128,255,255",
             "backColour": "null",
             "bold": 1,
             "italic": 1
         },
-		"error": {
-            "textColour": "255,0,0",
+        "error": {
+            "textColour": "101,132,91",
             "backColour": "null",
             "bold": 1,
             "italic": 1
         },
-		"msg": {
-            "textColour": "0,254,231",
+        "msg": {
+            "textColour": "101,132,91",
+            "backColour": "null",
+            "bold": 0,
+            "italic": 1
+        },
+        "hex": {
+            "textColour": "252,153,60",
+            "backColour": "null",
+            "bold": 0,
+            "italic": 1
+        },
+        "data": {
+            "textColour": "153,153,153",
+            "backColour": "null",
+            "bold": 0,
+            "italic": 1
+        },
+        "btye": {
+            "textColour": "255,128,128",
+            "backColour": "null",
+            "bold": 0,
+            "italic": 1
+        },
+        "inst": {
+            "textColour": "255,165,70",
+            "backColour": "null",
+            "bold": 0,
+            "italic": 1
+        },
+        "call": {
+            "textColour": "101,132,92",
+            "backColour": "null",
+            "bold": 0,
+            "italic": 1
+        },
+        "jmp": {
+            "textColour": "101,132,91",
+            "backColour": "null",
+            "bold": 0,
+            "italic": 1
+        },
+        "proc": {
+            "textColour": "252,205,109",
+            "backColour": "null",
+            "bold": 0,
+            "italic": 1
+        },
+        "module": {
+            "textColour": "252,205,109",
+            "backColour": "null",
+            "bold": 0,
+            "italic": 1
+        },
+        "param": {
+            "textColour": "153,153,153",
             "backColour": "null",
             "bold": 0,
             "italic": 1

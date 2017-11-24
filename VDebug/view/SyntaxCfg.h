@@ -4,10 +4,19 @@
 #include "../global.h"
 
 /*语法高亮配置 开始*/
-#define COLOUR_ADDR             GetSyntaxCfg(L"addr")
-#define COLOUR_REGISTER         GetSyntaxCfg(L"register")
-#define COLOUR_ERROR            GetSyntaxCfg(L"error")
-#define COLOUR_MSG              GetSyntaxCfg(L"msg")
+#define COLOUR_ADDR             GetSyntaxCfg(L"addr")           //地址
+#define COLOUR_REGISTER         GetSyntaxCfg(L"register")       //寄存器
+#define COLOUR_ERROR            GetSyntaxCfg(L"error")          //错误
+#define COLOUR_MSG              GetSyntaxCfg(L"msg")            //普通信息
+#define COLOUR_HEX              GetSyntaxCfg(L"hex")            //哈希值
+#define COLOUR_DATA             GetSyntaxCfg(L"data")           //数据
+#define COLOUR_BYTE             GetSyntaxCfg(L"btye")           //字节码
+#define COLOUR_INST             GetSyntaxCfg(L"inst")           //指令集
+#define COLOUR_CALL             GetSyntaxCfg(L"call")           //call
+#define COLOUR_JMP              GetSyntaxCfg(L"jmp")            //jmp
+#define COLOUR_PROC             GetSyntaxCfg(L"proc")           //函数名
+#define COLOUR_MODULE           GetSyntaxCfg(L"module")         //模块名
+#define COLOUR_PARAM            GetSyntaxCfg(L"param")          //参数
 /*语法高亮配置 结束*/
 
 struct SyntaxColourDesc

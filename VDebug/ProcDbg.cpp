@@ -326,16 +326,14 @@ bool CProcDbgger::LoadModuleInfo(HANDLE hFile, DWORD64 dwBaseOfModule)
     GetSymbolHlpr()->SendTask(&task);
     //两个结构完全一样，考虑到和dump可能有区别分别命名
     m_vModuleInfo[dwBaseOfModule] = loadInfo.m_ModuleInfo;
-
     CSyntaxDescHlpr hlpr;
     WCHAR wszStart[64] = {0};
     WCHAR wszEnd[64] = {0};
     _i64tow_s(loadInfo.m_ModuleInfo.m_dwBaseOfImage, wszStart, 64, 16);
     _i64tow_s(loadInfo.m_ModuleInfo.m_dwEndAddr, wszEnd, 16, 16);
-    hlpr.FormatDesc(
-        FormatW(L"模块加载 0x%08ls 0x%08ls  %ls", wszStart, wszEnd, loadInfo.m_ModuleInfo.m_wstrDllName.c_str()).c_str(),
-        COLOUR_MSG
-        );
+    hlpr.FormatDesc(L"模块加载 ", COLOUR_MSG);
+    hlpr.FormatDesc(FormatW(L"0x%08ls 0x%08ls  ", wszStart, wszEnd), COLOUR_ADDR);
+    hlpr.FormatDesc(loadInfo.m_ModuleInfo.m_wstrDllName, COLOUR_MODULE);
     GetSyntaxView()->AppendSyntaxDesc(hlpr.GetResult());
     return true;
 }
@@ -472,10 +470,10 @@ DbgCmdResult CProcDbgger::OnCmdDisass(const ustring &wstrCmdParam, BOOL bShow, c
         CSyntaxDescHlpr hlpr;
         for (vector<DisasmInfo>::const_iterator it = vDisasmSet.begin() ; it != vDisasmSet.end() ; it++)
         {
-            hlpr.FormatDesc(it->m_wstrAddr, COLOUR_MSG, 10);
-            hlpr.FormatDesc(it->m_wstrByteCode, COLOUR_MSG, 18);
-            hlpr.FormatDesc(it->m_wstrOpt, COLOUR_MSG, 8);
-            hlpr.FormatDesc(it->m_wstrContent, COLOUR_MSG);
+            hlpr.FormatDesc(it->m_wstrAddr, COLOUR_ADDR, 10);
+            hlpr.FormatDesc(it->m_wstrByteCode, COLOUR_BYTE, 18);
+            hlpr.FormatDesc(it->m_wstrOpt, COLOUR_INST, 8);
+            hlpr.FormatDesc(it->m_wstrContent, COLOUR_INST);
             hlpr.NextLine();
         }
         GetSyntaxView()->AppendSyntaxDesc(hlpr.GetResult());
@@ -536,13 +534,13 @@ DbgCmdResult CProcDbgger::OnCmdKv(const ustring &wstrCmdParam, BOOL bShow, const
     hlpr.NextLine();
     for (list<STACKFRAME64>::const_iterator it = vStack.begin() ; it != vStack.end() ; it++)
     {
-        hlpr.FormatDesc(FormatW(L"%08x ", (DWORD)it->AddrReturn.Offset), COLOUR_MSG);
+        hlpr.FormatDesc(FormatW(L"%08x ", (DWORD)it->AddrReturn.Offset), COLOUR_ADDR);
         for (int j = 0 ; j < 4 ; j++)
         {
-            hlpr.FormatDesc(FormatW(L"%08x ", (DWORD)it->Params[j]), COLOUR_MSG);
+            hlpr.FormatDesc(FormatW(L"%08x ", (DWORD)it->Params[j]), COLOUR_PARAM);
         }
 
-        hlpr.FormatDesc(FormatW(L"%ls", GetProcDbgger()->GetSymFromAddr(it->AddrPC.Offset).c_str()), COLOUR_MSG);
+        hlpr.FormatDesc(FormatW(L"%ls", GetProcDbgger()->GetSymFromAddr(it->AddrPC.Offset).c_str()), COLOUR_PROC);
         hlpr.NextLine();
     }
     GetSyntaxView()->AppendSyntaxDesc(hlpr.GetResult());
@@ -602,7 +600,7 @@ DbgCmdResult CProcDbgger::OnCmdDb(const ustring &wstrCmdParam, BOOL bShow, const
         {
             if (j < (int)dwRead)
             {
-                desc.FormatDesc(FormatW(L"%02x ", (BYTE)szData[j]), COLOUR_MSG);
+                desc.FormatDesc(FormatW(L"%02x ", (BYTE)szData[j]), COLOUR_HEX);
             }
             else
             {
@@ -611,7 +609,7 @@ DbgCmdResult CProcDbgger::OnCmdDb(const ustring &wstrCmdParam, BOOL bShow, const
         }
 
         desc.FormatDesc(L" ", COLOUR_MSG);
-        desc.FormatDesc(FormatW(L"%hs", GetPrintStr(szData, dwRead).c_str()), COLOUR_MSG);
+        desc.FormatDesc(FormatW(L"%hs", GetPrintStr(szData, dwRead).c_str()), COLOUR_DATA);
         desc.NextLine();
 
         if (dwRead != dwReadSize)
@@ -650,10 +648,10 @@ DbgCmdResult CProcDbgger::OnCmdDd(const ustring &wstrCmdParam, BOOL bShow, const
         {
             break;
         }
-        desc.FormatDesc(FormatW(L"%08x  ", dwAddr), COLOUR_MSG);
+        desc.FormatDesc(FormatW(L"%08x  ", dwAddr), COLOUR_ADDR);
         for (int j = 0 ; j < (int)dwReadSize / 4 ; j += 1)
         {
-            desc.FormatDesc(FormatW(L"%08x ", *((DWORD *)szData + j)), COLOUR_MSG);
+            desc.FormatDesc(FormatW(L"%08x ", *((DWORD *)szData + j)), COLOUR_DATA);
         }
         desc.NextLine();
         dwAddr += 16;
@@ -677,7 +675,7 @@ DbgCmdResult CProcDbgger::OnCmdDu(const ustring &wstrCmdParam, BOOL bShow, const
     ustring wstrData = mhlpr.MemoryReadStrUnicode(dwAddr, MAX_PATH);
 
     CSyntaxDescHlpr desc;
-    desc.FormatDesc(wstrData.c_str(), COLOUR_MSG);
+    desc.FormatDesc(wstrData.c_str(), COLOUR_DATA);
     GetSyntaxView()->AppendSyntaxDesc(desc.GetResult());
     return DbgCmdResult(em_dbgstat_succ, L"");
 }

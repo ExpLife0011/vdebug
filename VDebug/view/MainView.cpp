@@ -125,7 +125,7 @@ static VOID _LoadDebugFile()
 static VOID _LoadDefaultFont()
 {
     LOGFONTW ft = {0};
-    ft.lfHeight = 14;
+    ft.lfHeight = 13;
     ft.lfWidth = 0;
     ft.lfEscapement = 0;
     ft.lfWeight = 0;
@@ -310,6 +310,7 @@ static VOID _OnInitDialog(HWND hwnd, WPARAM wp, LPARAM lp)
     SetCmdNotify(em_dbg_status_init, L"³õÊ¼×´Ì¬");
     gs_pfnCommandProc = (PWIN_PROC)SetWindowLong(gs_hCommand, GWL_WNDPROC, (long)_CommandProc);
     gs_pCmdQueue = new CCmdQueue();
+    SetTimer(hwnd, TIMER_CFG_CHECK, 3000, NULL);
 }
 
 static VOID _OnCommand(HWND hwnd, WPARAM wp, LPARAM lp)
@@ -475,11 +476,11 @@ static void _DisableCtrls()
 static void _EnableCtrls()
 {
     HMENU hMenu = GetMenu(gs_hMainView);
-    //EnableMenuItem(hMenu, IDC_CMD_OPEN, MF_ENABLED);
+    EnableMenuItem(hMenu, IDC_CMD_OPEN, MF_ENABLED);
     EnableMenuItem(hMenu, IDC_CMD_ATTACH, MF_ENABLED);
     EnableMenuItem(hMenu, IDC_CMD_OPEN_DUMP, MF_ENABLED);
 
-    //SendMessageW(gs_hToolbar, TB_ENABLEBUTTON, IDT_OPEN_APP, TRUE);
+    SendMessageW(gs_hToolbar, TB_ENABLEBUTTON, IDT_OPEN_APP, TRUE);
     SendMessageW(gs_hToolbar, TB_ENABLEBUTTON, IDT_ATTACH_PROC, TRUE);
     SendMessageW(gs_hToolbar, TB_ENABLEBUTTON, IDT_OPEN_DUMP, TRUE);
 }

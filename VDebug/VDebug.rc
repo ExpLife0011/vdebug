@@ -130,7 +130,7 @@ IDI_MAIN                ICON                    "res\\main.ico"
 // Bitmap
 //
 
-IDB_TOOLBAR             BITMAP                  "res\\toolbar1.bmp"
+IDB_TOOLBAR             BITMAP                  "res\\toolbar.bmp"
 
 /////////////////////////////////////////////////////////////////////////////
 //
