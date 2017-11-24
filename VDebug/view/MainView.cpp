@@ -161,7 +161,7 @@ static VOID _CreateToolBar()
     {
         {0, 0, TBSTATE_ENABLED, TBSTYLE_SEP},
 
-        {1, IDT_OPEN_APP, TBSTATE_ENABLED, TBSTYLE_BUTTON, {0, 0}, 0, (INT_PTR)(L"调试程序")},
+        {0, IDT_OPEN_APP, TBSTATE_ENABLED, TBSTYLE_BUTTON, {0, 0}, 0, (INT_PTR)(L"调试程序")},
         {2, IDT_FIND_WND, TBSTATE_ENABLED, TBSTYLE_BUTTON, {0, 0}, 0, (INT_PTR)(L"查找窗口")},
         {3, IDT_FIND_DATA, TBSTATE_ENABLED, TBSTYLE_BUTTON, {0, 0}, 0, (INT_PTR)(L"查找数据")},
         {4, IDT_SAVE_DATA, TBSTATE_ENABLED, TBSTYLE_BUTTON, {0, 0}, 0, (INT_PTR)(L"保存数据")},
@@ -181,46 +181,26 @@ static VOID _CreateToolBar()
     };
 
     HIMAGELIST image = NULL;
-    HBITMAP hBitmapHot = NULL;
-    HBITMAP disable = NULL;
-    do 
-    {
-        image = ImageList_Create(16, 15, ILC_COLOR32 | ILC_MASK, 2, 2);
-        if (!image)
-        {
-            break;
-        }
-        hBitmapHot = LoadBitmap(g_hInstance, MAKEINTRESOURCE(IDB_TOOLBAR));
-        if(!hBitmapHot)
-        {
-            break;
-        }
-        gs_hToolbar = CreateWindowExW(
-            0,
-            TOOLBARCLASSNAMEW,
-            NULL,
-            WS_CHILD | TBSTYLE_FLAT | WS_BORDER | CCS_NOMOVEY | CCS_ADJUSTABLE | TBSTYLE_TOOLTIPS | TBSTYLE_ALTDRAG,
-            0,
-            0,
-            0,
-            0,
-            gs_hMainView,
-            NULL,
-            g_hInstance,
-            NULL
-            ); 
-        ImageList_AddMasked(image, hBitmapHot, 0xc0c0c0);
-        SendMessageW(gs_hToolbar, TB_SETIMAGELIST, 0, (LPARAM)image);
-        SendMessageW(gs_hToolbar, TB_BUTTONSTRUCTSIZE, (WPARAM) sizeof(TBBUTTON), 0);
-        SendMessageW(gs_hToolbar, TB_ADDBUTTONS, (WPARAM)(sizeof(tbb) / sizeof(TBBUTTON)), (LPARAM)(LPTBBUTTON)&tbb);
-        SendMessageW(gs_hToolbar, TB_SETMAXTEXTROWS, (WPARAM) 0, 0);;
-        ShowWindow(gs_hToolbar, SW_SHOW);
-    } while (FALSE);
+    image = ImageList_LoadImageW(g_hInstance, MAKEINTRESOURCEW(IDB_TOOLBAR), 16, 15, 0xFF000000, 0, 0);
+    gs_hToolbar = CreateWindowExW(
+        0,
+        TOOLBARCLASSNAMEW,
+        NULL,
+        WS_CHILD | TBSTYLE_FLAT | WS_BORDER | CCS_NOMOVEY | CCS_ADJUSTABLE | TBSTYLE_TOOLTIPS | TBSTYLE_ALTDRAG,
+        0,
+        0,
+        0,
+        0,
+        gs_hMainView,
+        NULL,
+        g_hInstance,
+        NULL
+        ); 
 
-    if(hBitmapHot)
-    {
-        DeleteObject(hBitmapHot);
-    }
+    SendMessageW(gs_hToolbar, TB_SETIMAGELIST, 0, (LPARAM)image);
+    SendMessageW(gs_hToolbar, TB_ADDBUTTONSW, (WPARAM)(sizeof(tbb) / sizeof(TBBUTTON)), (LPARAM)(LPTBBUTTON)&tbb);
+    SendMessageW(gs_hToolbar, TB_SETMAXTEXTROWS, (WPARAM) 0, 0);;
+    ShowWindow(gs_hToolbar, SW_SHOW);
 }
 
 //调整控件位置
@@ -297,15 +277,12 @@ static VOID _OnInitDialog(HWND hwnd, WPARAM wp, LPARAM lp)
 
     _LoadDefaultFont();
     gs_pSyntaxView->CreateSynbaxView(hwnd, rtClient.right - rtClient.left, rtClient.bottom - rtClient.top - 60);
-
     _MoveMainWndCtrl();
 
     GetModuleFileNameW(NULL, gs_wstrCfgFile.alloc(MAX_PATH), MAX_PATH);
     gs_wstrCfgFile.setbuffer();
     gs_wstrCfgFile.path_append(L"..\\SyntaxCfg.json");
-
     gs_pSyntaxView->ReloadSynbaxCfg(gs_wstrCfgFile.c_str());
-
     _LoadDebugFile();
 
     CTL_PARAMS vCtrls[] =
@@ -330,10 +307,8 @@ static VOID _OnInitDialog(HWND hwnd, WPARAM wp, LPARAM lp)
     desc.AddEmptyLine();
 
     gs_pSyntaxView->AppendSyntaxDesc(desc.GetResult());
-
     SetCmdNotify(em_dbg_status_init, L"初始状态");
     gs_pfnCommandProc = (PWIN_PROC)SetWindowLong(gs_hCommand, GWL_WNDPROC, (long)_CommandProc);
-
     gs_pCmdQueue = new CCmdQueue();
 }
 
@@ -500,11 +475,11 @@ static void _DisableCtrls()
 static void _EnableCtrls()
 {
     HMENU hMenu = GetMenu(gs_hMainView);
-    EnableMenuItem(hMenu, IDC_CMD_OPEN, MF_ENABLED);
+    //EnableMenuItem(hMenu, IDC_CMD_OPEN, MF_ENABLED);
     EnableMenuItem(hMenu, IDC_CMD_ATTACH, MF_ENABLED);
     EnableMenuItem(hMenu, IDC_CMD_OPEN_DUMP, MF_ENABLED);
 
-    SendMessageW(gs_hToolbar, TB_ENABLEBUTTON, IDT_OPEN_APP, TRUE);
+    //SendMessageW(gs_hToolbar, TB_ENABLEBUTTON, IDT_OPEN_APP, TRUE);
     SendMessageW(gs_hToolbar, TB_ENABLEBUTTON, IDT_ATTACH_PROC, TRUE);
     SendMessageW(gs_hToolbar, TB_ENABLEBUTTON, IDT_OPEN_DUMP, TRUE);
 }

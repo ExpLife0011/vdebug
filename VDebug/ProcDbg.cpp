@@ -596,7 +596,7 @@ DbgCmdResult CProcDbgger::OnCmdDb(const ustring &wstrCmdParam, BOOL bShow, const
             break;
         }
 
-        desc.FormatDesc(FormatW(L"%08x  ", dwAddr), COLOUR_MSG);
+        desc.FormatDesc(FormatW(L"%08x  ", dwAddr), COLOUR_ADDR);
         int j = 0;
         for (j = 0 ; j < 16 ; j++)
         {

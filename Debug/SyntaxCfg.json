@@ -22,7 +22,7 @@
 		"msg": {
             "textColour": "0,254,231",
             "backColour": "null",
-            "bold": 1,
+            "bold": 0,
             "italic": 1
         }
     }
