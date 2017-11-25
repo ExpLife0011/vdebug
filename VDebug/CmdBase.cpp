@@ -1,5 +1,6 @@
 #include <Windows.h>
 #include <Shlwapi.h>
+#include <set>
 #include "CmdBase.h"
 
 CCmdBase::CCmdBase()
@@ -70,10 +71,133 @@ DWORD64 CCmdBase::GetFunAddr(const ustring &wstr)
     return (it->second.m_dwProcAddr + dwOffset);
 }
 
+//0x12abcd
+//0n115446
+//323ffabc
+bool CCmdBase::IsNumber(const ustring &wstr) const
+{
+    if (wstr.empty())
+    {
+        return false;
+    }
+
+    ustring wstrLower(wstr);
+    wstrLower.makelower();
+    bool b16 = true;
+    size_t i = 0;
+    if (wstrLower.startwith(L"0n"))
+    {
+        b16 = false;
+    }
+
+    if (wstrLower.startwith(L"0n") || wstrLower.startwith(L"0x"))
+    {
+        i += 2;
+    }
+
+    bool bResult = false;
+    for (; i < wstrLower.size() ; i++)
+    {
+        if (b16)
+        {
+            if (!((wstrLower[i] >= '0' && wstrLower[i] <= '9') || (wstrLower[i] >= 'a' && wstrLower[i] <= 'f')))
+            {
+                return false;
+            }
+        }
+        else
+        {
+            if (!(wstrLower[i] >= '0' && wstrLower[i] <= '9'))
+            {
+                return false;
+            }
+        }
+        bResult = true;
+    }
+    return bResult;
+}
+
+bool CCmdBase::IsKeyword(const ustring &wstr) const
+{
+    static set<ustring> *s_ptr = NULL;
+    if (!s_ptr)
+    {
+        s_ptr = new set<ustring>();
+        s_ptr->insert(L"ptr");
+        s_ptr->insert(L"word"), s_ptr->insert(L"byte");
+        s_ptr->insert(L"dword"), s_ptr->insert(L"qword");
+    }
+    ustring wstrLow(wstr);
+    wstrLow.makelower();
+    return (s_ptr->end() != s_ptr->find(wstrLow));
+}
+
+vector<WordNode> CCmdBase::GetWordSet(const ustring &wstrStr) const
+{
+    static set<ustring> *s_ptr = NULL;
+    if (!s_ptr)
+    {
+        s_ptr = new set<ustring>();
+        s_ptr->insert(L" "), s_ptr->insert(L",");
+        s_ptr->insert(L"("), s_ptr->insert(L")");
+        s_ptr->insert(L"["), s_ptr->insert(L"]");
+        s_ptr->insert(L"{"), s_ptr->insert(L"}");
+        s_ptr->insert(L"*"), s_ptr->insert(L"+");
+        s_ptr->insert(L"-");
+    }
+
+    vector<WordNode> vResult;
+    size_t iLastPos = 0;
+    WordNode node;
+    for (size_t i = 0 ; i < wstrStr.size() ;)
+    {
+        while (i < wstrStr.size() && (s_ptr->end() != s_ptr->find(wstrStr[i])))
+        {
+            i++;
+            continue;
+        }
+
+        if (i == wstrStr.size())
+        {
+            break;
+        }
+
+        if (i > iLastPos)
+        {
+            node.m_iStartPos = iLastPos;
+            node.m_iLength = (i - iLastPos);
+            node.m_wstrContent = wstrStr.substr(iLastPos, i - iLastPos);
+            vResult.push_back(node);
+        }
+
+        iLastPos = i;
+        size_t j = i + 1;
+        while (j < wstrStr.size() && (s_ptr->end() == s_ptr->find(wstrStr[j])))
+        {
+            j++;
+        }
+        node.m_iStartPos = iLastPos;
+        node.m_iLength = (j - iLastPos);
+        node.m_wstrContent = wstrStr.substr(iLastPos, j - iLastPos);
+        vResult.push_back(node);
+        i = j;
+        iLastPos = j;
+    }
+
+    if (wstrStr.size() > iLastPos)
+    {
+        node.m_iStartPos = iLastPos;
+        node.m_iLength = wstrStr.size() - iLastPos;
+        node.m_wstrContent = wstrStr.substr(iLastPos, node.m_iLength);
+        vResult.push_back(node);
+    }
+    return vResult;
+}
+
 //0x43fdad12
 //0n12232433
 //5454546455
-BOOL CCmdBase::GetNumFromStr(const ustring &wstrNumber, DWORD64 &dwResult)
+BOOL CCmdBase::GetNumFromStr(const ustring &wstrNumber, DWORD64 &dwResult) const
 {
     return StrToInt64ExW(wstrNumber.c_str(), STIF_SUPPORT_HEX, (LONGLONG *)&dwResult);
 }

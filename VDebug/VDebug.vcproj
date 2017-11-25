@@ -189,6 +189,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\DbgBase.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\Debugger.cpp"
 				>
 			</File>

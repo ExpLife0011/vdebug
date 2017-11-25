@@ -7,6 +7,7 @@
 #include "CmdBase.h"
 #include "DbgProxy.h"
 #include "TitanEngine/TitanEngine.h"
+#include "SyntaxDescHlpr.h"
 
 using namespace std;
 
@@ -142,10 +143,14 @@ protected:
 
     //调试器对应的命令
 protected:
+    void GetDisassContentDesc(const ustring &wstrContent, CSyntaxDescHlpr &hlpr) const; //汇编指令着色
     virtual DbgCmdResult OnCommand(const ustring &wstrCmd, const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
     DbgCmdResult OnCmdBp(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
     DbgCmdResult OnCmdDisass(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
+    DbgCmdResult OnCmdUb(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
+    DbgCmdResult OnCmdUf(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
     DbgCmdResult OnCmdGo(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
+    DbgCmdResult OnCmdGu(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
     DbgCmdResult OnCmdKv(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
     DbgCmdResult OnCmdDb(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
     DbgCmdResult OnCmdDd(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);

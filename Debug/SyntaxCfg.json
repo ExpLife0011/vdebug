@@ -14,12 +14,18 @@
             "italic": 1
         },
         "error": {
-            "textColour": "101,132,91",
+            "textColour": "252,205,109",
             "backColour": "null",
             "bold": 1,
             "italic": 1
         },
         "msg": {
+            "textColour": "252,205,109",
+            "backColour": "null",
+            "bold": 0,
+            "italic": 1
+        },
+		 "msg2": {
             "textColour": "101,132,91",
             "backColour": "null",
             "bold": 0,
@@ -43,7 +49,13 @@
             "bold": 0,
             "italic": 1
         },
-        "inst": {
+		"inst": {
+            "textColour": "255,165,70",
+            "backColour": "null",
+            "bold": 0,
+            "italic": 1
+        },
+        "inst2": {
             "textColour": "255,165,70",
             "backColour": "null",
             "bold": 0,
@@ -75,6 +87,25 @@
         },
         "param": {
             "textColour": "153,153,153",
+            "backColour": "null",
+            "bold": 0,
+            "italic": 1
+        },
+        "num": {
+            "textColour": "255,255,128",
+            "backColour": "null",
+            "bold": 0,
+            "italic": 1
+        }
+		,
+        "keyword": {
+            "textColour": "128,128,192",
+            "backColour": "null",
+            "bold": 0,
+            "italic": 1
+        },
+        "register": {
+            "textColour": "128,222,84",
             "backColour": "null",
             "bold": 0,
             "italic": 1

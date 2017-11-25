@@ -1,6 +1,7 @@
 #ifndef CMDBASE_VDEBUG_H_H_
 #define CMDBASE_VDEBUG_H_H_
 #include <Windows.h>
+#include <vector>
 #include <map>
 #include "mstring.h"
 
@@ -56,6 +57,13 @@ struct DbgFunInfo
     DWORD64 m_dwProcAddr;
 };
 
+struct WordNode
+{
+    size_t m_iStartPos;
+    size_t m_iLength;
+    ustring m_wstrContent;
+};
+
 class CCmdBase
 {
 public:
@@ -67,8 +75,11 @@ public:
     DWORD64 GetFunAddr(const ustring &wstr);
 
     //Tools
-protected:
-    static BOOL GetNumFromStr(const ustring &wstrNumber, DWORD64 &dwNumber);
+public:
+    bool IsNumber(const ustring &wstr) const;
+    bool IsKeyword(const ustring &wstr) const;
+    vector<WordNode> GetWordSet(const ustring &wstrStr) const;
+    BOOL GetNumFromStr(const ustring &wstrNumber, DWORD64 &dwNumber) const;
 
 protected:
     virtual DbgCmdResult OnCommand(const ustring &wstrCmd, const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);

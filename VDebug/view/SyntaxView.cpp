@@ -149,6 +149,12 @@ void CSynbaxView::SetVscrollPos(DWORD dwPos)
 void CSynbaxView::OnAppendDesc(HWND hwnd, WPARAM wp, LPARAM lp)
 {
     SyntaxDesc *ptr = (SyntaxDesc *)wp;
+
+    if (m_vSyntaxRules.size() != m_vShowInfo.size())
+    {
+        ErrMessage(L"数据数量错误");
+        return;
+    }
     m_vSyntaxRules.insert(m_vSyntaxRules.end(), ptr->m_vSyntaxDesc.begin(), ptr->m_vSyntaxDesc.end());
     m_vShowInfo.insert(m_vShowInfo.end(), ptr->m_vShowInfo.begin(), ptr->m_vShowInfo.end());
     ReCalParam();

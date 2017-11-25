@@ -261,7 +261,7 @@ static VOID _OnInitDialog(HWND hwnd, WPARAM wp, LPARAM lp)
     SendMessageW(hwnd, WM_SETICON, (WPARAM)ICON_BIG, (LPARAM)LoadIconW(g_hInstance, MAKEINTRESOURCEW(IDI_MAIN)));
     SendMessageW(hwnd, WM_SETICON, (WPARAM)ICON_SMALL, (LPARAM)LoadIconW(g_hInstance, MAKEINTRESOURCEW(IDI_MAIN)));
     CentreWindow(hwnd);
-    SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+    //SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
 
     gs_hMainView = hwnd;
     gs_hStatEdit = GetDlgItem(hwnd, IDC_EDT_STATUS);
@@ -395,9 +395,9 @@ static VOID _OnExecCommand(HWND hwnd, WPARAM wp, LPARAM lp)
     }
     else
     {
-        hlpr.FormatDesc(ustring().format(L"%ls 执行完成", wstr.c_str()).c_str(), COLOUR_MSG);
-        hlpr.AddEmptyLine();
-        gs_pSyntaxView->AppendSyntaxDesc(hlpr.GetResult());
+        //hlpr.FormatDesc(ustring().format(L"%ls 执行完成", wstr.c_str()).c_str(), COLOUR_MSG);
+        //hlpr.AddEmptyLine();
+        //gs_pSyntaxView->AppendSyntaxDesc(hlpr.GetResult());
     }
     SetWindowTextW(gs_hCommand, L"");
 }

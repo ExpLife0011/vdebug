@@ -2,6 +2,7 @@
 #define DBGBASE_VDEBUG_H_H_
 #include <Windows.h>
 #include <DbgHelp.h>
+#include <map>
 #include <list>
 #include "TitanEngine/TitanEngine.h"
 #include "mstring.h"
@@ -111,6 +112,8 @@ public:
         return m_bX64;
     }
 
+    //ÊÇ·ñÊÇ¼Ä´æÆ÷
+    bool IsRegister(const ustring &wstr) const;
     mstring GetPrintStr(const char *szBuffer, int iSize)
     {
         mstring strOut;
