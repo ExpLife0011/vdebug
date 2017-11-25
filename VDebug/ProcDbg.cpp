@@ -194,7 +194,7 @@ HANDLE CProcDbgger::GetCurrentThread()
     return NULL;
 }
 
-DbgModuleInfo CProcDbgger::GetModuleFromAddr(DWORD64 dwAddr)
+DbgModuleInfo CProcDbgger::GetModuleFromAddr(DWORD64 dwAddr) const
 {
     for (map<DWORD64, DbgModuleInfo>::const_iterator it = m_vModuleInfo.begin() ; it != m_vModuleInfo.end() ; it++)
     {
@@ -207,7 +207,7 @@ DbgModuleInfo CProcDbgger::GetModuleFromAddr(DWORD64 dwAddr)
     return DbgModuleInfo();
 }
 
-ustring CProcDbgger::GetSymFromAddr(DWORD64 dwAddr)
+ustring CProcDbgger::GetSymFromAddr(DWORD64 dwAddr) const
 {
     CTaskSymbolFromAddr task;
     task.m_dwAddr = dwAddr;
@@ -233,7 +233,7 @@ ustring CProcDbgger::GetSymFromAddr(DWORD64 dwAddr)
     return FormatW(L"%ls!%ls", wstr.c_str(), task.m_wstrSymbol.c_str());
 }
 
-HANDLE CProcDbgger::GetDbgProc()
+HANDLE CProcDbgger::GetDbgProc() const
 {
     return m_vDbgProcInfo.m_hProcess;
 }
@@ -389,6 +389,10 @@ DbgCmdResult CProcDbgger::OnCommand(const ustring &wstrCmd, const ustring &wstrC
     {
         return OnCmdBp(wstrCmdParam, bShow, pParam);
     }
+    else if (wstrCmd == L"cls")
+    {
+        return OnCmdClear(wstrCmdParam, bShow, pParam);
+    }
     else if (wstrCmd == L"u")
     {
         return OnCmdDisass(wstrCmdParam, bShow, pParam);
@@ -493,29 +497,18 @@ void CProcDbgger::GetDisassContentDesc(const ustring &wstrContent, CSyntaxDescHl
     }
 }
 
-DbgCmdResult CProcDbgger::OnCmdDisass(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam)
+bool CProcDbgger::DisassWithSize(DWORD64 dwAddr, DWORD64 dwSize) const
 {
-    ustring wstr(wstrCmdParam);
-    wstr.makelower();
-
-    DWORD64 dwAddr = 0;
-    if (GetNumFromStr(wstr, dwAddr))
-    {
-    }
-    else
-    {
-        dwAddr = GetFunAddr(wstr);
-    }
-
-    if (!dwAddr)
-    {
-        return DbgCmdResult();
-    }
     CDisasmParser Disasm(GetDbgProc());
     vector<DisasmInfo> vDisasmSet;
-    if (Disasm.Disasm(dwAddr, 1024, vDisasmSet))
+    CSyntaxDescHlpr hlpr;
+    ustring wstr = GetSymFromAddr(dwAddr);
+    wstr += L":";
+    hlpr.NextLine();
+    hlpr.FormatDesc(wstr, COLOUR_PROC);
+    hlpr.NextLine();
+    if (Disasm.DisasmWithSize(dwAddr, (DWORD)dwSize, vDisasmSet))
     {
-        CSyntaxDescHlpr hlpr;
         for (vector<DisasmInfo>::const_iterator it = vDisasmSet.begin() ; it != vDisasmSet.end() ; it++)
         {
             hlpr.FormatDesc(it->m_wstrAddr, COLOUR_ADDR, 10);
@@ -525,18 +518,186 @@ DbgCmdResult CProcDbgger::OnCmdDisass(const ustring &wstrCmdParam, BOOL bShow, c
             hlpr.NextLine();
         }
         GetSyntaxView()->AppendSyntaxDesc(hlpr.GetResult());
+        return true;
     }
+    return false;
+}
+
+bool CProcDbgger::DisassWithAddr(DWORD64 dwStartAddr, DWORD64 dwEndAddr) const
+{
+    if (dwEndAddr <= dwStartAddr)
+    {
+        return false;
+    }
+
+    DWORD64 dwSize = (dwEndAddr - dwStartAddr + 16);
+    CDisasmParser Disasm(GetDbgProc());
+    vector<DisasmInfo> vDisasmSet;
+    CSyntaxDescHlpr hlpr;
+    ustring wstr = GetSymFromAddr(dwStartAddr);
+    wstr += L":";
+    hlpr.NextLine();
+    hlpr.FormatDesc(wstr, COLOUR_PROC);
+    hlpr.NextLine();
+    if (Disasm.DisasmWithSize(dwStartAddr, (DWORD)dwSize, vDisasmSet))
+    {
+        for (vector<DisasmInfo>::const_iterator it = vDisasmSet.begin() ; it != vDisasmSet.end() ; it++)
+        {
+            if (it->m_dwAddr > dwEndAddr)
+            {
+                break;
+            }
+            hlpr.FormatDesc(it->m_wstrAddr, COLOUR_ADDR, 10);
+            hlpr.FormatDesc(it->m_wstrByteCode, COLOUR_BYTE, 18);
+            hlpr.FormatDesc(it->m_wstrOpt, COLOUR_INST, 8);
+            GetDisassContentDesc(it->m_wstrContent, hlpr);
+            hlpr.NextLine();
+        }
+        GetSyntaxView()->AppendSyntaxDesc(hlpr.GetResult());
+        return true;
+    }
+    return false;
+}
+
+bool CProcDbgger::DisassUntilRet(DWORD64 dwStartAddr) const
+{
+    CDisasmParser Disasm(GetDbgProc());
+    vector<DisasmInfo> vDisasmSet;
+    CSyntaxDescHlpr hlpr;
+    ustring wstr = GetSymFromAddr(dwStartAddr);
+    wstr += L":";
+    hlpr.NextLine();
+    hlpr.FormatDesc(wstr, COLOUR_PROC);
+    hlpr.NextLine();
+    if (Disasm.DisasmUntilReturn(dwStartAddr, vDisasmSet))
+    {
+        for (vector<DisasmInfo>::const_iterator it = vDisasmSet.begin() ; it != vDisasmSet.end() ; it++)
+        {
+            hlpr.FormatDesc(it->m_wstrAddr, COLOUR_ADDR, 10);
+            hlpr.FormatDesc(it->m_wstrByteCode, COLOUR_BYTE, 18);
+            hlpr.FormatDesc(it->m_wstrOpt, COLOUR_INST, 8);
+            GetDisassContentDesc(it->m_wstrContent, hlpr);
+            hlpr.NextLine();
+        }
+        GetSyntaxView()->AppendSyntaxDesc(hlpr.GetResult());
+        return true;
+    }
+    return false;
+}
+
+DbgCmdResult CProcDbgger::OnCmdDisass(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam)
+{
+    ustring wstr(wstrCmdParam);
+    wstr.makelower();
+    wstr.trim();
+
+    DWORD64 dwDisasmSize = 0;
+    ustring wstrAddr;
+
+    dwDisasmSize = GetSizeAndParam(wstr, wstrAddr);
+    if (!dwDisasmSize)
+    {
+        return DbgCmdResult(em_dbgstat_syntaxerr);
+    }
+
+    if (-1 == dwDisasmSize)
+    {
+        dwDisasmSize = ms_dwDefDisasmSize;
+    }
+
+    DWORD64 dwAddr = 0;
+    if (GetNumFromStr(wstrAddr, dwAddr))
+    {
+    }
+    else
+    {
+        dwAddr = GetFunAddr(wstrAddr);
+    }
+
+    if (!dwAddr)
+    {
+        return DbgCmdResult(em_dbgstat_faild, L"");
+    }
+    DisassWithSize(dwAddr, dwDisasmSize);
+    return DbgCmdResult(em_dbgstat_succ, L"");
+}
+
+DbgCmdResult CProcDbgger::OnCmdClear(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam)
+{
+    GetSyntaxView()->ClearView();
     return DbgCmdResult(em_dbgstat_succ, L"");
 }
 
 DbgCmdResult CProcDbgger::OnCmdUb(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam)
 {
-    return DbgCmdResult();
+    ustring wstr(wstrCmdParam);
+    wstr.makelower();
+    wstr.trim();
+
+    DWORD64 dwDisasmSize = ms_dwDefDisasmSize;
+    ustring wstrAddr;
+
+    dwDisasmSize = GetSizeAndParam(wstr, wstrAddr);
+    if (!dwDisasmSize)
+    {
+        return DbgCmdResult(em_dbgstat_faild, L"");
+    }
+
+    if (-1 == dwDisasmSize)
+    {
+        dwDisasmSize = ms_dwDefDisasmSize;
+    }
+
+    DWORD64 dwAddr = 0;
+    if (!GetNumFromStr(wstrAddr, dwAddr))
+    {
+        dwAddr = GetFunAddr(wstrAddr);
+    }
+
+    if (!dwAddr)
+    {
+        return DbgCmdResult(em_dbgstat_syntaxerr);
+    }
+
+    DWORD64 dwEndAddr = dwAddr;
+    dwAddr -= dwDisasmSize;
+    DWORD64 dwStartAddr = dwAddr;
+    DisassWithAddr(dwStartAddr, dwEndAddr);
+    return DbgCmdResult(em_dbgstat_succ);
 }
 
 DbgCmdResult CProcDbgger::OnCmdUf(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam)
 {
-    return DbgCmdResult();
+    ustring wstr(wstrCmdParam);
+    wstr.makelower();
+    wstr.trim();
+
+    DWORD64 dwDisasmSize = ms_dwDefDisasmSize;
+    ustring wstrAddr;
+
+    dwDisasmSize = GetSizeAndParam(wstr, wstrAddr);
+    if (!dwDisasmSize)
+    {
+        return DbgCmdResult(em_dbgstat_faild, L"");
+    }
+
+    if (-1 == dwDisasmSize)
+    {
+        dwDisasmSize = ms_dwDefDisasmSize;
+    }
+
+    DWORD64 dwAddr = 0;
+    if (!GetNumFromStr(wstrAddr, dwAddr))
+    {
+        dwAddr = GetFunAddr(wstrAddr);
+    }
+
+    if (!dwAddr)
+    {
+        return DbgCmdResult(em_dbgstat_syntaxerr);
+    }
+    DisassUntilRet(dwAddr);
+    return DbgCmdResult(em_dbgstat_succ);
 }
 
 DbgCmdResult CProcDbgger::OnCmdGo(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam)
@@ -594,7 +755,6 @@ DbgCmdResult CProcDbgger::OnCmdKv(const ustring &wstrCmdParam, BOOL bShow, const
     hlpr.NextLine();
     hlpr.FormatDesc(L"返回地址 ", COLOUR_MSG, 8);
     hlpr.FormatDesc(L"参数列表 ", COLOUR_MSG, 8);
-    hlpr.FormatDesc(L"函数位置", COLOUR_MSG);
     hlpr.NextLine();
     for (list<STACKFRAME64>::const_iterator it = vStack.begin() ; it != vStack.end() ; it++)
     {

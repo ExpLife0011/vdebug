@@ -2,6 +2,7 @@
 #define DISASM_VDEBUG_H_H_
 #include <Windows.h>
 #include <vector>
+#include "capstone/capstone.h"
 #include "mstring.h"
 
 using namespace std;
@@ -24,14 +25,20 @@ struct DisasmInfo
     }
 };
 
+typedef BOOL (WINAPI *pfnDisasmProc)(const cs_insn *pAsmInfo, LPVOID pParam);
+
 class CDisasmParser
 {
 public:
     CDisasmParser(HANDLE hProcess);
-
     virtual ~CDisasmParser();
 
-    bool Disasm(DWORD64 dwAddr, DWORD dwMaxSize, vector<DisasmInfo> &vInfo) const;
+    bool DisasmUntilReturn(DWORD64 dwAddr, vector<DisasmInfo> &vInfo) const;
+    bool DisasmWithSize(DWORD64 dwAddr, DWORD dwMaxSize, vector<DisasmInfo> &vInfo) const;
+
+protected:
+    bool DisasmInternal(DWORD64 dwAddr, pfnDisasmProc pfn, LPVOID pParam) const;
+    static BOOL WINAPI DisasmCallback(const cs_insn *pAsmInfo, LPVOID pParam);
 
 protected:
     HANDLE m_hProcess;

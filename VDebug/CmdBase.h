@@ -26,7 +26,9 @@ struct CmdUserParam
 enum DbgCmdStatus
 {
     em_dbgstat_succ,
-    em_dbgstat_notfound,
+    em_dbgstat_cmdnotfound,
+    em_dbgstat_syntaxerr,
+    em_dbgstat_memoryerr,
     em_dbgstat_faild
 };
 
@@ -37,7 +39,7 @@ struct DbgCmdResult
 
     DbgCmdResult()
     {
-        m_eStatus = em_dbgstat_notfound;
+        m_eStatus = em_dbgstat_cmdnotfound;
         m_wstrResult = L"∑«ƒ⁄÷√√¸¡Ó";
     }
 
@@ -45,6 +47,11 @@ struct DbgCmdResult
     {
         m_eStatus = eStatus;
         m_wstrResult = wstrResult;
+    }
+
+    DbgCmdResult(DbgCmdStatus eStatus)
+    {
+        m_eStatus = eStatus;
     }
 };
 
@@ -80,6 +87,9 @@ public:
     bool IsKeyword(const ustring &wstr) const;
     vector<WordNode> GetWordSet(const ustring &wstrStr) const;
     BOOL GetNumFromStr(const ustring &wstrNumber, DWORD64 &dwNumber) const;
+
+protected:
+    DWORD64 GetSizeAndParam(const ustring &wstrParam, ustring &wstrOut) const;
 
 protected:
     virtual DbgCmdResult OnCommand(const ustring &wstrCmd, const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);

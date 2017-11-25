@@ -84,6 +84,7 @@ public:
     void AppendSyntaxDesc(const SyntaxDesc &vDesc);
     void Redraw();
     bool ReloadSynbaxCfg(LPCWSTR wszCfgJson);
+    void ClearView();
     virtual BOOL SetFont(HFONT hFont);
 
 protected:
@@ -110,6 +111,7 @@ protected:
     void OnVscroll(HWND hwnd, WPARAM wp, LPARAM lp);
     void OnMouseWheel(HWND hwnd, WPARAM wp, LPARAM lp);
     void OnAppendDesc(HWND hwnd, WPARAM wp, LPARAM lp);
+    void OnClearView(HWND hwnd, WPARAM wp, LPARAM lp);
     void SetVscrollPos(DWORD dwPos);
     void ReCalParam();
 

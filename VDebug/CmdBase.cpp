@@ -199,7 +199,42 @@ vector<WordNode> CCmdBase::GetWordSet(const ustring &wstrStr) const
 //5454546455
 BOOL CCmdBase::GetNumFromStr(const ustring &wstrNumber, DWORD64 &dwResult) const
 {
-    return StrToInt64ExW(wstrNumber.c_str(), STIF_SUPPORT_HEX, (LONGLONG *)&dwResult);
+    ustring wstr(wstrNumber);
+    wstr.makelower();
+    if (wstr.startwith(L"0n"))
+    {
+        return StrToInt64ExW(wstrNumber.c_str() + 2, STIF_DEFAULT, (LONGLONG *)&dwResult);
+    }
+    else
+    {
+        if (!wstr.startwith(L"0x"))
+        {
+            wstr.insert(0, L"0x");
+        }
+        return StrToInt64ExW(wstr.c_str(), STIF_SUPPORT_HEX, (LONGLONG *)&dwResult);
+    }
+}
+
+DWORD64 CCmdBase::GetSizeAndParam(const ustring &wstrParam, ustring &wstrOut) const
+{
+    ustring wstr(wstrParam);
+    wstr.makelower();
+    wstr.trim();
+    wstrOut = wstr;
+
+    DWORD64 dwSize = -1;
+    if (wstr.startwith(L"l"))
+    {
+        size_t iEndPos = wstr.find(L" ");
+        if (ustring::npos == iEndPos)
+        {
+            return 0;
+        }
+        GetNumFromStr(wstr.substr(1, iEndPos - 1), dwSize);
+        wstrOut = wstr.c_str() + iEndPos;
+        wstrOut.trim();
+    }
+    return dwSize;
 }
 
 DbgCmdResult CCmdBase::OnCommand(const ustring &wstrCmd, const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam)

@@ -5,6 +5,7 @@
 #include "common.h"
 
 #define MSG_APPEND_DESC   (WM_USER + 5060)
+#define MSG_CLEAR_VIEW    (WM_USER + 5061)
 
 extern HINSTANCE g_hInstance;
 #define CLASS_VDEBUG_SYNTAXVIEW     L"VDebugSynbaxViewClass"
@@ -43,6 +44,9 @@ LRESULT CSynbaxView::OnWindowMsg(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
         break;
     case MSG_APPEND_DESC:
         OnAppendDesc(hwnd, wp, lp);
+        break;
+    case MSG_CLEAR_VIEW:
+        OnClearView(hwnd, wp, lp);
         break;
     case  WM_CLOSE:
         OnClose(wp, lp);
@@ -167,6 +171,14 @@ void CSynbaxView::OnAppendDesc(HWND hwnd, WPARAM wp, LPARAM lp)
     delete ptr;
 }
 
+void CSynbaxView::OnClearView(HWND hwnd, WPARAM wp, LPARAM lp)
+{
+    m_vSyntaxRules.clear();
+    m_vShowInfo.clear();
+    ReCalParam();
+    InvalidateRect(m_hwnd, NULL, TRUE);
+}
+
 void CSynbaxView::OnMouseWheel(HWND hwnd, WPARAM wp, LPARAM lp)
 {
     if (!m_bYScrollShow)
@@ -254,6 +266,11 @@ void CSynbaxView::Redraw()
     //    }
     //}
     InvalidateRect(m_hwnd, NULL, TRUE);
+}
+
+void CSynbaxView::ClearView()
+{
+    PostMessageW(m_hwnd, MSG_CLEAR_VIEW, 0, 0);
 }
 
 void CSynbaxView::LoadGlobalCfg(const Value &vGlobal)

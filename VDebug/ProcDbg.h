@@ -95,9 +95,9 @@ public:
     virtual TITAN_ENGINE_CONTEXT_t GetCurrentContext();
     VOID Wait();
     void Run();
-    DbgModuleInfo GetModuleFromAddr(DWORD64 dwAddr);
-    ustring GetSymFromAddr(DWORD64 dwAddr);
-    HANDLE GetDbgProc();
+    DbgModuleInfo GetModuleFromAddr(DWORD64 dwAddr) const;
+    ustring GetSymFromAddr(DWORD64 dwAddr) const;
+    HANDLE GetDbgProc() const;
     HANDLE GetCurrentThread();
 
 protected:
@@ -140,12 +140,17 @@ protected:
     DWORD m_dwCurrentThreadId;
     DebuggerStatus m_eDbggerStat;
     HANDLE m_hRunNotify;
+    static const DWORD ms_dwDefDisasmSize = 128;
 
     //调试器对应的命令
 protected:
+    bool DisassWithSize(DWORD64 dwAddr, DWORD64 dwSize) const;
+    bool DisassWithAddr(DWORD64 dwStartAddr, DWORD64 dwEndAddr) const;
+    bool DisassUntilRet(DWORD64 dwStartAddr) const;
     void GetDisassContentDesc(const ustring &wstrContent, CSyntaxDescHlpr &hlpr) const; //汇编指令着色
     virtual DbgCmdResult OnCommand(const ustring &wstrCmd, const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
     DbgCmdResult OnCmdBp(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
+    DbgCmdResult OnCmdClear(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
     DbgCmdResult OnCmdDisass(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
     DbgCmdResult OnCmdUb(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
     DbgCmdResult OnCmdUf(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);

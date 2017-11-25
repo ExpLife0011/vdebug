@@ -395,9 +395,9 @@ static VOID _OnExecCommand(HWND hwnd, WPARAM wp, LPARAM lp)
     }
     else
     {
-        //hlpr.FormatDesc(ustring().format(L"%ls 执行完成", wstr.c_str()).c_str(), COLOUR_MSG);
-        //hlpr.AddEmptyLine();
-        //gs_pSyntaxView->AppendSyntaxDesc(hlpr.GetResult());
+        hlpr.FormatDesc(ustring().format(L"%ls 执行完成", wstr.c_str()).c_str(), COLOUR_MSG);
+        hlpr.AddEmptyLine();
+        gs_pSyntaxView->AppendSyntaxDesc(hlpr.GetResult());
     }
     SetWindowTextW(gs_hCommand, L"");
 }
