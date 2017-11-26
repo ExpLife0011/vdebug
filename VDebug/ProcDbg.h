@@ -147,6 +147,7 @@ protected:
     HANDLE GetThreadHandle(DWORD dwThreadId);
     bool LoadModuleInfo(HANDLE hFile, DWORD64 dwBaseOfModule);
     void ResetCache();
+    void OnDetachDbgger();
     virtual list<STACKFRAME64> GetStackFrame(const ustring &wstrParam);
 
 protected:
@@ -158,6 +159,7 @@ protected:
     DebuggerStatus m_eDbggerStat;
     HANDLE m_hRunNotify;
     static const DWORD ms_dwDefDisasmSize = 128;
+    BOOL m_bDetachDbgger;
 
     //∂œµ„–≈œ¢ª∫¥Ê
     vector<ProcDbgBreakPoint> m_vBreakPoint;

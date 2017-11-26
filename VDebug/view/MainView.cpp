@@ -471,7 +471,7 @@ static void _DisableCtrls()
 
     SendMessageW(gs_hToolbar, TB_ENABLEBUTTON, IDT_OPEN_APP, FALSE);
     SendMessageW(gs_hToolbar, TB_ENABLEBUTTON, IDT_ATTACH_PROC, FALSE);
-    SendMessageW(gs_hToolbar, TB_ENABLEBUTTON, IDT_OPEN_DUMP, FALSE);
+    SendMessageW(gs_hToolbar, TB_ENABLEBUTTON, IDT_OPEN_DUMP, FALSE);//
 }
 
 static void _EnableCtrls()
@@ -489,9 +489,9 @@ static void _EnableCtrls()
 VOID SetCmdNotify(DebuggerStatus uStatus, const ustring &wstrShowMsg)
 {
     SetWindowTextW(gs_hStatEdit, wstrShowMsg.c_str());
-
     if (em_dbg_status_init == uStatus)
     {
+        SetWindowTextW(gs_hCommand, L"");
         SendMessageW(gs_hCommand, EM_SETREADONLY, 1, 0);
         _EnableCtrls();
     }
@@ -507,6 +507,7 @@ VOID SetCmdNotify(DebuggerStatus uStatus, const ustring &wstrShowMsg)
     }
     else if (em_dbg_status_busy == uStatus)
     {
+        SetWindowTextW(gs_hCommand, L"");
         SendMessageW(gs_hCommand, EM_SETREADONLY, 1, 0);
         _DisableCtrls();
     }

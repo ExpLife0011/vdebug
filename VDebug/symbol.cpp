@@ -80,18 +80,45 @@ bool CSymbolHlpr::IsSymbolLoaded(const ustring &wstrDll, DWORD64 dwBaseOfModule)
     return false;
 }
 
-bool CSymbolHlpr::UnLoadModule(const ustring &wstrDllName)
+bool CSymbolHlpr::UnLoadModuleByName(const ustring &wstrDllName)
 {
     CScopedLocker lock(this);
     for (list<SymbolLoadInfo>::iterator it = m_vSymbolInfo.begin() ; it != m_vSymbolInfo.end() ; it++)
     {
         if (0 == it->m_wstrMuduleName.comparei(wstrDllName))
         {
+            SymUnloadModule64(NULL, it->m_dwBaseOfModule);
             m_vSymbolInfo.erase(it);
             return true;
         }
     }
     return false;
+}
+
+bool CSymbolHlpr::UnLoadModuleByAddr(DWORD64 dwAddr)
+{
+    CScopedLocker lock(this);
+    for (list<SymbolLoadInfo>::iterator it = m_vSymbolInfo.begin() ; it != m_vSymbolInfo.end() ; it++)
+    {
+        if (it->m_dwBaseOfModule == dwAddr)
+        {
+            SymUnloadModule64(NULL, dwAddr);
+            m_vSymbolInfo.erase(it);
+            return true;
+        }
+    }
+    return false;
+}
+
+bool CSymbolHlpr::UnloadAllModules()
+{
+    CScopedLocker lock(this);
+    for (list<SymbolLoadInfo>::iterator it = m_vSymbolInfo.begin() ; it != m_vSymbolInfo.end() ; it++)
+    {
+        SymUnloadModule64(NULL, it->m_dwBaseOfModule);
+    }
+    m_vSymbolInfo.clear();
+    return true;
 }
 
 bool CSymbolHlpr::LoadModule(HANDLE hFile, const ustring &wstrDllPath, DWORD64 dwBaseOfModule)
@@ -149,7 +176,7 @@ bool CSymbolHlpr::LoadSymbol(CTaskLoadSymbol *pModuleInfo)
     DWORD64 dwBaseAddr = dwBaseOfModule;
     if (!GetSymbolHlpr()->IsSymbolLoaded(wstrName, dwBaseOfModule))
     {
-        GetSymbolHlpr()->UnLoadModule(wstrName);
+        GetSymbolHlpr()->UnLoadModuleByName(wstrName);
         if (!GetSymbolHlpr()->LoadModule(pModuleInfo->m_hImgaeFile, wstrDll, dwBaseOfModule))
         {
             return false;
@@ -278,6 +305,18 @@ bool CSymbolHlpr::FindFileForDump(CTaskFindFileForDump *pFileInfo)
     return !pFileInfo->m_wstrFullPath.empty();
 }
 
+bool CSymbolHlpr::UnloadModuleTask(CTaskUnloadSymbol *pUnloadInfo)
+{
+    GetSymbolHlpr()->UnLoadModuleByAddr(pUnloadInfo->m_dwModuleAddr);
+    return true;
+}
+
+bool CSymbolHlpr::UnloadAllModuleTask(LPVOID pParam)
+{
+    GetSymbolHlpr()->UnloadAllModules();
+    return true;
+}
+
 bool CSymbolHlpr::DoTask(CSymbolTaskHeader *pTask)
 {
     bool bStat = false;
@@ -306,6 +345,16 @@ bool CSymbolHlpr::DoTask(CSymbolTaskHeader *pTask)
     case em_task_findfile:
         {
             bStat = FindFileForDump((CTaskFindFileForDump *)pTask->m_pParam);
+        }
+        break;
+    case em_task_unloadsym:
+        {
+            bStat = UnloadModuleTask((CTaskUnloadSymbol *)pTask->m_pParam);
+        }
+        break;
+    case em_task_unloadall:
+        {
+            bStat = UnloadAllModuleTask(0);
         }
         break;
     }

@@ -25,10 +25,12 @@ typedef DWORD64 (CALLBACK *pfnStackTranslateAddressProc64)(HANDLE hProcess, HAND
 enum SymbolTask
 {
     em_task_loadsym,    //符号加载
-    em_task_symaddr,    //
-    em_task_setpath,
-    em_task_stackwalk,
-    em_task_findfile    //在本地下载dump中的模块
+    em_task_symaddr,    //符号地址
+    em_task_setpath,    //设置符号地址
+    em_task_stackwalk,  //栈回朔
+    em_task_findfile,   //在本地下载dump中的模块
+    em_task_unloadsym,  //卸载指定符号
+    em_task_unloadall   //卸载所有符号
 };
 
 struct SymbolLoadInfo   //已加载模块的符号信息
@@ -97,6 +99,11 @@ struct CTaskFindFileForDump
     ustring m_wstrFullPath;     //OUT 本地模块路径
 };
 
+struct CTaskUnloadSymbol
+{
+    DWORD64 m_dwModuleAddr;     //卸载模块地址
+};
+
 struct CSymbolTaskHeader
 {
     CSymbolTaskHeader() : m_dwSize(0), m_hNotify(NULL), m_pParam(NULL), m_bSucc(FALSE)
@@ -122,6 +129,8 @@ public:
     bool DeleteTask(CSymbolTaskHeader *pTask);
 
 protected:
+    static bool UnloadAllModuleTask(LPVOID pParam);
+    static bool UnloadModuleTask(CTaskUnloadSymbol *pUnloadInfo);
     static bool FindFileForDump(CTaskFindFileForDump *pFileInfo);
     static bool StackWalk(CTaskStackWalkInfo *pStackWalkInfo);
     static bool SetSymbolPath(CTaskSetSymbolPath *pSymbolPath);
@@ -136,12 +145,14 @@ protected:
     bool IsSymbolLoaded(const ustring &wstrDll, DWORD64 dwBaseOfModule);
     //重新加载指定模块
     bool ReloadModule(const ustring &wstrDll, DWORD64 dwBaseOfModule);
-    //卸载指定模块
-    bool UnLoadModule(const ustring &wstrDllName);
+    //卸载指定模块符号
+    bool UnLoadModuleByName(const ustring &wstrDllName);
+    //卸载指定模块符号
+    bool UnLoadModuleByAddr(DWORD64 dwAddr);
     //加载符号
     bool LoadModule(HANDLE hFile, const ustring &wstrDllPath, DWORD64 dwBaseOfModule);
     //卸载当前所有的模块
-    bool UnloadModules();
+    bool UnloadAllModules();
 
 protected:
     list<SymbolLoadInfo> m_vSymbolInfo;

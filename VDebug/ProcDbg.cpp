@@ -26,6 +26,7 @@ CProcDbgger::CProcDbgger()
 {
     m_dwLastBpSerial = 0;
     m_hRunNotify = CreateEventW(NULL, FALSE, FALSE, NULL);
+    m_bDetachDbgger = FALSE;
 }
 
 CProcDbgger::~CProcDbgger()
@@ -48,6 +49,8 @@ void CProcDbgger::Run()
 
 BOOL CProcDbgger::Connect(LPCWSTR wszTarget, LPVOID pParam)
 {
+    InitEngine();
+
     DbgProcUserContext *ptr = (DbgProcUserContext *)pParam;
     m_vDbgProcInfo.m_eType = em_dbgproc_open;
     m_vDbgProcInfo.m_dwPid = 0;
@@ -78,8 +81,15 @@ BOOL CProcDbgger::Connect(DWORD dwPid)
 
 BOOL CProcDbgger::DisConnect()
 {
-    DetachDebugger(m_dwCurrentThreadId);
-    ResetCache();
+    if (!IsConnect())
+    {
+        return FALSE;
+    }
+
+    GetProcDbgger()->GetDbgProc();
+    m_bDetachDbgger = TRUE;
+    DebugBreakProcess(GetProcDbgger()->GetDbgProc());
+    Run();
     return TRUE;
 }
 
@@ -93,6 +103,12 @@ void CProcDbgger::ResetCache()
     m_vThreadMap.clear();
     m_dwCurDebugProc = 0;
     m_vDbgProcInfo.Clear();
+    m_vModuleInfo.clear();
+    m_dwCurrentThreadId = 0;
+    m_eDbggerStat = em_dbg_status_init;
+    m_vBreakPoint.clear();
+    m_dwLastBpSerial = 0;
+    m_bDetachDbgger = FALSE;
 }
 
 DWORD CProcDbgger::DebugThread(LPVOID pParam)
@@ -119,8 +135,10 @@ DWORD CProcDbgger::DebugThread(LPVOID pParam)
 
         if (!process)
         {
+            GetProcDbgger()->ResetCache();
             return 0;
         }
+        GetProcDbgger()->m_vDbgProcInfo.m_dwPid = process->dwProcessId;
         GetProcDbgger()->m_vDbgProcInfo.m_hProcess = process->hProcess;
         DebugLoop();
     }
@@ -283,9 +301,26 @@ void CProcDbgger::OnCreateProcess(CREATE_PROCESS_DEBUG_INFO* pCreateProcessInfo)
     GetProcDbgger()->LoadModuleInfo(pCreateProcessInfo->hFile, (DWORD64)pCreateProcessInfo->lpBaseOfImage);
 }
 
+void CProcDbgger::OnDetachDbgger()
+{
+    GetProcDbgger()->ResetCache();
+    CSymbolTaskHeader task;
+    task.m_dwSize = sizeof(CSymbolTaskHeader);
+    task.m_eTaskType = em_task_unloadall;
+    GetSymbolHlpr()->SendTask(&task);
+    SetCmdNotify(em_dbg_status_init, L"³õÊ¼×´Ì¬");
+
+    CSyntaxDescHlpr hlpr;
+    hlpr.FormatDesc(L"ÒÑÍÑÀëµ÷ÊÔÆ÷", COLOUR_MSG);
+    GetSyntaxView()->AppendSyntaxDesc(hlpr.GetResult());
+}
+
 void CProcDbgger::OnExitProcess(EXIT_PROCESS_DEBUG_INFO* ExitProcess)
 {
     CSyntaxDescHlpr hlpr;
+    hlpr.FormatDesc(FormatW(L"µ÷ÊÔ½ø³ÌÍË³ö,·µ»ØÂë:%08x", ExitProcess->dwExitCode), COLOUR_MSG);
+    GetSyntaxView()->AppendSyntaxDesc(hlpr.GetResult());
+    GetProcDbgger()->OnDetachDbgger();
 }
 
 void CProcDbgger::OnCreateThread(CREATE_THREAD_DEBUG_INFO* CreateThread)
@@ -311,6 +346,12 @@ void CProcDbgger::OnSystemBreakpoint(void* ExceptionData)
     DWORD dwId = ((DEBUG_EVENT*)GetDebugData())->dwThreadId;
     GetProcDbgger()->m_dwCurrentThreadId = dwId;
     if (GetProcDbgger()->m_vThreadMap.end() == GetProcDbgger()->m_vThreadMap.find(dwId))
+    {
+        return;
+    }
+
+    //ÍÑÀëµ÷ÊÔÆ÷
+    if (GetProcDbgger()->m_bDetachDbgger)
     {
         return;
     }
@@ -364,7 +405,11 @@ void CProcDbgger::OnException(EXCEPTION_DEBUG_INFO* ExceptionData)
 {
     if (EXCEPTION_BREAKPOINT == ExceptionData->ExceptionRecord.ExceptionCode)
     {
-        int d = 0;
+        if (GetProcDbgger()->m_bDetachDbgger)
+        {
+            DetachDebuggerEx(GetProcDbgger()->m_vDbgProcInfo.m_dwPid);
+            GetProcDbgger()->OnDetachDbgger();
+        }
     }
 }
 
@@ -395,6 +440,10 @@ DbgCmdResult CProcDbgger::OnCommand(const ustring &wstrCmd, const ustring &wstrC
     else if (wstrCmd == L"bl")
     {
         return OnCmdBl(wstrCmdParam, bShow, pParam);
+    }
+    else if (wstrCmd == L"bk")
+    {
+        DebugBreakProcess(GetProcDbgger()->GetDbgProc());
     }
     else if (wstrCmd == L"bc")
     {
