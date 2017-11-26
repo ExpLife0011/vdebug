@@ -82,6 +82,23 @@ struct DbgProcThreadInfo
     }
 };
 
+enum ProcDbgBreakPointStat
+{
+    em_bp_enable,       //断点启用
+    em_bp_disable,      //断点禁用
+    em_bp_uneffect      //断点尚未生效
+};
+
+//断点信息
+struct ProcDbgBreakPoint
+{
+    DWORD m_dwSerial;
+    DWORD64 m_dwBpAddr;
+    ustring m_wstrAddr;
+    ustring m_wstrSymbol;
+    ProcDbgBreakPointStat m_eStat;
+};
+
 class CProcDbgger : public CDbggerProxy
 {
 public:
@@ -142,14 +159,23 @@ protected:
     HANDLE m_hRunNotify;
     static const DWORD ms_dwDefDisasmSize = 128;
 
+    //断点信息缓存
+    vector<ProcDbgBreakPoint> m_vBreakPoint;
+    DWORD m_dwLastBpSerial;
+
     //调试器对应的命令
 protected:
+    void ClearBreakPoint(DWORD dwSerial = -1);
+    bool IsBreakpointSet(DWORD64 dwAddr) const;
     bool DisassWithSize(DWORD64 dwAddr, DWORD64 dwSize) const;
     bool DisassWithAddr(DWORD64 dwStartAddr, DWORD64 dwEndAddr) const;
     bool DisassUntilRet(DWORD64 dwStartAddr) const;
     void GetDisassContentDesc(const ustring &wstrContent, CSyntaxDescHlpr &hlpr) const; //汇编指令着色
     virtual DbgCmdResult OnCommand(const ustring &wstrCmd, const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
     DbgCmdResult OnCmdBp(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
+    DbgCmdResult OnCmdBl(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
+    DbgCmdResult OnCmdBc(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
+    DbgCmdResult OnCmdBu(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
     DbgCmdResult OnCmdClear(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
     DbgCmdResult OnCmdDisass(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
     DbgCmdResult OnCmdUb(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);

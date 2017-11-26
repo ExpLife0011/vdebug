@@ -42,10 +42,18 @@ public:
     virtual ~CBreakPointMgr();
 
     BOOL SetBreakPoint(DWORD64 dwAddr, const CmdUserParam *pUserContext = NULL);
+    BOOL DeleteBp(DWORD64 dwAddr);
+    BOOL EnableBp(DWORD64 dwAddr);
+    BOOL DisableBp(DWORD64 dwAddr);
+
     BOOL SetBreakPointWithLogic(DWORD64 dwAddr, const ustring &wstrName, const ustring &wstrLogic);
     BOOL SetBreakPointWithFile(DWORD64 dwAddr, const ustring &wstrName, const ustring &wstrFile);
     BOOL OnBreakPoint(DWORD64 dwAddr);
 
+protected:
+    bool IsBpInCache(DWORD64 dwAddr) const;
+    bool PushBreakPoint(const BreakPointInfo &info);
+    bool DeleteInCache(DWORD64 dwAddr);
 protected:
     static void WINAPI Int3BpCallback();
 

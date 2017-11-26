@@ -24,6 +24,7 @@ CProcDbgger *GetProcDbgger()
 
 CProcDbgger::CProcDbgger()
 {
+    m_dwLastBpSerial = 0;
     m_hRunNotify = CreateEventW(NULL, FALSE, FALSE, NULL);
 }
 
@@ -283,7 +284,9 @@ void CProcDbgger::OnCreateProcess(CREATE_PROCESS_DEBUG_INFO* pCreateProcessInfo)
 }
 
 void CProcDbgger::OnExitProcess(EXIT_PROCESS_DEBUG_INFO* ExitProcess)
-{}
+{
+    CSyntaxDescHlpr hlpr;
+}
 
 void CProcDbgger::OnCreateThread(CREATE_THREAD_DEBUG_INFO* CreateThread)
 {
@@ -389,6 +392,20 @@ DbgCmdResult CProcDbgger::OnCommand(const ustring &wstrCmd, const ustring &wstrC
     {
         return OnCmdBp(wstrCmdParam, bShow, pParam);
     }
+    else if (wstrCmd == L"bl")
+    {
+        return OnCmdBl(wstrCmdParam, bShow, pParam);
+    }
+    else if (wstrCmd == L"bc")
+    {
+        return OnCmdBc(wstrCmdParam, bShow, pParam);
+    }
+    else if (wstrCmd == L"tc")
+    {
+    }
+    else if (wstrCmd == L"ts")
+    {
+    }
     else if (wstrCmd == L"cls")
     {
         return OnCmdClear(wstrCmdParam, bShow, pParam);
@@ -436,6 +453,18 @@ DbgCmdResult CProcDbgger::OnCommand(const ustring &wstrCmd, const ustring &wstrC
     return res;
 }
 
+bool CProcDbgger::IsBreakpointSet(DWORD64 dwAddr) const
+{
+    for (vector<ProcDbgBreakPoint>::const_iterator it = m_vBreakPoint.begin() ; it != m_vBreakPoint.end() ; it++)
+    {
+        if (it->m_dwBpAddr == dwAddr)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
 DbgCmdResult CProcDbgger::OnCmdBp(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam)
 {
     ustring wstr(wstrCmdParam);
@@ -454,12 +483,110 @@ DbgCmdResult CProcDbgger::OnCmdBp(const ustring &wstrCmdParam, BOOL bShow, const
 
     if (dwProcAddr)
     {
+        if (IsBreakpointSet(dwProcAddr))
+        {
+            return DbgCmdResult(em_dbgstat_succ, L"地址已存在断点");
+        }
+
         if (GetBreakPointMgr()->SetBreakPoint(dwProcAddr, pParam))
         {
+            ProcDbgBreakPoint p;
+            p.m_dwBpAddr = dwProcAddr;
+            p.m_wstrSymbol = GetSymFromAddr(dwProcAddr);
+            p.m_eStat = em_bp_enable;
+            p.m_wstrAddr = FormatW(L"%I64d", dwProcAddr);
+            p.m_dwSerial = m_dwLastBpSerial++;
+            m_vBreakPoint.push_back(p);
             return DbgCmdResult(em_dbgstat_succ, L"");
         }
     }
     return DbgCmdResult(em_dbgstat_faild, L"bp命令执行失败");
+}
+
+DbgCmdResult CProcDbgger::OnCmdBl(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam)
+{
+    CSyntaxDescHlpr hlpr;
+    if (m_vBreakPoint.empty())
+    {
+        hlpr.FormatDesc(L"尚未设置任何断点", COLOUR_MSG);
+        GetSyntaxView()->AppendSyntaxDesc(hlpr.GetResult());
+        return DbgCmdResult(em_dbgstat_succ);
+    }
+
+    hlpr.FormatDesc(L"断点序号  ", COLOUR_MSG);
+    hlpr.FormatDesc(L"断点状态  ", COLOUR_MSG);
+    hlpr.FormatDesc(L"断点地址  ", COLOUR_MSG);
+    hlpr.FormatDesc(L"符号位置", COLOUR_MSG);
+    for (vector<ProcDbgBreakPoint>::const_iterator it = m_vBreakPoint.begin() ; it != m_vBreakPoint.end() ; it++)
+    {
+        hlpr.NextLine();
+        hlpr.FormatDesc(FormatW(L"%02x", it->m_dwSerial), COLOUR_MSG, 10);
+        switch (it->m_eStat)
+        {
+        case em_bp_enable:
+            hlpr.FormatDesc(L"启用", COLOUR_MSG, 10);
+            break;
+        case em_bp_disable:
+            hlpr.FormatDesc(L"禁用", COLOUR_MSG, 10);
+            break;
+        case em_bp_uneffect:
+            hlpr.FormatDesc(L"未生效", COLOUR_MSG, 10);
+            break;
+        }
+        hlpr.FormatDesc(FormatW(L"%08x", it->m_dwBpAddr), COLOUR_MSG, 10);
+        hlpr.FormatDesc(it->m_wstrSymbol, COLOUR_MSG);
+    }
+    GetSyntaxView()->AppendSyntaxDesc(hlpr.GetResult());
+    return DbgCmdResult(em_dbgstat_succ);
+}
+
+void CProcDbgger::ClearBreakPoint(DWORD dwSerial)
+{
+    for (vector<ProcDbgBreakPoint>::const_iterator it = m_vBreakPoint.begin() ; it != m_vBreakPoint.end() ;)
+    {
+        if (-1 == dwSerial)
+        {
+            GetBreakPointMgr()->DeleteBp(it->m_dwBpAddr);
+            it = m_vBreakPoint.erase(it);
+        }
+        else if (dwSerial == it->m_dwSerial)
+        {
+            GetBreakPointMgr()->DeleteBp(it->m_dwBpAddr);
+            m_vBreakPoint.erase(it);
+            return;
+        }
+    }
+}
+
+DbgCmdResult CProcDbgger::OnCmdBc(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam)
+{
+    ustring wstr(wstrCmdParam);
+    wstr.makelower();
+    CSyntaxDescHlpr hlpr;
+    if (wstr == L"*")
+    {
+        ClearBreakPoint(-1);
+        hlpr.FormatDesc(L"已清空所有断点", COLOUR_MSG);
+        GetSyntaxView()->AppendSyntaxDesc(hlpr.GetResult());
+        return DbgCmdResult(em_dbgstat_succ);
+    }
+
+    if (!IsNumber(wstr))
+    {
+        return DbgCmdResult(em_dbgstat_syntaxerr);
+    }
+
+    DWORD64 dwSerial = 0;
+    GetNumFromStr(wstr, dwSerial);
+    ClearBreakPoint((DWORD)dwSerial);
+    hlpr.FormatDesc(FormatW(L"已清除%02x号断点", dwSerial), COLOUR_MSG);
+    GetSyntaxView()->AppendSyntaxDesc(hlpr.GetResult());
+    return DbgCmdResult(em_dbgstat_succ);
+}
+
+DbgCmdResult CProcDbgger::OnCmdBu(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam)
+{
+    return DbgCmdResult(em_dbgstat_succ);
 }
 
 void CProcDbgger::GetDisassContentDesc(const ustring &wstrContent, CSyntaxDescHlpr &hlpr) const

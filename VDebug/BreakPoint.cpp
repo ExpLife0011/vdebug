@@ -19,9 +19,45 @@ void CBreakPointMgr::Int3BpCallback()
     ((CProcDbgger *)GetCurrentDbgger())->Wait();
 }
 
+bool CBreakPointMgr::IsBpInCache(DWORD64 dwAddr) const
+{
+    for (vector<BreakPointInfo>::const_iterator it = m_vBreakPoints.begin() ; it != m_vBreakPoints.end() ; it++)
+    {
+        if (it->m_dwBpAddr == dwAddr)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool CBreakPointMgr::DeleteInCache(DWORD64 dwAddr)
+{
+    for (vector<BreakPointInfo>::iterator it = m_vBreakPoints.begin() ; it != m_vBreakPoints.end() ; it++)
+    {
+        if (it->m_dwBpAddr == dwAddr)
+        {
+            m_vBreakPoints.erase(it);
+            return true;
+        }
+    }
+    return false;
+}
+
+bool CBreakPointMgr::PushBreakPoint(const BreakPointInfo &info)
+{
+    m_vBreakPoints.push_back(info);
+    return true;
+}
+
 BOOL CBreakPointMgr::SetBreakPoint(DWORD64 dwAddr, const CmdUserParam *pUserContxt)
 {
-    if (SetBPX((ULONG_PTR)dwAddr, UE_BREAKPOINT_TYPE_INT3, Int3BpCallback))
+    if (IsBpInCache(dwAddr))
+    {
+        return TRUE;
+    }
+
+    if (SetBPX((ULONG_PTR)dwAddr, UE_BREAKPOINT, Int3BpCallback))
     {
         BreakPointInfo point;
         point.m_dwBpAddr = dwAddr;
@@ -30,23 +66,22 @@ BOOL CBreakPointMgr::SetBreakPoint(DWORD64 dwAddr, const CmdUserParam *pUserCont
         {
             memcpy(&point.m_vUserContext, pUserContxt, sizeof(CmdUserContext));
         }
-
-        vector<BreakPointInfo>::iterator it;
-        for (it = m_vBreakPoints.begin() ; it != m_vBreakPoints.end() ; it++)
-        {
-            if (*it == point)
-            {
-                break;
-            }
-        }
-
-        if (it == m_vBreakPoints.end())
-        {
-            m_vBreakPoints.push_back(point);
-        }
+        PushBreakPoint(point);
         return TRUE;
     }
     return FALSE;
+}
+
+BOOL CBreakPointMgr::DeleteBp(DWORD64 dwAddr)
+{
+    if (!IsBpInCache(dwAddr))
+    {
+        return FALSE;
+    }
+
+    DeleteInCache(dwAddr);
+    DeleteBPX((ULONG_PTR)dwAddr);
+    return TRUE;
 }
 
 BOOL CBreakPointMgr::OnBreakPoint(DWORD64 dwAddr)

@@ -125,7 +125,8 @@ static VOID _LoadDebugFile()
 static VOID _LoadDefaultFont()
 {
     LOGFONTW ft = {0};
-    ft.lfHeight = 13;
+    //字体大小需要是偶数，否则中文和两个英文宽度会差一个像素
+    ft.lfHeight = 14;
     ft.lfWidth = 0;
     ft.lfEscapement = 0;
     ft.lfWeight = 0;
