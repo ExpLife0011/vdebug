@@ -385,17 +385,17 @@ static VOID _OnExecCommand(HWND hwnd, WPARAM wp, LPARAM lp)
     gs_pCmdQueue->EnterCmd(wstr);
     DbgCmdResult res = GetCurrentDbgger()->RunCommand(wstr.c_str());
 
-    CSyntaxDescHlpr hlpr;
-    if (res.m_eStatus != em_dbgstat_succ)
-    {
-        gs_pSyntaxView->AppendSyntaxDesc(res.m_vSyntaxDesc);
-    }
-    else
-    {
-        hlpr.FormatDesc(ustring().format(L"%ls 执行完成", wstr.c_str()).c_str(), COLOUR_MSG);
-        hlpr.AddEmptyLine();
-        gs_pSyntaxView->AppendSyntaxDesc(res.m_vSyntaxDesc);
-    }
+    //CSyntaxDescHlpr hlpr;
+    //if (res.m_eStatus != em_dbgstat_succ)
+    //{
+    //    gs_pSyntaxView->AppendSyntaxDesc(res.m_vSyntaxDesc);
+    //}
+    //else
+    //{
+    //    hlpr.FormatDesc(ustring().format(L"%ls 执行完成", wstr.c_str()).c_str(), COLOUR_MSG);
+    //    hlpr.AddEmptyLine();
+    //    gs_pSyntaxView->AppendSyntaxDesc(res.m_vSyntaxDesc);
+    //}
     SetWindowTextW(gs_hCommand, L"");
 }
 

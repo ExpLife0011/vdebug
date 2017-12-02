@@ -494,7 +494,7 @@ DbgCmdResult CProcDbgger::OnCommand(const ustring &wstrCmd, const ustring &wstrC
     }
     else if (wstrCmd == L"dd")
     {
-        OnCmdDd(wstrCmdParam, bShow, pParam);
+        return OnCmdDd(wstrCmdParam, bShow, pParam);
     }
     else if (wstrCmd == L"du")
     {
@@ -547,7 +547,8 @@ DbgCmdResult CProcDbgger::OnCmdBp(const ustring &wstrCmdParam, BOOL bShow, const
     {
         if (IsBreakpointSet(dwProcAddr))
         {
-            return DbgCmdResult(em_dbgstat_succ, L"地址已存在断点");
+            hlpr.FormatDesc(L"地址已存在断点");
+            return DbgCmdResult(em_dbgstat_succ, hlpr.GetResult());
         }
 
         if (GetBreakPointMgr()->SetBreakPoint(dwProcAddr, pParam))
@@ -559,7 +560,7 @@ DbgCmdResult CProcDbgger::OnCmdBp(const ustring &wstrCmdParam, BOOL bShow, const
             p.m_wstrAddr = FormatW(L"%I64d", dwProcAddr);
             p.m_dwSerial = m_dwLastBpSerial++;
             m_vBreakPoint.push_back(p);
-            return DbgCmdResult(em_dbgstat_succ, L"");
+            return DbgCmdResult(em_dbgstat_succ, L"bp 执行成功");
         }
     }
     return DbgCmdResult(em_dbgstat_faild, L"bp命令执行失败");
@@ -570,9 +571,7 @@ DbgCmdResult CProcDbgger::OnCmdBl(const ustring &wstrCmdParam, BOOL bShow, const
     CSyntaxDescHlpr hlpr;
     if (m_vBreakPoint.empty())
     {
-        hlpr.FormatDesc(L"尚未设置任何断点", COLOUR_MSG);
-        GetSyntaxView()->AppendSyntaxDesc(hlpr.GetResult());
-        return DbgCmdResult(em_dbgstat_succ);
+        return DbgCmdResult(em_dbgstat_succ, L"尚未设置任何断点");
     }
 
     hlpr.FormatDesc(L"断点序号  ", COLOUR_MSG);
@@ -598,8 +597,7 @@ DbgCmdResult CProcDbgger::OnCmdBl(const ustring &wstrCmdParam, BOOL bShow, const
         hlpr.FormatDesc(FormatW(L"%08x", it->m_dwBpAddr), COLOUR_MSG, 10);
         hlpr.FormatDesc(it->m_wstrSymbol, COLOUR_MSG);
     }
-    GetSyntaxView()->AppendSyntaxDesc(hlpr.GetResult());
-    return DbgCmdResult(em_dbgstat_succ);
+    return DbgCmdResult(em_dbgstat_succ, hlpr.GetResult());
 }
 
 void CProcDbgger::ClearBreakPoint(DWORD dwSerial)
@@ -624,26 +622,21 @@ DbgCmdResult CProcDbgger::OnCmdBc(const ustring &wstrCmdParam, BOOL bShow, const
 {
     ustring wstr(wstrCmdParam);
     wstr.makelower();
-    CSyntaxDescHlpr hlpr;
     if (wstr == L"*")
     {
         ClearBreakPoint(-1);
-        hlpr.FormatDesc(L"已清空所有断点", COLOUR_MSG);
-        GetSyntaxView()->AppendSyntaxDesc(hlpr.GetResult());
-        return DbgCmdResult(em_dbgstat_succ);
+        return DbgCmdResult(em_dbgstat_succ, L"已清空所有断点");
     }
 
     if (!IsNumber(wstr))
     {
-        return DbgCmdResult(em_dbgstat_syntaxerr);
+        return DbgCmdResult(em_dbgstat_syntaxerr, L"bc 语法错误");
     }
 
     DWORD64 dwSerial = 0;
     GetNumFromStr(wstr, dwSerial);
     ClearBreakPoint((DWORD)dwSerial);
-    hlpr.FormatDesc(FormatW(L"已清除%02x号断点", dwSerial), COLOUR_MSG);
-    GetSyntaxView()->AppendSyntaxDesc(hlpr.GetResult());
-    return DbgCmdResult(em_dbgstat_succ);
+    return DbgCmdResult(em_dbgstat_succ, FormatW(L"已清除%02x号断点", dwSerial));
 }
 
 DbgCmdResult CProcDbgger::OnCmdBu(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam)
@@ -686,11 +679,10 @@ void CProcDbgger::GetDisassContentDesc(const ustring &wstrContent, CSyntaxDescHl
     }
 }
 
-bool CProcDbgger::DisassWithSize(DWORD64 dwAddr, DWORD64 dwSize) const
+bool CProcDbgger::DisassWithSize(DWORD64 dwAddr, DWORD64 dwSize, CSyntaxDescHlpr &hlpr) const
 {
     CDisasmParser Disasm(GetDbgProc());
     vector<DisasmInfo> vDisasmSet;
-    CSyntaxDescHlpr hlpr;
     ustring wstr = GetSymFromAddr(dwAddr);
     wstr += L":";
     hlpr.NextLine();
@@ -706,13 +698,12 @@ bool CProcDbgger::DisassWithSize(DWORD64 dwAddr, DWORD64 dwSize) const
             GetDisassContentDesc(it->m_wstrContent, hlpr);
             hlpr.NextLine();
         }
-        GetSyntaxView()->AppendSyntaxDesc(hlpr.GetResult());
         return true;
     }
     return false;
 }
 
-bool CProcDbgger::DisassWithAddr(DWORD64 dwStartAddr, DWORD64 dwEndAddr) const
+bool CProcDbgger::DisassWithAddr(DWORD64 dwStartAddr, DWORD64 dwEndAddr, CSyntaxDescHlpr &hlpr) const
 {
     if (dwEndAddr <= dwStartAddr)
     {
@@ -722,7 +713,6 @@ bool CProcDbgger::DisassWithAddr(DWORD64 dwStartAddr, DWORD64 dwEndAddr) const
     DWORD64 dwSize = (dwEndAddr - dwStartAddr + 16);
     CDisasmParser Disasm(GetDbgProc());
     vector<DisasmInfo> vDisasmSet;
-    CSyntaxDescHlpr hlpr;
     ustring wstr = GetSymFromAddr(dwStartAddr);
     wstr += L":";
     hlpr.NextLine();
@@ -742,17 +732,15 @@ bool CProcDbgger::DisassWithAddr(DWORD64 dwStartAddr, DWORD64 dwEndAddr) const
             GetDisassContentDesc(it->m_wstrContent, hlpr);
             hlpr.NextLine();
         }
-        GetSyntaxView()->AppendSyntaxDesc(hlpr.GetResult());
         return true;
     }
     return false;
 }
 
-bool CProcDbgger::DisassUntilRet(DWORD64 dwStartAddr) const
+bool CProcDbgger::DisassUntilRet(DWORD64 dwStartAddr, CSyntaxDescHlpr &hlpr) const
 {
     CDisasmParser Disasm(GetDbgProc());
     vector<DisasmInfo> vDisasmSet;
-    CSyntaxDescHlpr hlpr;
     ustring wstr = GetSymFromAddr(dwStartAddr);
     wstr += L":";
     hlpr.NextLine();
@@ -768,7 +756,6 @@ bool CProcDbgger::DisassUntilRet(DWORD64 dwStartAddr) const
             GetDisassContentDesc(it->m_wstrContent, hlpr);
             hlpr.NextLine();
         }
-        GetSyntaxView()->AppendSyntaxDesc(hlpr.GetResult());
         return true;
     }
     return false;
@@ -805,16 +792,17 @@ DbgCmdResult CProcDbgger::OnCmdDisass(const ustring &wstrCmdParam, BOOL bShow, c
 
     if (!dwAddr)
     {
-        return DbgCmdResult(em_dbgstat_faild, L"");
+        return DbgCmdResult(em_dbgstat_faild, FormatW(L"获取%ls地址失败", wstrAddr.c_str()));
     }
-    DisassWithSize(dwAddr, dwDisasmSize);
-    return DbgCmdResult(em_dbgstat_succ, L"");
+    CSyntaxDescHlpr hlpr;
+    DisassWithSize(dwAddr, dwDisasmSize, hlpr);
+    return DbgCmdResult(em_dbgstat_succ, hlpr.GetResult());
 }
 
 DbgCmdResult CProcDbgger::OnCmdClear(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam)
 {
     GetSyntaxView()->ClearView();
-    return DbgCmdResult(em_dbgstat_succ, L"");
+    return DbgCmdResult(em_dbgstat_succ, L"已清除所有断点");
 }
 
 DbgCmdResult CProcDbgger::OnCmdUb(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam)
@@ -829,7 +817,7 @@ DbgCmdResult CProcDbgger::OnCmdUb(const ustring &wstrCmdParam, BOOL bShow, const
     dwDisasmSize = GetSizeAndParam(wstr, wstrAddr);
     if (!dwDisasmSize)
     {
-        return DbgCmdResult(em_dbgstat_faild, L"");
+        return DbgCmdResult(em_dbgstat_faild, L"获取反汇编地址长度失败");
     }
 
     if (-1 == dwDisasmSize)
@@ -845,14 +833,15 @@ DbgCmdResult CProcDbgger::OnCmdUb(const ustring &wstrCmdParam, BOOL bShow, const
 
     if (!dwAddr)
     {
-        return DbgCmdResult(em_dbgstat_syntaxerr);
+        return DbgCmdResult(em_dbgstat_syntaxerr, L"ub语法错误");
     }
 
     DWORD64 dwEndAddr = dwAddr;
     dwAddr -= dwDisasmSize;
     DWORD64 dwStartAddr = dwAddr;
-    DisassWithAddr(dwStartAddr, dwEndAddr);
-    return DbgCmdResult(em_dbgstat_succ);
+    CSyntaxDescHlpr hlpr;
+    DisassWithAddr(dwStartAddr, dwEndAddr, hlpr);
+    return DbgCmdResult(em_dbgstat_succ, hlpr.GetResult());
 }
 
 DbgCmdResult CProcDbgger::OnCmdUf(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam)
@@ -885,8 +874,10 @@ DbgCmdResult CProcDbgger::OnCmdUf(const ustring &wstrCmdParam, BOOL bShow, const
     {
         return DbgCmdResult(em_dbgstat_syntaxerr);
     }
-    DisassUntilRet(dwAddr);
-    return DbgCmdResult(em_dbgstat_succ);
+
+    CSyntaxDescHlpr hlpr;
+    DisassUntilRet(dwAddr, hlpr);
+    return DbgCmdResult(em_dbgstat_succ, hlpr.GetResult());
 }
 
 DbgCmdResult CProcDbgger::OnCmdGo(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam)
@@ -956,8 +947,7 @@ DbgCmdResult CProcDbgger::OnCmdKv(const ustring &wstrCmdParam, BOOL bShow, const
         hlpr.FormatDesc(FormatW(L"%ls", GetProcDbgger()->GetSymFromAddr(it->AddrPC.Offset).c_str()), COLOUR_PROC);
         hlpr.NextLine();
     }
-    GetSyntaxView()->AppendSyntaxDesc(hlpr.GetResult());
-    return DbgCmdResult(em_dbgstat_succ, L"");
+    return DbgCmdResult(em_dbgstat_succ, hlpr.GetResult());
 }
 
 DbgCmdResult CProcDbgger::OnCmdDb(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam)
@@ -1031,8 +1021,7 @@ DbgCmdResult CProcDbgger::OnCmdDb(const ustring &wstrCmdParam, BOOL bShow, const
         }
         dwAddr += 16;
     }
-    GetSyntaxView()->AppendSyntaxDesc(desc.GetResult());
-    return DbgCmdResult();
+    return DbgCmdResult(em_dbgstat_succ, desc.GetResult());
 }
 
 DbgCmdResult CProcDbgger::OnCmdDd(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam)
@@ -1069,8 +1058,7 @@ DbgCmdResult CProcDbgger::OnCmdDd(const ustring &wstrCmdParam, BOOL bShow, const
         desc.NextLine();
         dwAddr += 16;
     }
-    GetSyntaxView()->AppendSyntaxDesc(desc.GetResult());
-    return DbgCmdResult(em_dbgstat_succ, L"");
+    return DbgCmdResult(em_dbgstat_succ, desc.GetResult());
 }
 
 DbgCmdResult CProcDbgger::OnCmdDu(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam)
@@ -1089,31 +1077,26 @@ DbgCmdResult CProcDbgger::OnCmdDu(const ustring &wstrCmdParam, BOOL bShow, const
 
     CSyntaxDescHlpr desc;
     desc.FormatDesc(wstrData.c_str(), COLOUR_DATA);
-    GetSyntaxView()->AppendSyntaxDesc(desc.GetResult());
-    return DbgCmdResult(em_dbgstat_succ, L"");
+    return DbgCmdResult(em_dbgstat_succ, desc.GetResult());
 }
 
 DbgCmdResult CProcDbgger::OnCmdReg(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam)
 {
     TITAN_ENGINE_CONTEXT_t context = GetCurrentDbgger()->GetCurrentContext();
-    if (bShow)
-    {
-        CSyntaxDescHlpr vDescHlpr;
-        vDescHlpr.FormatDesc(FormatW(L"CAX=0x%08x ", context.cax), COLOUR_MSG);
-        vDescHlpr.FormatDesc(FormatW(L"CBX=0x%08x ", context.cbx), COLOUR_MSG);
-        vDescHlpr.FormatDesc(FormatW(L"CCX=0x%08x ", context.ccx), COLOUR_MSG);
-        vDescHlpr.NextLine();
+    CSyntaxDescHlpr vDescHlpr;;
+    vDescHlpr.FormatDesc(FormatW(L"CAX=0x%08x ", context.cax), COLOUR_MSG);
+    vDescHlpr.FormatDesc(FormatW(L"CBX=0x%08x ", context.cbx), COLOUR_MSG);
+    vDescHlpr.FormatDesc(FormatW(L"CCX=0x%08x ", context.ccx), COLOUR_MSG);
+    vDescHlpr.NextLine();
 
-        vDescHlpr.FormatDesc(FormatW(L"CDX=0x%08x ", context.cdx), COLOUR_MSG);
-        vDescHlpr.FormatDesc(FormatW(L"CSI=0x%08x ", context.csi), COLOUR_MSG);
-        vDescHlpr.FormatDesc(FormatW(L"CDI=0x%08x ", context.cdi), COLOUR_MSG);
-        vDescHlpr.NextLine();
+    vDescHlpr.FormatDesc(FormatW(L"CDX=0x%08x ", context.cdx), COLOUR_MSG);
+    vDescHlpr.FormatDesc(FormatW(L"CSI=0x%08x ", context.csi), COLOUR_MSG);
+    vDescHlpr.FormatDesc(FormatW(L"CDI=0x%08x ", context.cdi), COLOUR_MSG);
+    vDescHlpr.NextLine();
 
-        vDescHlpr.FormatDesc(FormatW(L"CSP=0x%08x ", context.csp), COLOUR_MSG);
-        vDescHlpr.FormatDesc(FormatW(L"CBP=0x%08x ", context.cbp), COLOUR_MSG);
-        GetSyntaxView()->AppendSyntaxDesc(vDescHlpr.GetResult());
-    }
-    return DbgCmdResult(em_dbgstat_succ, L"");
+    vDescHlpr.FormatDesc(FormatW(L"CSP=0x%08x ", context.csp), COLOUR_MSG);
+    vDescHlpr.FormatDesc(FormatW(L"CBP=0x%08x ", context.cbp), COLOUR_MSG);
+    return DbgCmdResult(em_dbgstat_succ, vDescHlpr.GetResult());
 }
 
 DbgCmdResult CProcDbgger::OnCmdScript(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam)

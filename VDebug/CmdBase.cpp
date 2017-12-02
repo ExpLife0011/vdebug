@@ -3,6 +3,7 @@
 #include <set>
 #include "CmdBase.h"
 #include "symbol.h"
+#include "MainView.h"
 
 CCmdBase::CCmdBase()
 {}
@@ -35,6 +36,7 @@ DbgCmdResult CCmdBase::RunCommand(const ustring &wstrCmd, BOOL bShow, const CmdU
         wstrParam.trim();
     }
     res = OnCommand(wstrStart, wstrParam, bShow, pParam);
+    GetSyntaxView()->AppendSyntaxDesc(res.m_vSyntaxDesc);
     return res;
 }
 

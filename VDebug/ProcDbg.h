@@ -169,9 +169,9 @@ protected:
 protected:
     void ClearBreakPoint(DWORD dwSerial = -1);
     bool IsBreakpointSet(DWORD64 dwAddr) const;
-    bool DisassWithSize(DWORD64 dwAddr, DWORD64 dwSize) const;
-    bool DisassWithAddr(DWORD64 dwStartAddr, DWORD64 dwEndAddr) const;
-    bool DisassUntilRet(DWORD64 dwStartAddr) const;
+    bool DisassWithSize(DWORD64 dwAddr, DWORD64 dwSize, CSyntaxDescHlpr &hlpr) const;
+    bool DisassWithAddr(DWORD64 dwStartAddr, DWORD64 dwEndAddr, CSyntaxDescHlpr &hlpr) const;
+    bool DisassUntilRet(DWORD64 dwStartAddr, CSyntaxDescHlpr &hlpr) const;
     void GetDisassContentDesc(const ustring &wstrContent, CSyntaxDescHlpr &hlpr) const; //»ã±àÖ¸Áî×ÅÉ«
     virtual DbgCmdResult OnCommand(const ustring &wstrCmd, const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
     DbgCmdResult OnCmdBp(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);

@@ -5,7 +5,7 @@ CSyntaxDescHlpr &CSyntaxDescHlpr::FormatDesc(const ustring &wstrInfo, const Synt
 {
     m_vCurrentDesc.push_back(SyntaxColourNode(wstrInfo, m_wstrCurrentLine.size(), vDesc));
     m_wstrCurrentLine += wstrInfo;
-    //中英文对其
+    //中英文对齐
     mstring strData = WtoA(wstrInfo);
     if (strData.size() < dwFormatLength)
     {
