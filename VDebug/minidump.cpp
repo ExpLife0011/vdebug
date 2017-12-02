@@ -2,7 +2,6 @@
 #include <DbgHelp.h>
 #include "minidump.h"
 #include "common.h"
-#include "Debugger.h"
 #include "symbol.h"
 
 typedef struct DECLSPEC_ALIGN(16) _M128A {

@@ -2,6 +2,7 @@
 #include <Shlwapi.h>
 #include <set>
 #include "CmdBase.h"
+#include "symbol.h"
 
 CCmdBase::CCmdBase()
 {}
@@ -37,12 +38,6 @@ DbgCmdResult CCmdBase::RunCommand(const ustring &wstrCmd, BOOL bShow, const CmdU
     return res;
 }
 
-BOOL CCmdBase::InsertFunMsg(const ustring &wstrIndex, const DbgFunInfo &vProcInfo)
-{
-    m_vProcMap[wstrIndex] = vProcInfo;
-    return TRUE;
-}
-
 DWORD64 CCmdBase::GetFunAddr(const ustring &wstr)
 {
     ustring wstrContent(wstr);
@@ -63,12 +58,15 @@ DWORD64 CCmdBase::GetFunAddr(const ustring &wstr)
 
     DWORD64 dwOffset = 0;
     GetNumFromStr(wstrOffset, dwOffset);
-    map<ustring, DbgFunInfo>::const_iterator it;
-    if (m_vProcMap.end() == (it = m_vProcMap.find(wstrFun)))
-    {
-        return 0;
-    }
-    return (it->second.m_dwProcAddr + dwOffset);
+
+    CSymbolTaskHeader header;
+    CTaskGetAddrFromStr param;
+    header.m_dwSize = sizeof(header) + sizeof(param);
+    header.m_pParam = &param;
+    header.m_eTaskType = em_task_addrfromstr;
+    param.m_wstrStr = wstrContent;
+    GetSymbolHlpr()->SendTask(&header);
+    return (param.m_dwAddr + dwOffset);
 }
 
 //0x12abcd

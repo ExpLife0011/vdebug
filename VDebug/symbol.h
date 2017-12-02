@@ -4,7 +4,6 @@
 #include <list>
 #include "mstring.h"
 #include "LockBase.h"
-#include "Debugger.h"
 #include "CmdBase.h"
 #include "DbgBase.h"
 
@@ -25,7 +24,8 @@ typedef DWORD64 (CALLBACK *pfnStackTranslateAddressProc64)(HANDLE hProcess, HAND
 enum SymbolTask
 {
     em_task_loadsym,    //符号加载
-    em_task_symaddr,    //符号地址
+    em_task_strfromaddr,//获取地址对应的字符串名称
+    em_task_addrfromstr,//获取字符串名称对应的符号地址
     em_task_setpath,    //设置符号地址
     em_task_stackwalk,  //栈回朔
     em_task_findfile,   //在本地下载dump中的模块
@@ -104,6 +104,20 @@ struct CTaskUnloadSymbol
     DWORD64 m_dwModuleAddr;     //卸载模块地址
 };
 
+struct CTaskGetAddrFromStr
+{
+    ustring m_wstrStr;          //获取地址的字符串 eg:createfilew kernelbase!createfilew
+    DWORD64 m_dwBaseOfModule;   //模块基址
+
+    DWORD64 m_dwAddr;           //OUT 具体的符号所在地址
+
+    CTaskGetAddrFromStr()
+    {
+        m_dwBaseOfModule = 0;
+        m_dwAddr = 0;
+    }
+};
+
 struct CSymbolTaskHeader
 {
     CSymbolTaskHeader() : m_dwSize(0), m_hNotify(NULL), m_pParam(NULL), m_bSucc(FALSE)
@@ -135,7 +149,7 @@ protected:
     static bool StackWalk(CTaskStackWalkInfo *pStackWalkInfo);
     static bool SetSymbolPath(CTaskSetSymbolPath *pSymbolPath);
     static bool GetSymbolFromAddr(CTaskSymbolFromAddr *pSymbolInfo);
-    static BOOL CALLBACK EnumSymbolProc(PSYMBOL_INFOW pSymInfo, ULONG uSymbolSize, PVOID pUserContext);
+    static bool GetAddrFromStr(CTaskGetAddrFromStr *pSymbolInfo);
     static bool LoadSymbol(CTaskLoadSymbol *pModuleInfo);
     static bool DoTask(CSymbolTaskHeader *pTask);
     static DWORD WINAPI WorkThread(LPVOID pParam);

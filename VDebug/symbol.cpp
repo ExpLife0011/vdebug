@@ -1,9 +1,7 @@
 #include <Windows.h>
 #include <DbgHelp.h>
 #include "symbol.h"
-#include "Debugger.h"
 #include "common.h"
-#include "Command.h"
 #include "view/MainView.h"
 
 CSymbolHlpr::CSymbolHlpr(const ustring &wstrSymbolPath)
@@ -146,27 +144,6 @@ bool CSymbolHlpr::LoadModule(HANDLE hFile, const ustring &wstrDllPath, DWORD64 d
     return false;
 }
 
-BOOL CSymbolHlpr::EnumSymbolProc(PSYMBOL_INFOW pSymInfo, ULONG uSymbolSize, PVOID pUserContext)
-{
-    CTaskLoadSymbol *ptr = (CTaskLoadSymbol *)pUserContext;
-    ustring wstr = ptr->m_ModuleInfo.m_wstrDllName;
-    size_t pos = wstr.rfind(L'.');
-    if (pos != wstring::npos)
-    {
-        wstr.erase(pos, wstr.size() - pos);
-    }
-    wstr += L"!";
-    wstr += pSymInfo->Name;
-    DbgFunInfo info;
-    info.m_dwModuleBase = ptr->m_ModuleInfo.m_dwBaseOfImage;
-    info.m_dwProcAddr = pSymInfo->Address;
-    info.m_dwProcOffset = (info.m_dwProcAddr - info.m_dwModuleBase);
-    info.m_wstrModule = ptr->m_ModuleInfo.m_wstrDllName;
-    info.m_wstrFunName = pSymInfo->Name;
-    GetCurrentDbgger()->InsertFunMsg(wstr.makelower(), info);
-    return TRUE;
-}
-
 bool CSymbolHlpr::LoadSymbol(CTaskLoadSymbol *pModuleInfo)
 {
     ustring wstrDll = GetFilePathFromHandle(pModuleInfo->m_hImgaeFile);
@@ -187,9 +164,15 @@ bool CSymbolHlpr::LoadSymbol(CTaskLoadSymbol *pModuleInfo)
     wstr1.makelower();
     if (ustring::npos != wstr1.find(L"kernelbase.dll"))
     {
-        SYMBOL_INFOW info = {0};
         ustring wstrError = GetStdErrorStr();
-        int e = 1;
+
+        char szBuffer[4096] = {0};
+        SYMBOL_INFOW *pTest = (SYMBOL_INFOW *)szBuffer;
+        pTest->SizeOfStruct  = sizeof(SYMBOL_INFOW);
+        pTest->MaxNameLen = 1024;
+        pTest->ModBase = dwBaseOfModule;
+        SymFromNameW(NULL, L"kernelbase!createfileW", pTest);
+        int dd = 0;
     }
 
     IMAGEHLP_MODULEW64 info = {0};
@@ -199,14 +182,6 @@ bool CSymbolHlpr::LoadSymbol(CTaskLoadSymbol *pModuleInfo)
     DbgModuleInfo *pModule = &(pModuleInfo->m_ModuleInfo);
     pModule->m_wstrDllPath = wstrDll;
     pModule->m_wstrDllName = PathFindFileNameW(wstrDll.c_str());
-    SymEnumSymbolsW(
-        NULL,
-        dwBaseAddr,
-        NULL,
-        EnumSymbolProc,
-        pModuleInfo
-        );
-
     pModule->m_dwBaseOfImage = dwBaseAddr;
     pModule->m_dwModuleSize = info.ImageSize;
     pModule->m_dwEndAddr = (pModule->m_dwBaseOfImage + pModule->m_dwModuleSize);
@@ -218,7 +193,7 @@ bool CSymbolHlpr::GetSymbolFromAddr(CTaskSymbolFromAddr *pSymbolInfo)
 {
     DWORD64 dwOffset = 0;
     ULONG64 buffer[(sizeof(SYMBOL_INFO) +
-        MAX_SYM_NAME*sizeof(TCHAR) +
+        MAX_SYM_NAME*sizeof(WCHAR) +
         sizeof(ULONG64) - 1) /
         sizeof(ULONG64)] = {0};
     PSYMBOL_INFOW pSymbol = (PSYMBOL_INFOW)buffer;
@@ -248,6 +223,22 @@ bool CSymbolHlpr::GetSymbolFromAddr(CTaskSymbolFromAddr *pSymbolInfo)
         pSymbolInfo->m_wstrSymbol = pSymbol->Name;
     }
     return true;
+}
+
+bool CSymbolHlpr::GetAddrFromStr(CTaskGetAddrFromStr *pSymbolInfo)
+{
+    char szBuffer[4096] = {0};
+    PSYMBOL_INFOW pSymbol = (PSYMBOL_INFOW)szBuffer;
+    pSymbol->SizeOfStruct = sizeof(SYMBOL_INFOW);
+    pSymbol->MaxNameLen = 512;
+    pSymbol->ModBase = pSymbolInfo->m_dwBaseOfModule;
+
+    if (SymFromNameW(NULL, pSymbolInfo->m_wstrStr.c_str(), pSymbol))
+    {
+        pSymbolInfo->m_dwAddr = pSymbol->Address;
+        return true;
+    }
+    return false;
 }
 
 bool CSymbolHlpr::SetSymbolPath(CTaskSetSymbolPath *pSymbolPath)
@@ -327,9 +318,14 @@ bool CSymbolHlpr::DoTask(CSymbolTaskHeader *pTask)
             bStat = LoadSymbol((CTaskLoadSymbol *)pTask->m_pParam);
         }
         break;
-    case  em_task_symaddr:
+    case  em_task_strfromaddr:
         {
             bStat = GetSymbolFromAddr((CTaskSymbolFromAddr *)pTask->m_pParam);
+        }
+        break;
+    case  em_task_addrfromstr:
+        {
+            bStat = GetAddrFromStr((CTaskGetAddrFromStr *)pTask->m_pParam);
         }
         break;
     case  em_task_setpath:
@@ -367,6 +363,8 @@ DWORD CSymbolHlpr::WorkThread(LPVOID pParam)
     CSymbolTaskHeader *pTask = NULL;
 
     //符号支持需要symsrv.dll的支持并需要symsrv.yes文件
+    //忽略大小写匹配
+    SymSetOptions(SymGetOptions() | SYMOPT_CASE_INSENSITIVE);
     SymInitializeW(NULL, pThis->m_wstrSymbolPath.c_str(), FALSE);
     SetEvent(pThis->m_hInitEvent);
     while (TRUE)

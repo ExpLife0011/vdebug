@@ -1,6 +1,5 @@
 #include "Disasm.h"
 #include "memory.h"
-#include "Debugger.h"
 #include "MainView.h"
 #include "common.h"
 

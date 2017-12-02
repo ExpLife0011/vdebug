@@ -43,6 +43,7 @@ public:
 
     BOOL SetBreakPoint(DWORD64 dwAddr, const CmdUserParam *pUserContext = NULL);
     BOOL DeleteBp(DWORD64 dwAddr);
+    BOOL DeleteAllBp();
     BOOL EnableBp(DWORD64 dwAddr);
     BOOL DisableBp(DWORD64 dwAddr);
 

@@ -1,7 +1,6 @@
 #include "OpenView.h"
 #include "common.h"
 #include "../resource.h"
-#include "../Debugger.h"
 #include "MainView.h"
 
 #define REG_KEY_PROCCACHE       L"software\\vdebug\\proccache"

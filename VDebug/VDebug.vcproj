@@ -185,15 +185,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Command.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\DbgBase.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Debugger.cpp"
 				>
 			</File>
 			<File
@@ -243,19 +235,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Command.h"
-				>
-			</File>
-			<File
 				RelativePath=".\DbgBase.h"
 				>
 			</File>
 			<File
 				RelativePath=".\DbgProxy.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Debugger.h"
 				>
 			</File>
 			<File

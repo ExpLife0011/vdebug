@@ -1,7 +1,6 @@
 #ifndef  MAINVIEW_VDEBUG_H_H_
 #define MAINVIEW_VDEBUG_H_H_
 #include "SyntaxView.h"
-#include "../Debugger.h"
 #include "../DbgProxy.h"
 
 CSynbaxView *GetSyntaxView();

@@ -93,8 +93,5 @@ protected:
 
 protected:
     virtual DbgCmdResult OnCommand(const ustring &wstrCmd, const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
-
-protected:
-    map<ustring, DbgFunInfo> m_vProcMap;
 };
 #endif

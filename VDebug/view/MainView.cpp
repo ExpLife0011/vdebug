@@ -6,11 +6,9 @@
 #include "../ParserAsm.h"
 #include "ProcView.h"
 #include "../resource.h"
-#include "../Debugger.h"
 #include "SyntaxDescHlpr.h"
 #include "SyntaxCfg.h"
 #include "MainView.h"
-#include "../Command.h"
 #include "CmdQueue.h"
 #include "OpenView.h"
 #include "../DbgProxy.h"
@@ -388,7 +386,7 @@ static VOID _OnExecCommand(HWND hwnd, WPARAM wp, LPARAM lp)
     DbgCmdResult res = GetCurrentDbgger()->RunCommand(wstr.c_str());
 
     CSyntaxDescHlpr hlpr;
-    if (res.m_eStatus != em_status_succ)
+    if (res.m_eStatus != em_dbgstat_succ)
     {
         hlpr.FormatDesc(res.m_wstrResult.c_str(), COLOUR_ERROR);
         hlpr.AddEmptyLine();

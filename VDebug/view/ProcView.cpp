@@ -3,7 +3,6 @@
 #include "common.h"
 #include <commctrl.h>
 #include "winsize.h"
-#include "../Debugger.h"
 
 enum ProcSortType
 {

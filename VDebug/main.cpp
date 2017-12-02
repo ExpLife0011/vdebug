@@ -1,10 +1,17 @@
 #include <Windows.h>
 #include "view.h"
-#include "Debugger.h"
 #include "Index.h"
 #include "Script.h"
 #include "minidump.h"
 #include "symbol.h"
+
+#pragma comment(lib, "Dbghelp.lib")
+
+#if _WIN64 || WIN64
+#pragma comment(lib, "capstone/capstone_x64.lib")
+#else
+#pragma comment(lib, "capstone/capstone_x86.lib")
+#endif
 
 HINSTANCE g_hInstance = NULL;
 
@@ -34,7 +41,6 @@ int WINAPI WinMain(HINSTANCE m, HINSTANCE p, LPSTR cmd, int show)
 
     //MessageBoxW(0, 0, 0, 0);
     //return 0;
-
     CoInitialize(NULL);
     g_hInstance = m;
     ShowMainView();

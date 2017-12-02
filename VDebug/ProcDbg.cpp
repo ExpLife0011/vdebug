@@ -232,7 +232,7 @@ ustring CProcDbgger::GetSymFromAddr(DWORD64 dwAddr) const
     task.m_dwAddr = dwAddr;
     CSymbolTaskHeader header;
     header.m_dwSize = sizeof(CTaskSymbolFromAddr) + sizeof(CSymbolTaskHeader);
-    header.m_eTaskType = em_task_symaddr;
+    header.m_eTaskType = em_task_strfromaddr;
 
     DbgModuleInfo module = GetModuleFromAddr(dwAddr);
     if (module.m_wstrDllName.empty())
@@ -304,6 +304,7 @@ void CProcDbgger::OnCreateProcess(CREATE_PROCESS_DEBUG_INFO* pCreateProcessInfo)
 void CProcDbgger::OnDetachDbgger()
 {
     GetProcDbgger()->ResetCache();
+    GetBreakPointMgr()->DeleteAllBp();
     CSymbolTaskHeader task;
     task.m_dwSize = sizeof(CSymbolTaskHeader);
     task.m_eTaskType = em_task_unloadall;
@@ -449,10 +450,16 @@ DbgCmdResult CProcDbgger::OnCommand(const ustring &wstrCmd, const ustring &wstrC
     {
         return OnCmdBc(wstrCmdParam, bShow, pParam);
     }
+    //切换到指定线程
     else if (wstrCmd == L"tc")
     {
     }
+    //展示指定线程
     else if (wstrCmd == L"ts")
+    {
+    }
+    //展示模块信息
+    else if (wstrCmd == L"lm")
     {
     }
     else if (wstrCmd == L"cls")

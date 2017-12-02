@@ -2,10 +2,8 @@
 #include <list>
 #include "Script.h"
 #include "memory.h"
-#include "Debugger.h"
 #include "common.h"
 #include "crc32.h"
-#include "Command.h"
 #include "memory.h"
 #include "SyntaxDescHlpr.h"
 #include "MainView.h"

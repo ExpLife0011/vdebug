@@ -84,6 +84,16 @@ BOOL CBreakPointMgr::DeleteBp(DWORD64 dwAddr)
     return TRUE;
 }
 
+BOOL CBreakPointMgr::DeleteAllBp()
+{
+    for (vector<BreakPointInfo>::const_iterator it = m_vBreakPoints.begin() ; it != m_vBreakPoints.end() ; it++)
+    {
+        DeleteBPX((ULONG_PTR)it->m_dwBpAddr);
+    }
+    m_vBreakPoints.clear();
+    return TRUE;
+}
+
 BOOL CBreakPointMgr::OnBreakPoint(DWORD64 dwAddr)
 {
     for (vector<BreakPointInfo>::const_iterator it = m_vBreakPoints.begin() ; it != m_vBreakPoints.end() ; it++)
