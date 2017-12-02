@@ -2,7 +2,6 @@
 #include "SyntaxDescHlpr.h"
 #include "common.h"
 #include "MainView.h"
-#include "Command.h"
 #include "ProcDbg.h"
 
 CBreakPointMgr::CBreakPointMgr()
@@ -64,7 +63,7 @@ BOOL CBreakPointMgr::SetBreakPoint(DWORD64 dwAddr, const CmdUserParam *pUserCont
         point.m_wstrName = GetCurrentDbgger()->GetSymFromAddr(dwAddr);
         if (pUserContxt)
         {
-            memcpy(&point.m_vUserContext, pUserContxt, sizeof(CmdUserContext));
+            memcpy(&point.m_vUserContext, pUserContxt, sizeof(CmdUserParam));
         }
         PushBreakPoint(point);
         return TRUE;

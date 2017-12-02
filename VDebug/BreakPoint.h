@@ -4,7 +4,6 @@
 #include <vector>
 #include <map>
 #include "mstring.h"
-#include "Command.h"
 #include "CmdBase.h"
 
 using namespace std;

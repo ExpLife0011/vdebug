@@ -1,7 +1,7 @@
 #include "SyntaxDescHlpr.h"
 #include "common.h"
 
-VOID CSyntaxDescHlpr::FormatDesc(const ustring &wstrInfo, const SyntaxColourDesc &vDesc, DWORD dwFormatLength)
+CSyntaxDescHlpr &CSyntaxDescHlpr::FormatDesc(const ustring &wstrInfo, const SyntaxColourDesc &vDesc, DWORD dwFormatLength)
 {
     m_vCurrentDesc.push_back(SyntaxColourNode(wstrInfo, m_wstrCurrentLine.size(), vDesc));
     m_wstrCurrentLine += wstrInfo;
@@ -14,6 +14,7 @@ VOID CSyntaxDescHlpr::FormatDesc(const ustring &wstrInfo, const SyntaxColourDesc
             m_wstrCurrentLine += L" ";
         }
     }
+    return *this;
 }
 
 VOID CSyntaxDescHlpr::NextLine()

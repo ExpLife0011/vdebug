@@ -388,15 +388,13 @@ static VOID _OnExecCommand(HWND hwnd, WPARAM wp, LPARAM lp)
     CSyntaxDescHlpr hlpr;
     if (res.m_eStatus != em_dbgstat_succ)
     {
-        hlpr.FormatDesc(res.m_wstrResult.c_str(), COLOUR_ERROR);
-        hlpr.AddEmptyLine();
-        gs_pSyntaxView->AppendSyntaxDesc(hlpr.GetResult());
+        gs_pSyntaxView->AppendSyntaxDesc(res.m_vSyntaxDesc);
     }
     else
     {
         hlpr.FormatDesc(ustring().format(L"%ls Ö´ÐÐÍê³É", wstr.c_str()).c_str(), COLOUR_MSG);
         hlpr.AddEmptyLine();
-        gs_pSyntaxView->AppendSyntaxDesc(hlpr.GetResult());
+        gs_pSyntaxView->AppendSyntaxDesc(res.m_vSyntaxDesc);
     }
     SetWindowTextW(gs_hCommand, L"");
 }

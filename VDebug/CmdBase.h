@@ -4,6 +4,8 @@
 #include <vector>
 #include <map>
 #include "mstring.h"
+#include "view/SyntaxView.h"
+#include "view/SyntaxDescHlpr.h"
 
 using namespace std;
 
@@ -34,24 +36,35 @@ enum DbgCmdStatus
 
 struct DbgCmdResult
 {
-    ustring m_wstrResult;       //Json格式的返回结果
-    DbgCmdStatus m_eStatus;
+    SyntaxDesc m_vSyntaxDesc;   //命令返回的高亮语法结果
+    DbgCmdStatus m_eStatus;     //命令执行结果
 
     DbgCmdResult()
     {
         m_eStatus = em_dbgstat_cmdnotfound;
-        m_wstrResult = L"非内置命令";
     }
 
-    DbgCmdResult(DbgCmdStatus eStatus, const ustring &wstrResult)
+    DbgCmdResult(DbgCmdStatus eStatus, const SyntaxDesc &vSyntaxDesc)
     {
         m_eStatus = eStatus;
-        m_wstrResult = wstrResult;
+        m_vSyntaxDesc = vSyntaxDesc;
     }
 
     DbgCmdResult(DbgCmdStatus eStatus)
     {
         m_eStatus = eStatus;
+    }
+
+    DbgCmdResult(DbgCmdStatus eStatus, const ustring &wstrMsg)
+    {
+        m_eStatus = eStatus;
+        CSyntaxDescHlpr hlpr;
+        m_vSyntaxDesc = hlpr.FormatDesc(wstrMsg).GetResult();
+    }
+
+    void SetResult(const SyntaxDesc &vSyntaxDesc)
+    {
+        m_vSyntaxDesc = vSyntaxDesc;
     }
 };
 

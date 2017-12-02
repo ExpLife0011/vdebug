@@ -3,7 +3,6 @@
 #include "view/SyntaxDescHlpr.h"
 #include "common/common.h"
 #include "view/MainView.h"
-#include "Command.h"
 #include "symbol.h"
 #include "BreakPoint.h"
 #include "Disasm.h"
@@ -482,6 +481,9 @@ DbgCmdResult CProcDbgger::OnCommand(const ustring &wstrCmd, const ustring &wstrC
     {
         return OnCmdGo(wstrCmdParam, bShow, pParam);
     }
+    else if (wstrCmd == L"gu")
+    {
+    }
     else if (wstrCmd == L"kv")
     {
         return OnCmdKv(wstrCmdParam, bShow, pParam);
@@ -523,12 +525,16 @@ bool CProcDbgger::IsBreakpointSet(DWORD64 dwAddr) const
 
 DbgCmdResult CProcDbgger::OnCmdBp(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam)
 {
+    DbgCmdResult result;
+    CSyntaxDescHlpr hlpr;
     ustring wstr(wstrCmdParam);
     wstr.trim();
 
     if (wstr.empty())
     {
-        return DbgCmdResult();
+        hlpr.FormatDesc(L"bp²ÎÊý´íÎó");
+        result.SetResult(hlpr.GetResult());
+        return result;
     }
 
     DWORD64 dwProcAddr = 0;
