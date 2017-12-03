@@ -8,6 +8,7 @@
 #include "DbgProxy.h"
 #include "TitanEngine/TitanEngine.h"
 #include "SyntaxDescHlpr.h"
+#include "common.h"
 
 using namespace std;
 
@@ -116,6 +117,7 @@ public:
     ustring GetSymFromAddr(DWORD64 dwAddr) const;
     HANDLE GetDbgProc() const;
     HANDLE GetCurrentThread();
+    HANDLE GetThreadById(DWORD dwId) const;
 
 protected:
     //读写调试进程内存
@@ -143,15 +145,15 @@ protected:
     static DWORD64 CALLBACK StackTranslateAddressProc64(HANDLE hProcess, HANDLE hThread, LPADDRESS64 lpaddr);
 
 protected:
+    void DeleteThreadById(DWORD dwId);
     DEBUG_EVENT *GetDebugProcData();
-    HANDLE GetThreadHandle(DWORD dwThreadId);
     bool LoadModuleInfo(HANDLE hFile, DWORD64 dwBaseOfModule);
     void ResetCache();
     void OnDetachDbgger();
     virtual list<STACKFRAME64> GetStackFrame(const ustring &wstrParam);
 
 protected:
-    map<DWORD, DbgProcThreadInfo> m_vThreadMap;
+    list<DbgProcThreadInfo> m_vThreadMap;
     map<DWORD64, DbgModuleInfo> m_vModuleInfo;
     DWORD m_dwCurDebugProc;
     DbgProcInfo m_vDbgProcInfo;
@@ -167,6 +169,7 @@ protected:
 
     //调试器对应的命令
 protected:
+    ustring GetStatusStr(ThreadStat eStat, ThreadWaitReason eWaitReason) const;
     void ClearBreakPoint(DWORD dwSerial = -1);
     bool IsBreakpointSet(DWORD64 dwAddr) const;
     bool DisassWithSize(DWORD64 dwAddr, DWORD64 dwSize, CSyntaxDescHlpr &hlpr) const;
@@ -190,6 +193,7 @@ protected:
     DbgCmdResult OnCmdDu(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
     DbgCmdResult OnCmdReg(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
     DbgCmdResult OnCmdScript(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
+    DbgCmdResult OnCmdTs(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
 };
 
 CProcDbgger *GetProcDbgger();

@@ -109,6 +109,12 @@
             "backColour": "null",
             "bold": 0,
             "italic": 1
+        },
+        "hight": {
+            "textColour": "19,255,192",
+            "backColour": "null",
+            "bold": 0,
+            "italic": 1
         }
     }
 }

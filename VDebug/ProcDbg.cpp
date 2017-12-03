@@ -172,42 +172,28 @@ DEBUG_EVENT *CProcDbgger::GetDebugProcData()
     return (DEBUG_EVENT *)GetDebugData();
 }
 
-HANDLE CProcDbgger::GetThreadHandle(DWORD dwThreadId)
-{
-    map<DWORD, DbgProcThreadInfo>::const_iterator it = m_vThreadMap.find(dwThreadId);
-    if (m_vThreadMap.end() == it)
-    {
-        return NULL;
-    }
-    else
-    {
-        return it->second.m_hThread;
-    }
-}
-
 TITAN_ENGINE_CONTEXT_t CProcDbgger::GetCurrentContext()
 {
     DEBUG_EVENT *ptr = GetDebugProcData();
-
     TITAN_ENGINE_CONTEXT_t context = {0};
-    map<DWORD, DbgProcThreadInfo>::const_iterator it = m_vThreadMap.find(ptr->dwThreadId);
-    if (it == m_vThreadMap.end())
-    {
-        return context;
-    }
-    GetFullContextDataEx(it->second.m_hThread, &context);
+    GetFullContextDataEx(GetThreadById(ptr->dwThreadId), &context);
     return context;
 }
 
 HANDLE CProcDbgger::GetCurrentThread()
 {
     DEBUG_EVENT *ptr = GetDebugProcData();
+    return GetThreadById(ptr->dwThreadId);
+}
 
-    TITAN_ENGINE_CONTEXT_t context = {0};
-    map<DWORD, DbgProcThreadInfo>::const_iterator it = m_vThreadMap.find(ptr->dwThreadId);
-    if (it != m_vThreadMap.end())
+HANDLE CProcDbgger::GetThreadById(DWORD dwId) const
+{
+    for (list<DbgProcThreadInfo>::const_iterator it = m_vThreadMap.begin() ; it != m_vThreadMap.end() ; it++)
     {
-        return it->second.m_hThread;
+        if (it->m_dwThreadId == dwId)
+        {
+            return it->m_hThread;
+        }
     }
     return NULL;
 }
@@ -216,6 +202,11 @@ DbgModuleInfo CProcDbgger::GetModuleFromAddr(DWORD64 dwAddr) const
 {
     for (map<DWORD64, DbgModuleInfo>::const_iterator it = m_vModuleInfo.begin() ; it != m_vModuleInfo.end() ; it++)
     {
+        if (it->second.m_wstrDllName == L"vdebug.exe")
+        {
+            int dd = 1;
+        }
+
         if (dwAddr >= it->second.m_dwBaseOfImage && dwAddr <= it->second.m_dwEndAddr)
         {
             return it->second;
@@ -223,6 +214,18 @@ DbgModuleInfo CProcDbgger::GetModuleFromAddr(DWORD64 dwAddr) const
     }
 
     return DbgModuleInfo();
+}
+
+void CProcDbgger::DeleteThreadById(DWORD dwId)
+{
+    for (list<DbgProcThreadInfo>::const_iterator it = m_vThreadMap.begin() ; it != m_vThreadMap.end() ; it++)
+    {
+        if (it->m_dwThreadId == dwId)
+        {
+            m_vThreadMap.erase(it);
+            return;
+        }
+    }
 }
 
 ustring CProcDbgger::GetSymFromAddr(DWORD64 dwAddr) const
@@ -293,7 +296,7 @@ void CProcDbgger::OnCreateProcess(CREATE_PROCESS_DEBUG_INFO* pCreateProcessInfo)
     tp.m_dwStartAddr = (DWORD64)pCreateProcessInfo->lpStartAddress;
     tp.m_wstrName = L"主线程";
 
-    (GetProcDbgger()->m_vThreadMap)[dwId] = tp;
+    (GetProcDbgger()->m_vThreadMap).push_back(tp);
     GetProcDbgger()->m_dwCurDebugProc = GetProcessId(pCreateProcessInfo->hProcess);
 
     GetProcDbgger()->m_vDbgProcInfo.m_hProcess = pCreateProcessInfo->hProcess;
@@ -331,21 +334,23 @@ void CProcDbgger::OnCreateThread(CREATE_THREAD_DEBUG_INFO* CreateThread)
     newThread.m_dwStartAddr = (DWORD64)CreateThread->lpStartAddress;
     newThread.m_dwLocalBase = (DWORD64)CreateThread->lpThreadLocalBase;
     newThread.m_hThread = CreateThread->hThread;
-
-    GetProcDbgger()->m_vThreadMap[newThread.m_dwThreadId] = newThread;
+    GetProcDbgger()->m_vThreadMap.push_back(newThread);
 }
 
 void CProcDbgger::OnExitThread(EXIT_THREAD_DEBUG_INFO* ExitThread)
 {
     DWORD dwId = ((DEBUG_EVENT*)GetDebugData())->dwThreadId;
-    GetProcDbgger()->m_vThreadMap.erase(dwId);
+    GetProcDbgger()->DeleteThreadById(dwId);
+    return;
 }
 
 void CProcDbgger::OnSystemBreakpoint(void* ExceptionData)
 {
     DWORD dwId = ((DEBUG_EVENT*)GetDebugData())->dwThreadId;
     GetProcDbgger()->m_dwCurrentThreadId = dwId;
-    if (GetProcDbgger()->m_vThreadMap.end() == GetProcDbgger()->m_vThreadMap.find(dwId))
+    HANDLE hThread = GetProcDbgger()->GetThreadById(dwId);
+
+    if (!hThread)
     {
         return;
     }
@@ -355,8 +360,6 @@ void CProcDbgger::OnSystemBreakpoint(void* ExceptionData)
     {
         return;
     }
-
-    HANDLE hThread = GetProcDbgger()->m_vThreadMap[dwId].m_hThread;
     UINT cip = GetContextDataEx(hThread, UE_CIP);
     GetProcDbgger()->RunCommand(L"r");
     GetProcDbgger()->Wait();
@@ -456,6 +459,7 @@ DbgCmdResult CProcDbgger::OnCommand(const ustring &wstrCmd, const ustring &wstrC
     //展示指定线程
     else if (wstrCmd == L"ts")
     {
+        return OnCmdTs(wstrCmdParam, bShow, pParam);
     }
     //展示模块信息
     else if (wstrCmd == L"lm")
@@ -639,6 +643,59 @@ DbgCmdResult CProcDbgger::OnCmdBc(const ustring &wstrCmdParam, BOOL bShow, const
     return DbgCmdResult(em_dbgstat_succ, FormatW(L"已清除%02x号断点", dwSerial));
 }
 
+ustring CProcDbgger::GetStatusStr(ThreadStat eStat, ThreadWaitReason eWaitReason) const
+{
+    return L"正常运行";
+}
+
+DbgCmdResult CProcDbgger::OnCmdTs(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam)
+{
+    DbgCmdResult res;
+    CSyntaxDescHlpr hlpr;
+    hlpr.FormatDesc(L"序号 ");
+    hlpr.FormatDesc(L"线程ID", COLOUR_MSG, 12);
+    hlpr.FormatDesc(L"启动时间", COLOUR_MSG, 25);
+    hlpr.FormatDesc(L"状态", COLOUR_MSG, 10);
+    hlpr.FormatDesc(L"启动位置");
+
+    list<ThreadInformation> vThreads;
+    GetThreadInformation(GetProcDbgger()->GetDebugProcData()->dwProcessId, vThreads);
+    int iIndex = 0;
+    for (list<DbgProcThreadInfo>::const_iterator it = m_vThreadMap.begin() ; it != m_vThreadMap.end() ; it++, iIndex++)
+    {
+        for (list<ThreadInformation>::const_iterator itSingle = vThreads.begin() ; itSingle != vThreads.end() ; itSingle++)
+        {
+            if (it->m_dwThreadId == itSingle->m_dwThreadId)
+            {
+                hlpr.NextLine();
+                hlpr.FormatDesc(FormatW(L"%02x", iIndex), COLOUR_MSG, 5);
+                hlpr.FormatDesc(FormatW(L"%x:%d", it->m_dwThreadId, it->m_dwThreadId), COLOUR_MSG, 12);
+
+                SYSTEMTIME time = {0};
+                FileTimeToSystemTime(&(itSingle->m_vCreateTime), &time);
+                hlpr.FormatDesc(
+                    FormatW(
+                    L"%04d-%02d-%02d %02d:%02d:%02d %03d ",
+                    time.wYear,
+                    time.wMonth,
+                    time.wDay,
+                    time.wHour,
+                    time.wMinute,
+                    time.wSecond,
+                    time.wMilliseconds
+                    ),
+                    COLOUR_MSG,
+                    25
+                    );
+                hlpr.FormatDesc(GetStatusStr(itSingle->m_eStat, itSingle->m_eWaitReason), COLOUR_MSG, 10);
+                hlpr.FormatDesc(GetSymFromAddr(it->m_dwStartAddr), COLOUR_PROC);
+            }
+        }
+    }
+    res.SetResult(hlpr.GetResult());
+    return res;
+}
+
 DbgCmdResult CProcDbgger::OnCmdBu(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam)
 {
     return DbgCmdResult(em_dbgstat_succ);
@@ -694,7 +751,7 @@ bool CProcDbgger::DisassWithSize(DWORD64 dwAddr, DWORD64 dwSize, CSyntaxDescHlpr
         {
             hlpr.FormatDesc(it->m_wstrAddr, COLOUR_ADDR, 10);
             hlpr.FormatDesc(it->m_wstrByteCode, COLOUR_BYTE, 18);
-            hlpr.FormatDesc(it->m_wstrOpt, COLOUR_INST, 8);
+            hlpr.FormatDesc(it->m_wstrOpt, COLOUR_INST, 12);
             GetDisassContentDesc(it->m_wstrContent, hlpr);
             hlpr.NextLine();
         }
@@ -728,7 +785,7 @@ bool CProcDbgger::DisassWithAddr(DWORD64 dwStartAddr, DWORD64 dwEndAddr, CSyntax
             }
             hlpr.FormatDesc(it->m_wstrAddr, COLOUR_ADDR, 10);
             hlpr.FormatDesc(it->m_wstrByteCode, COLOUR_BYTE, 18);
-            hlpr.FormatDesc(it->m_wstrOpt, COLOUR_INST, 8);
+            hlpr.FormatDesc(it->m_wstrOpt, COLOUR_INST, 12);
             GetDisassContentDesc(it->m_wstrContent, hlpr);
             hlpr.NextLine();
         }
@@ -752,7 +809,7 @@ bool CProcDbgger::DisassUntilRet(DWORD64 dwStartAddr, CSyntaxDescHlpr &hlpr) con
         {
             hlpr.FormatDesc(it->m_wstrAddr, COLOUR_ADDR, 10);
             hlpr.FormatDesc(it->m_wstrByteCode, COLOUR_BYTE, 18);
-            hlpr.FormatDesc(it->m_wstrOpt, COLOUR_INST, 8);
+            hlpr.FormatDesc(it->m_wstrOpt, COLOUR_INST, 12);
             GetDisassContentDesc(it->m_wstrContent, hlpr);
             hlpr.NextLine();
         }
@@ -1084,18 +1141,18 @@ DbgCmdResult CProcDbgger::OnCmdReg(const ustring &wstrCmdParam, BOOL bShow, cons
 {
     TITAN_ENGINE_CONTEXT_t context = GetCurrentDbgger()->GetCurrentContext();
     CSyntaxDescHlpr vDescHlpr;;
-    vDescHlpr.FormatDesc(FormatW(L"CAX=0x%08x ", context.cax), COLOUR_MSG);
-    vDescHlpr.FormatDesc(FormatW(L"CBX=0x%08x ", context.cbx), COLOUR_MSG);
-    vDescHlpr.FormatDesc(FormatW(L"CCX=0x%08x ", context.ccx), COLOUR_MSG);
+    vDescHlpr.FormatDesc(FormatW(L"cax=0x%08x ", context.cax), COLOUR_MSG);
+    vDescHlpr.FormatDesc(FormatW(L"cbx=0x%08x ", context.cbx), COLOUR_MSG);
+    vDescHlpr.FormatDesc(FormatW(L"ccx=0x%08x ", context.ccx), COLOUR_MSG);
     vDescHlpr.NextLine();
 
-    vDescHlpr.FormatDesc(FormatW(L"CDX=0x%08x ", context.cdx), COLOUR_MSG);
-    vDescHlpr.FormatDesc(FormatW(L"CSI=0x%08x ", context.csi), COLOUR_MSG);
-    vDescHlpr.FormatDesc(FormatW(L"CDI=0x%08x ", context.cdi), COLOUR_MSG);
+    vDescHlpr.FormatDesc(FormatW(L"cdx=0x%08x ", context.cdx), COLOUR_MSG);
+    vDescHlpr.FormatDesc(FormatW(L"csi=0x%08x ", context.csi), COLOUR_MSG);
+    vDescHlpr.FormatDesc(FormatW(L"cdi=0x%08x ", context.cdi), COLOUR_MSG);
     vDescHlpr.NextLine();
 
-    vDescHlpr.FormatDesc(FormatW(L"CSP=0x%08x ", context.csp), COLOUR_MSG);
-    vDescHlpr.FormatDesc(FormatW(L"CBP=0x%08x ", context.cbp), COLOUR_MSG);
+    vDescHlpr.FormatDesc(FormatW(L"csp=0x%08x ", context.csp), COLOUR_MSG);
+    vDescHlpr.FormatDesc(FormatW(L"cbp=0x%08x ", context.cbp), COLOUR_MSG);
     return DbgCmdResult(em_dbgstat_succ, vDescHlpr.GetResult());
 }
 

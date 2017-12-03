@@ -19,6 +19,7 @@
 #define COLOUR_PARAM            GetSyntaxCfg(L"param")          //参数
 #define COLOUR_KEYWORD          GetSyntaxCfg(L"keyword")        //关键字
 #define COLOUR_NUM              GetSyntaxCfg(L"num")            //数字
+#define COLOUR_HIGHT            GetSyntaxCfg(L"hight")          //高亮
 /*语法高亮配置 结束*/
 
 struct SyntaxColourDesc

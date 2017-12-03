@@ -11,6 +11,46 @@ CCmdBase::CCmdBase()
 CCmdBase::~CCmdBase()
 {}
 
+bool CCmdBase::OnFilter(SyntaxDesc &desc, const ustring &wstrFilter) const
+{
+    vector<ustring>::const_iterator it = desc.m_vShowInfo.begin();
+    vector<vector<SyntaxColourNode>> ::const_iterator itDesc;
+    itDesc = desc.m_vSyntaxDesc.begin();
+    int index = 0;
+    while (it != desc.m_vShowInfo.end())
+    {
+        if (ustring::npos == it->find(wstrFilter))
+        {
+            it = desc.m_vShowInfo.erase(it);
+            desc.m_vSyntaxDesc.erase(desc.m_vSyntaxDesc.begin() + index);
+        }
+        else
+        {
+            it++;
+            index++;
+        }
+    }
+    return true;
+}
+
+bool CCmdBase::OnHight(SyntaxDesc &desc, const ustring &wstrHight) const
+{
+    vector<vector<SyntaxColourNode>> ::iterator itDesc = desc.m_vSyntaxDesc.begin();
+    vector<SyntaxColourNode>::iterator itNode;
+    int iSerial = 0;
+    for (vector<ustring>::const_iterator it = desc.m_vShowInfo.begin() ; it != desc.m_vShowInfo.end() ; it++, iSerial++, itDesc++)
+    {
+        if (ustring::npos != it->find(wstrHight))
+        {
+            for (itNode = itDesc->begin() ; itNode != itDesc->end() ; itNode++)
+            {
+                itNode->m_vHightLightDesc = COLOUR_HIGHT;
+            }
+        }
+    }
+    return true;
+}
+
 DbgCmdResult CCmdBase::RunCommand(const ustring &wstrCmd, BOOL bShow, const CmdUserParam *pParam)
 {
     DbgCmdResult res;
@@ -21,6 +61,14 @@ DbgCmdResult CCmdBase::RunCommand(const ustring &wstrCmd, BOOL bShow, const CmdU
     {
         return res;
     }
+
+    bool bFilter = false;
+    ustring wstrFilter;
+    bool bHight = false;
+    ustring wstrHight;
+    bFilter = IsFilterStr(wstr, wstrFilter);
+    bHight = IsHightStr(wstr, wstrHight);
+    wstr.trim();
 
     ustring wstrStart;
     ustring wstrParam;
@@ -36,6 +84,14 @@ DbgCmdResult CCmdBase::RunCommand(const ustring &wstrCmd, BOOL bShow, const CmdU
         wstrParam.trim();
     }
     res = OnCommand(wstrStart, wstrParam, bShow, pParam);
+    if (bFilter)
+    {
+        OnFilter(res.m_vSyntaxDesc, wstrFilter);
+    }
+    else if (bHight)
+    {
+        OnHight(res.m_vSyntaxDesc, wstrHight);
+    }
     GetSyntaxView()->AppendSyntaxDesc(res.m_vSyntaxDesc);
     return res;
 }
@@ -213,6 +269,62 @@ BOOL CCmdBase::GetNumFromStr(const ustring &wstrNumber, DWORD64 &dwResult) const
         }
         return StrToInt64ExW(wstr.c_str(), STIF_SUPPORT_HEX, (LONGLONG *)&dwResult);
     }
+}
+
+bool CCmdBase::IsFilterStr(ustring &wstrData, ustring &wstrFilter) const
+{
+    ustring wstr(wstrData);
+    wstr.makelower();
+    size_t pos = 0;
+    if (ustring::npos == (pos = wstr.rfind(L">> ")))
+    {
+        return false;
+    }
+
+    ustring wstrCmd = wstrData.substr(0, pos);
+    ustring wstrSub = wstr.substr(pos);
+    pos = wstrSub.find(L"ft ");
+    if (ustring::npos == pos)
+    {
+        return false;
+    }
+    wstrSub.erase(0, pos + 3);
+    wstrSub.trim();
+    if (wstrSub.empty())
+    {
+        return false;
+    }
+    wstrFilter = wstrSub;
+    wstrData = wstrCmd;
+    return true;
+}
+
+bool CCmdBase::IsHightStr(ustring &wstrData, ustring &wstrHight) const
+{
+    ustring wstr(wstrData);
+    wstr.makelower();
+    size_t pos = 0;
+    if (ustring::npos == (pos = wstr.rfind(L">> ")))
+    {
+        return false;
+    }
+
+    ustring wstrCmd = wstrData.substr(0, pos);
+    ustring wstrSub = wstr.substr(pos);
+    pos = wstrSub.find(L"ht ");
+    if (ustring::npos == pos)
+    {
+        return false;
+    }
+    wstrSub.erase(0, pos + 3);
+    wstrSub.trim();
+    if (wstrSub.empty())
+    {
+        return false;
+    }
+    wstrHight = wstrSub;
+    wstrData = wstrCmd;
+    return true;
 }
 
 DWORD64 CCmdBase::GetSizeAndParam(const ustring &wstrParam, ustring &wstrOut) const

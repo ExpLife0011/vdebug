@@ -3,6 +3,7 @@
 #include <Windows.h>
 #include <Shlwapi.h>
 #include <TlHelp32.h>
+#include <list>
 #include "mstring.h"
 #include "json.h"
 
@@ -152,4 +153,67 @@ typedef struct _GDS_LINKINFO
 } GDS_LINKINFO, *PGDS_LINKINFO;
 
 BOOL ShlParseShortcutsW(LPCWSTR wszLnkFile, PGDS_LINKINFO info);
+
+enum ThreadStat
+{
+    StateInitialized,
+    StateReady,
+    StateRunning,
+    StateStandby,
+    StateTerminated,
+    StateWait,
+    StateTransition,
+    StateUnknown
+};
+
+enum ThreadWaitReason
+{
+    Executive,
+    FreePage,
+    PageIn,
+    PoolAllocation,
+    DelayExecution,
+    Suspended,
+    UserRequest,
+    WrExecutive,
+    WrFreePage,
+    WrPageIn,
+    WrPoolAllocation,
+    WrDelayExecution,
+    WrSuspended,
+    WrUserRequest,
+    WrEventPair,
+    WrQueue,
+    WrLpcReceive,
+    WrLpcReply,
+    WrVirtualMemory,
+    WrPageOut,
+    WrRendezvous,
+    Spare2,
+    Spare3,
+    Spare4,
+    Spare5,
+    Spare6,
+    WrKernel,
+    MaximumWaitReason
+};
+
+struct ThreadInformation
+{
+    DWORD m_dwThreadId;
+    DWORD64 m_dwStartAddr;
+    DWORD m_dwSwitchCount;
+    DWORD64 m_dwTebBase;
+    FILETIME m_vCreateTime;
+    LONG m_Priority; 
+    ThreadStat m_eStat;
+    ThreadWaitReason m_eWaitReason;
+
+    ThreadInformation()
+    {
+        ZeroMemory(this, sizeof(ThreadInformation));
+    }
+};
+
+BOOL GetThreadInformation(DWORD dwProcressId, list<ThreadInformation> &vThreads);
 #endif
