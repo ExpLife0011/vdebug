@@ -174,9 +174,14 @@ DEBUG_EVENT *CProcDbgger::GetDebugProcData()
 
 TITAN_ENGINE_CONTEXT_t CProcDbgger::GetCurrentContext()
 {
-    DEBUG_EVENT *ptr = GetDebugProcData();
     TITAN_ENGINE_CONTEXT_t context = {0};
-    GetFullContextDataEx(GetThreadById(ptr->dwThreadId), &context);
+    HANDLE hThread = NULL;
+    if (!(hThread = GetThreadById(m_dwCurrentThreadId)))
+    {
+        m_dwCurrentThreadId = m_vThreadMap.begin()->m_dwThreadId;
+        hThread = GetThreadById(m_dwCurrentThreadId);
+    }
+    GetFullContextDataEx(hThread, &context);
     return context;
 }
 
@@ -455,6 +460,7 @@ DbgCmdResult CProcDbgger::OnCommand(const ustring &wstrCmd, const ustring &wstrC
     //切换到指定线程
     else if (wstrCmd == L"tc")
     {
+        return OnCmdTc(wstrCmdParam, bShow, pParam);
     }
     //展示指定线程
     else if (wstrCmd == L"ts")
@@ -646,6 +652,29 @@ DbgCmdResult CProcDbgger::OnCmdBc(const ustring &wstrCmdParam, BOOL bShow, const
 ustring CProcDbgger::GetStatusStr(ThreadStat eStat, ThreadWaitReason eWaitReason) const
 {
     return L"正常运行";
+}
+
+DbgCmdResult CProcDbgger::OnCmdTc(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam)
+{
+    ustring wstr(wstrCmdParam);
+    wstr.trim();
+    if (wstr.empty())
+    {
+        return DbgCmdResult(em_dbgstat_faild, L"tc语法错误");
+    }
+    DWORD64 dwSerial = 0;
+    GetNumFromStr(wstr, dwSerial);
+
+    DWORD dw = 0;
+    for (list<DbgProcThreadInfo>::const_iterator it = m_vThreadMap.begin() ; it != m_vThreadMap.end() ; it++, dw++)
+    {
+        if (dwSerial == dw || dwSerial == it->m_dwThreadId)
+        {
+            m_dwCurrentThreadId = it->m_dwThreadId;
+            return DbgCmdResult(em_dbgstat_succ, FormatW(L"切换至%d号线程成功，当前线程%x", dw, it->m_dwThreadId));
+        }
+    }
+    return DbgCmdResult(em_dbgstat_faild, L"未找到需要切换的线程");
 }
 
 DbgCmdResult CProcDbgger::OnCmdTs(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam)
@@ -859,7 +888,7 @@ DbgCmdResult CProcDbgger::OnCmdDisass(const ustring &wstrCmdParam, BOOL bShow, c
 DbgCmdResult CProcDbgger::OnCmdClear(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam)
 {
     GetSyntaxView()->ClearView();
-    return DbgCmdResult(em_dbgstat_succ, L"已清除所有断点");
+    return DbgCmdResult(em_dbgstat_succ, L"");
 }
 
 DbgCmdResult CProcDbgger::OnCmdUb(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam)
