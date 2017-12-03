@@ -195,6 +195,7 @@ protected:
     DbgCmdResult OnCmdScript(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
     DbgCmdResult OnCmdTs(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
     DbgCmdResult OnCmdTc(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
+    DbgCmdResult OnCmdLm(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
 };
 
 CProcDbgger *GetProcDbgger();

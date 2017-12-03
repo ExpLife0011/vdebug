@@ -19,7 +19,9 @@ bool CCmdBase::OnFilter(SyntaxDesc &desc, const ustring &wstrFilter) const
     int index = 0;
     while (it != desc.m_vShowInfo.end())
     {
-        if (ustring::npos == it->find(wstrFilter))
+        ustring wstrLow(*it);
+        wstrLow.makelower();
+        if (ustring::npos == wstrLow.find(wstrFilter))
         {
             it = desc.m_vShowInfo.erase(it);
             desc.m_vSyntaxDesc.erase(desc.m_vSyntaxDesc.begin() + index);
@@ -40,7 +42,9 @@ bool CCmdBase::OnHight(SyntaxDesc &desc, const ustring &wstrHight) const
     int iSerial = 0;
     for (vector<ustring>::const_iterator it = desc.m_vShowInfo.begin() ; it != desc.m_vShowInfo.end() ; it++, iSerial++, itDesc++)
     {
-        if (ustring::npos != it->find(wstrHight))
+        ustring wstrLow(*it);
+        wstrLow.makelower();
+        if (ustring::npos != wstrLow.find(wstrHight))
         {
             for (itNode = itDesc->begin() ; itNode != itDesc->end() ; itNode++)
             {

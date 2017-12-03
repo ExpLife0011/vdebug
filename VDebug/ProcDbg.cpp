@@ -175,20 +175,20 @@ DEBUG_EVENT *CProcDbgger::GetDebugProcData()
 TITAN_ENGINE_CONTEXT_t CProcDbgger::GetCurrentContext()
 {
     TITAN_ENGINE_CONTEXT_t context = {0};
-    HANDLE hThread = NULL;
-    if (!(hThread = GetThreadById(m_dwCurrentThreadId)))
-    {
-        m_dwCurrentThreadId = m_vThreadMap.begin()->m_dwThreadId;
-        hThread = GetThreadById(m_dwCurrentThreadId);
-    }
+    HANDLE hThread = GetCurrentThread();
     GetFullContextDataEx(hThread, &context);
     return context;
 }
 
 HANDLE CProcDbgger::GetCurrentThread()
 {
-    DEBUG_EVENT *ptr = GetDebugProcData();
-    return GetThreadById(ptr->dwThreadId);
+    HANDLE hThread = NULL;
+    if (!(hThread = GetThreadById(m_dwCurrentThreadId)))
+    {
+        m_dwCurrentThreadId = m_vThreadMap.begin()->m_dwThreadId;
+        hThread = GetThreadById(m_dwCurrentThreadId);
+    }
+    return hThread;
 }
 
 HANDLE CProcDbgger::GetThreadById(DWORD dwId) const
@@ -207,17 +207,11 @@ DbgModuleInfo CProcDbgger::GetModuleFromAddr(DWORD64 dwAddr) const
 {
     for (map<DWORD64, DbgModuleInfo>::const_iterator it = m_vModuleInfo.begin() ; it != m_vModuleInfo.end() ; it++)
     {
-        if (it->second.m_wstrDllName == L"vdebug.exe")
-        {
-            int dd = 1;
-        }
-
         if (dwAddr >= it->second.m_dwBaseOfImage && dwAddr <= it->second.m_dwEndAddr)
         {
             return it->second;
         }
     }
-
     return DbgModuleInfo();
 }
 
@@ -470,6 +464,7 @@ DbgCmdResult CProcDbgger::OnCommand(const ustring &wstrCmd, const ustring &wstrC
     //展示模块信息
     else if (wstrCmd == L"lm")
     {
+        return OnCmdLm(wstrCmdParam, bShow, pParam);
     }
     else if (wstrCmd == L"cls")
     {
@@ -675,6 +670,22 @@ DbgCmdResult CProcDbgger::OnCmdTc(const ustring &wstrCmdParam, BOOL bShow, const
         }
     }
     return DbgCmdResult(em_dbgstat_faild, L"未找到需要切换的线程");
+}
+
+DbgCmdResult CProcDbgger::OnCmdLm(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam)
+{
+    CSyntaxDescHlpr hlpr;
+    hlpr.FormatDesc(L"起始位置", COLOUR_MSG, 12);
+    hlpr.FormatDesc(L"结束位置", COLOUR_MSG, 12);
+    hlpr.FormatDesc(L"模块名称", COLOUR_MSG, 12);
+    for (map<DWORD64, DbgModuleInfo>::const_iterator it = m_vModuleInfo.begin() ; it != m_vModuleInfo.end() ; it++)
+    {
+        hlpr.NextLine();
+        hlpr.FormatDesc(FormatW(L"0x%08x", it->second.m_dwBaseOfImage), COLOUR_MSG, 12);
+        hlpr.FormatDesc(FormatW(L"0x%08x", it->second.m_dwEndAddr), COLOUR_MSG, 12);
+        hlpr.FormatDesc(FormatW(L"%ls", it->second.m_wstrDllName.c_str()));
+    }
+    return DbgCmdResult(em_dbgstat_succ, hlpr.GetResult());
 }
 
 DbgCmdResult CProcDbgger::OnCmdTs(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam)
