@@ -5,5 +5,6 @@
 
 class CDbggerProxy : public CCmdBase, public CDbgBase
 {
+    DbgCmdResult OnCmdHelp(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
 };
 #endif

@@ -174,8 +174,12 @@ DEBUG_EVENT *CProcDbgger::GetDebugProcData()
 
 TITAN_ENGINE_CONTEXT_t CProcDbgger::GetCurrentContext()
 {
+    return GetThreadContext(GetCurrentThread());
+}
+
+TITAN_ENGINE_CONTEXT_t CProcDbgger::GetThreadContext(HANDLE hThread)
+{
     TITAN_ENGINE_CONTEXT_t context = {0};
-    HANDLE hThread = GetCurrentThread();
     GetFullContextDataEx(hThread, &context);
     return context;
 }
@@ -486,8 +490,10 @@ DbgCmdResult CProcDbgger::OnCommand(const ustring &wstrCmd, const ustring &wstrC
     {
         return OnCmdGo(wstrCmdParam, bShow, pParam);
     }
+    //执行到调用返回
     else if (wstrCmd == L"gu")
     {
+        return OnCmdGu(wstrCmdParam, bShow, pParam);
     }
     else if (wstrCmd == L"kv")
     {
@@ -512,6 +518,10 @@ DbgCmdResult CProcDbgger::OnCommand(const ustring &wstrCmd, const ustring &wstrC
     else if (wstrCmd == L"sc")
     {
         return OnCmdScript(wstrCmdParam, bShow, pParam);
+    }
+    else if (wstrCmd == L"help" || wstrCmd == L"h")
+    {
+        return OnCmdHelp(wstrCmdParam, bShow, pParam);
     }
     return res;
 }
@@ -983,10 +993,22 @@ DbgCmdResult CProcDbgger::OnCmdGo(const ustring &wstrCmdParam, BOOL bShow, const
     return DbgCmdResult(em_dbgstat_succ, L"");
 }
 
+void CProcDbgger::GuCmdCallback()
+{
+    HANDLE hThread = GetProcDbgger()->GetCurrentThread();
+    TITAN_ENGINE_CONTEXT_t context = GetProcDbgger()->GetThreadContext(hThread);
+    ustring wstrSymbol = GetProcDbgger()->GetSymFromAddr(context.cip);
+    CSyntaxDescHlpr hlpr;
+    hlpr.FormatDesc(FormatW(L"进程中断于%ls", wstrSymbol.c_str()));
+    GetSyntaxView()->AppendSyntaxDesc(hlpr.GetResult());
+    GetProcDbgger()->Wait();
+}
+
 DbgCmdResult CProcDbgger::OnCmdGu(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam)
 {
+    StepOut(GuCmdCallback, true);
     Run();
-    return DbgCmdResult(em_dbgstat_succ, L"");
+    return DbgCmdResult(em_dbgstat_succ, L"执行gu成功");
 }
 
 list<STACKFRAME64> CProcDbgger::GetStackFrame(const ustring &wstrParam)

@@ -111,6 +111,7 @@ public:
     virtual BOOL DisConnect();
     virtual BOOL IsConnect();
     virtual TITAN_ENGINE_CONTEXT_t GetCurrentContext();
+    TITAN_ENGINE_CONTEXT_t GetThreadContext(HANDLE hThread);
     VOID Wait();
     void Run();
     DbgModuleInfo GetModuleFromAddr(DWORD64 dwAddr) const;
@@ -176,6 +177,7 @@ protected:
     bool DisassWithAddr(DWORD64 dwStartAddr, DWORD64 dwEndAddr, CSyntaxDescHlpr &hlpr) const;
     bool DisassUntilRet(DWORD64 dwStartAddr, CSyntaxDescHlpr &hlpr) const;
     void GetDisassContentDesc(const ustring &wstrContent, CSyntaxDescHlpr &hlpr) const; //»ã±àÖ¸Áî×ÅÉ«
+
     virtual DbgCmdResult OnCommand(const ustring &wstrCmd, const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
     DbgCmdResult OnCmdBp(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
     DbgCmdResult OnCmdBl(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
@@ -196,6 +198,8 @@ protected:
     DbgCmdResult OnCmdTs(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
     DbgCmdResult OnCmdTc(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
     DbgCmdResult OnCmdLm(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
+
+    static void __cdecl GuCmdCallback();
 };
 
 CProcDbgger *GetProcDbgger();
