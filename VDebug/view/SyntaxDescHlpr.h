@@ -16,6 +16,8 @@ public:
 
 public:
     CSyntaxDescHlpr &FormatDesc(const ustring &wstrInfo, const SyntaxColourDesc &vDesc = COLOUR_MSG, DWORD dwFormatLength = 0);
+    CSyntaxDescHlpr &FormatWithLength(const ustring &wstrInfo, DWORD dwFormatLength = 0);
+    CSyntaxDescHlpr &FormatWithColour(const ustring &wstrInfo, const SyntaxColourDesc &vDesc = COLOUR_MSG);
 
     VOID NextLine();
 

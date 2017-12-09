@@ -17,6 +17,11 @@ CSyntaxDescHlpr &CSyntaxDescHlpr::FormatDesc(const ustring &wstrInfo, const Synt
     return *this;
 }
 
+CSyntaxDescHlpr &CSyntaxDescHlpr::FormatWithLength(const ustring &wstrInfo, DWORD dwFormatLength)
+{
+    return FormatDesc(wstrInfo, COLOUR_MSG, dwFormatLength);
+}
+
 VOID CSyntaxDescHlpr::NextLine()
 {
     m_vResult.m_vSyntaxDesc.push_back(m_vCurrentDesc);

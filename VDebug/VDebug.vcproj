@@ -189,6 +189,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\DbgProxy.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\Disasm.cpp"
 				>
 			</File>
