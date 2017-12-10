@@ -5,23 +5,23 @@
 
 struct CCmdHelpDesc
 {
-    SyntaxDesc m_vCmdName;
+    ustring m_wstrName;
     SyntaxDesc m_vCmdDesc;
     SyntaxDesc m_vCmdExample;
 };
 
 class CDbggerProxy : public CCmdBase, public CDbgBase
 {
-public:
-    void OnCmdHlprRegister();
 protected:
-    void RegisterCmdHlpr(const CCmdHelpDesc &vDesc);
-    DbgCmdResult GetAllCmdDesc();
+    static void OnCmdHlprRegister();
+    static void RegisterCmdHlpr(const CCmdHelpDesc &vDesc);
+    static DbgCmdResult GetAllCmdDesc();
 
 protected:
     static list<CCmdHelpDesc> *ms_pHelpDesc;
 
 public:
     DbgCmdResult OnCmdHelp(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
+    static void InitHelpEngine(); //初始化调试引擎
 };
 #endif

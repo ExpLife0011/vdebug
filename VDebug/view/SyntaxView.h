@@ -4,8 +4,8 @@
 #include <string>
 #include <vector>
 #include <map>
-#include "ParserBase.h"
 #include "ViewBase.h"
+#include "SyntaxCfg.h"
 
 using namespace std;
 
@@ -29,10 +29,45 @@ struct SynbaxViewAttr
     }
 };
 
+struct SyntaxColourNode
+{
+    std::wstring m_wstrContent;
+    DWORD m_dwStartPos;
+    DWORD m_dwLength;
+
+    SyntaxColourDesc m_vHightLightDesc;
+
+    SyntaxColourNode(
+        const ustring &wstrKeyWord,
+        DWORD dwStartPos = 0,
+        SyntaxColourDesc vDesc = SyntaxColourDesc()
+        )
+    {
+        m_wstrContent = wstrKeyWord;
+        m_dwStartPos = dwStartPos;
+        m_dwLength = wstrKeyWord.size();
+        m_vHightLightDesc = vDesc;
+    }
+};
+
 struct SyntaxDesc
 {
     vector<vector<SyntaxColourNode>> m_vSyntaxDesc;
     vector<ustring> m_vShowInfo;
+
+    bool operator+=(const SyntaxDesc &desc)
+    {
+        m_vSyntaxDesc.insert(m_vSyntaxDesc.end(), desc.m_vSyntaxDesc.begin(), desc.m_vSyntaxDesc.end());
+        m_vShowInfo.insert(m_vShowInfo.end(), desc.m_vShowInfo.begin(), desc.m_vShowInfo.end());
+        return true;
+    }
+
+    bool operator=(const SyntaxDesc &desc)
+    {
+        m_vSyntaxDesc = desc.m_vSyntaxDesc;
+        m_vShowInfo = desc.m_vShowInfo;
+        return true;
+    }
 
     BOOL IsValid() const
     {
@@ -49,18 +84,6 @@ struct SyntaxDesc
 
 class CSynbaxView : public CWindowBase
 {
-    struct SyntaxShowInfo
-    {
-        wstring m_wstrClass;
-        wstring m_wstrLine;
-
-        SyntaxShowInfo(const wstring &wstrClass, const wstring &wstrLine)
-        {
-            m_wstrClass = wstrClass;
-            m_wstrLine = wstrLine;
-        }
-    };
-
 public:
     CSynbaxView()
     {

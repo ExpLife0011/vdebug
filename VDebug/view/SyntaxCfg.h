@@ -1,7 +1,10 @@
 #ifndef SYNTAXCFG_H_H_
 #define SYNTAXCFG_H_H_
 #include <Windows.h>
+#include "../json/json.h"
 #include "../global.h"
+
+using namespace Json;
 
 /*语法高亮配置 开始*/
 #define COLOUR_ADDR             GetSyntaxCfg(L"addr")           //地址

@@ -3,7 +3,6 @@
 #include "SyntaxView.h"
 #include "common.h"
 #include "winsize.h"
-#include "../ParserAsm.h"
 #include "ProcView.h"
 #include "../resource.h"
 #include "SyntaxDescHlpr.h"
@@ -255,7 +254,6 @@ static VOID _OnInitDialog(HWND hwnd, WPARAM wp, LPARAM lp)
 {
     gs_pProcDbgger = GetProcDbgger();
     gs_pCurDbgger = gs_pProcDbgger;
-    CProcDbgger::InitEngine();
 
     SendMessageW(hwnd, WM_SETICON, (WPARAM)ICON_BIG, (LPARAM)LoadIconW(g_hInstance, MAKEINTRESOURCEW(IDI_MAIN)));
     SendMessageW(hwnd, WM_SETICON, (WPARAM)ICON_SMALL, (LPARAM)LoadIconW(g_hInstance, MAKEINTRESOURCEW(IDI_MAIN)));
@@ -310,6 +308,9 @@ static VOID _OnInitDialog(HWND hwnd, WPARAM wp, LPARAM lp)
     gs_pfnCommandProc = (PWIN_PROC)SetWindowLong(gs_hCommand, GWL_WNDPROC, (long)_CommandProc);
     gs_pCmdQueue = new CCmdQueue();
     SetTimer(hwnd, TIMER_CFG_CHECK, 3000, NULL);
+
+    CDbggerProxy::InitHelpEngine();
+    gs_pProcDbgger->RunCommand(L"help");
 }
 
 static VOID _OnCommand(HWND hwnd, WPARAM wp, LPARAM lp)

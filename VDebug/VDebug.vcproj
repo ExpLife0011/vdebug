@@ -329,14 +329,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\view\ParserBase.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\view\ParserBase.h"
-				>
-			</File>
-			<File
 				RelativePath=".\view\ProcView.cpp"
 				>
 			</File>
@@ -484,18 +476,6 @@
 				RelativePath=".\TitanEngine\TitanEngine.h"
 				>
 			</File>
-			<Filter
-				Name="parser"
-				>
-				<File
-					RelativePath=".\ParserAsm.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\ParserAsm.h"
-					>
-				</File>
-			</Filter>
 		</Filter>
 		<Filter
 			Name="capstone"
