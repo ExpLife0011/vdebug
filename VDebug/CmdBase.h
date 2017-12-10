@@ -102,10 +102,10 @@ public:
     BOOL GetNumFromStr(const ustring &wstrNumber, DWORD64 &dwNumber) const;
 
 protected:
-    bool IsFilterStr(ustring &wstrData, ustring &wstrFilter) const;
-    bool OnFilter(SyntaxDesc &desc, const ustring &wstrFilter) const;
+    bool IsFilterStr(ustring &strData, ustring &strFilter) const;
+    bool OnFilter(SyntaxDesc &desc, const ustring &strFilter) const;
     bool IsHightStr(ustring &wstrData, ustring &wstrHight) const;
-    bool OnHight(SyntaxDesc &desc, const ustring &wstrHight) const;
+    bool OnHight(SyntaxDesc &desc, const ustring &strHight) const;
     DWORD64 GetSizeAndParam(const ustring &wstrParam, ustring &wstrOut) const;
 
 protected:

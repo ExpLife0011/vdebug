@@ -31,21 +31,21 @@ struct SynbaxViewAttr
 
 struct SyntaxColourNode
 {
-    std::wstring m_wstrContent;
+    std::mstring m_strContent;
     DWORD m_dwStartPos;
     DWORD m_dwLength;
 
     SyntaxColourDesc m_vHightLightDesc;
 
     SyntaxColourNode(
-        const ustring &wstrKeyWord,
+        const mstring &strKeyWord,
         DWORD dwStartPos = 0,
         SyntaxColourDesc vDesc = SyntaxColourDesc()
         )
     {
-        m_wstrContent = wstrKeyWord;
+        m_strContent = strKeyWord;
         m_dwStartPos = dwStartPos;
-        m_dwLength = wstrKeyWord.size();
+        m_dwLength = m_strContent.size();
         m_vHightLightDesc = vDesc;
     }
 };
@@ -53,7 +53,7 @@ struct SyntaxColourNode
 struct SyntaxDesc
 {
     vector<vector<SyntaxColourNode>> m_vSyntaxDesc;
-    vector<ustring> m_vShowInfo;
+    vector<mstring> m_vShowInfo;
 
     bool operator+=(const SyntaxDesc &desc)
     {
@@ -105,6 +105,7 @@ public:
     bool SetSynbaxViewAttr(const SynbaxViewAttr &vAttr);
     BOOL CreateSynbaxView(HWND hParent, DWORD dwWidth, DWORD dwHight);
     void AppendSyntaxDesc(const SyntaxDesc &vDesc);
+    void AppendSyntaxDescA(const mstring &strTest);
     void Redraw();
     bool ReloadSynbaxCfg(LPCWSTR wszCfgJson);
     void ClearView();
@@ -125,7 +126,7 @@ protected:
 
 protected:
     SynbaxViewAttr m_vAttr;
-    vector<ustring> m_vShowInfo;
+    vector<mstring> m_vShowInfo;
     vector<vector<SyntaxColourNode>> m_vSyntaxRules;
 
 protected:
@@ -134,6 +135,7 @@ protected:
     void OnVscroll(HWND hwnd, WPARAM wp, LPARAM lp);
     void OnMouseWheel(HWND hwnd, WPARAM wp, LPARAM lp);
     void OnAppendDesc(HWND hwnd, WPARAM wp, LPARAM lp);
+    void OnAppendMsg(HWND hwnd, WPARAM wp, LPARAM lp);
     void OnClearView(HWND hwnd, WPARAM wp, LPARAM lp);
     void SetVscrollPos(DWORD dwPos);
     void ReCalParam();

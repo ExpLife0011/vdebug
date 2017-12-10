@@ -32,7 +32,7 @@ public:
 
     SyntaxDesc GetResult()
     {
-        if (m_wstrCurrentLine.size())
+        if (m_strCurrentLine.size())
         {
             NextLine();
         }
@@ -41,7 +41,7 @@ public:
 
 protected:
     vector<SyntaxColourNode> m_vCurrentDesc;
-    ustring m_wstrCurrentLine;
+    mstring m_strCurrentLine;
     SyntaxDesc m_vResult;
     BOOL m_bValid;
 };
@@ -55,15 +55,16 @@ public:
     void AppendWord(const ustring &wstrWord);
     void AppendWord(const ustring &wstrWord, SyntaxColourDesc &vDesc);
     void NextLine();
-
     SyntaxDesc GetResult();
+    void Clear();
+
 protected:
-    void Format();
+    SyntaxDesc Format();
 
 protected:
     int m_iCurCol;
     map<int, int> m_vColMax;                        //每一列最大值
-    vector<SyntaxColourNode> m_vCurLineDesc;
-    vector<vector<SyntaxColourNode>> m_vDescCache;
+    vector<SyntaxColourNode> m_vCurLineDesc;        //当前行缓存
+    vector<vector<SyntaxColourNode>> m_vDescCache;  //当前所有行缓存
 };
 #endif

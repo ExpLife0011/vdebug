@@ -18,7 +18,8 @@ protected:
     static DbgCmdResult GetAllCmdDesc();
 
 protected:
-    static list<CCmdHelpDesc> *ms_pHelpDesc;
+    static list<CCmdHelpDesc> ms_vHelpDesc;
+    static SyntaxDesc ms_vCmdSummary;
 
 public:
     DbgCmdResult OnCmdHelp(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);

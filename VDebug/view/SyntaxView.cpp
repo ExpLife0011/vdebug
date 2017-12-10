@@ -5,6 +5,7 @@
 #include "common.h"
 
 #define MSG_APPEND_DESC   (WM_USER + 5060)
+#define MSG_APPEND_MSG    (WM_USER + 5063)
 #define MSG_CLEAR_VIEW    (WM_USER + 5061)
 
 extern HINSTANCE g_hInstance;
@@ -44,6 +45,9 @@ LRESULT CSynbaxView::OnWindowMsg(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
         break;
     case MSG_APPEND_DESC:
         OnAppendDesc(hwnd, wp, lp);
+        break;
+    case MSG_APPEND_MSG:
+        OnAppendMsg(hwnd, wp, lp);
         break;
     case MSG_CLEAR_VIEW:
         OnClearView(hwnd, wp, lp);
@@ -89,6 +93,13 @@ void CSynbaxView::AppendSyntaxDesc(const SyntaxDesc &vDesc)
     SyntaxDesc *ptr = new SyntaxDesc;
     *ptr = vDesc;
     PostMessageW(m_hwnd, MSG_APPEND_DESC, (WPARAM)ptr, 0);
+}
+
+void CSynbaxView::AppendSyntaxDescA(const mstring &strTest)
+{
+    mstring *ptr = new mstring();
+    *ptr = strTest;
+    PostMessageW(m_hwnd, MSG_APPEND_MSG, (WPARAM)ptr, 0);
 }
 
 bool CSynbaxView::ReloadSynbaxCfg(LPCWSTR wszCfgJson)
@@ -161,6 +172,25 @@ void CSynbaxView::OnAppendDesc(HWND hwnd, WPARAM wp, LPARAM lp)
     }
     m_vSyntaxRules.insert(m_vSyntaxRules.end(), ptr->m_vSyntaxDesc.begin(), ptr->m_vSyntaxDesc.end());
     m_vShowInfo.insert(m_vShowInfo.end(), ptr->m_vShowInfo.begin(), ptr->m_vShowInfo.end());
+    ReCalParam();
+
+    if (m_bYScrollShow)
+    {
+        SetVscrollPos(m_dwMaxPos);
+    }
+    InvalidateRect(m_hwnd, NULL, TRUE);
+    delete ptr;
+}
+
+void CSynbaxView::OnAppendMsg(HWND hwnd, WPARAM wp, LPARAM lp)
+{
+    mstring *ptr = (mstring *)wp;
+    m_vShowInfo.push_back(*ptr);
+    SyntaxColourNode node(*ptr, 0, COLOUR_MSG);
+    vector<SyntaxColourNode> v;
+    v.push_back(node);
+    m_vSyntaxRules.push_back(v);
+
     ReCalParam();
 
     if (m_bYScrollShow)
@@ -426,17 +456,17 @@ void CSynbaxView::OnPaintStr(HDC hdc, DWORD dwX, DWORD dwY) const
     for (itSingleLineInfo = m_vSyntaxRules.begin() + m_dwCurPos; itSingleLineInfo != m_vSyntaxRules.end() && dwLine < m_dwLineOfPage; itSingleLineInfo++, dwLine++)
     {
         SIZE szLine = {0};
-        wstring wstrLine = m_vShowInfo[m_dwCurPos + dwLine];
+        mstring strLine = m_vShowInfo[m_dwCurPos + dwLine];
         DWORD dwPos = 0;
 
         //可能只有空行
-        if (wstrLine.empty())
+        if (strLine.empty())
         {
             GetTextExtentPoint32W(hdc, L" ", 1, &szLine);
         }
         else
         {
-            GetTextExtentPoint32W(hdc, wstrLine.c_str(), wstrLine.size(), &szLine);
+            GetTextExtentPoint32A(hdc, strLine.c_str(), strLine.size(), &szLine);
             rtText.right = rtText.left + szLine.cx;
             rtText.bottom = rtText.top + szLine.cy;
         }
@@ -454,7 +484,7 @@ void CSynbaxView::OnPaintStr(HDC hdc, DWORD dwX, DWORD dwY) const
             }
         }
 
-        if (wstrLine.empty())
+        if (strLine.empty())
         {
             rtText.left = dwX;
             rtText.top += szLine.cy;
@@ -465,7 +495,7 @@ void CSynbaxView::OnPaintStr(HDC hdc, DWORD dwX, DWORD dwY) const
         {
             if (itColourNode->m_dwStartPos > dwPos)
             {
-                wstring wstrJmp = wstrLine.substr(dwPos, itColourNode->m_dwStartPos - dwPos);
+                string strJmp = strLine.substr(dwPos, itColourNode->m_dwStartPos - dwPos);
                 SetTextColor(hdc, m_vAttr.m_dwDefTextColour);
 
                 if (NULL_COLOUR == m_vAttr.m_dwDefBackColour)
@@ -477,14 +507,14 @@ void CSynbaxView::OnPaintStr(HDC hdc, DWORD dwX, DWORD dwY) const
                     SetBkMode(hdc, OPAQUE);
                     SetBkColor(hdc, m_vAttr.m_dwDefBackColour);
                 }
-                TextOutW(hdc, rtText.left, rtText.top, wstrJmp.c_str(), wstrJmp.size());
+                TextOutA(hdc, rtText.left, rtText.top, strJmp.c_str(), strJmp.size());
                 SIZE szJmp = {0};
-                GetTextExtentPoint32W(hdc, wstrJmp.c_str(), wstrJmp.size(), &szJmp);
+                GetTextExtentPoint32A(hdc, strJmp.c_str(), strJmp.size(), &szJmp);
                 rtText.left += szJmp.cx;
             }
 
             SIZE szNode = {0};
-            GetTextExtentPoint32W(hdc, itColourNode->m_wstrContent.c_str(), itColourNode->m_wstrContent.size(), &szNode);
+            GetTextExtentPoint32A(hdc, itColourNode->m_strContent.c_str(), itColourNode->m_strContent.size(), &szNode);
 
             if (NULL_COLOUR == itColourNode->m_vHightLightDesc.m_dwTextColour)
             {
@@ -504,15 +534,15 @@ void CSynbaxView::OnPaintStr(HDC hdc, DWORD dwX, DWORD dwY) const
                 SetBkMode(hdc, OPAQUE);
                 SetBkColor(hdc, itColourNode->m_vHightLightDesc.m_dwBackColour);
             }
-            TextOutW(hdc, rtText.left, rtText.top, itColourNode->m_wstrContent.c_str(), itColourNode->m_wstrContent.size());
+            TextOutA(hdc, rtText.left, rtText.top, itColourNode->m_strContent.c_str(), itColourNode->m_strContent.size());
             rtText.left += szNode.cx;
             dwPos = (itColourNode->m_dwStartPos + itColourNode->m_dwLength);
         }
 
         //绘制遗漏的结束字符
-        if (dwPos < wstrLine.size())
+        if (dwPos < strLine.size())
         {
-            wstring wstrJmp = wstrLine.substr(dwPos, wstrLine.size() - dwPos);
+            mstring strJmp = strLine.substr(dwPos, strLine.size() - dwPos);
             SetTextColor(hdc, m_vAttr.m_dwDefTextColour);
 
             if (NULL_COLOUR == m_vAttr.m_dwDefBackColour)
@@ -524,9 +554,9 @@ void CSynbaxView::OnPaintStr(HDC hdc, DWORD dwX, DWORD dwY) const
                 SetBkMode(hdc, OPAQUE);
                 SetBkColor(hdc, m_vAttr.m_dwDefBackColour);
             }
-            TextOutW(hdc, rtText.left, rtText.top, wstrJmp.c_str(), wstrJmp.size());
+            TextOutA(hdc, rtText.left, rtText.top, strJmp.c_str(), strJmp.size());
             SIZE szJmp = {0};
-            GetTextExtentPoint32W(hdc, wstrJmp.c_str(), wstrJmp.size(), &szJmp);
+            GetTextExtentPoint32A(hdc, strJmp.c_str(), strJmp.size(), &szJmp);
         }
         rtText.left = dwX;
         rtText.top += szLine.cy;

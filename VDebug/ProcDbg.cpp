@@ -850,7 +850,6 @@ bool CProcDbgger::DisassUntilRet(DWORD64 dwStartAddr, CSyntaxDescHlpr &hlpr) con
     vector<DisasmInfo> vDisasmSet;
     ustring wstr = GetSymFromAddr(dwStartAddr);
     wstr += L":";
-    hlpr.NextLine();
     hlpr.FormatDesc(wstr, COLOUR_PROC);
     hlpr.NextLine();
     if (Disasm.DisasmUntilReturn(dwStartAddr, vDisasmSet))

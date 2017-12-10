@@ -3,15 +3,15 @@
 
 CSyntaxDescHlpr &CSyntaxDescHlpr::FormatDesc(const ustring &wstrInfo, const SyntaxColourDesc &vDesc, DWORD dwFormatLength)
 {
-    m_vCurrentDesc.push_back(SyntaxColourNode(wstrInfo, m_wstrCurrentLine.size(), vDesc));
-    m_wstrCurrentLine += wstrInfo;
+    mstring strInfo(wstrInfo);
+    m_vCurrentDesc.push_back(SyntaxColourNode(wstrInfo, m_strCurrentLine.size(), vDesc));
+    m_strCurrentLine += strInfo;
     //中英文对齐
-    mstring strData = WtoA(wstrInfo);
-    if (strData.size() < dwFormatLength)
+    if (strInfo.size() < dwFormatLength)
     {
-        for (DWORD dwIdex = strData.size() ; dwIdex < dwFormatLength ; dwIdex++)
+        for (DWORD dwIdex = strInfo.size() ; dwIdex < dwFormatLength ; dwIdex++)
         {
-            m_wstrCurrentLine += L" ";
+            m_strCurrentLine += " ";
         }
     }
     return *this;
@@ -35,17 +35,17 @@ CSyntaxDescHlpr &CSyntaxDescHlpr::FormatDesc(const ustring &wstrInfo)
 VOID CSyntaxDescHlpr::NextLine()
 {
     m_vResult.m_vSyntaxDesc.push_back(m_vCurrentDesc);
-    m_vResult.m_vShowInfo.push_back(m_wstrCurrentLine);
+    m_vResult.m_vShowInfo.push_back(m_strCurrentLine);
 
     m_vCurrentDesc.clear();
-    m_wstrCurrentLine.clear();
+    m_strCurrentLine.clear();
 }
 
 VOID CSyntaxDescHlpr::Clear()
 {
     m_vResult.Clear();
     m_vCurrentDesc.clear();
-    m_wstrCurrentLine.clear();
+    m_strCurrentLine.clear();
 }
 
 CEasySyntaxHlpr::CEasySyntaxHlpr()
@@ -56,12 +56,12 @@ CEasySyntaxHlpr::CEasySyntaxHlpr()
 CEasySyntaxHlpr::~CEasySyntaxHlpr()
 {}
 
-void CEasySyntaxHlpr::AppendWord(const ustring &wstrWord)
+void CEasySyntaxHlpr::AppendWord(const ustring &wstrWord, SyntaxColourDesc &vDesc)
 {
-    SyntaxColourNode node(wstrWord);
+    mstring str(wstrWord);
+    SyntaxColourNode node(str, 0, vDesc);
     map<int, int>::iterator it;
-    //一个汉字的长度相当于两个英文字符
-    int iCurSize = WtoA(wstrWord).size();
+    int iCurSize = str.size();
     if (m_vColMax.end() == (it = m_vColMax.find(m_iCurCol)))
     {
         m_vColMax[m_iCurCol] = iCurSize;
@@ -70,38 +70,66 @@ void CEasySyntaxHlpr::AppendWord(const ustring &wstrWord)
     {
         it->second = iCurSize;
     }
+    m_iCurCol++;
     m_vCurLineDesc.push_back(node);
+}
+
+void CEasySyntaxHlpr::AppendWord(const ustring &wstrWord)
+{
+    AppendWord(wstrWord, COLOUR_MSG);
 }
 
 void CEasySyntaxHlpr::NextLine()
 {
     m_vDescCache.push_back(m_vCurLineDesc);
     m_vCurLineDesc.clear();
+    m_iCurCol = 0;
 }
 
 SyntaxDesc CEasySyntaxHlpr::GetResult()
 {
-    return SyntaxDesc();
+    return Format();
 }
 
-void CEasySyntaxHlpr::Format()
+void CEasySyntaxHlpr::Clear()
+{
+    m_vColMax.clear();
+    m_vCurLineDesc.clear();
+    m_vDescCache.clear();
+}
+
+SyntaxDesc CEasySyntaxHlpr::Format()
 {
     if (!m_vCurLineDesc.empty())
     {
         NextLine();
     }
 
+    SyntaxDesc vResult;
     for (vector<vector<SyntaxColourNode>>::iterator itLine = m_vDescCache.begin() ; itLine != m_vDescCache.end() ; itLine++)
     {
         int iColumn = 0;
         int iPos = 0;
+        mstring strLine;
         for (vector<SyntaxColourNode>::iterator itNode = itLine->begin() ; itNode != itLine->end() ; itNode++, iColumn++)
         {
             int iMaxLength = m_vColMax[iColumn];
             itNode->m_dwStartPos = iPos;
-            itNode->m_dwLength = itNode->m_wstrContent.size();
-            int iCurSize = WtoA(itNode->m_wstrContent).size();
-            iPos += (iMaxLength - iCurSize + 1);
+            itNode->m_dwLength = itNode->m_strContent.size();
+            iPos += (iMaxLength + 1);
+
+            int iStrSize = itNode->m_strContent.size();
+            strLine += itNode->m_strContent;
+            if (iStrSize < (iMaxLength + 1))
+            {
+                for (int i = 0 ; i < (iMaxLength + 1 - iStrSize) ; i++)
+                {
+                    strLine += " ";
+                }
+            }
         }
+        vResult.m_vShowInfo.push_back(strLine);
     }
+    vResult.m_vSyntaxDesc = m_vDescCache;
+    return vResult;
 }

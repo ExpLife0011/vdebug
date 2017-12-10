@@ -13,15 +13,15 @@ CCmdBase::~CCmdBase()
 
 bool CCmdBase::OnFilter(SyntaxDesc &desc, const ustring &wstrFilter) const
 {
-    vector<ustring>::const_iterator it = desc.m_vShowInfo.begin();
+    vector<mstring>::const_iterator it = desc.m_vShowInfo.begin();
     vector<vector<SyntaxColourNode>> ::const_iterator itDesc;
     itDesc = desc.m_vSyntaxDesc.begin();
     int index = 0;
     while (it != desc.m_vShowInfo.end())
     {
-        ustring wstrLow(*it);
-        wstrLow.makelower();
-        if (ustring::npos == wstrLow.find(wstrFilter))
+        ustring strLow(*it);
+        strLow.makelower();
+        if (ustring::npos == strLow.find(wstrFilter))
         {
             it = desc.m_vShowInfo.erase(it);
             desc.m_vSyntaxDesc.erase(desc.m_vSyntaxDesc.begin() + index);
@@ -40,7 +40,7 @@ bool CCmdBase::OnHight(SyntaxDesc &desc, const ustring &wstrHight) const
     vector<vector<SyntaxColourNode>> ::iterator itDesc = desc.m_vSyntaxDesc.begin();
     vector<SyntaxColourNode>::iterator itNode;
     int iSerial = 0;
-    for (vector<ustring>::const_iterator it = desc.m_vShowInfo.begin() ; it != desc.m_vShowInfo.end() ; it++, iSerial++, itDesc++)
+    for (vector<mstring>::const_iterator it = desc.m_vShowInfo.begin() ; it != desc.m_vShowInfo.end() ; it++, iSerial++, itDesc++)
     {
         ustring wstrLow(*it);
         wstrLow.makelower();
@@ -88,6 +88,10 @@ DbgCmdResult CCmdBase::RunCommand(const ustring &wstrCmd, BOOL bShow, const CmdU
         wstrParam.trim();
     }
     res = OnCommand(wstrStart, wstrParam, bShow, pParam);
+
+    CSyntaxDescHlpr hlpr;
+    hlpr.NextLine();
+    GetSyntaxView()->AppendSyntaxDesc(hlpr.GetResult());
     if (bFilter)
     {
         OnFilter(res.m_vSyntaxDesc, wstrFilter);
