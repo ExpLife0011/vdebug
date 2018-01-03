@@ -58,9 +58,8 @@ public:
     SyntaxDesc GetResult();
     void Clear();
 
-protected:
+    //格式化结果集
     SyntaxDesc Format();
-
 protected:
     int m_iCurCol;
     map<int, int> m_vColMax;                        //每一列最大值

@@ -345,6 +345,14 @@
 				>
 			</File>
 			<File
+				RelativePath=".\view\SyntaxDesc.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\view\SyntaxDesc.h"
+				>
+			</File>
+			<File
 				RelativePath=".\view\SyntaxDescHlpr.cpp"
 				>
 			</File>
