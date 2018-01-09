@@ -309,7 +309,6 @@ static VOID _OnInitDialog(HWND hwnd, WPARAM wp, LPARAM lp)
     gs_pCmdQueue = new CCmdQueue();
     SetTimer(hwnd, TIMER_CFG_CHECK, 3000, NULL);
     CDbggerProxy::InitHelpEngine();
-    GetProcDbgger()->RunCommand(L"h bp");
 }
 
 static VOID _OnCommand(HWND hwnd, WPARAM wp, LPARAM lp)
