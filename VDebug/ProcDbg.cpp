@@ -26,6 +26,7 @@ CProcDbgger::CProcDbgger()
     m_dwLastBpSerial = 0;
     m_hRunNotify = CreateEventW(NULL, FALSE, FALSE, NULL);
     m_bDetachDbgger = FALSE;
+    m_dwCurDebugProc = 0;
 }
 
 CProcDbgger::~CProcDbgger()
@@ -89,6 +90,7 @@ BOOL CProcDbgger::DisConnect()
     m_bDetachDbgger = TRUE;
     DebugBreakProcess(GetProcDbgger()->GetDbgProc());
     Run();
+    m_dwCurDebugProc = 0;
     return TRUE;
 }
 

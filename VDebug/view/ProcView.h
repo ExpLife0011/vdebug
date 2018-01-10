@@ -56,9 +56,7 @@ protected:
     void OnListColumnClick(IN NMLISTVIEW *ptr);
 
     INT_PTR OnNotify(HWND hwnd, WPARAM wp, LPARAM lp);
-
     INT_PTR OnClose(HWND hwnd, WPARAM wp, LPARAM lp);
-
     INT_PTR OnCommand(HWND hwnd, WPARAM wp, LPARAM lp);
 
 protected:

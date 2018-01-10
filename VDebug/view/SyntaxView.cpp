@@ -8,6 +8,12 @@
 #define MSG_APPEND_MSG    (WM_USER + 5063)
 #define MSG_CLEAR_VIEW    (WM_USER + 5061)
 
+#define ID_MENU_COPY      (WM_USER + 5091)
+#define ID_MENU_ALL       (WM_USER + 5092)
+#define ID_MENU_CLEAR     (WM_USER + 5093)
+#define ID_MENU_FIND      (WM_USER + 5094)
+#define ID_MENU_ABOUT     (WM_USER + 5095)
+
 extern HINSTANCE g_hInstance;
 #define CLASS_VDEBUG_SYNTAXVIEW     L"VDebugSynbaxViewClass"
 
@@ -34,8 +40,13 @@ LRESULT CSynbaxView::OnWindowMsg(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
         }
         break;
     case  WM_MOUSEMOVE:
+        OnMouseMove(wp, lp);
         break;
     case  WM_LBUTTONUP:
+        OnLButtonUp(wp, lp);
+        break;
+    case WM_RBUTTONUP:
+        OnRButtonUp(wp, lp);
         break;
     case WM_MOUSEWHEEL:
         OnMouseWheel(hwnd, wp, lp);
@@ -407,23 +418,36 @@ LRESULT CSynbaxView::OnCreate(WPARAM wp, LPARAM lp)
     return 0;
 }
 
-LRESULT CSynbaxView::OnLButtonDown(WPARAM wp, LPARAM lp)
+DWORD CSynbaxView::GetLineNumFromCoord(short iX, short iY)
 {
-    DWORD dwX = LOWORD(lp);
-    DWORD dwY = HIWORD(lp);
-
     HDC dc = GetWindowDC(m_hwnd);
     SIZE sz = {0};
     GetTextExtentPoint32W(dc, L"0", 1, &sz);
     ReleaseDC(m_hwnd, dc);
 
-    if (dwY > (DWORD)(sz.cy / 2))
+    //鼠标滑到最上面iY是负数，将来可以在此加入滚动条自动滚动的功能
+    if (iY < 0)
     {
-        dwY += 3;
+        iY = 0;
+    }
+
+    if (iY > (sz.cy / 2))
+    {
+        iY += 3;
     }
     //根据坐标获取所在行数
-    DWORD dwLineInCurPage = ((dwY / m_dwLineHight));
-    m_dwSelectLine = (m_dwCurPos + dwLineInCurPage);
+    DWORD dwLineInCurPage = (iY / m_dwLineHight);
+    return (m_dwCurPos + dwLineInCurPage);
+}
+
+LRESULT CSynbaxView::OnLButtonDown(WPARAM wp, LPARAM lp)
+{
+    m_bLButtonDown = TRUE;
+    SetCapture(m_hwnd);
+    m_dwSelectLine = GetLineNumFromCoord(LOWORD(lp), HIWORD(lp));
+    m_dwSelectStart = m_dwSelectLine;
+    m_dwSelectEnd = m_dwSelectLine;
+    m_dwSelectBase = m_dwSelectLine;
     if (m_dwSelectLine < m_vSyntaxRules.size())
     {
         InvalidateRect(m_hwnd, NULL, TRUE);
@@ -433,11 +457,57 @@ LRESULT CSynbaxView::OnLButtonDown(WPARAM wp, LPARAM lp)
 
 LRESULT CSynbaxView::OnMouseMove(WPARAM wp, LPARAM lp)
 {
+    if (m_bLButtonDown)
+    {
+        DWORD dwCurLine = GetLineNumFromCoord(LOWORD(lp), HIWORD(lp));
+
+        //向上翻
+        if (dwCurLine < m_dwSelectBase)
+        {
+            m_dwSelectStart = dwCurLine;
+            m_dwSelectEnd = m_dwSelectBase;
+        }
+        //向下翻
+        else
+        {
+            m_dwSelectStart = m_dwSelectBase;
+            m_dwSelectEnd = dwCurLine;
+        }
+
+        if (m_dwSelectEnd > m_vSyntaxRules.size())
+        {
+            m_dwSelectEnd = m_vSyntaxRules.size();
+        }
+
+        if (m_dwSelectStart > m_vSyntaxRules.size())
+        {
+            m_dwSelectStart = m_vSyntaxRules.size();
+        }
+        InvalidateRect(m_hwnd, NULL, TRUE);
+    }
     return 0;
 }
 
 LRESULT CSynbaxView::OnLButtonUp(WPARAM wp, LPARAM lp)
 {
+    m_bLButtonDown = FALSE;
+    ReleaseCapture();
+    return 0;
+}
+
+LRESULT CSynbaxView::OnRButtonUp(WPARAM wp, LPARAM lp)
+{
+    POINT pt = {0}; 
+    GetCursorPos(&pt);
+    HMENU menu = CreatePopupMenu();
+    AppendMenuW(menu, MF_ENABLED, ID_MENU_COPY,  L"复制数据 CTRL+C");
+    AppendMenuW(menu, MF_ENABLED, ID_MENU_ALL,   L"全部选中 CTRL+A");
+    AppendMenuW(menu, MF_ENABLED, ID_MENU_CLEAR, L"清空数据 CTRL+R");
+    AppendMenuW(menu, MF_ENABLED, ID_MENU_FIND,  L"查找数据 CTRL+F");
+    AppendMenuW(menu, MF_MENUBARBREAK, 0, 0);
+    AppendMenuW(menu, MF_ENABLED, ID_MENU_ABOUT, L"关于VDebug");
+    TrackPopupMenu(menu, TPM_CENTERALIGN, pt.x, pt.y, 0, m_hwnd, 0);
+    DestroyMenu(menu);
     return 0;
 }
 
@@ -471,7 +541,8 @@ void CSynbaxView::OnPaintStr(HDC hdc, DWORD dwX, DWORD dwY) const
             rtText.bottom = rtText.top + szLine.cy;
         }
 
-        if (m_dwSelectLine == (m_dwCurPos + dwLine))
+        DWORD dwCurLine = (m_dwCurPos + dwLine);
+        if (dwCurLine >= m_dwSelectStart && dwCurLine <= m_dwSelectEnd)
         {
             if (m_vAttr.m_dwSelectLineColour != NULL_COLOUR)
             {

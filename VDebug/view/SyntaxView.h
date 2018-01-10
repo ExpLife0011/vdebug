@@ -45,6 +45,9 @@ public:
         m_hMemDc = NULL;
         m_hMemBmp = NULL;
         m_hOldBmp = NULL;
+        m_dwSelectStart = 0;
+        m_dwSelectEnd = 0;
+        m_bLButtonDown = FALSE;
     }
 
     virtual ~CSynbaxView()
@@ -65,10 +68,12 @@ protected:
     void LoadGlobalCfg(const Value &vGlobal);
 
 protected:
+    DWORD GetLineNumFromCoord(short iX, short iY);
     LRESULT OnCreate(WPARAM wp, LPARAM lp);
     LRESULT OnLButtonDown(WPARAM wp, LPARAM lp);
     LRESULT OnMouseMove(WPARAM wp, LPARAM lp);
     LRESULT OnLButtonUp(WPARAM wp, LPARAM lp);
+    LRESULT OnRButtonUp(WPARAM wp, LPARAM lp);
     LRESULT OnPaint(WPARAM wp, LPARAM lp) const;
     LRESULT OnClose(WPARAM wp, LPARAM lp);
 
@@ -100,5 +105,10 @@ protected:
     DWORD m_dwMaxPos;           //Y轴最大的滑动范围
     BOOL m_bYScrollShow;        //是否展示纵向滚动条
     DWORD m_dwSelectLine;       //当前选择的行，高亮处理
+
+    BOOL m_bLButtonDown;        //左键是否按下
+    DWORD m_dwSelectBase;       //鼠标按下的初始位置
+    DWORD m_dwSelectStart;      //当前选中的起始行
+    DWORD m_dwSelectEnd;        //当前选中的结束行
 };
 #endif
