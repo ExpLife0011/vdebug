@@ -23,7 +23,7 @@ struct SyntaxColourNode
     {
         m_strContent = strKeyWord;
         m_dwStartPos = dwStartPos;
-        m_dwLength = m_strContent.size();
+        m_dwLength = (DWORD)m_strContent.size();
         m_vHightLightDesc = vDesc;
     }
 };

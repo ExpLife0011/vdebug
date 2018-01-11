@@ -359,7 +359,7 @@ void CSynbaxView::ReCalParam()
     {
         m_bYScrollShow = TRUE;
         ShowScrollBar(m_hwnd, SB_VERT, TRUE);
-        m_dwMaxPos = (m_vSyntaxRules.size());
+        m_dwMaxPos = (DWORD)(m_vSyntaxRules.size());
         scr.nPage = m_dwLineOfPage;
         scr.nMax = m_dwMaxPos;
         if (m_dwCurPos > m_dwMaxPos)
@@ -476,12 +476,12 @@ LRESULT CSynbaxView::OnMouseMove(WPARAM wp, LPARAM lp)
 
         if (m_dwSelectEnd > m_vSyntaxRules.size())
         {
-            m_dwSelectEnd = m_vSyntaxRules.size();
+            m_dwSelectEnd = (DWORD)m_vSyntaxRules.size();
         }
 
         if (m_dwSelectStart > m_vSyntaxRules.size())
         {
-            m_dwSelectStart = m_vSyntaxRules.size();
+            m_dwSelectStart = (DWORD)m_vSyntaxRules.size();
         }
         InvalidateRect(m_hwnd, NULL, TRUE);
     }
@@ -536,7 +536,7 @@ void CSynbaxView::OnPaintStr(HDC hdc, DWORD dwX, DWORD dwY) const
         }
         else
         {
-            GetTextExtentPoint32A(hdc, strLine.c_str(), strLine.size(), &szLine);
+            GetTextExtentPoint32A(hdc, strLine.c_str(), (int)strLine.size(), &szLine);
             rtText.right = rtText.left + szLine.cx;
             rtText.bottom = rtText.top + szLine.cy;
         }
@@ -578,14 +578,14 @@ void CSynbaxView::OnPaintStr(HDC hdc, DWORD dwX, DWORD dwY) const
                     SetBkMode(hdc, OPAQUE);
                     SetBkColor(hdc, m_vAttr.m_dwDefBackColour);
                 }
-                TextOutA(hdc, rtText.left, rtText.top, strJmp.c_str(), strJmp.size());
+                TextOutA(hdc, rtText.left, rtText.top, strJmp.c_str(), (int)strJmp.size());
                 SIZE szJmp = {0};
-                GetTextExtentPoint32A(hdc, strJmp.c_str(), strJmp.size(), &szJmp);
+                GetTextExtentPoint32A(hdc, strJmp.c_str(), (int)strJmp.size(), &szJmp);
                 rtText.left += szJmp.cx;
             }
 
             SIZE szNode = {0};
-            GetTextExtentPoint32A(hdc, itColourNode->m_strContent.c_str(), itColourNode->m_strContent.size(), &szNode);
+            GetTextExtentPoint32A(hdc, itColourNode->m_strContent.c_str(), (int)itColourNode->m_strContent.size(), &szNode);
 
             if (NULL_COLOUR == itColourNode->m_vHightLightDesc.m_dwTextColour)
             {
@@ -605,7 +605,7 @@ void CSynbaxView::OnPaintStr(HDC hdc, DWORD dwX, DWORD dwY) const
                 SetBkMode(hdc, OPAQUE);
                 SetBkColor(hdc, itColourNode->m_vHightLightDesc.m_dwBackColour);
             }
-            TextOutA(hdc, rtText.left, rtText.top, itColourNode->m_strContent.c_str(), itColourNode->m_strContent.size());
+            TextOutA(hdc, rtText.left, rtText.top, itColourNode->m_strContent.c_str(), (int)itColourNode->m_strContent.size());
             rtText.left += szNode.cx;
             dwPos = (itColourNode->m_dwStartPos + itColourNode->m_dwLength);
         }
@@ -625,9 +625,9 @@ void CSynbaxView::OnPaintStr(HDC hdc, DWORD dwX, DWORD dwY) const
                 SetBkMode(hdc, OPAQUE);
                 SetBkColor(hdc, m_vAttr.m_dwDefBackColour);
             }
-            TextOutA(hdc, rtText.left, rtText.top, strJmp.c_str(), strJmp.size());
+            TextOutA(hdc, rtText.left, rtText.top, strJmp.c_str(), (int)strJmp.size());
             SIZE szJmp = {0};
-            GetTextExtentPoint32A(hdc, strJmp.c_str(), strJmp.size(), &szJmp);
+            GetTextExtentPoint32A(hdc, strJmp.c_str(), (int)strJmp.size(), &szJmp);
         }
         rtText.left = dwX;
         rtText.top += szLine.cy;

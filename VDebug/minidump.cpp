@@ -4,6 +4,7 @@
 #include "common.h"
 #include "symbol.h"
 
+#ifndef _WIN64
 typedef struct DECLSPEC_ALIGN(16) _M128A {
     ULONGLONG Low;
     LONGLONG High;
@@ -27,6 +28,7 @@ typedef struct _XMM_SAVE_AREA32 {
     M128A XmmRegisters[16];
     BYTE  Reserved4[96];
 } XMM_SAVE_AREA32, *PXMM_SAVE_AREA32;
+#endif
 
 typedef struct DECLSPEC_ALIGN(16) _CONTEXTx64 {
 

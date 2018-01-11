@@ -86,7 +86,7 @@ public:
     {
         if (IsWindow(m_hwnd))
         {
-            return SendMessageW(m_hwnd, uMsg, wp, lp);
+            return (BOOL)SendMessageW(m_hwnd, uMsg, wp, lp);
         }
         return FALSE;
     }

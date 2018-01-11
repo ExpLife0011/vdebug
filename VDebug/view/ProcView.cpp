@@ -36,7 +36,7 @@ VOID CProcSelectView::CalWidthByColumns() const
     int iWidthTotal = 0;
     int iColumnWidth = 0;
     int iItm = 0;
-    while((iColumnWidth = SendMessageW(m_hProcList, LVM_GETCOLUMNWIDTH, iItm++, 0)) > 0)
+    while((iColumnWidth = (int)SendMessageW(m_hProcList, LVM_GETCOLUMNWIDTH, iItm++, 0)) > 0)
     {
         iWidthTotal += iColumnWidth;
     }
@@ -553,7 +553,7 @@ INT_PTR CProcSelectView::OnCommand(HWND hwnd, WPARAM wp, LPARAM lp)
     }
     else if (IDC_BTN_ATTACH == dwId)
     {
-        int iSelect = SendMessageW(m_hProcList, LVM_GETNEXTITEM, -1, LVNI_SELECTED);
+        int iSelect = (int)SendMessageW(m_hProcList, LVM_GETNEXTITEM, -1, LVNI_SELECTED);
         if (-1 == iSelect)
         {
             SetWindowTextW(m_hEdit, L"请先选择一个进程");

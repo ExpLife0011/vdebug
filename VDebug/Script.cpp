@@ -302,7 +302,7 @@ ustring CScriptEngine::DeleteOperator(const ustring &wstrScript, const ustring &
 
             ustring wstrOptResult = GetTwoNumCalResult(wstr1, wstr2, GetOperator(wstrResult[i]));
             wstrResult.replace(iStartPos, iEndPos - iStartPos, wstrOptResult);
-            i = iStartPos + wstrOptResult.size() + 1;
+            i = (int)(iStartPos + wstrOptResult.size() + 1);
         }
         else
         {
@@ -340,7 +340,7 @@ ustring CScriptEngine::GetSimpleResult1(const ustring &wstrScript) const
                     ustring wstResult = GetSimpleResult2(wstrSub);
                     wstResult = GetPointerData(wstResult);
                     wstr.replace(j, i - j + 1, wstResult);
-                    i = i - 1 + wstrSub.size();
+                    i = (int)(i - 1 + wstrSub.size());
                     break;
                 }
             }
@@ -389,7 +389,7 @@ DWORD64 CScriptEngine::Compile(const ustring &wstrScript) const
                         ustring wstrResult = GetSimpleResult1(wstrSub);
                         wstrResult = GetSimpleResult2(wstrResult);
                         wstr.replace(j, i - j + 1, wstrResult);
-                        i = (iStartPos - 1 + wstrResult.size());
+                        i = (iStartPos - 1 + (int)wstrResult.size());
                         break;
                     }
                 }
@@ -502,7 +502,7 @@ LuaScriptInfo GetScriptInfo(const ustring &wstrScript)
     LuaScriptInfo info;
     info.m_wstrFilePath = wstr;
     mstring str(wstr);
-    info.m_wstrUniqueMark.format(L"%08x", std_crc32(str.c_str(), str.size()));
+    info.m_wstrUniqueMark.format(L"%08x", std_crc32(str.c_str(), (int)str.size()));
     return info;
 }
 

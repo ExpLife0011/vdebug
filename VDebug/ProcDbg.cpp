@@ -334,7 +334,7 @@ void CProcDbgger::OnExitProcess(EXIT_PROCESS_DEBUG_INFO* ExitProcess)
 void CProcDbgger::OnCreateThread(CREATE_THREAD_DEBUG_INFO* CreateThread)
 {
     DbgProcThreadInfo newThread;
-    newThread.m_dwThreadNum = GetProcDbgger()->m_vThreadMap.size();
+    newThread.m_dwThreadNum = (DWORD)GetProcDbgger()->m_vThreadMap.size();
     newThread.m_dwThreadId = ((DEBUG_EVENT*)GetDebugData())->dwThreadId;
     newThread.m_dwStartAddr = (DWORD64)CreateThread->lpStartAddress;
     newThread.m_dwLocalBase = (DWORD64)CreateThread->lpThreadLocalBase;
@@ -365,7 +365,6 @@ void CProcDbgger::OnSystemBreakpoint(void* ExceptionData)
     {
         return;
     }
-    UINT cip = GetContextDataEx(hThread, UE_CIP);
     GetProcDbgger()->RunCommand(L"r");
     GetProcDbgger()->Wait();
 }

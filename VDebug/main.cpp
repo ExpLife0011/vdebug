@@ -1,6 +1,5 @@
 #include <Windows.h>
 #include "view.h"
-#include "Index.h"
 #include "Script.h"
 #include "minidump.h"
 #include "symbol.h"

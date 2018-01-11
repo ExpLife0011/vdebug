@@ -12,7 +12,7 @@ CMemoryOperator::CMemoryOperator(HANDLE hProcess)
 CMemoryOperator::~CMemoryOperator()
 {}
 
-bool CMemoryOperator::MemoryReadPageSafe(DWORD64 dwAddr, char *szBuffer, DWORD dwBufferSize, IN OUT DWORD *pReadSize) const
+bool CMemoryOperator::MemoryReadPageSafe(DWORD64 dwAddr, char *szBuffer, DWORD dwBufferSize, IN OUT SIZE_T *pReadSize) const
 {
     if (dwBufferSize > (PAGE_SIZE - (dwAddr & (PAGE_SIZE - 1))))
     {
@@ -38,17 +38,17 @@ bool CMemoryOperator::MemoryReadSafe(DWORD64 dwAddr, char *szBuffer, DWORD dwBuf
     pReadSize[0] = 0;
     while (dwReadSize)
     {
-        DWORD dw = 0;
+        SIZE_T dw = 0;
         MemoryReadPageSafe(dwAddr + dwOffset, szBuffer + dwOffset, dwReadSize, &dw);
 
-        pReadSize[0] += dw;
+        pReadSize[0] += (DWORD)dw;
         if (dw != dwReadSize)
         {
             break;
         }
 
-        dwOffset += dw;
-        dwRequest -= dw;
+        dwOffset += (DWORD)dw;
+        dwRequest -= (DWORD)dw;
         dwReadSize = min(PAGE_SIZE, dwRequest);
     }
     return true;

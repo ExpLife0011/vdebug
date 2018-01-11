@@ -40,7 +40,7 @@ ustring CCmdQueue::GetFrontCmd()
 
     if (-1 == m_dwCurPos)
     {
-        m_dwCurPos = m_vCmdList.size() - 1;
+        m_dwCurPos = (DWORD)m_vCmdList.size() - 1;
         return m_vCmdList[m_dwCurPos];
     }
 

@@ -4,12 +4,12 @@
 CSyntaxDescHlpr &CSyntaxDescHlpr::FormatDesc(const ustring &wstrInfo, const SyntaxColourDesc &vDesc, DWORD dwFormatLength)
 {
     mstring strInfo(wstrInfo);
-    m_vCurrentDesc.push_back(SyntaxColourNode(wstrInfo, m_strCurrentLine.size(), vDesc));
+    m_vCurrentDesc.push_back(SyntaxColourNode(wstrInfo, (DWORD)m_strCurrentLine.size(), vDesc));
     m_strCurrentLine += strInfo;
     //ÖÐÓ¢ÎÄ¶ÔÆë
     if (strInfo.size() < dwFormatLength)
     {
-        for (DWORD dwIdex = strInfo.size() ; dwIdex < dwFormatLength ; dwIdex++)
+        for (DWORD dwIdex = (DWORD)strInfo.size() ; dwIdex < dwFormatLength ; dwIdex++)
         {
             m_strCurrentLine += " ";
         }
@@ -61,7 +61,7 @@ void CEasySyntaxHlpr::AppendWord(const ustring &wstrWord, SyntaxColourDesc &vDes
     mstring str(wstrWord);
     SyntaxColourNode node(str, 0, vDesc);
     map<int, int>::iterator it;
-    int iCurSize = str.size();
+    int iCurSize = (int)str.size();
     if (m_vColMax.end() == (it = m_vColMax.find(m_iCurCol)))
     {
         m_vColMax[m_iCurCol] = iCurSize;
@@ -115,10 +115,10 @@ SyntaxDesc CEasySyntaxHlpr::Format()
         {
             int iMaxLength = m_vColMax[iColumn];
             itNode->m_dwStartPos = iPos;
-            itNode->m_dwLength = itNode->m_strContent.size();
+            itNode->m_dwLength = (DWORD)itNode->m_strContent.size();
             iPos += (iMaxLength + 1);
 
-            int iStrSize = itNode->m_strContent.size();
+            int iStrSize = (int)itNode->m_strContent.size();
             strLine += itNode->m_strContent;
             if (iStrSize < (iMaxLength + 1))
             {

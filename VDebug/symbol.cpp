@@ -254,7 +254,7 @@ bool CSymbolHlpr::StackWalk(CTaskStackWalkInfo *pStackWalkInfo)
     bool bStat = false;
     for (int i = 0 ; i < iMaxWalks ; i++)
     {
-        if (StackWalk64(
+        if (::StackWalk64(
             machineType,
             pStackWalkInfo->m_hDstProcess,
             pStackWalkInfo->m_hDstThread,

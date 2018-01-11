@@ -305,7 +305,7 @@ static VOID _OnInitDialog(HWND hwnd, WPARAM wp, LPARAM lp)
 
     gs_pSyntaxView->AppendSyntaxDesc(desc.GetResult());
     SetCmdNotify(em_dbg_status_init, L"³õÊ¼×´Ì¬");
-    gs_pfnCommandProc = (PWIN_PROC)SetWindowLong(gs_hCommand, GWL_WNDPROC, (long)_CommandProc);
+    gs_pfnCommandProc = (PWIN_PROC)SetWindowLongPtr(gs_hCommand, GWLP_WNDPROC, (LONG_PTR)_CommandProc);
     gs_pCmdQueue = new CCmdQueue();
     SetTimer(hwnd, TIMER_CFG_CHECK, 3000, NULL);
     CDbggerProxy::InitHelpEngine();
