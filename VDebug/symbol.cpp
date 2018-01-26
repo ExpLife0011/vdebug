@@ -9,8 +9,8 @@ CSymbolHlpr::CSymbolHlpr(const ustring &wstrSymbolPath)
     m_hNotifyEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
     m_hInitEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
     m_wstrSymbolPath = wstrSymbolPath;
-    CloseHandle(CreateThread(NULL, 0, WorkThread, this, 0, 0));
-    WaitForSingleObject(m_hInitEvent, INFINITE);
+    //CloseHandle(CreateThread(NULL, 0, WorkThread, this, 0, 0));
+    //WaitForSingleObject(m_hInitEvent, INFINITE);
 }
 
 bool CSymbolHlpr::SetSymbolPath(const ustring &wstrSymbolPath)
@@ -29,6 +29,7 @@ CSymbolHlpr:: ~CSymbolHlpr()
 
 bool CSymbolHlpr::SendTask(CSymbolTaskHeader *pTask, BOOL bAtOnce)
 {
+    return true;
     {
         CScopedLocker lock(this);
         pTask->m_hNotify = CreateEventW(NULL, FALSE, FALSE, NULL);
@@ -246,6 +247,45 @@ bool CSymbolHlpr::SetSymbolPath(CTaskSetSymbolPath *pSymbolPath)
     return (TRUE == SymSetSearchPathW(NULL, pSymbolPath->m_wstrSymbolPath.c_str()));
 }
 
+static ULONG_PTR __stdcall GetModuleBase(_In_ HANDLE hProcess, _In_ ULONG_PTR dwReturnAddress)
+{
+    IMAGEHLP_MODULE moduleInfo;
+    moduleInfo.SizeOfStruct = sizeof(IMAGEHLP_MODULE);
+
+#ifdef _WIN64
+    if (SymGetModuleInfo(hProcess, dwReturnAddress, &moduleInfo))
+#else
+    if (SymGetModuleInfo(hProcess, (ULONG)dwReturnAddress, &moduleInfo))
+#endif
+        return moduleInfo.BaseOfImage;
+    else
+    {
+        MEMORY_BASIC_INFORMATION memoryBasicInfo;
+
+        if (::VirtualQueryEx(hProcess, (LPVOID) dwReturnAddress,
+            &memoryBasicInfo, sizeof(memoryBasicInfo)))
+        {
+            DWORD cch = 0;
+            char szFile[MAX_PATH] = { 0 };
+
+            cch = GetModuleFileNameA((HINSTANCE)memoryBasicInfo.AllocationBase,
+                szFile, MAX_PATH);
+
+            // Ignore the return code since we can't do anything with it.
+            SymLoadModule(hProcess,
+                NULL, ((cch) ? szFile : NULL),
+#ifdef _WIN64
+                NULL, (DWORD_PTR) memoryBasicInfo.AllocationBase, 0);
+#else
+                NULL, (DWORD)(DWORD_PTR)memoryBasicInfo.AllocationBase, 0);
+#endif
+            return (DWORD_PTR) memoryBasicInfo.AllocationBase;
+        }
+    }
+
+    return 0;
+}
+
 bool CSymbolHlpr::StackWalk(CTaskStackWalkInfo *pStackWalkInfo)
 {
     STACKFRAME64 *pFrame = &(pStackWalkInfo->m_context);
@@ -254,7 +294,9 @@ bool CSymbolHlpr::StackWalk(CTaskStackWalkInfo *pStackWalkInfo)
     bool bStat = false;
     for (int i = 0 ; i < iMaxWalks ; i++)
     {
-        if (::StackWalk64(
+        //x86
+#ifndef _WIN64
+        BOOL bRet = ::StackWalk64(
             machineType,
             pStackWalkInfo->m_hDstProcess,
             pStackWalkInfo->m_hDstThread,
@@ -264,13 +306,32 @@ bool CSymbolHlpr::StackWalk(CTaskStackWalkInfo *pStackWalkInfo)
             SymFunctionTableAccess64,
             pStackWalkInfo->m_pfnGetModuleBaseProc,
             pStackWalkInfo->m_pfnStackTranslateProc
-            ))
+            );
+#else   //x64
+        //DWORD dw = SymGetOptions();
+        //dw &= ~SYMOPT_UNDNAME;
+        //SymSetOptions(dw);
+
+        BOOL bRet = ::StackWalk64(
+            machineType,
+            pStackWalkInfo->m_hDstProcess,
+            pStackWalkInfo->m_hDstThread,
+            pFrame,
+            pStackWalkInfo->m_pThreadContext,
+            pStackWalkInfo->m_pfnReadMemoryProc,
+            SymFunctionTableAccess64,
+            GetModuleBase,
+            pStackWalkInfo->m_pfnStackTranslateProc
+            );
+#endif
+        if (bRet)
         {
             pStackWalkInfo->m_FrameSet.push_back(*pFrame);
             bStat = true;
         }
         else
         {
+            int err = GetLastError();
             break;
         }
     }

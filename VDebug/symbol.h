@@ -77,6 +77,7 @@ struct CTaskStackWalkInfo
     STACKFRAME64 m_context;     //IN
     HANDLE m_hDstProcess;       //IN
     HANDLE m_hDstThread;        //IN
+    CONTEXT *m_pThreadContext;  //IN 64Œª π”√
     pfnReadDumpMemoryProc64 m_pfnReadMemoryProc;    //IN
     pfnGetModuelBaseFromAddr m_pfnGetModuleBaseProc;//IN
     pfnStackTranslateAddressProc64 m_pfnStackTranslateProc; //IN

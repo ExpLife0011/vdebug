@@ -117,6 +117,7 @@ public:
     DbgModuleInfo GetModuleFromAddr(DWORD64 dwAddr) const;
     ustring GetSymFromAddr(DWORD64 dwAddr) const;
     HANDLE GetDbgProc() const;
+    DWORD GetCurDbgProcId() const;
     HANDLE GetCurrentThread();
     HANDLE GetThreadById(DWORD dwId) const;
 
