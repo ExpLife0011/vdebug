@@ -299,6 +299,15 @@ void CProcDbgger::OnCreateProcess(CREATE_PROCESS_DEBUG_INFO* pCreateProcessInfo)
     hlpr.AddEmptyLine();
     GetSyntaxView()->AppendSyntaxDesc(hlpr.GetResult());
 
+    CSymbolTaskHeader task;
+    CTaskSymbolInit param;
+    param.m_hDstProc = pCreateProcessInfo->hProcess;
+    task.m_dwSize = sizeof(CSymbolTaskHeader) + sizeof(CTaskSymbolInit);
+    task.m_pParam = &param;
+    task.m_eTaskType = em_task_initsymbol;
+
+    GetSymbolHlpr()->SendTask(&task);
+
     DbgProcThreadInfo tp;
     tp.m_dwThreadId = dwId;
     tp.m_hThread = pCreateProcessInfo->hThread;
@@ -1103,21 +1112,10 @@ BOOL GetModuleListTH32(HANDLE hProcess, DWORD pid)
 
 list<STACKFRAME64> CProcDbgger::GetStackFrame(const ustring &wstrParam)
 {
-    SymInitializeW(GetProcDbgger()->GetDbgProc(), L".;d:\\local\\StackWalker;d:\\local\\StackWalker\\x64\\Debug_VC9;C:\\Windows;C:\\Windows\\system32;SRV*C:\\websymbols*http://msdl.microsoft.com/download/symbols;", FALSE);
-    DWORD symOptions = SymGetOptions();  // SymGetOptions
-    symOptions |= SYMOPT_LOAD_LINES;
-    symOptions |= SYMOPT_FAIL_CRITICAL_ERRORS;
-    //symOptions |= SYMOPT_NO_PROMPTS;
-    // SymSetOptions
-    symOptions = SymSetOptions(symOptions);
-
-    GetModuleListTH32(GetProcDbgger()->GetDbgProc(), GetProcDbgger()->GetCurDbgProcId());
-
     const int iMaxWalks = 1024;
     HANDLE hCurrentThread = GetProcDbgger()->GetCurrentThread();
     CONTEXT context = {0};
     context.ContextFlags = CONTEXT_FULL;
-    SuspendThread(hCurrentThread);
     ::GetThreadContext(hCurrentThread, &context);
     STACKFRAME64 frame = {0};
 
@@ -1138,37 +1136,9 @@ list<STACKFRAME64> CProcDbgger::GetStackFrame(const ustring &wstrParam)
     frame.AddrStack.Offset = context.Rsp;
     frame.AddrStack.Mode = AddrModeFlat;
 #endif
-    /*
-    CreateThread(NULL, 0, _TestThread, NULL, 0, NULL);
-    Sleep(2000);
-    HANDLE hThread = OpenThread(THREAD_ALL_ACCESS, FALSE, gs_dwThreadId1);
-    SuspendThread(hThread);
-    //hThread = GetProcDbgger()->GetCurrentThread();
-
-    CONTEXT contextTest;
-    memset(&contextTest, 0, sizeof(CONTEXT));
-
-    contextTest.ContextFlags = (CONTEXT_CONTROL | CONTEXT_INTEGER);
-    HANDLE hCurThread = GetProcDbgger()->GetCurrentThread();
-    ::GetThreadContext(hThread, &contextTest);
-
-    DWORD machineType2 = IMAGE_FILE_MACHINE_AMD64;
-    frame.AddrPC.Mode = AddrModeFlat;
-    frame.AddrPC.Offset = contextTest.Rip;
-    /*
-    frame.AddrPC.Mode = AddrModeFlat;
-    frame.AddrFrame.Offset = contextTest.Rsp;
-    frame.AddrFrame.Mode = AddrModeFlat;
-    frame.AddrStack.Offset = contextTest.Rsp;
-    frame.AddrStack.Mode = AddrModeFlat;
-
-    DWORD dw = SymGetOptions();
-    dw &= ~SYMOPT_UNDNAME;
-    SymSetOptions(dw);
-    */
     CTaskStackWalkInfo info;
     info.m_context = frame;
-    info.m_dwMachineType = IMAGE_FILE_MACHINE_AMD64;
+    info.m_dwMachineType = machineType;
     info.m_pfnGetModuleBaseProc = GetModuelBaseFromAddr;
     info.m_pfnReadMemoryProc = StackReadProcessMemoryProc64;
     info.m_pfnStackTranslateProc = StackTranslateAddressProc64;
@@ -1176,100 +1146,11 @@ list<STACKFRAME64> CProcDbgger::GetStackFrame(const ustring &wstrParam)
     info.m_hDstThread = hCurrentThread;
     info.m_pThreadContext = &context;
 
-    DWORD dw = SymGetOptions();
-    dw &= ~SYMOPT_UNDNAME;
-    SymSetOptions(dw);
-
-    SetLastError(0);
-    HANDLE h = GetProcDbgger()->GetDbgProc();
-    DWORD dwPid = GetProcDbgger()->GetCurDbgProcId();
-    HANDLE hDbgProc = OpenProcess(PROCESS_ALL_ACCESS, FALSE, dwPid);
-    list<STACKFRAME64> vTest2;
-    for (int i = 0 ; i < 256 ; i++)
-    {
-        if (::StackWalk64(
-            IMAGE_FILE_MACHINE_AMD64,
-            h,
-            hCurrentThread,
-            &frame,
-            &context,
-            NULL,
-            //StackReadProcessMemoryProc64,
-            //SymFunctionTableAccess64
-            //SymFunctionTableAccess,
-            //GetModuleBase,
-            NULL,
-            NULL,
-            NULL
-            ))
-        {
-            int ddd = 0;;
-            vTest2.push_back(frame);
-        }
-        else
-        {
-            int err = GetLastError();
-            break;
-        }
-    }
-    ResumeThread(hCurrentThread);
-
-    for (list<STACKFRAME64>::iterator it = vTest2.begin() ; it != vTest2.end() ; it++)
-    {
-        ustring wstrRetenAddr = FormatW(L"%016llx", it->AddrReturn.Offset);
-        int ddd = 0;
-    }
-
-    //调试 获取当前线程的调用栈
-    /*
-    DWORD dw = SymGetOptions();
-    dw &= ~SYMOPT_UNDNAME;
-    SymSetOptions(dw);
-
-    SetLastError(0);
-    list<STACKFRAME64> vTest2;
-    for (int i = 0 ; i < 256 ; i++)
-    {
-        if (::StackWalk64(
-            machineType2,
-            GetCurrentProcess(),
-            hThread,
-            &frame,
-            &contextTest,
-            NULL,
-            //SymFunctionTableAccess64
-            SymFunctionTableAccess,
-            GetModuleBase,
-            NULL
-            ))
-        {
-            int ddd = 0;;
-            vTest2.push_back(frame);
-        }
-        else
-        {
-            int err = GetLastError();
-            break;
-        }
-    }
-
-    for (list<STACKFRAME64>::iterator it = vTest2.begin() ; it != vTest2.end() ; it++)
-    {
-        ustring wstrRetenAddr = FormatW(L"%016llx", it->AddrReturn.Offset);
-        int ddd = 0;
-    }
-    */
     CSymbolTaskHeader header;
     header.m_dwSize = sizeof(CTaskStackWalkInfo) + sizeof(CSymbolTaskHeader);
     header.m_eTaskType = em_task_stackwalk;
     header.m_pParam = &info;
     GetSymbolHlpr()->SendTask(&header);
-
-    for (list<STACKFRAME64>::iterator it = info.m_FrameSet.begin() ; it != info.m_FrameSet.end() ; it++)
-    {
-        ustring wstrRetenAddr = FormatW(L"%016llx", it->AddrReturn.Offset);
-        dp(L"addr1:%016llx addr2:%016llx", it->AddrPC.Offset, it->AddrReturn.Offset);
-    }
     return info.m_FrameSet;
 }
 

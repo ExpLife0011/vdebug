@@ -23,6 +23,7 @@ typedef DWORD64 (CALLBACK *pfnStackTranslateAddressProc64)(HANDLE hProcess, HAND
 
 enum SymbolTask
 {
+    em_task_initsymbol, //初始化符号引擎
     em_task_loadsym,    //符号加载
     em_task_strfromaddr,//获取地址对应的字符串名称
     em_task_addrfromstr,//获取字符串名称对应的符号地址
@@ -31,6 +32,17 @@ enum SymbolTask
     em_task_findfile,   //在本地下载dump中的模块
     em_task_unloadsym,  //卸载指定符号
     em_task_unloadall   //卸载所有符号
+};
+
+struct CTaskSymbolInit  //初始化符号
+{
+    HANDLE m_hDstProc;  //目标进程
+    ustring m_wstrSearchPath;
+
+    CTaskSymbolInit()
+    {
+        m_hDstProc = NULL;
+    }
 };
 
 struct SymbolLoadInfo   //已加载模块的符号信息
@@ -144,6 +156,7 @@ public:
     bool DeleteTask(CSymbolTaskHeader *pTask);
 
 protected:
+    static bool InitEngine(CTaskSymbolInit *pInitInfo);
     static bool UnloadAllModuleTask(LPVOID pParam);
     static bool UnloadModuleTask(CTaskUnloadSymbol *pUnloadInfo);
     static bool FindFileForDump(CTaskFindFileForDump *pFileInfo);
@@ -174,6 +187,7 @@ protected:
     list<CSymbolTaskHeader *> m_vTaskQueue;
     HANDLE m_hNotifyEvent;
     HANDLE m_hInitEvent;
+    HANDLE m_hDbgProc;
     ustring m_wstrSymbolPath;
 };
 

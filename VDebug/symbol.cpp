@@ -8,9 +8,10 @@ CSymbolHlpr::CSymbolHlpr(const ustring &wstrSymbolPath)
 {
     m_hNotifyEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
     m_hInitEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
+    m_hDbgProc = NULL;
     m_wstrSymbolPath = wstrSymbolPath;
-    //CloseHandle(CreateThread(NULL, 0, WorkThread, this, 0, 0));
-    //WaitForSingleObject(m_hInitEvent, INFINITE);
+    CloseHandle(CreateThread(NULL, 0, WorkThread, this, 0, 0));
+    WaitForSingleObject(m_hInitEvent, INFINITE);
 }
 
 bool CSymbolHlpr::SetSymbolPath(const ustring &wstrSymbolPath)
@@ -29,7 +30,6 @@ CSymbolHlpr:: ~CSymbolHlpr()
 
 bool CSymbolHlpr::SendTask(CSymbolTaskHeader *pTask, BOOL bAtOnce)
 {
-    return true;
     {
         CScopedLocker lock(this);
         pTask->m_hNotify = CreateEventW(NULL, FALSE, FALSE, NULL);
@@ -101,7 +101,7 @@ bool CSymbolHlpr::UnLoadModuleByAddr(DWORD64 dwAddr)
     {
         if (it->m_dwBaseOfModule == dwAddr)
         {
-            SymUnloadModule64(NULL, dwAddr);
+            SymUnloadModule64(GetSymbolHlpr()->m_hDbgProc, dwAddr);
             m_vSymbolInfo.erase(it);
             return true;
         }
@@ -114,7 +114,7 @@ bool CSymbolHlpr::UnloadAllModules()
     CScopedLocker lock(this);
     for (list<SymbolLoadInfo>::iterator it = m_vSymbolInfo.begin() ; it != m_vSymbolInfo.end() ; it++)
     {
-        SymUnloadModule64(NULL, it->m_dwBaseOfModule);
+        SymUnloadModule64(GetSymbolHlpr()->m_hDbgProc, it->m_dwBaseOfModule);
     }
     m_vSymbolInfo.clear();
     return true;
@@ -124,7 +124,7 @@ bool CSymbolHlpr::LoadModule(HANDLE hFile, const ustring &wstrDllPath, DWORD64 d
 {
     CScopedLocker lock(this);
     DWORD64 dwBaseAddr = SymLoadModuleExW(
-        NULL,
+        m_hDbgProc,
         hFile,
         wstrDllPath.c_str(),
         0,
@@ -143,6 +143,14 @@ bool CSymbolHlpr::LoadModule(HANDLE hFile, const ustring &wstrDllPath, DWORD64 d
         return true;
     }
     return false;
+}
+
+bool CSymbolHlpr::InitEngine(CTaskSymbolInit *pInitInfo)
+{
+    SymSetOptions(SymGetOptions() | SYMOPT_CASE_INSENSITIVE | SYMOPT_LOAD_LINES | SYMOPT_FAIL_CRITICAL_ERRORS);
+    SymInitializeW(pInitInfo->m_hDstProc, NULL, FALSE);
+    GetSymbolHlpr()->m_hDbgProc = pInitInfo->m_hDstProc;
+    return true;
 }
 
 bool CSymbolHlpr::LoadSymbol(CTaskLoadSymbol *pModuleInfo)
@@ -178,7 +186,7 @@ bool CSymbolHlpr::LoadSymbol(CTaskLoadSymbol *pModuleInfo)
 
     IMAGEHLP_MODULEW64 info = {0};
     info.SizeOfStruct = sizeof(info);
-    SymGetModuleInfoW64(NULL, (DWORD64)dwBaseAddr, &info);
+    SymGetModuleInfoW64(GetSymbolHlpr()->m_hDbgProc, (DWORD64)dwBaseAddr, &info);
 
     DbgModuleInfo *pModule = &(pModuleInfo->m_ModuleInfo);
     pModule->m_wstrDllPath = wstrDll;
@@ -208,7 +216,7 @@ bool CSymbolHlpr::GetSymbolFromAddr(CTaskSymbolFromAddr *pSymbolInfo)
         return false;
     }
 
-    if (!SymFromAddrW(NULL, pSymbolInfo->m_dwAddr, &dwOffset, pSymbol))
+    if (!SymFromAddrW(GetSymbolHlpr()->m_hDbgProc, pSymbolInfo->m_dwAddr, &dwOffset, pSymbol))
     {
         ustring wstrErr = GetStdErrorStr();
         pSymbolInfo->m_wstrSymbol = FormatW(L"0x%x", pSymbolInfo->m_dwAddr - dwBaseOfModule);
@@ -234,7 +242,7 @@ bool CSymbolHlpr::GetAddrFromStr(CTaskGetAddrFromStr *pSymbolInfo)
     pSymbol->MaxNameLen = 512;
     pSymbol->ModBase = pSymbolInfo->m_dwBaseOfModule;
 
-    if (SymFromNameW(NULL, pSymbolInfo->m_wstrStr.c_str(), pSymbol))
+    if (SymFromNameW(GetSymbolHlpr()->m_hDbgProc, pSymbolInfo->m_wstrStr.c_str(), pSymbol))
     {
         pSymbolInfo->m_dwAddr = pSymbol->Address;
         return true;
@@ -244,54 +252,25 @@ bool CSymbolHlpr::GetAddrFromStr(CTaskGetAddrFromStr *pSymbolInfo)
 
 bool CSymbolHlpr::SetSymbolPath(CTaskSetSymbolPath *pSymbolPath)
 {
-    return (TRUE == SymSetSearchPathW(NULL, pSymbolPath->m_wstrSymbolPath.c_str()));
-}
-
-static ULONG_PTR __stdcall GetModuleBase(_In_ HANDLE hProcess, _In_ ULONG_PTR dwReturnAddress)
-{
-    IMAGEHLP_MODULE moduleInfo;
-    moduleInfo.SizeOfStruct = sizeof(IMAGEHLP_MODULE);
-
-#ifdef _WIN64
-    if (SymGetModuleInfo(hProcess, dwReturnAddress, &moduleInfo))
-#else
-    if (SymGetModuleInfo(hProcess, (ULONG)dwReturnAddress, &moduleInfo))
-#endif
-        return moduleInfo.BaseOfImage;
-    else
-    {
-        MEMORY_BASIC_INFORMATION memoryBasicInfo;
-
-        if (::VirtualQueryEx(hProcess, (LPVOID) dwReturnAddress,
-            &memoryBasicInfo, sizeof(memoryBasicInfo)))
-        {
-            DWORD cch = 0;
-            char szFile[MAX_PATH] = { 0 };
-
-            cch = GetModuleFileNameA((HINSTANCE)memoryBasicInfo.AllocationBase,
-                szFile, MAX_PATH);
-
-            // Ignore the return code since we can't do anything with it.
-            SymLoadModule(hProcess,
-                NULL, ((cch) ? szFile : NULL),
-#ifdef _WIN64
-                NULL, (DWORD_PTR) memoryBasicInfo.AllocationBase, 0);
-#else
-                NULL, (DWORD)(DWORD_PTR)memoryBasicInfo.AllocationBase, 0);
-#endif
-            return (DWORD_PTR) memoryBasicInfo.AllocationBase;
-        }
-    }
-
-    return 0;
+    return (TRUE == SymSetSearchPathW(GetSymbolHlpr()->m_hDbgProc, pSymbolPath->m_wstrSymbolPath.c_str()));
 }
 
 bool CSymbolHlpr::StackWalk(CTaskStackWalkInfo *pStackWalkInfo)
 {
+    //SymInitializeW(GetProcDbgger()->GetDbgProc(), /*L".;d:\\local\\StackWalker;d:\\local\\StackWalker\\x64\\Debug_VC9;C:\\Windows;C:\\Windows\\system32;SRV*C:\\websymbols*http://msdl.microsoft.com/download/symbols;"*/NULL, FALSE);
+    //DWORD symOptions = SymGetOptions();  // SymGetOptions
+    //symOptions |= SYMOPT_LOAD_LINES;
+    //symOptions |= SYMOPT_FAIL_CRITICAL_ERRORS;
+    //symOptions |= SYMOPT_NO_PROMPTS;
+    //SymSetOptions
+    //symOptions = SymSetOptions(symOptions);
+    //_GetModuleListTH32(GetProcDbgger()->GetDbgProc(), GetProcDbgger()->GetCurDbgProcId());
+
     STACKFRAME64 *pFrame = &(pStackWalkInfo->m_context);
     DWORD machineType = pStackWalkInfo->m_dwMachineType;
     int iMaxWalks = 1024;
     bool bStat = false;
+    SetLastError(0);
     for (int i = 0 ; i < iMaxWalks ; i++)
     {
         //x86
@@ -318,10 +297,10 @@ bool CSymbolHlpr::StackWalk(CTaskStackWalkInfo *pStackWalkInfo)
             pStackWalkInfo->m_hDstThread,
             pFrame,
             pStackWalkInfo->m_pThreadContext,
-            pStackWalkInfo->m_pfnReadMemoryProc,
-            SymFunctionTableAccess64,
-            GetModuleBase,
-            pStackWalkInfo->m_pfnStackTranslateProc
+            NULL,
+            NULL,
+            NULL,
+            NULL
             );
 #endif
         if (bRet)
@@ -374,6 +353,11 @@ bool CSymbolHlpr::DoTask(CSymbolTaskHeader *pTask)
     bool bStat = false;
     switch (pTask->m_eTaskType)
     {
+    case  em_task_initsymbol:
+        {
+            bStat = InitEngine((CTaskSymbolInit *)pTask->m_pParam);
+        }
+        break;
     case  em_task_loadsym:
         {
             bStat = LoadSymbol((CTaskLoadSymbol *)pTask->m_pParam);
@@ -426,7 +410,7 @@ DWORD CSymbolHlpr::WorkThread(LPVOID pParam)
     //符号支持需要symsrv.dll的支持并需要symsrv.yes文件
     //忽略大小写匹配
     SymSetOptions(SymGetOptions() | SYMOPT_CASE_INSENSITIVE);
-    SymInitializeW(NULL, pThis->m_wstrSymbolPath.c_str(), FALSE);
+    //SymInitializeW(NULL, pThis->m_wstrSymbolPath.c_str(), FALSE);
     SetEvent(pThis->m_hInitEvent);
     while (TRUE)
     {
