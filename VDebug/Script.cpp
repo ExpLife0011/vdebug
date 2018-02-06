@@ -138,27 +138,73 @@ BOOL CScriptEngine::IsOperator(WCHAR cLetter) const
 
 BOOL CScriptEngine::IsRegisterStr(const ustring &wstr, DWORD64 &dwData) const
 {
-    if (wstr == L"csp")
+    BOOL bResult = FALSE;
+    //x86
+#ifndef _WIN64
+    if (wstr == L"csp" || wstr == L"esp")
     {
         dwData = m_vContex.csp;
-        return TRUE;
+        bResult = TRUE;
     }
-    else if (wstr == L"cax")
+    else if (wstr == L"cax" || wstr == L"eax")
     {
         dwData = m_vContex.cax;
-        return TRUE;
+        bResult = TRUE;
     }
-    else if (wstr == L"cbx")
+    else if (wstr == L"cbx" || wstr = L"ebx" || wstr == L"rbx")
     {
         dwData = m_vContex.cbx;
-        return TRUE;
+        bResult = TRUE;
     }
-    else if (wstr == L"cbp")
+    else if (wstr == L"cbp" || wstr == L"ebp" || wstr == L"rbp")
     {
         dwData = m_vContex.cbp;
-        return TRUE;
+        bResult = TRUE;
     }
-    return FALSE;
+#else
+    //x64
+    if (wstr == L"csp" || wstr == L"rsp")
+    {
+        dwData = m_vContex.csp;
+        bResult = TRUE;
+    }
+    else if (wstr == L"cbp" || wstr == L"rbp")
+    {
+        dwData = m_vContex.cbp;
+        bResult = TRUE;
+    }
+    else if (wstr == L"cax" || wstr == L"rax")
+    {
+        dwData = m_vContex.cax;
+        bResult = TRUE;
+    }
+    else if (wstr == L"cbx" || wstr == L"rbx")
+    {
+        dwData = m_vContex.cbx;
+        bResult = TRUE;
+    }
+    else if (wstr == L"ccx" || wstr == L"rcx")
+    {
+        dwData = m_vContex.ccx;
+        bResult = TRUE;
+    }
+    else if (wstr == L"cdx" || wstr == L"rdx")
+    {
+        dwData = m_vContex.cdx;
+        bResult = TRUE;
+    }
+    else if (wstr == L"r8")
+    {
+        dwData = m_vContex.r8;
+        bResult = TRUE;
+    }
+    else if (wstr == L"r9")
+    {
+        dwData = m_vContex.r9;
+        bResult = TRUE;
+    }
+#endif
+    return bResult;
 }
 
 ustring CScriptEngine::GetPointerData(const ustring &wstrPointer) const

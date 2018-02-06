@@ -139,6 +139,10 @@ DWORD CProcDbgger::DebugThread(LPVOID pParam)
             GetProcDbgger()->ResetCache();
             return 0;
         }
+
+        BOOL bWowProc = TRUE;
+        IsWow64Process(process->hProcess, &bWowProc);
+        GetProcDbgger()->m_bX64 = (!bWowProc);
         GetProcDbgger()->m_vDbgProcInfo.m_dwPid = process->dwProcessId;
         GetProcDbgger()->m_vDbgProcInfo.m_hProcess = process->hProcess;
         DebugLoop();
@@ -700,15 +704,28 @@ DbgCmdResult CProcDbgger::OnCmdTc(const ustring &wstrCmdParam, BOOL bShow, const
 DbgCmdResult CProcDbgger::OnCmdLm(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam)
 {
     CSyntaxDescHlpr hlpr;
-    hlpr.FormatDesc(L"起始位置", COLOUR_MSG, 12);
-    hlpr.FormatDesc(L"结束位置", COLOUR_MSG, 12);
-    hlpr.FormatDesc(L"模块名称", COLOUR_MSG, 12);
+
+    BOOL bx64 = GetProcDbgger()->IsDbgProcx64();
+    DWORD dwLength = bx64 ? 20 : 12;
+    hlpr.FormatDesc(L"起始位置", COLOUR_MSG, dwLength);
+    hlpr.FormatDesc(L"结束位置", COLOUR_MSG, dwLength);
+    hlpr.FormatDesc(L"模块名称", COLOUR_MSG, dwLength);
+
     for (map<DWORD64, DbgModuleInfo>::const_iterator it = m_vModuleInfo.begin() ; it != m_vModuleInfo.end() ; it++)
     {
         hlpr.NextLine();
-        hlpr.FormatDesc(FormatW(L"0x%08x", it->second.m_dwBaseOfImage), COLOUR_MSG, 12);
-        hlpr.FormatDesc(FormatW(L"0x%08x", it->second.m_dwEndAddr), COLOUR_MSG, 12);
-        hlpr.FormatDesc(FormatW(L"%ls", it->second.m_wstrDllName.c_str()));
+        if (bx64)
+        {
+            hlpr.FormatDesc(FormatW(L"0x%016llx", it->second.m_dwBaseOfImage), COLOUR_MSG, dwLength);
+            hlpr.FormatDesc(FormatW(L"0x%016llx", it->second.m_dwEndAddr), COLOUR_MSG, dwLength);
+            hlpr.FormatDesc(FormatW(L"%ls", it->second.m_wstrDllName.c_str()));
+        }
+        else
+        {
+            hlpr.FormatDesc(FormatW(L"0x%08x", it->second.m_dwBaseOfImage), COLOUR_MSG, dwLength);
+            hlpr.FormatDesc(FormatW(L"0x%08x", it->second.m_dwEndAddr), COLOUR_MSG, dwLength);
+            hlpr.FormatDesc(FormatW(L"%ls", it->second.m_wstrDllName.c_str()));
+        }
     }
     return DbgCmdResult(em_dbgstat_succ, hlpr.GetResult());
 }
@@ -1031,85 +1048,6 @@ static BOOL CALLBACK StackReadProcessMemoryProc64(HANDLE hProcess, DWORD64 lpBas
     return memory.MemoryReadSafe(lpBaseAddress, (char *)lpBuffer, nSize, lpNumberOfBytesRead);
 }
 
-HANDLE gs_hTestThread1 = 0;
-DWORD gs_dwThreadId1 = 0;
-
-static DWORD _TestThread(LPVOID pParam)
-{
-    gs_dwThreadId1 = GetCurrentThreadId();
-    gs_hTestThread1 = GetCurrentThread();
-    while (TRUE)
-    {
-        Sleep(3000);
-    }
-    return 0;
-}
-
-static ULONG_PTR __stdcall GetModuleBase(_In_ HANDLE hProcess, _In_ ULONG_PTR dwReturnAddress)
-{
-    IMAGEHLP_MODULE moduleInfo;
-    moduleInfo.SizeOfStruct = sizeof(IMAGEHLP_MODULE);
-
-#ifdef _WIN64
-    if (SymGetModuleInfo(hProcess, dwReturnAddress, &moduleInfo))
-#else
-    if (SymGetModuleInfo(hProcess, (ULONG)dwReturnAddress, &moduleInfo))
-#endif
-        return moduleInfo.BaseOfImage;
-    else
-    {
-        MEMORY_BASIC_INFORMATION memoryBasicInfo;
-
-        if (::VirtualQueryEx(hProcess, (LPVOID) dwReturnAddress,
-            &memoryBasicInfo, sizeof(memoryBasicInfo)))
-        {
-            DWORD cch = 0;
-            char szFile[MAX_PATH] = { 0 };
-
-            cch = GetModuleFileNameA((HINSTANCE)memoryBasicInfo.AllocationBase,
-                szFile, MAX_PATH);
-
-            // Ignore the return code since we can't do anything with it.
-            SymLoadModule(hProcess,
-                NULL, ((cch) ? szFile : NULL),
-#ifdef _WIN64
-                NULL, (DWORD_PTR) memoryBasicInfo.AllocationBase, 0);
-#else
-                NULL, (DWORD)(DWORD_PTR)memoryBasicInfo.AllocationBase, 0);
-#endif
-            return (DWORD_PTR) memoryBasicInfo.AllocationBase;
-        }
-    }
-
-    return 0;
-}
-
-BOOL GetModuleListTH32(HANDLE hProcess, DWORD pid)
-{
-    HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, pid);
-    if (hSnap == (HANDLE)-1)
-    {
-        return FALSE;
-    }
-
-    MODULEENTRY32W me = {0};
-    me.dwSize = sizeof(me);
-    BOOL bContinue = Module32FirstW( hSnap, &me);
-    int cnt = 0;
-    while (TRUE)
-    {
-        mstring path(me.szExePath);
-        mstring name(me.szModule);
-        DWORD64 dd = SymLoadModuleExW(GetProcDbgger()->GetDbgProc(), NULL, me.szExePath, me.szModule, (DWORD64)me.modBaseAddr, me.modBaseSize, 0, 0);
-        if (!Module32Next(hSnap, &me))
-        {
-            break;
-        }
-    }
-    CloseHandle(hSnap);
-    return TRUE;
-}
-
 list<STACKFRAME64> CProcDbgger::GetStackFrame(const ustring &wstrParam)
 {
     const int iMaxWalks = 1024;
@@ -1164,8 +1102,8 @@ DbgCmdResult CProcDbgger::OnCmdKv(const ustring &wstrCmdParam, BOOL bShow, const
 
     CSyntaxDescHlpr hlpr;
     hlpr.NextLine();
-    hlpr.FormatDesc(L"返回地址 ", COLOUR_MSG, 16);
-    hlpr.FormatDesc(L"参数列表 ", COLOUR_MSG, 16);
+    hlpr.FormatDesc(L"返回地址 ", COLOUR_MSG, 17);
+    hlpr.FormatDesc(L"参数列表 ", COLOUR_MSG, 17);
     hlpr.NextLine();
     for (list<STACKFRAME64>::const_iterator it = vStack.begin() ; it != vStack.end() ; it++)
     {
@@ -1314,19 +1252,63 @@ DbgCmdResult CProcDbgger::OnCmdDu(const ustring &wstrCmdParam, BOOL bShow, const
 DbgCmdResult CProcDbgger::OnCmdReg(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam)
 {
     TITAN_ENGINE_CONTEXT_t context = GetCurrentDbgger()->GetCurrentContext();
-    CSyntaxDescHlpr vDescHlpr;;
-    vDescHlpr.FormatDesc(FormatW(L"cax=0x%08x ", context.cax), COLOUR_MSG);
-    vDescHlpr.FormatDesc(FormatW(L"cbx=0x%08x ", context.cbx), COLOUR_MSG);
-    vDescHlpr.FormatDesc(FormatW(L"ccx=0x%08x ", context.ccx), COLOUR_MSG);
-    vDescHlpr.NextLine();
+    CSyntaxDescHlpr vDescHlpr;
 
-    vDescHlpr.FormatDesc(FormatW(L"cdx=0x%08x ", context.cdx), COLOUR_MSG);
-    vDescHlpr.FormatDesc(FormatW(L"csi=0x%08x ", context.csi), COLOUR_MSG);
-    vDescHlpr.FormatDesc(FormatW(L"cdi=0x%08x ", context.cdi), COLOUR_MSG);
-    vDescHlpr.NextLine();
+    if (GetCurrentDbgger()->IsDbgProcx64())
+    {
+        vDescHlpr.FormatDesc(FormatW(L"rax=0x%016llx ", context.cax), COLOUR_MSG);
+        vDescHlpr.FormatDesc(FormatW(L"rbx=0x%016llx ", context.cbx), COLOUR_MSG);
+        vDescHlpr.FormatDesc(FormatW(L"rcx=0x%016llx ", context.ccx), COLOUR_HIGHT);
+        vDescHlpr.NextLine();
 
-    vDescHlpr.FormatDesc(FormatW(L"csp=0x%08x ", context.csp), COLOUR_MSG);
-    vDescHlpr.FormatDesc(FormatW(L"cbp=0x%08x ", context.cbp), COLOUR_MSG);
+        vDescHlpr.FormatDesc(FormatW(L"rdx=0x%016llx ", context.cdx), COLOUR_HIGHT);
+        vDescHlpr.FormatDesc(FormatW(L"rsi=0x%016llx ", context.csi), COLOUR_MSG);
+        vDescHlpr.FormatDesc(FormatW(L"rdi=0x%016llx ", context.cdi), COLOUR_MSG);
+        vDescHlpr.NextLine();
+
+        vDescHlpr.FormatDesc(FormatW(L"rip=0x%016llx ", context.cip), COLOUR_HIGHT);
+        vDescHlpr.FormatDesc(FormatW(L"rsp=0x%016llx ", context.csp), COLOUR_HIGHT);
+        vDescHlpr.FormatDesc(FormatW(L"rbp=0x%016llx ", context.cbp), COLOUR_HIGHT);
+        vDescHlpr.NextLine();
+
+        vDescHlpr.FormatDesc(FormatW(L" r8=0x%016llx ", context.r8), COLOUR_HIGHT);
+        vDescHlpr.FormatDesc(FormatW(L" r9=0x%016llx ", context.r9), COLOUR_HIGHT);
+        vDescHlpr.FormatDesc(FormatW(L"r10=0x%016llx ", context.r10), COLOUR_MSG);
+        vDescHlpr.NextLine();
+
+        vDescHlpr.FormatDesc(FormatW(L"r11=0x%016llx ", context.r11), COLOUR_MSG);
+        vDescHlpr.FormatDesc(FormatW(L"r12=0x%016llx ", context.r12), COLOUR_MSG);
+        vDescHlpr.FormatDesc(FormatW(L"r13=0x%016llx ", context.r13), COLOUR_MSG);
+        vDescHlpr.NextLine();
+
+        vDescHlpr.FormatDesc(FormatW(L"r14=0x%016llx ", context.r14), COLOUR_MSG);
+        vDescHlpr.FormatDesc(FormatW(L"r15=0x%016llx ", context.r15), COLOUR_MSG);
+        vDescHlpr.NextLine();
+    }
+    else
+    {
+        vDescHlpr.FormatDesc(FormatW(L"eax=0x%08x ", context.cax), COLOUR_MSG);
+        vDescHlpr.FormatDesc(FormatW(L"ebx=0x%08x ", context.cbx), COLOUR_MSG);
+        vDescHlpr.FormatDesc(FormatW(L"ecx=0x%08x ", context.ccx), COLOUR_MSG);
+        vDescHlpr.NextLine();
+
+        vDescHlpr.FormatDesc(FormatW(L"edx=0x%08x ", context.cdx), COLOUR_MSG);
+        vDescHlpr.FormatDesc(FormatW(L"esi=0x%08x ", context.csi), COLOUR_MSG);
+        vDescHlpr.FormatDesc(FormatW(L"edi=0x%08x ", context.cdi), COLOUR_MSG);
+        vDescHlpr.NextLine();
+
+        vDescHlpr.FormatDesc(FormatW(L"esp=0x%08x ", context.csp), COLOUR_MSG);
+        vDescHlpr.FormatDesc(FormatW(L"ebp=0x%08x ", context.cbp), COLOUR_MSG);
+    }
+    vDescHlpr.FormatDesc(FormatW(L"cs=0x%04x  ", context.cs), COLOUR_MSG);
+    vDescHlpr.FormatDesc(FormatW(L"ss=0x%04x  ", context.ss), COLOUR_MSG);
+    vDescHlpr.FormatDesc(FormatW(L"ds=0x%04x  ", context.ds), COLOUR_MSG);
+    vDescHlpr.FormatDesc(FormatW(L"es=0x%04x  ", context.es), COLOUR_MSG);
+    vDescHlpr.FormatDesc(FormatW(L"fs=0x%04x  ", context.fs), COLOUR_MSG);
+    vDescHlpr.FormatDesc(FormatW(L"gs=0x%04x  ", context.gs), COLOUR_MSG);
+    vDescHlpr.NextLine();
+    ustring wstrAddr = GetSymFromAddr(context.cip);
+    vDescHlpr.FormatDesc(wstrAddr, COLOUR_PROC);
     return DbgCmdResult(em_dbgstat_succ, vDescHlpr.GetResult());
 }
 
