@@ -19,16 +19,19 @@ struct DisasmInfoInternal
     DWORD m_dwMaxSize;              //最大反汇编的字节数
     DWORD64 m_dwStartAddr;          //起始位置
     DWORD m_dwCurSize;              //当前发汇编的字节数
+    BOOL m_bx64;
     vector<DisasmInfo> *m_pOutSet;  //出参
 
     DisasmInfoInternal()
     {
+        m_bx64 = FALSE;
         ZeroMemory(this, sizeof(DisasmInfoInternal));
     }
 };
 
 CDisasmParser::CDisasmParser(HANDLE hProcess)
 {
+    m_bx64 = GetCurrentDbgger()->IsDbgProcx64();
     m_hProcess = hProcess;
 }
 
@@ -43,9 +46,14 @@ BOOL CDisasmParser::DisasmCallback(const cs_insn *pAsmInfo, LPVOID pParam)
     info.m_wstrOpt = pAsmInfo->mnemonic;
     info.m_wstrContent = pAsmInfo->op_str;
 
-    WCHAR wszBuf[64] = {0};
-    _ui64tow(info.m_dwAddr, wszBuf, 16);
-    info.m_wstrAddr.format(L"%08ls", wszBuf);
+    if (pInfo->m_bx64)
+    {
+        info.m_wstrAddr.format(L"%016llx", info.m_dwAddr);
+    }
+    else
+    {
+        info.m_wstrAddr.format(L"%08x", info.m_dwAddr);
+    }
 
     for (int i = 0 ; i < pAsmInfo->size ; i++)
     {
@@ -84,7 +92,7 @@ BOOL CDisasmParser::DisasmCallback(const cs_insn *pAsmInfo, LPVOID pParam)
     return TRUE;
 }
 
-bool CDisasmParser::DisasmInternal(DWORD64 dwAddr, pfnDisasmProc pfn, LPVOID pParam) const
+bool CDisasmParser::DisasmInternal(DWORD64 dwAddr, pfnDisasmProc pfn, LPVOID pParam)
 {
     static char *s_szBuffer = new char[4096];
     static const DWORD dwDisasmSize = 4096;
@@ -98,7 +106,7 @@ bool CDisasmParser::DisasmInternal(DWORD64 dwAddr, pfnDisasmProc pfn, LPVOID pPa
         return false;
     }
     csh mHandle = NULL;
-    if (GetCurrentDbgger()->IsDbgProcx64())
+    if (m_bx64)
     {
         cs_open(CS_ARCH_X86, CS_MODE_64, &mHandle);
     }
@@ -148,22 +156,24 @@ bool CDisasmParser::DisasmInternal(DWORD64 dwAddr, pfnDisasmProc pfn, LPVOID pPa
     return true;
 }
 
-bool CDisasmParser::DisasmUntilReturn(DWORD64 dwAddr, vector<DisasmInfo> &vInfo) const
+bool CDisasmParser::DisasmUntilReturn(DWORD64 dwAddr, vector<DisasmInfo> &vInfo)
 {
     DisasmInfoInternal st;
     st.m_eType = em_disasm_byret;
     st.m_dwStartAddr = dwAddr;
     st.m_pOutSet = &vInfo;
+    st.m_bx64 = m_bx64;
     DisasmInternal(dwAddr, DisasmCallback, &st);
     return !vInfo.empty();
 }
 
-bool CDisasmParser::DisasmWithSize(DWORD64 dwAddr, DWORD dwDisasmSize, vector<DisasmInfo> &vInfo) const
+bool CDisasmParser::DisasmWithSize(DWORD64 dwAddr, DWORD dwDisasmSize, vector<DisasmInfo> &vInfo)
 {
     DisasmInfoInternal st;
     st.m_eType = em_disasm_bysize;
     st.m_dwMaxSize = dwDisasmSize;
     st.m_dwStartAddr = dwAddr;
+    st.m_bx64 = m_bx64;
     st.m_pOutSet = &vInfo;
     DisasmInternal(dwAddr, DisasmCallback, &st);
     return !vInfo.empty();

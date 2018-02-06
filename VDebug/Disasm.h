@@ -33,15 +33,16 @@ public:
     CDisasmParser(HANDLE hProcess);
     virtual ~CDisasmParser();
 
-    bool DisasmUntilReturn(DWORD64 dwAddr, vector<DisasmInfo> &vInfo) const;
-    bool DisasmWithSize(DWORD64 dwAddr, DWORD dwMaxSize, vector<DisasmInfo> &vInfo) const;
+    bool DisasmUntilReturn(DWORD64 dwAddr, vector<DisasmInfo> &vInfo);
+    bool DisasmWithSize(DWORD64 dwAddr, DWORD dwMaxSize, vector<DisasmInfo> &vInfo);
 
 protected:
-    bool DisasmInternal(DWORD64 dwAddr, pfnDisasmProc pfn, LPVOID pParam) const;
+    bool DisasmInternal(DWORD64 dwAddr, pfnDisasmProc pfn, LPVOID pParam);
     static BOOL WINAPI DisasmCallback(const cs_insn *pAsmInfo, LPVOID pParam);
 
 protected:
     HANDLE m_hProcess;
+    BOOL m_bx64;
 };
 
 #endif

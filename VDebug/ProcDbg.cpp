@@ -401,12 +401,17 @@ bool CProcDbgger::LoadModuleInfo(HANDLE hFile, DWORD64 dwBaseOfModule)
     //两个结构完全一样，考虑到和dump可能有区别分别命名
     m_vModuleInfo[dwBaseOfModule] = loadInfo.m_ModuleInfo;
     CSyntaxDescHlpr hlpr;
-    WCHAR wszStart[64] = {0};
-    WCHAR wszEnd[64] = {0};
-    _i64tow_s(loadInfo.m_ModuleInfo.m_dwBaseOfImage, wszStart, 64, 16);
-    _i64tow_s(loadInfo.m_ModuleInfo.m_dwEndAddr, wszEnd, 16, 16);
     hlpr.FormatDesc(L"模块加载 ", COLOUR_MSG);
-    hlpr.FormatDesc(FormatW(L"0x%08ls 0x%08ls  ", wszStart, wszEnd), COLOUR_MSG);
+
+    if (GetCurrentDbgger()->IsDbgProcx64())
+    {
+        hlpr.FormatDesc(FormatW(L"0x%016llx 0x%016llx  ", loadInfo.m_ModuleInfo.m_dwBaseOfImage, loadInfo.m_ModuleInfo.m_dwEndAddr), COLOUR_MSG);
+    }
+    else
+    {
+        hlpr.FormatDesc(FormatW(L"0x%08x 0x%08x  ", loadInfo.m_ModuleInfo.m_dwBaseOfImage, loadInfo.m_ModuleInfo.m_dwEndAddr), COLOUR_MSG);
+    }
+
     hlpr.FormatDesc(loadInfo.m_ModuleInfo.m_wstrDllName, COLOUR_MODULE);
     GetSyntaxView()->AppendSyntaxDesc(hlpr.GetResult());
     return true;
@@ -831,9 +836,18 @@ bool CProcDbgger::DisassWithSize(DWORD64 dwAddr, DWORD64 dwSize, CSyntaxDescHlpr
     {
         for (vector<DisasmInfo>::const_iterator it = vDisasmSet.begin() ; it != vDisasmSet.end() ; it++)
         {
-            hlpr.FormatDesc(it->m_wstrAddr, COLOUR_ADDR, 10);
-            hlpr.FormatDesc(it->m_wstrByteCode, COLOUR_BYTE, 18);
-            hlpr.FormatDesc(it->m_wstrOpt, COLOUR_INST, 12);
+            if (GetCurrentDbgger()->IsDbgProcx64())
+            {
+                hlpr.FormatDesc(it->m_wstrAddr, COLOUR_ADDR, 18);
+                hlpr.FormatDesc(it->m_wstrByteCode, COLOUR_BYTE, 28);
+                hlpr.FormatDesc(it->m_wstrOpt, COLOUR_INST, 16);
+            }
+            else
+            {
+                hlpr.FormatDesc(it->m_wstrAddr, COLOUR_ADDR, 10);
+                hlpr.FormatDesc(it->m_wstrByteCode, COLOUR_BYTE, 18);
+                hlpr.FormatDesc(it->m_wstrOpt, COLOUR_INST, 16);
+            }
             GetDisassContentDesc(it->m_wstrContent, hlpr);
             hlpr.NextLine();
         }
@@ -865,9 +879,19 @@ bool CProcDbgger::DisassWithAddr(DWORD64 dwStartAddr, DWORD64 dwEndAddr, CSyntax
             {
                 break;
             }
-            hlpr.FormatDesc(it->m_wstrAddr, COLOUR_ADDR, 10);
-            hlpr.FormatDesc(it->m_wstrByteCode, COLOUR_BYTE, 18);
-            hlpr.FormatDesc(it->m_wstrOpt, COLOUR_INST, 12);
+
+            if (GetCurrentDbgger()->IsDbgProcx64())
+            {
+                hlpr.FormatDesc(it->m_wstrAddr, COLOUR_ADDR, 18);
+                hlpr.FormatDesc(it->m_wstrByteCode, COLOUR_BYTE, 28);
+                hlpr.FormatDesc(it->m_wstrOpt, COLOUR_INST, 16);
+            }
+            else
+            {
+                hlpr.FormatDesc(it->m_wstrAddr, COLOUR_ADDR, 10);
+                hlpr.FormatDesc(it->m_wstrByteCode, COLOUR_BYTE, 18);
+                hlpr.FormatDesc(it->m_wstrOpt, COLOUR_INST, 16);
+            }
             GetDisassContentDesc(it->m_wstrContent, hlpr);
             hlpr.NextLine();
         }
@@ -888,9 +912,18 @@ bool CProcDbgger::DisassUntilRet(DWORD64 dwStartAddr, CSyntaxDescHlpr &hlpr) con
     {
         for (vector<DisasmInfo>::const_iterator it = vDisasmSet.begin() ; it != vDisasmSet.end() ; it++)
         {
-            hlpr.FormatDesc(it->m_wstrAddr, COLOUR_ADDR, 10);
-            hlpr.FormatDesc(it->m_wstrByteCode, COLOUR_BYTE, 18);
-            hlpr.FormatDesc(it->m_wstrOpt, COLOUR_INST, 12);
+            if (GetCurrentDbgger()->IsDbgProcx64())
+            {
+                hlpr.FormatDesc(it->m_wstrAddr, COLOUR_ADDR, 18);
+                hlpr.FormatDesc(it->m_wstrByteCode, COLOUR_BYTE, 28);
+                hlpr.FormatDesc(it->m_wstrOpt, COLOUR_INST, 16);
+            }
+            else
+            {
+                hlpr.FormatDesc(it->m_wstrAddr, COLOUR_ADDR, 10);
+                hlpr.FormatDesc(it->m_wstrByteCode, COLOUR_BYTE, 18);
+                hlpr.FormatDesc(it->m_wstrOpt, COLOUR_INST, 16);
+            }
             GetDisassContentDesc(it->m_wstrContent, hlpr);
             hlpr.NextLine();
         }
