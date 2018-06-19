@@ -613,9 +613,18 @@ DbgCmdResult CProcDbgger::OnCmdBl(const ustring &wstrCmdParam, BOOL bShow, const
         return DbgCmdResult(em_dbgstat_succ, L"尚未设置任何断点");
     }
 
+    BOOL bx64 = GetCurrentDbgger()->IsDbgProcx64();
     hlpr.FormatDesc(L"断点序号  ", COLOUR_MSG);
     hlpr.FormatDesc(L"断点状态  ", COLOUR_MSG);
-    hlpr.FormatDesc(L"断点地址  ", COLOUR_MSG);
+
+    if (bx64)
+    {
+        hlpr.FormatDesc(L"断点地址  ", COLOUR_MSG, 18);
+    }
+    else
+    {
+        hlpr.FormatDesc(L"断点地址  ", COLOUR_MSG);
+    }
     hlpr.FormatDesc(L"符号位置", COLOUR_MSG);
     for (vector<ProcDbgBreakPoint>::const_iterator it = m_vBreakPoint.begin() ; it != m_vBreakPoint.end() ; it++)
     {
@@ -633,7 +642,15 @@ DbgCmdResult CProcDbgger::OnCmdBl(const ustring &wstrCmdParam, BOOL bShow, const
             hlpr.FormatDesc(L"未生效", COLOUR_MSG, 10);
             break;
         }
-        hlpr.FormatDesc(FormatW(L"%08x", it->m_dwBpAddr), COLOUR_MSG, 10);
+
+        if (bx64)
+        {
+            hlpr.FormatDesc(FormatW(L"%016llx", it->m_dwBpAddr), COLOUR_MSG, 18);
+        }
+        else
+        {
+            hlpr.FormatDesc(FormatW(L"%08x", it->m_dwBpAddr), COLOUR_MSG, 10);
+        }
         hlpr.FormatDesc(it->m_wstrSymbol, COLOUR_MSG);
     }
     return DbgCmdResult(em_dbgstat_succ, hlpr.GetResult());
