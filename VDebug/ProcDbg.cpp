@@ -1321,6 +1321,7 @@ DbgCmdResult CProcDbgger::OnCmdReg(const ustring &wstrCmdParam, BOOL bShow, cons
         vDescHlpr.FormatDesc(FormatW(L"rbp=0x%016llx ", context.cbp), COLOUR_HIGHT);
         vDescHlpr.NextLine();
 
+        #ifdef _WIN64
         vDescHlpr.FormatDesc(FormatW(L" r8=0x%016llx ", context.r8), COLOUR_HIGHT);
         vDescHlpr.FormatDesc(FormatW(L" r9=0x%016llx ", context.r9), COLOUR_HIGHT);
         vDescHlpr.FormatDesc(FormatW(L"r10=0x%016llx ", context.r10), COLOUR_MSG);
@@ -1334,6 +1335,7 @@ DbgCmdResult CProcDbgger::OnCmdReg(const ustring &wstrCmdParam, BOOL bShow, cons
         vDescHlpr.FormatDesc(FormatW(L"r14=0x%016llx ", context.r14), COLOUR_MSG);
         vDescHlpr.FormatDesc(FormatW(L"r15=0x%016llx ", context.r15), COLOUR_MSG);
         vDescHlpr.NextLine();
+        #endif
     }
     else
     {

@@ -172,6 +172,7 @@ BOOL CScriptEngine::IsRegisterStr(const ustring &wstr, DWORD64 &dwData) const
             dwData = m_vContex.cdx;
             bResult = TRUE;
         }
+        #ifdef _WIN64
         else if (wstr == L"r8")
         {
             dwData = m_vContex.r8;
@@ -182,6 +183,7 @@ BOOL CScriptEngine::IsRegisterStr(const ustring &wstr, DWORD64 &dwData) const
             dwData = m_vContex.r9;
             bResult = TRUE;
         }
+        #endif
     }
     else
     {
