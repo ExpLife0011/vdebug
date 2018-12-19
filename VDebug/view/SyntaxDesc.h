@@ -3,7 +3,7 @@
 #include <Windows.h>
 #include <mstring.h>
 #include <vector>
-#include "SyntaxCfg.h"
+#include <SyntaxHlpr/SyntaxCfg.h>
 
 using namespace std;
 

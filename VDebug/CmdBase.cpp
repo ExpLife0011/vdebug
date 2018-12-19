@@ -4,6 +4,7 @@
 #include "CmdBase.h"
 #include "symbol.h"
 #include "MainView.h"
+#include <SyntaxHlpr/SyntaxParser.h>
 
 CCmdBase::CCmdBase()
 {}
@@ -37,6 +38,7 @@ bool CCmdBase::OnFilter(SyntaxDesc &desc, const ustring &wstrFilter) const
 
 bool CCmdBase::OnHight(SyntaxDesc &desc, const ustring &wstrHight) const
 {
+    /**
     vector<vector<SyntaxColourNode>> ::iterator itDesc = desc.m_vSyntaxDesc.begin();
     vector<SyntaxColourNode>::iterator itNode;
     int iSerial = 0;
@@ -52,6 +54,7 @@ bool CCmdBase::OnHight(SyntaxDesc &desc, const ustring &wstrHight) const
             }
         }
     }
+    */
     return true;
 }
 
@@ -89,18 +92,15 @@ DbgCmdResult CCmdBase::RunCommand(const ustring &wstrCmd, BOOL bShow, const CmdU
     }
     res = OnCommand(wstrStart, wstrParam, bShow, pParam);
 
-    CSyntaxDescHlpr hlpr;
-    hlpr.NextLine();
-    GetSyntaxView()->AppendSyntaxDesc(hlpr.GetResult());
+    GetSyntaxView()->AppendText(SCI_LABEL_DEFAULT, "\n");
     if (bFilter)
     {
-        OnFilter(res.m_vSyntaxDesc, wstrFilter);
+        //OnFilter(res.m_vSyntaxDesc, wstrFilter);
     }
     else if (bHight)
     {
-        OnHight(res.m_vSyntaxDesc, wstrHight);
+        //OnHight(res.m_vSyntaxDesc, wstrHight);
     }
-    GetSyntaxView()->AppendSyntaxDesc(res.m_vSyntaxDesc);
     return res;
 }
 

@@ -2,11 +2,11 @@
     "globalCfg": {
         "lineNumber": 1,
         "defTextColour": "0,0,255",
-        "defBackColour": "null",
+        "defBackColour": "40,40,40",
         "viewBackColour": "40,40,40",
         "curLineColour": "60,56,54"
     },
-    "SyntaxCfg": {
+    "syntaxCfg": {
         "addr": {
             "textColour": "128,255,255",
             "backColour": "null",
@@ -25,8 +25,8 @@
             "bold": 0,
             "italic": 1
         },
-		 "msg2": {
-            "textColour": "101,132,91",
+		 "default": {
+            "textColour": "252,205,109",
             "backColour": "null",
             "bold": 0,
             "italic": 1

@@ -7,7 +7,6 @@
 #include "CmdBase.h"
 #include "DbgProxy.h"
 #include "TitanEngine/TitanEngine.h"
-#include "SyntaxDescHlpr.h"
 #include "common.h"
 
 using namespace std;
@@ -174,10 +173,10 @@ protected:
     ustring GetStatusStr(ThreadStat eStat, ThreadWaitReason eWaitReason) const;
     void ClearBreakPoint(DWORD dwSerial = -1);
     bool IsBreakpointSet(DWORD64 dwAddr) const;
-    bool DisassWithSize(DWORD64 dwAddr, DWORD64 dwSize, CSyntaxDescHlpr &hlpr) const;
-    bool DisassWithAddr(DWORD64 dwStartAddr, DWORD64 dwEndAddr, CSyntaxDescHlpr &hlpr) const;
-    bool DisassUntilRet(DWORD64 dwStartAddr, CSyntaxDescHlpr &hlpr) const;
-    void GetDisassContentDesc(const ustring &wstrContent, CSyntaxDescHlpr &hlpr) const; //汇编指令着色
+    bool DisassWithSize(DWORD64 dwAddr, DWORD64 dwSize, mstring &data) const;
+    bool DisassWithAddr(DWORD64 dwStartAddr, DWORD64 dwEndAddr, mstring &data) const;
+    bool DisassUntilRet(DWORD64 dwStartAddr, mstring &data) const;
+    void GetDisassContentDesc(const ustring &wstrContent, mstring &data) const; //汇编指令着色
 
     virtual DbgCmdResult OnCommand(const ustring &wstrCmd, const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
     DbgCmdResult OnCmdBp(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);

@@ -5,7 +5,6 @@
 #include "common.h"
 #include "crc32.h"
 #include "memory.h"
-#include "SyntaxDescHlpr.h"
 #include "MainView.h"
 
 //´«µÝ¸øluaµÄ´íÎóÂë
@@ -692,9 +691,9 @@ int CScriptEngine::DbgPrintMsg(lua_State *pLuaStat)
     wstr.trim();
     wstr.makelower();
 
-    CSyntaxDescHlpr hlpr;
-    hlpr.FormatDesc(wstr, COLOUR_MSG);
-    GetSyntaxView()->AppendSyntaxDesc(hlpr.GetResult());
+    ////CSyntaxDescHlpr hlpr;
+    //hlpr.FormatDesc(wstr, COLOUR_MSG);
+    //GetSyntaxView()->AppendSyntaxDesc(hlpr.GetResult());
 
     lua_pushnumber(pLuaStat, SCRIPT_ERROR_SUCCESS);
     return 1;
@@ -713,9 +712,9 @@ int CScriptEngine::DbgPrintErr(lua_State *pLuaStat)
     wstr.trim();
     wstr.makelower();
 
-    CSyntaxDescHlpr hlpr;
-    hlpr.FormatDesc(wstr, COLOUR_ERROR);
-    GetSyntaxView()->AppendSyntaxDesc(hlpr.GetResult());
+    ////CSyntaxDescHlpr hlpr;
+    //hlpr.FormatDesc(wstr, COLOUR_ERROR);
+    //GetSyntaxView()->AppendSyntaxDesc(hlpr.GetResult());
     lua_pushnumber(pLuaStat, SCRIPT_ERROR_SUCCESS);
     return 1;
 }

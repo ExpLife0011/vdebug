@@ -71,6 +71,7 @@ static DWORD GetColourFromStr(LPCSTR szColour)
 }
 
 std::wstring FormatW(const wchar_t *format, ...);
+std::string FormatA(const char *fmt, ...);
 
 //char conver
 _STD_BEGIN

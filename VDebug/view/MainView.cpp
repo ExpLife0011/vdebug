@@ -1,17 +1,17 @@
 #include <Windows.h>
 #include <CommCtrl.h>
-#include "SyntaxView.h"
 #include "common.h"
 #include "winsize.h"
 #include "ProcView.h"
 #include "../resource.h"
-#include "SyntaxDescHlpr.h"
-#include "SyntaxCfg.h"
+#include <SyntaxHlpr/SyntaxCfg.h>
 #include "MainView.h"
 #include "CmdQueue.h"
 #include "OpenView.h"
 #include "../DbgProxy.h"
 #include "../ProcDbg.h"
+#include "SyntaxHlpr/SyntaxView.h"
+#include <SyntaxHlpr/SyntaxParser.h>
 
 #pragma comment(lib, "comctl32.lib")
 
@@ -47,7 +47,7 @@
 #define  TIMER_CFG_CHECK 5001
 
 extern HINSTANCE g_hInstance;
-static CSynbaxView *gs_pSyntaxView = NULL;
+static SyntaxView *gs_pSyntaxView = NULL;
 static HWND gs_hMainView = NULL;
 static HWND gs_hStatEdit = NULL;
 static HWND gs_hCommand = NULL;
@@ -66,7 +66,7 @@ CDbggerProxy *GetCurrentDbgger()
     return gs_pCurDbgger;
 }
 
-CSynbaxView *GetSyntaxView()
+SyntaxView *GetSyntaxView()
 {
     return gs_pSyntaxView;
 }
@@ -143,7 +143,7 @@ static VOID _LoadDefaultFont()
         lstrcpynW(ft.lfFaceName, s_vFontArry[dwIdex], RTL_NUMBER_OF(ft.lfFaceName));
         if (gs_hFont = CreateFontIndirectW(&ft))
         {
-            gs_pSyntaxView->SetFont(gs_hFont);
+            //gs_pSyntaxView->SetFont(gs_hFont);
             SendMessage(gs_hMainView,WM_SETFONT, (WPARAM)gs_hFont, 1);
             SendMessage(gs_hStatBar,WM_SETFONT, (WPARAM)gs_hFont, 1);
             SendMessage(gs_hStatEdit,WM_SETFONT, (WPARAM)gs_hFont, 1);
@@ -224,7 +224,7 @@ static VOID _MoveMainWndCtrl()
     int iCY = rtClient.bottom - (rtStatBar.bottom - rtStatBar.top) - (rtEdtStat.bottom - rtEdtStat.top) - (rtToolBar.bottom - rtToolBar.top) - 5 -5;
     MoveWindow(gs_hStatEdit, 5, iY + iCY + 5, rtEdtStat.right - rtEdtStat.left, rtEdtStat.bottom - rtEdtStat.top, TRUE);
     MoveWindow(gs_hCommand, rtEdtStat.right + 5 + 5, iY + iCY + 5, rtCommand.right - rtCommand.left - 5, rtCommand.bottom - rtCommand.top, TRUE);
-    MoveWindow(gs_pSyntaxView->GetWndHandle(), 0, iY, rtClient.right - rtClient.left, iCY, TRUE);
+    MoveWindow(gs_pSyntaxView->GetWindow(), 0, iY, rtClient.right - rtClient.left, iCY, TRUE);
 }
 
 typedef LRESULT (CALLBACK *PWIN_PROC)(HWND, UINT, WPARAM, LPARAM);
@@ -268,24 +268,29 @@ static VOID _OnInitDialog(HWND hwnd, WPARAM wp, LPARAM lp)
 
     RECT rtClient = {0};
     GetClientRect(gs_hMainView, &rtClient);
-    gs_pSyntaxView = new CSynbaxView;
+    gs_pSyntaxView = new SyntaxView();
     gs_pProcSelect = new CProcSelectView;
     gs_pPeOpenView = new CPeFileOpenView;
 
     _LoadDefaultFont();
-    gs_pSyntaxView->CreateSynbaxView(hwnd, rtClient.right - rtClient.left, rtClient.bottom - rtClient.top - 60);
+    //gs_pSyntaxView->CreateSynbaxView(hwnd, rtClient.right - rtClient.left, rtClient.bottom - rtClient.top - 60);
+    gs_pSyntaxView->CreateView(gs_hMainView, 0, 0, 100, 100);
+    gs_pSyntaxView->ShowScrollBar(false);
+    gs_pSyntaxView->ShowMargin(false);
     _MoveMainWndCtrl();
 
     GetModuleFileNameW(NULL, gs_wstrCfgFile.alloc(MAX_PATH), MAX_PATH);
     gs_wstrCfgFile.setbuffer();
     gs_wstrCfgFile.path_append(L"..\\SyntaxCfg.json");
-    gs_pSyntaxView->ReloadSynbaxCfg(gs_wstrCfgFile.c_str());
-    _LoadDebugFile();
+    //gs_pSyntaxView->ReloadSynbaxCfg(gs_wstrCfgFile.c_str());
+    //_LoadDebugFile();
+    LoadSyntaxCfg(WtoA(gs_wstrCfgFile));
+    UpdateSyntaxView(gs_pSyntaxView);
 
     CTL_PARAMS vCtrls[] =
     {
         {0, gs_hToolbar, 0, 0, 1, 0},
-        {0, gs_pSyntaxView->GetWndHandle(), 0, 0, 1, 1},
+        {0, gs_pSyntaxView->GetWindow(), 0, 0, 1, 1},
         {0, gs_hStatEdit, 0, 1, 0, 0},
         {0, gs_hCommand, 0, 1, 1, 0},
         {0, gs_hStatBar, 0, 1, 1, 0}
@@ -299,11 +304,8 @@ static VOID _OnInitDialog(HWND hwnd, WPARAM wp, LPARAM lp)
     GetModuleFileNameW(NULL, wszBuf, MAX_PATH);
     GetPeVersionW(wszBuf, wstrVersion.alloc(MAX_PATH), MAX_PATH);
     wstrVersion.setbuffer();
-    CSyntaxDescHlpr desc;
-    desc.FormatDesc(FormatW(L"VDebugµ÷ÊÔÆ÷£¬°æ±¾£º%ls", wstrVersion.c_str()), COLOUR_MSG);
-    desc.AddEmptyLine();
 
-    gs_pSyntaxView->AppendSyntaxDesc(desc.GetResult());
+    gs_pSyntaxView->AppendText(SCI_LABEL_DEFAULT, FormatA("VDebugµ÷ÊÔÆ÷£¬°æ±¾£º%ls\n", wstrVersion.c_str()));
     SetCmdNotify(em_dbg_status_init, L"³õÊ¼×´Ì¬");
     gs_pfnCommandProc = (PWIN_PROC)SetWindowLongPtr(gs_hCommand, GWLP_WNDPROC, (LONG_PTR)_CommandProc);
     gs_pCmdQueue = new CCmdQueue();
@@ -358,7 +360,7 @@ static VOID _OnTimer(HWND hwnd, WPARAM wp, LPARAM lp)
         if (memcmp(&s_timeLastWrite, &time, sizeof(time)))
         {
             s_timeLastWrite = time;
-            gs_pSyntaxView->ReloadSynbaxCfg(gs_wstrCfgFile.c_str());
+            //gs_pSyntaxView->ReloadSynbaxCfg(gs_wstrCfgFile.c_str());
         }
         CloseHandle(hFile);
     }
@@ -384,7 +386,7 @@ static VOID _OnExecCommand(HWND hwnd, WPARAM wp, LPARAM lp)
     gs_pCmdQueue->EnterCmd(wstr);
     DbgCmdResult res = GetCurrentDbgger()->RunCommand(wstr.c_str());
 
-    //CSyntaxDescHlpr hlpr;
+    ////CSyntaxDescHlpr hlpr;
     //if (res.m_eStatus != em_dbgstat_succ)
     //{
     //    gs_pSyntaxView->AppendSyntaxDesc(res.m_vSyntaxDesc);

@@ -3,6 +3,7 @@
 #include "Script.h"
 #include "minidump.h"
 #include "symbol.h"
+#include "SyntaxHlpr/SyntaxParser.h"
 
 #pragma comment(lib, "Dbghelp.lib")
 
@@ -16,6 +17,13 @@ HINSTANCE g_hInstance = NULL;
 
 int WINAPI WinMain(HINSTANCE m, HINSTANCE p, LPSTR cmd, int show)
 {
+    if (!LoadLibraryW(L"SyntaxView.dll"))
+    {
+        MessageBoxW(NULL, L"SyntaxView.dll not Find", L"Error", 0);
+        return 0;
+    }
+
+    SyntaxParser::GetInstance()->InitParser();
     //InitSymbolHlpr(L"SRV*F:\\mysymbol*http://msdl.microsoft.com/download/symbols/");
     InitSymbolHlpr(L"F:\\mysymbol");
 

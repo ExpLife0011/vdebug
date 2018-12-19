@@ -24,6 +24,24 @@
             "backColour": "null",
             "bold": 1,
             "italic": 1
+        },
+		"function": {
+            "textColour": "0,254,231",
+            "backColour": "null",
+            "bold": 1,
+            "italic": 1
+        },
+		"default": {
+            "textColour": "0,254,231",
+            "backColour": "null",
+            "bold": 1,
+            "italic": 1
+        },
+		"number": {
+            "textColour": "0,254,231",
+            "backColour": "null",
+            "bold": 1,
+            "italic": 1
         }
     }
 }

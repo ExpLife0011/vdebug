@@ -1,8 +1,9 @@
 #include "BreakPoint.h"
-#include "SyntaxDescHlpr.h"
 #include "common.h"
 #include "MainView.h"
 #include "ProcDbg.h"
+#include <SyntaxHlpr/SyntaxView.h>
+#include <SyntaxHlpr/SyntaxParser.h>
 
 CBreakPointMgr::CBreakPointMgr()
 {}
@@ -99,9 +100,7 @@ BOOL CBreakPointMgr::OnBreakPoint(DWORD64 dwAddr)
     {
         if (dwAddr == it->m_dwBpAddr)
         {
-            CSyntaxDescHlpr hlpr;
-            hlpr.FormatDesc(FormatW(L"断点%ls已触发", it->m_wstrName.c_str()), COLOUR_MSG);
-            GetSyntaxView()->AppendSyntaxDesc(hlpr.GetResult());
+            GetSyntaxView()->AppendText(SCI_LABEL_DEFAULT, FormatA("断点%ls已触发", it->m_wstrName.c_str()));
             GetCurrentDbgger()->RunCommand("r");
 
             if (it->m_vUserContext.m_pfnCallback)

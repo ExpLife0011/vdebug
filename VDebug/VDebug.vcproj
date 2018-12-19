@@ -44,7 +44,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="../..;./common;./Json;./view"
+				AdditionalIncludeDirectories="../..;./common;./Json;./view;../;./"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -486,38 +486,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\view\SyntaxCfg.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\view\SyntaxCfg.h"
-				>
-			</File>
-			<File
-				RelativePath=".\view\SyntaxDesc.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\view\SyntaxDesc.h"
-				>
-			</File>
-			<File
-				RelativePath=".\view\SyntaxDescHlpr.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\view\SyntaxDescHlpr.h"
-				>
-			</File>
-			<File
-				RelativePath=".\view\SyntaxView.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\view\SyntaxView.h"
-				>
-			</File>
-			<File
 				RelativePath=".\view\ViewBase.cpp"
 				>
 			</File>
@@ -931,6 +899,34 @@
 			</File>
 			<File
 				RelativePath=".\lua\Makefile"
+				>
+			</File>
+		</Filter>
+		<Filter
+			Name="SyntaxHlpr"
+			>
+			<File
+				RelativePath=".\SyntaxHlpr\SyntaxCfg.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\SyntaxHlpr\SyntaxCfg.h"
+				>
+			</File>
+			<File
+				RelativePath=".\SyntaxHlpr\SyntaxParser.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\SyntaxHlpr\SyntaxParser.h"
+				>
+			</File>
+			<File
+				RelativePath=".\SyntaxHlpr\SyntaxView.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\SyntaxHlpr\SyntaxView.h"
 				>
 			</File>
 		</Filter>

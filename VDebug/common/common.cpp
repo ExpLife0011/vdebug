@@ -41,6 +41,17 @@ std::wstring FormatW(const wchar_t *format, ...)
     return szText;
 }
 
+std::string FormatA(const char *fmt, ...) {
+    char szText[2048];
+    va_list val;
+
+    va_start(val, fmt);
+    wvnsprintfA(szText, RTL_NUMBER_OF(szText), fmt, val);
+    va_end(val);
+
+    return szText;
+}
+
 void ErrMessage(const wchar_t *format, ...)
 {
     wchar_t szText[2048] = {0};

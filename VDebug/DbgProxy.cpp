@@ -10,6 +10,7 @@ DbgCmdResult CDbggerProxy::OnCmdHelp(const ustring &wstrCmdParam, BOOL bShow, co
     wstrParam.makelower();
     wstrParam.trim();
 
+    /*
     SyntaxDesc desc;
     if (wstrParam.empty())
     {
@@ -141,7 +142,9 @@ DbgCmdResult CDbggerProxy::OnCmdHelp(const ustring &wstrCmdParam, BOOL bShow, co
     {
         desc += L"没有该命令的说明";
     }
-    return DbgCmdResult(em_dbgstat_succ, desc);
+    */
+    //return DbgCmdResult(em_dbgstat_succ, desc);
+    return DbgCmdResult();
 }
 
 void CDbggerProxy::InitHelpEngine()

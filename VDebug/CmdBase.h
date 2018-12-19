@@ -4,8 +4,7 @@
 #include <vector>
 #include <map>
 #include "mstring.h"
-#include "view/SyntaxView.h"
-#include "view/SyntaxDescHlpr.h"
+#include "SyntaxDesc.h"
 
 using namespace std;
 
@@ -36,7 +35,7 @@ enum DbgCmdStatus
 
 struct DbgCmdResult
 {
-    SyntaxDesc m_vSyntaxDesc;   //命令返回的高亮语法结果
+    //SyntaxDesc m_vSyntaxDesc;   //命令返回的高亮语法结果
     DbgCmdStatus m_eStatus;     //命令执行结果
 
     DbgCmdResult()
@@ -44,11 +43,12 @@ struct DbgCmdResult
         m_eStatus = em_dbgstat_cmdnotfound;
     }
 
+    /*
     DbgCmdResult(DbgCmdStatus eStatus, const SyntaxDesc &vSyntaxDesc)
     {
         m_eStatus = eStatus;
-        m_vSyntaxDesc = vSyntaxDesc;
     }
+    */
 
     DbgCmdResult(DbgCmdStatus eStatus)
     {
@@ -58,13 +58,13 @@ struct DbgCmdResult
     DbgCmdResult(DbgCmdStatus eStatus, const ustring &wstrMsg)
     {
         m_eStatus = eStatus;
-        CSyntaxDescHlpr hlpr;
-        m_vSyntaxDesc = hlpr.FormatDesc(wstrMsg).GetResult();
+        //CSyntaxDescHlpr hlpr;
+        //m_vSyntaxDesc = hlpr.FormatDesc(wstrMsg).GetResult();
     }
 
-    void SetResult(const SyntaxDesc &vSyntaxDesc)
+    void SetResult(/*const SyntaxDesc &vSyntaxDesc*/)
     {
-        m_vSyntaxDesc = vSyntaxDesc;
+       // m_vSyntaxDesc = vSyntaxDesc;
     }
 };
 
