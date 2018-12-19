@@ -12,6 +12,7 @@
 #include "../ProcDbg.h"
 #include "SyntaxHlpr/SyntaxView.h"
 #include <SyntaxHlpr/SyntaxParser.h>
+#include <ComLib/ComUtil.h>
 
 #pragma comment(lib, "comctl32.lib")
 
@@ -60,6 +61,7 @@ static CPeFileOpenView *gs_pPeOpenView = NULL;
 static CCmdQueue *gs_pCmdQueue = NULL;
 static CProcDbgger *gs_pProcDbgger = NULL;
 static CDbggerProxy *gs_pCurDbgger = NULL;
+static PrintFormater *gs_pFormater = NULL;
 
 CDbggerProxy *GetCurrentDbgger()
 {
@@ -254,6 +256,7 @@ static VOID _OnInitDialog(HWND hwnd, WPARAM wp, LPARAM lp)
 {
     gs_pProcDbgger = GetProcDbgger();
     gs_pCurDbgger = gs_pProcDbgger;
+    gs_pFormater = _GetPrintFormater();
 
     SendMessageW(hwnd, WM_SETICON, (WPARAM)ICON_BIG, (LPARAM)LoadIconW(g_hInstance, MAKEINTRESOURCEW(IDI_MAIN)));
     SendMessageW(hwnd, WM_SETICON, (WPARAM)ICON_SMALL, (LPARAM)LoadIconW(g_hInstance, MAKEINTRESOURCEW(IDI_MAIN)));
@@ -306,6 +309,12 @@ static VOID _OnInitDialog(HWND hwnd, WPARAM wp, LPARAM lp)
     wstrVersion.setbuffer();
 
     gs_pSyntaxView->AppendText(SCI_LABEL_DEFAULT, FormatA("VDebugµ÷ÊÔÆ÷£¬°æ±¾£º%ls\n", wstrVersion.c_str()));
+    gs_pFormater->Reset();
+    PrintFormater &pf = *gs_pFormater;
+    pf << "1111111111111111" << "22" << line_end;
+    pf << "11"               << "22" << line_end;
+    gs_pSyntaxView->AppendText(SCI_LABEL_DEFAULT, pf.GetResult());
+
     SetCmdNotify(em_dbg_status_init, L"³õÊ¼×´Ì¬");
     gs_pfnCommandProc = (PWIN_PROC)SetWindowLongPtr(gs_hCommand, GWLP_WNDPROC, (LONG_PTR)_CommandProc);
     gs_pCmdQueue = new CCmdQueue();

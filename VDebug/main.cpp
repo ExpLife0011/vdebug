@@ -23,6 +23,12 @@ int WINAPI WinMain(HINSTANCE m, HINSTANCE p, LPSTR cmd, int show)
         return 0;
     }
 
+    if (!LoadLibraryW(L"ComLib32.dll"))
+    {
+        MessageBoxW(NULL, L"ComLib32.dll not Find", L"Error", 0);
+        return 0;
+    }
+
     SyntaxParser::GetInstance()->InitParser();
     //InitSymbolHlpr(L"SRV*F:\\mysymbol*http://msdl.microsoft.com/download/symbols/");
     InitSymbolHlpr(L"F:\\mysymbol");
