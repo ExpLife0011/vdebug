@@ -86,6 +86,37 @@ void SyntaxView::ShowScrollBar(bool show) {
     SendMsg(SCI_SETHSCROLLBAR, show, 0);
 }
 
+std::string SyntaxView::GetFont() {
+    char tmp[128];
+    tmp[0] = 0x00;
+    SendMsg(SCI_STYLEGETFONT, STYLE_DEFAULT, (LPARAM)tmp);
+    return tmp;
+}
+
+void SyntaxView::SetFont(const std::string &fontName) {
+    SendMsg(SCI_STYLESETFONT, STYLE_DEFAULT, (LPARAM)fontName.c_str());
+}
+
+void SyntaxView::SetCaretColour(unsigned int colour) {
+    SendMsg(SCI_SETCARETFORE, (WPARAM)colour, 0);
+}
+
+void SyntaxView::SetCaretSize(int size) {
+    SendMsg(SCI_SETCARETWIDTH, (WPARAM)size, 0);
+}
+
+void SyntaxView::SetFontWeight(int weight) {
+    SendMsg(SCI_STYLESETWEIGHT, STYLE_DEFAULT, weight);
+}
+
+int SyntaxView::GetFontWeight() {
+    return SendMsg(SCI_STYLEGETWEIGHT, STYLE_DEFAULT, 0);
+}
+
+unsigned int SyntaxView::GetCaretColour() {
+    return 0;
+}
+
 void SyntaxView::AppendText(const std::string &label, const std::string &text) const {
     VdebugRuleParam param;
     param.label = label.c_str();

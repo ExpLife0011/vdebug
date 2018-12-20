@@ -252,6 +252,21 @@ static LRESULT CALLBACK _CommandProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
     return CallWindowProc(gs_pfnCommandProc, hwnd, msg, wp, lp);
 }
 
+static void _InitSyntaxView() {
+    gs_pSyntaxView = new SyntaxView();
+
+    gs_pSyntaxView->CreateView(gs_hMainView, 0, 0, 100, 100);
+    gs_pSyntaxView->ShowScrollBar(false);
+    gs_pSyntaxView->ShowMargin(false);
+    gs_pSyntaxView->SetCaretColour(RGB(255, 255, 255));
+
+    gs_pSyntaxView->SetFont("Lucida Console");
+    string ff = gs_pSyntaxView->GetFont();
+    gs_pSyntaxView->SetCaretSize(1);
+
+    gs_pSyntaxView->SendMsg(SCI_STYLESETSIZE, STYLE_DEFAULT, 10);
+}
+
 static VOID _OnInitDialog(HWND hwnd, WPARAM wp, LPARAM lp)
 {
     gs_pProcDbgger = GetProcDbgger();
@@ -271,15 +286,12 @@ static VOID _OnInitDialog(HWND hwnd, WPARAM wp, LPARAM lp)
 
     RECT rtClient = {0};
     GetClientRect(gs_hMainView, &rtClient);
-    gs_pSyntaxView = new SyntaxView();
     gs_pProcSelect = new CProcSelectView;
     gs_pPeOpenView = new CPeFileOpenView;
 
+    _InitSyntaxView();
+
     _LoadDefaultFont();
-    //gs_pSyntaxView->CreateSynbaxView(hwnd, rtClient.right - rtClient.left, rtClient.bottom - rtClient.top - 60);
-    gs_pSyntaxView->CreateView(gs_hMainView, 0, 0, 100, 100);
-    gs_pSyntaxView->ShowScrollBar(false);
-    gs_pSyntaxView->ShowMargin(false);
     _MoveMainWndCtrl();
 
     GetModuleFileNameW(NULL, gs_wstrCfgFile.alloc(MAX_PATH), MAX_PATH);
@@ -308,11 +320,13 @@ static VOID _OnInitDialog(HWND hwnd, WPARAM wp, LPARAM lp)
     GetPeVersionW(wszBuf, wstrVersion.alloc(MAX_PATH), MAX_PATH);
     wstrVersion.setbuffer();
 
-    gs_pSyntaxView->AppendText(SCI_LABEL_DEFAULT, FormatA("VDebug调试器，版本：%ls\n", wstrVersion.c_str()));
+    //gs_pSyntaxView->AppendText(SCI_LABEL_DEFAULT, FormatA("VDebug调试器，版本：%ls\n", wstrVersion.c_str()));
     gs_pFormater->Reset();
+
     PrintFormater &pf = *gs_pFormater;
-    pf << "1111111111111111" << "22" << line_end;
-    pf << "11"               << "22" << line_end;
+    pf << "世界"  << "你好"   << "hello world" << line_end;
+    pf << "aaaaa" << "22"     << "33"          << line_end;
+    pf << space   << ""       << "哈哈哈"      << line_end;
     gs_pSyntaxView->AppendText(SCI_LABEL_DEFAULT, pf.GetResult());
 
     SetCmdNotify(em_dbg_status_init, L"初始状态");

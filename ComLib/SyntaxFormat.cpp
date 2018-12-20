@@ -1,4 +1,4 @@
-#include "PrintFormat.h"
+#include "SyntaxFormat.h"
 #include "ComUtil.h"
 
 using namespace std;
@@ -24,7 +24,12 @@ bool SyntaxFormater::SetRule(const char *type) {
 }
 
 PrintFormater &SyntaxFormater::operator << (const char *data) {
-    m_matrix1.push_back(data);
+    if (!data || !data[0])
+    {
+        m_matrix1.push_back(" ");
+    } else {
+        m_matrix1.push_back(data);
+    }
     return *this;
 }
 
@@ -33,6 +38,9 @@ PrintFormater &SyntaxFormater::operator << (PrintFormatStat stat) {
     {
         m_matrix2.push_back(m_matrix1);
         m_matrix1.clear();
+    } else if (stat == space)
+    {
+        m_matrix1.push_back(" ");
     }
     return *this;
 }
@@ -66,24 +74,32 @@ const char *SyntaxFormater::GetResult() {
     s_result.clear();
     for (i = 0 ; i < (int)m_matrix2.size() ; i++)
     {
-        for (j = 0 ; j < (int)m_matrix2[0].size() ; j++)
+        int border = (int)m_matrix2[0].size();
+        for (j = 0 ; j < border ; j++)
         {
             string node = m_matrix2[i][j];
             if ((int)node.size() < rule[j])
             {
-                int count = rule[j] - node.size();
-                while (count > 0) {
-                    node += " ";
-                    count--;
+                if (j != (border - 1))
+                {
+                    int count = rule[j] - node.size();
+                    while (count > 0) {
+                        node += " ";
+                        count--;
+                    }
                 }
+
                 s_result += node;
             } else {
                 s_result += node;
             }
 
-            for (int k = 0 ; k < ms_space ; k++)
+            if (j != (border - 1))
             {
-                s_result += " ";
+                for (int k = 0 ; k < ms_space ; k++)
+                {
+                    s_result += " ";
+                }
             }
         }
         s_result += "\n";

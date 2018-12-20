@@ -4,7 +4,7 @@
 #include <string>
 #include <map>
 #include "SyntaxParser.h"
-//#include <SyntaxHlpr/SyntaxCfg.h>
+#include <SyntaxView/include/Scintilla.h>
 
 typedef int (* SCINTILLA_FUNC) (void*, int, int, int);
 typedef void * SCINTILLA_PTR;
@@ -28,6 +28,13 @@ public:
     void SetDefStyle(unsigned int textColour, unsigned int backColour);
     void ShowScrollBar(bool show);
     void LoadSyntaxCfgFile(const std::string path);
+    std::string GetFont();
+    void SetFont(const std::string &fontName);
+    void SetCaretColour(unsigned int colour);
+    void SetCaretSize(int size);
+    void SetFontWeight(int weight);
+    int GetFontWeight();
+    unsigned int GetCaretColour();
 
 private:
     std::string m_path;

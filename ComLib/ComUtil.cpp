@@ -1,5 +1,5 @@
 #include "ComUtil.h"
-#include "PrintFormat.h"
+#include "SyntaxFormat.h"
 
 ComUtil *__stdcall GetComUtil() {
     return NULL;

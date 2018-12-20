@@ -33,7 +33,8 @@ class ComUtil {
 
 enum PrintFormatStat {
     line_start = 0,
-    line_end = 1
+    line_end,
+    space
 };
 
 class PrintFormater {

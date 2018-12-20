@@ -186,7 +186,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\PrintFormat.cpp"
+				RelativePath=".\SyntaxFormat.cpp"
 				>
 			</File>
 		</Filter>
@@ -200,7 +200,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\PrintFormat.h"
+				RelativePath=".\SyntaxFormat.h"
 				>
 			</File>
 		</Filter>
