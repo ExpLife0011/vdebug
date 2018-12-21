@@ -1,0 +1,11 @@
+EXPORTS
+    MsgInitServ
+    MsgInitClient
+    MsgRegister
+    MsgUnRegister
+    MsgStrAlloc
+    MsgStrCopy
+    MsgStrFree
+    MsgSend
+    MsgSendForResult
+    RundllFun

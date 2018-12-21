@@ -12,7 +12,7 @@
 #include "../ProcDbg.h"
 #include "SyntaxHlpr/SyntaxView.h"
 #include <SyntaxHlpr/SyntaxParser.h>
-#include <ComLib/ComUtil.h>
+#include <ComLib/SyntaxFormat.h>
 
 #pragma comment(lib, "comctl32.lib")
 
@@ -299,7 +299,7 @@ static VOID _OnInitDialog(HWND hwnd, WPARAM wp, LPARAM lp)
     gs_wstrCfgFile.path_append(L"..\\SyntaxCfg.json");
     //gs_pSyntaxView->ReloadSynbaxCfg(gs_wstrCfgFile.c_str());
     //_LoadDebugFile();
-    LoadSyntaxCfg(WtoA(gs_wstrCfgFile));
+    LoadSyntaxCfg(WtoA(gs_wstrCfgFile.c_str()));
     UpdateSyntaxView(gs_pSyntaxView);
 
     CTL_PARAMS vCtrls[] =

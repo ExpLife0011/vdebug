@@ -8,6 +8,7 @@
 #include "Script.h"
 #include "memory.h"
 #include <SyntaxHlpr/SyntaxParser.h>
+#include <ComLib/global.h>
 
 #if WIN64 || _WIN64
 #pragma comment(lib, "TitanEngine/TitanEngine_x64.lib")

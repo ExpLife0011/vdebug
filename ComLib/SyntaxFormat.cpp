@@ -1,6 +1,28 @@
 #include "SyntaxFormat.h"
 #include "ComUtil.h"
 
+class SyntaxFormater : public PrintFormater {
+public:
+    SyntaxFormater();
+    virtual ~SyntaxFormater();
+
+    virtual bool InitRule(const char *type, const char *rule);
+    virtual bool SetRule(const char *type);
+    virtual bool Reset();
+
+    virtual PrintFormater &operator << (const char*);
+    virtual PrintFormater &operator << (PrintFormatStat stat);
+
+    virtual bool StartSession(const char *type);
+    virtual bool EndSession();
+    virtual const char *GetResult();
+private:
+    map<string, vector<int>> m_FormatRule;
+    vector<string> m_matrix1;
+    vector<vector<string>> m_matrix2;
+    static const int ms_space = 2;
+};
+
 using namespace std;
 
 SyntaxFormater::SyntaxFormater() {
@@ -115,4 +137,12 @@ VOID WINAPI RundllFun(HWND hwnd, HINSTANCE hinst, LPSTR cmd, int show) {
     string dd = p->GetResult();
     OutputDebugStringA(dd.c_str());
     MessageBoxA(0, 0, 0, 0);
+}
+
+PrintFormater *__stdcall GetPrintFormater() {
+    return new SyntaxFormater();
+}
+
+void __stdcall FreePrintFormater(PrintFormater *p) {
+    delete p;
 }

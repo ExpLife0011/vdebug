@@ -6,7 +6,8 @@
 #include "SyntaxParser.h"
 #include "SyntaxView.h"
 #include "../json/json.h"
-#include "../global.h"
+
+#define NULL_COLOUR 0xffffffff
 
 using namespace Json;
 

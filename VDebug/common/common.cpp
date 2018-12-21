@@ -29,29 +29,6 @@ VOID WINAPI CentreWindow(HWND hSrcWnd, HWND hDstWnd)
     MoveWindow(hSrcWnd, iX, iY, icW, icH, TRUE);
 }
 
-std::wstring FormatW(const wchar_t *format, ...)
-{
-    wchar_t szText[2048];
-    va_list val;
-
-    va_start(val, format);
-    wvnsprintfW(szText, RTL_NUMBER_OF(szText), format, val);
-    va_end(val);
-
-    return szText;
-}
-
-std::string FormatA(const char *fmt, ...) {
-    char szText[2048];
-    va_list val;
-
-    va_start(val, fmt);
-    wvnsprintfA(szText, RTL_NUMBER_OF(szText), fmt, val);
-    va_end(val);
-
-    return szText;
-}
-
 void ErrMessage(const wchar_t *format, ...)
 {
     wchar_t szText[2048] = {0};
@@ -613,106 +590,6 @@ void IterateModulesW(DWORD procId, pfnModuleHandlerW handler, void* lpParam)
 
         CloseHandle(hSnap);
     } while (FALSE);
-}
-
-#define NEW new
-
-strutf8 ToUtf8A(const string &str)
-{
-    return ToUtf8W(ToWideChar(str));
-}
-
-strutf8 ToUtf8W(const wstring &str)
-{
-    strutf8 ret;
-
-    int count = WideCharToMultiByte(CP_UTF8, 0, str.c_str(), -1, NULL, 0, NULL, NULL);
-
-    if (count > 0)
-    {
-        char *buffer = NEW char[count];
-
-        if (buffer != 0)
-        {
-            WideCharToMultiByte(CP_UTF8, 0, str.c_str(), -1, buffer, count, NULL, NULL);
-            ret = buffer;
-
-            delete []buffer;
-        }
-    }
-
-    return ret;
-}
-
-string ToCommonA(const strutf8 &str)
-{
-    return ToMultiByte(ToCommonW(str));
-}
-
-wstring ToCommonW(const strutf8 &str)
-{
-    wstring ret;
-
-    int count = MultiByteToWideChar(CP_UTF8, 0, str.c_str(), -1, NULL, 0);
-
-    if (count > 0)
-    {
-        wchar_t *buffer = NEW wchar_t[count];
-
-        if (buffer != 0)
-        {
-            MultiByteToWideChar(CP_UTF8, 0, str.c_str(), -1, buffer, count);
-            ret = buffer;
-
-            delete []buffer;
-        }
-    }
-
-    return ret;
-}
-
-string ToMultiByte(const wstring &str)
-{
-    string ret;
-
-    int count = WideCharToMultiByte(CP_ACP, 0, str.c_str(), -1, NULL, 0, NULL, NULL);
-
-    if (count > 0)
-    {
-        char *buffer = NEW char[count];
-
-        if (buffer != 0)
-        {
-            WideCharToMultiByte(CP_ACP, 0, str.c_str(), -1, buffer, count, NULL, NULL);
-            ret = buffer;
-
-            delete []buffer;
-        }
-    }
-
-    return ret;
-}
-
-wstring ToWideChar(const string &str)
-{
-    wstring ret;
-
-    int count = MultiByteToWideChar(CP_ACP, 0, str.c_str(), -1, NULL, 0);
-
-    if (count > 0)
-    {
-        wchar_t *buffer = NEW wchar_t[count];
-
-        if (buffer != 0)
-        {
-            MultiByteToWideChar(CP_ACP, 0, str.c_str(), -1, buffer, count);
-            ret = buffer;
-
-            delete []buffer;
-        }
-    }
-
-    return ret;
 }
 
 static BOOL _GetNtVersionNumbers(DWORD &dwMajorVer, DWORD &dwMinorVer, DWORD &dwBuildNumber)

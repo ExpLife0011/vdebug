@@ -3,6 +3,7 @@
 #include "symbol.h"
 #include "common.h"
 #include "view/MainView.h"
+#include <ComLib/global.h>
 
 CSymbolHlpr::CSymbolHlpr(const ustring &wstrSymbolPath)
 {

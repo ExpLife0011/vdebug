@@ -2,9 +2,9 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="9.00"
-	Name="ComLib"
-	ProjectGUID="{652CC710-0062-496A-8F38-4A8D779F34CB}"
-	RootNamespace="ComLib"
+	Name="mq"
+	ProjectGUID="{AB55F249-56FA-436F-89F9-EF6A930373E9}"
+	RootNamespace="mq"
 	Keyword="Win32Proj"
 	TargetFrameworkVersion="196613"
 	>
@@ -41,7 +41,8 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;COMLIB_EXPORTS;CJSON_EXPORT_SYMBOLS"
+				AdditionalIncludeDirectories="../"
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;MQ_EXPORTS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
@@ -62,7 +63,7 @@
 				Name="VCLinkerTool"
 				OutputFile="$(OutDir)\$(ProjectName)32.dll"
 				LinkIncremental="2"
-				ModuleDefinitionFile="ComLib.def"
+				ModuleDefinitionFile="mq.def"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				TargetMachine="1"
@@ -116,7 +117,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;COMLIB_EXPORTS"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;MQ_EXPORTS"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="0"
@@ -135,7 +136,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				LinkIncremental="1"
-				ModuleDefinitionFile="ComLib.def"
+				ModuleDefinitionFile="mq.def"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"
@@ -174,15 +175,7 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath=".\cJSON.c"
-				>
-			</File>
-			<File
-				RelativePath=".\ComLib.def"
-				>
-			</File>
-			<File
-				RelativePath=".\ComUtil.cpp"
+				RelativePath=".\ClientLogic.cpp"
 				>
 			</File>
 			<File
@@ -190,15 +183,27 @@
 				>
 			</File>
 			<File
-				RelativePath=".\StrSafte.cpp"
+				RelativePath=".\mq.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\SyntaxFormat.cpp"
+				RelativePath=".\mq.def"
 				>
 			</File>
 			<File
-				RelativePath=".\tpool.cpp"
+				RelativePath=".\mq.rc"
+				>
+			</File>
+			<File
+				RelativePath=".\msgclient.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\msgserv.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\ServerLogic.cpp"
 				>
 			</File>
 		</Filter>
@@ -208,35 +213,31 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
-				RelativePath=".\cJSON.h"
+				RelativePath=".\ClientLogic.h"
 				>
 			</File>
 			<File
-				RelativePath=".\ComUtil.h"
+				RelativePath=".\mq.h"
 				>
 			</File>
 			<File
-				RelativePath=".\global.h"
+				RelativePath=".\msgclient.h"
 				>
 			</File>
 			<File
-				RelativePath=".\LockBase.h"
+				RelativePath=".\msgserv.h"
 				>
 			</File>
 			<File
-				RelativePath=".\logger.h"
+				RelativePath=".\protocol.h"
 				>
 			</File>
 			<File
-				RelativePath=".\StrSafe.h"
+				RelativePath=".\resource.h"
 				>
 			</File>
 			<File
-				RelativePath=".\SyntaxFormat.h"
-				>
-			</File>
-			<File
-				RelativePath=".\tpool.h"
+				RelativePath=".\ServerLogic.h"
 				>
 			</File>
 		</Filter>

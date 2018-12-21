@@ -6,6 +6,7 @@
 #include "crc32.h"
 #include "memory.h"
 #include "MainView.h"
+#include <ComLib/global.h>
 
 //´«µÝ¸øluaµÄ´íÎóÂë
 #define SCRIPT_ERROR_SUCCESS            0
@@ -818,7 +819,7 @@ DWORD CScriptEngine::ScriptExecThread(LPVOID pParam)
     pLuaInfo->m_eScriptStat = em_script_stat_wait;
     try
     {
-        if (0 != luaL_dofile(pLuaStat, WtoA(pLuaInfo->m_wstrFilePath).c_str()))
+        if (0 != luaL_dofile(pLuaStat, WtoA(pLuaInfo->m_wstrFilePath.c_str())))
         {
             dp(L"Ö´ÐÐ½Å±¾Ê§°Ü£¬Err:%hs", lua_tostring(pLuaStat, -1));
             pLuaInfo->m_eScriptStat = em_script_stat_faild;

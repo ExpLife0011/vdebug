@@ -70,39 +70,6 @@ static DWORD GetColourFromStr(LPCSTR szColour)
     return RGB(vCol[0], vCol[1], vCol[2]);
 }
 
-std::wstring FormatW(const wchar_t *format, ...);
-std::string FormatA(const char *fmt, ...);
-
-//char conver
-_STD_BEGIN
-//strutf8类型定义，同string同类型
-typedef string strutf8;
-//tstring类型定义
-#ifdef _UNICODE
-typedef wstring tstring;
-#else
-typedef string tstring;
-#endif
-_STD_END
-
-strutf8 ToUtf8A(const string &str);
-#define AtoU ToUtf8A
-
-strutf8 ToUtf8W(const wstring &str);
-#define WtoU ToUtf8W
-
-string ToCommonA(const strutf8 &str);
-#define UtoA ToCommonA
-
-wstring ToCommonW(const strutf8 &str);
-#define UtoW ToCommonW
-
-string ToMultiByte(const wstring &str);
-#define WtoA ToMultiByte
-
-wstring ToWideChar(const string &str);
-#define AtoW ToWideCharh
-
 VOID PrintDbgInternal(LPCWSTR wszTarget, LPCSTR wszFile, DWORD dwLine, LPCWSTR wszFormat, ...);
 #define dp(f, ...) PrintDbgInternal(L"[gdprotect]", __FILE__, __LINE__, f, ##__VA_ARGS__)
 
