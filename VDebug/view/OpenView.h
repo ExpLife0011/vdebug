@@ -1,9 +1,9 @@
 #ifndef OPENVIEW_VDEBUG_H_H_
 #define OPENVIEW_VDEBUG_H_H_
 #include <Windows.h>
-#include "LockBase.h"
 #include "ViewBase.h"
-#include "mstring.h"
+#include <ComLib/global.h>
+#include <ComStatic/ComStatic.h>
 
 using namespace std;
 

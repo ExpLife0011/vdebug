@@ -3,7 +3,7 @@
 #include <Windows.h>
 #include <vector>
 #include <set>
-#include "mstring.h"
+#include <ComStatic/ComStatic.h>
 
 using namespace std;
 

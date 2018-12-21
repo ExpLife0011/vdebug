@@ -1,7 +1,7 @@
 #ifndef SYNTAXDESC_VDEBUG_H_H_
 #define SYNTAXDESC_VDEBUG_H_H_
 #include <Windows.h>
-#include <mstring.h>
+#include <ComStatic/ComStatic.h>
 #include <vector>
 #include <SyntaxHlpr/SyntaxCfg.h>
 

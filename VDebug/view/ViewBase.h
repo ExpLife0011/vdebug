@@ -2,7 +2,7 @@
 #define VIEWBASE_VDEBUG_H_H_
 #include <Windows.h>
 #include <map>
-#include "mstring.h"
+#include <ComStatic/ComStatic.h>
 
 using namespace std;
 

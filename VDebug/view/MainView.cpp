@@ -1,18 +1,17 @@
 #include <Windows.h>
 #include <CommCtrl.h>
-#include "common.h"
-#include "winsize.h"
+//#include "common.h"
+#include <ComLib/global.h>
 #include "ProcView.h"
 #include "../resource.h"
 #include <SyntaxHlpr/SyntaxCfg.h>
 #include "MainView.h"
 #include "CmdQueue.h"
 #include "OpenView.h"
-#include "../DbgProxy.h"
-#include "../ProcDbg.h"
-#include "SyntaxHlpr/SyntaxView.h"
+//#include "../DbgProxy.h"
+//#include "../ProcDbg.h"
+#include <SyntaxHlpr/SyntaxView.h>
 #include <SyntaxHlpr/SyntaxParser.h>
-#include <ComLib/SyntaxFormat.h>
 
 #pragma comment(lib, "comctl32.lib")
 
@@ -59,14 +58,16 @@ static ustring gs_wstrCfgFile;
 static CProcSelectView *gs_pProcSelect = NULL;
 static CPeFileOpenView *gs_pPeOpenView = NULL;
 static CCmdQueue *gs_pCmdQueue = NULL;
-static CProcDbgger *gs_pProcDbgger = NULL;
-static CDbggerProxy *gs_pCurDbgger = NULL;
+//static CProcDbgger *//gs_pProcDbgger = NULL;
+//static CDbggerProxy *//gs_pCurDbgger = NULL;
 static PrintFormater *gs_pFormater = NULL;
 
+/*
 CDbggerProxy *GetCurrentDbgger()
 {
-    return gs_pCurDbgger;
+    return //gs_pCurDbgger;
 }
+*/
 
 SyntaxView *GetSyntaxView()
 {
@@ -269,8 +270,8 @@ static void _InitSyntaxView() {
 
 static VOID _OnInitDialog(HWND hwnd, WPARAM wp, LPARAM lp)
 {
-    gs_pProcDbgger = GetProcDbgger();
-    gs_pCurDbgger = gs_pProcDbgger;
+    //gs_pProcDbgger = GetProcDbgger();
+    //gs_pCurDbgger = gs_pProcDbgger;
     gs_pFormater = _GetPrintFormater();
 
     SendMessageW(hwnd, WM_SETICON, (WPARAM)ICON_BIG, (LPARAM)LoadIconW(g_hInstance, MAKEINTRESOURCEW(IDI_MAIN)));
@@ -299,7 +300,7 @@ static VOID _OnInitDialog(HWND hwnd, WPARAM wp, LPARAM lp)
     gs_wstrCfgFile.path_append(L"..\\SyntaxCfg.json");
     //gs_pSyntaxView->ReloadSynbaxCfg(gs_wstrCfgFile.c_str());
     //_LoadDebugFile();
-    LoadSyntaxCfg(WtoA(gs_wstrCfgFile.c_str()));
+    LoadSyntaxCfg(gs_wstrCfgFile.c_str());
     UpdateSyntaxView(gs_pSyntaxView);
 
     CTL_PARAMS vCtrls[] =
@@ -329,11 +330,11 @@ static VOID _OnInitDialog(HWND hwnd, WPARAM wp, LPARAM lp)
     pf << space   << ""       << "¹þ¹þ¹þ"      << line_end;
     gs_pSyntaxView->AppendText(SCI_LABEL_DEFAULT, pf.GetResult());
 
-    SetCmdNotify(em_dbg_status_init, L"³õÊ¼×´Ì¬");
+    //SetCmdNotify(em_dbg_status_init, L"³õÊ¼×´Ì¬");
     gs_pfnCommandProc = (PWIN_PROC)SetWindowLongPtr(gs_hCommand, GWLP_WNDPROC, (LONG_PTR)_CommandProc);
     gs_pCmdQueue = new CCmdQueue();
     SetTimer(hwnd, TIMER_CFG_CHECK, 3000, NULL);
-    CDbggerProxy::InitHelpEngine();
+    //CDbggerProxy::InitHelpEngine();
 }
 
 static VOID _OnCommand(HWND hwnd, WPARAM wp, LPARAM lp)
@@ -343,7 +344,7 @@ static VOID _OnCommand(HWND hwnd, WPARAM wp, LPARAM lp)
     {
     case IDT_EXIT_DEBUG:
         {
-            gs_pCurDbgger->DisConnect();
+            //gs_pCurDbgger->DisConnect();
         }
         break;
     case  IDC_CMD_OPEN:
@@ -407,7 +408,7 @@ static VOID _OnExecCommand(HWND hwnd, WPARAM wp, LPARAM lp)
     }
 
     gs_pCmdQueue->EnterCmd(wstr);
-    DbgCmdResult res = GetCurrentDbgger()->RunCommand(wstr.c_str());
+    //DbgCmdResult res = GetCurrentDbgger()->RunCommand(wstr.c_str());
 
     ////CSyntaxDescHlpr hlpr;
     //if (res.m_eStatus != em_dbgstat_succ)
@@ -425,10 +426,12 @@ static VOID _OnExecCommand(HWND hwnd, WPARAM wp, LPARAM lp)
 
 static VOID _OnPageChange(HWND hwnd, WPARAM wp, LPARAM lp)
 {
+    /*
     if (gs_pCurDbgger->GetStatus() != em_dbg_status_free)
     {
         return;
     }
+    */
 
     ustring wstr;
     if (VK_UP == wp)
@@ -506,6 +509,7 @@ static void _EnableCtrls()
     SendMessageW(gs_hToolbar, TB_ENABLEBUTTON, IDT_OPEN_DUMP, TRUE);
 }
 
+/*
 VOID SetCmdNotify(DebuggerStatus uStatus, const ustring &wstrShowMsg)
 {
     SetWindowTextW(gs_hStatEdit, wstrShowMsg.c_str());
@@ -531,8 +535,9 @@ VOID SetCmdNotify(DebuggerStatus uStatus, const ustring &wstrShowMsg)
         SendMessageW(gs_hCommand, EM_SETREADONLY, 1, 0);
         _DisableCtrls();
     }
-    GetCurrentDbgger()->SetStatus(uStatus);
+    //GetCurrentDbgger()->SetStatus(uStatus);
 }
+*/
 
 VOID SetMainviewTitle(const ustring &wstrTitle)
 {

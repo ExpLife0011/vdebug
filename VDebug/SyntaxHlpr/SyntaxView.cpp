@@ -3,13 +3,12 @@
 #include <SyntaxView/include/SciLexer.h>
 #include <SyntaxView/LexVdebug.h>
 #include <fstream>
-#include <json/json.h>
 #include <SyntaxHlpr/SyntaxCfg.h>
 
 #pragma comment(lib, "shlwapi.lib")
 
 using namespace std;
-using namespace Json;
+
 typedef int (* SCINTILLA_FUNC) (void*, int, int, int);
 typedef void * SCINTILLA_PTR;
 

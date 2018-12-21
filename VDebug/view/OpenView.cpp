@@ -1,5 +1,5 @@
 #include "OpenView.h"
-#include "common.h"
+//#include "common.h"
 #include "../resource.h"
 #include "MainView.h"
 
@@ -104,6 +104,7 @@ void CPeFileOpenView::OnCommand(HWND hwnd, WPARAM wp, LPARAM lp)
         WCHAR wszBuffer[MAX_PATH] = {0};
         GetWindowTextW(m_hPePath, wszBuffer, MAX_PATH);
 
+        /*
         if (GetCurrentDbgger()->Connect(wszBuffer, NULL))
         {
             EndDialog(m_hwnd, 0);
@@ -112,6 +113,7 @@ void CPeFileOpenView::OnCommand(HWND hwnd, WPARAM wp, LPARAM lp)
         {
             SetWindowTextW(m_hStatus, L"启动调试进程失败");
         }
+        */
     }
 }
 

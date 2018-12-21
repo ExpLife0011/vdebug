@@ -1,17 +1,6 @@
 #include <Windows.h>
 #include "view.h"
-#include "Script.h"
-#include "minidump.h"
-#include "symbol.h"
 #include "SyntaxHlpr/SyntaxParser.h"
-
-#pragma comment(lib, "Dbghelp.lib")
-
-#if _WIN64 || WIN64
-#pragma comment(lib, "capstone/capstone_x64.lib")
-#else
-#pragma comment(lib, "capstone/capstone_x86.lib")
-#endif
 
 HINSTANCE g_hInstance = NULL;
 
@@ -31,7 +20,7 @@ int WINAPI WinMain(HINSTANCE m, HINSTANCE p, LPSTR cmd, int show)
 
     SyntaxParser::GetInstance()->InitParser();
     //InitSymbolHlpr(L"SRV*F:\\mysymbol*http://msdl.microsoft.com/download/symbols/");
-    InitSymbolHlpr(L"F:\\mysymbol");
+    //InitSymbolHlpr(L"F:\\mysymbol");
 
     //WCHAR wsz[MAX_PATH] = {0};
     //GetModuleFileNameW(NULL, wsz, MAX_PATH);

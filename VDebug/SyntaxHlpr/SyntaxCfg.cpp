@@ -3,13 +3,11 @@
 #include <string>
 #include <fstream>
 #include "SyntaxParser.h"
-#include "json.h"
-#include "mstring.h"
-#include "common.h"
+#include <ComStatic/ComStatic.h>
 #include "SyntaxCfg.h"
+#include <ComLib/global.h>
 
 using namespace std;
-using namespace Json;
 
 static map<mstring, int> *gs_pSyntaxMap = NULL;
 static map<int, SyntaxColourDesc *> *gs_pSyntaxCfg = NULL;
@@ -29,13 +27,13 @@ SyntaxColourDesc *GetSyntaxCfg(int type)
     return NULL;
 }
 
-static SyntaxColourDesc *_GetDescFromJson(const Value &vJson)
+static SyntaxColourDesc *_GetDescFromJson(const cJSON *json)
 {
     SyntaxColourDesc *desc = new SyntaxColourDesc();
-    desc->m_dwTextColour = GetColourFromStr(JsonGetStrValue(vJson, "textColour").c_str());
-    desc->m_dwBackColour = GetColourFromStr(JsonGetStrValue(vJson, "backColour").c_str());
-    desc->m_bBold = JsonGetIntValue(vJson, "bold");
-    desc->m_bItalic = JsonGetIntValue(vJson, "italic");
+    desc->m_dwTextColour = GetColourFromStr(cJSON_GetObjectItem(json, "textColour")->valuestring);
+    desc->m_dwBackColour = GetColourFromStr(cJSON_GetObjectItem(json, "backColour")->valuestring);
+    desc->m_bBold = cJSON_GetObjectItem(json, "bold")->valueint;
+    desc->m_bItalic = cJSON_GetObjectItem(json, "italic")->valueint;
 
     if (desc->m_dwTextColour == NULL_COLOUR)
     {
@@ -46,6 +44,7 @@ static SyntaxColourDesc *_GetDescFromJson(const Value &vJson)
     {
         desc->m_dwBackColour = gs_defBackColour;
     }
+    desc->m_strDesc = json->string;
     return desc;
 }
 
@@ -85,7 +84,7 @@ BOOL UpdateSyntaxView(SyntaxView *pSyntaxView) {
     return TRUE;
 }
 
-BOOL LoadSyntaxCfg(const string &path)
+BOOL LoadSyntaxCfg(const wstring &path)
 {
     if (!gs_bInit)
     {
@@ -94,38 +93,52 @@ BOOL LoadSyntaxCfg(const string &path)
         _InitSyntaxCfg();
     }
 
-    fstream fp(path.c_str());
-    if (!fp.is_open())
+    cJSON *root = NULL;
+    PFILE_MAPPING_STRUCT pMapping = NULL;
+    BOOL stat = FALSE;
+
+    do 
     {
-        return FALSE;
-    }
-
-    Value content;
-    Reader().parse(fp, content);
-    if (content.type() != objectValue)
-    {
-        return FALSE;
-    }
-
-    //Global Config
-    Value global = content["globalCfg"];
-    Value cfg = content["syntaxCfg"];
-    gs_defTextColour = GetColourFromStr(global["defTextColour"].asCString());
-    gs_defBackColour = GetColourFromStr(global["defBackColour"].asCString());
-    gs_CaretLineColour = GetColourFromStr(global["curLineColour"].asCString());
-
-    vector<string> vMembers = cfg.getMemberNames();
-    vector<string>::const_iterator it;
-    for (it = vMembers.begin() ; it != vMembers.end() ; it++)
-    {
-        SyntaxColourDesc *desc = _GetDescFromJson(cfg[it->c_str()]);
-        desc->m_strDesc = *it;
-
-        map<mstring, int>::const_iterator ij = gs_pSyntaxMap->find(*it);
-        if (ij != gs_pSyntaxMap->end())
+        pMapping = MappingFileW(path.c_str());
+        if (pMapping == NULL || pMapping->hFile == INVALID_HANDLE_VALUE)
         {
-            gs_pSyntaxCfg->insert(make_pair(ij->second, desc));
+            break;
         }
+
+        cJSON *root = cJSON_Parse((const char *)pMapping->lpView);
+        if (!root || root->type != cJSON_Object)
+        {
+            break;
+        }
+
+
+        //Global Config
+        cJSON *golbal = cJSON_GetObjectItem(root, "globalCfg");
+        cJSON *cfg = cJSON_GetObjectItem(root, "syntaxCfg");
+
+        gs_defTextColour = cJSON_GetObjectItem(golbal, "defTextColour")->valueint;
+        gs_defBackColour = cJSON_GetObjectItem(golbal, "defBackColour")->valueint;
+        gs_CaretLineColour = cJSON_GetObjectItem(golbal, "curLineColour")->valueint;
+
+        for (cJSON *it = cfg ; it != NULL ; it = it->next) {
+            SyntaxColourDesc *desc = _GetDescFromJson(it);
+
+            map<mstring, int>::const_iterator ij = gs_pSyntaxMap->find(desc->m_strDesc);
+            if (ij != gs_pSyntaxMap->end())
+            {
+                gs_pSyntaxCfg->insert(make_pair(ij->second, desc));
+            }
+        }
+    } while (FALSE);
+
+    if (pMapping)
+    {
+        CloseFileMapping(pMapping);
     }
-    return TRUE;
+
+    if (root)
+    {
+        cJSON_Delete(root);
+    }
+    return stat;
 }

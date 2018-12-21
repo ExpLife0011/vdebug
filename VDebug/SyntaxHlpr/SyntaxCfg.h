@@ -2,14 +2,11 @@
 #define SYNTAXCFG_H_H_
 #include <Windows.h>
 #include <string>
-#include "mstring.h"
+#include <ComStatic/ComStatic.h>
 #include "SyntaxParser.h"
 #include "SyntaxView.h"
-#include "../json/json.h"
 
 #define NULL_COLOUR 0xffffffff
-
-using namespace Json;
 
 /*语法高亮配置 开始*/
 #define COLOUR_DEFAULT          GetSyntaxCfg(SCI_PARSER_STAT_DEFAULT)       //默认配置
@@ -61,7 +58,7 @@ struct SyntaxColourDesc
 
 BOOL UpdateSyntaxView(SyntaxView *pSyntaxView);
 
-BOOL LoadSyntaxCfg(const std::string &path);
+BOOL LoadSyntaxCfg(const std::wstring &path);
 
 BOOL ReloadSyntaxCfg();
 

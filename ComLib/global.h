@@ -7,6 +7,8 @@
 #include "StrSafe.h"
 #include "LockBase.h"
 #include "logger.h"
+#include "crc32.h"
+#include "winsize.h"
 
 #ifndef COMLIB_EXPORTS
     #if _WIN64 || WIN64

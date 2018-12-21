@@ -11,6 +11,29 @@ MsgSend£ºÏûÏ¢·¢²¼½Ó¿Ú£¬µÚÒ»¸ö²ÎÊýÊÇÏûÏ¢Òª·¢²¼µ½µÄÆµµÀ£¬µÚ¶þ¸ö²ÎÊýÊÇÒª·¢²¼ÏûÏ¢µÄÄ
 #define DPMSG_INTERFACE_H_H_
 #include <Windows.h>
 
+//×¢²áµÄÏà¹Ø¹¦ÄÜÆµµÀ
+#define MQ_CHANNEL_DBG_SERVER      L"mq_event_server"
+#define MQ_CHANNEL_DBG_CLIENT32    L"mq_event_client_proc32"
+#define MQ_CHANNEL_DBG_CLIENT64    L"mq_event_client_proc64"
+#define MQ_CHANNEL_DBG_DUMP32      L"mq_event_client_dump32"
+#define MQ_CHANNEL_DBG_DUMP64      L"mq_event_client_dump64"
+
+#ifndef MQ_EXPORTS
+    #if _WIN64 || WIN64
+        #ifdef _DEBUG
+            #pragma comment(lib, "../Debug/x64/mq64.lib")
+        #else
+            #pragma comment(lib, "../Release/x64/mq64.lib")
+        #endif //_DEBUG
+    #else
+        #ifdef _DEBUG
+            #pragma comment(lib, "../Debug/x32/mq32.lib")
+        #else
+            #pragma comment(lib, "../Release/x32/mq32.lib")
+        #endif //_DEBUG
+    #endif //_WIN64
+#endif //MQ_EXPORTS
+
 #ifdef __cplusplus
 extern "C"
 {

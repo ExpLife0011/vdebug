@@ -48,7 +48,7 @@
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
-				RuntimeLibrary="1"
+				RuntimeLibrary="3"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
 				DebugInformationFormat="3"
@@ -334,47 +334,7 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath=".\BreakPoint.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\CmdBase.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\DbgBase.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\DbgProxy.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Disasm.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\main.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\memory.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\minidump.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\ProcDbg.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Script.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\symbol.cpp"
 				>
 			</File>
 		</Filter>
@@ -384,47 +344,7 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
-				RelativePath=".\BreakPoint.h"
-				>
-			</File>
-			<File
-				RelativePath=".\CmdBase.h"
-				>
-			</File>
-			<File
-				RelativePath=".\DbgBase.h"
-				>
-			</File>
-			<File
-				RelativePath=".\DbgProxy.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Disasm.h"
-				>
-			</File>
-			<File
-				RelativePath=".\memory.h"
-				>
-			</File>
-			<File
-				RelativePath=".\minidump.h"
-				>
-			</File>
-			<File
-				RelativePath=".\ProcDbg.h"
-				>
-			</File>
-			<File
 				RelativePath=".\resource.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Script.h"
-				>
-			</File>
-			<File
-				RelativePath=".\symbol.h"
 				>
 			</File>
 		</Filter>
@@ -487,106 +407,6 @@
 			</File>
 			<File
 				RelativePath=".\view\ViewBase.h"
-				>
-			</File>
-		</Filter>
-		<Filter
-			Name="common"
-			>
-			<File
-				RelativePath=".\common\common.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\common\common.h"
-				>
-			</File>
-			<File
-				RelativePath=".\common\crc32.c"
-				>
-			</File>
-			<File
-				RelativePath=".\common\crc32.h"
-				>
-			</File>
-			<File
-				RelativePath=".\common\LockBase.h"
-				>
-			</File>
-			<File
-				RelativePath=".\common\md5.c"
-				>
-			</File>
-			<File
-				RelativePath=".\common\md5.h"
-				>
-			</File>
-			<File
-				RelativePath=".\common\mstring.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\common\mstring.h"
-				>
-			</File>
-			<File
-				RelativePath=".\common\winsize.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\common\winsize.h"
-				>
-			</File>
-		</Filter>
-		<Filter
-			Name="json"
-			>
-			<File
-				RelativePath=".\json\config.h"
-				>
-			</File>
-			<File
-				RelativePath=".\json\features.h"
-				>
-			</File>
-			<File
-				RelativePath=".\json\forwards.h"
-				>
-			</File>
-			<File
-				RelativePath=".\json\json.h"
-				>
-			</File>
-			<File
-				RelativePath=".\json\json_batchallocator.h"
-				>
-			</File>
-			<File
-				RelativePath=".\json\json_reader.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\json\json_value.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\json\json_valueiterator.inl"
-				>
-			</File>
-			<File
-				RelativePath=".\json\json_writer.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\json\reader.h"
-				>
-			</File>
-			<File
-				RelativePath=".\json\value.h"
-				>
-			</File>
-			<File
-				RelativePath=".\json\writer.h"
 				>
 			</File>
 		</Filter>

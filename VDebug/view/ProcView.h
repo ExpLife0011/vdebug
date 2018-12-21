@@ -3,10 +3,12 @@
 #include <Windows.h>
 #include <CommCtrl.h>
 #include <set>
+#include <vector>
 #include "ViewBase.h"
-#include "common.h"
-#include "LockBase.h"
-#include "mstring.h"
+//#include "common.h"
+//#include "LockBase.h"
+#include <ComStatic/ComStatic.h>
+#include <ComLib/global.h>
 
 using namespace std;
 

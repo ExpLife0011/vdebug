@@ -1,8 +1,6 @@
 #include "ProcView.h"
 #include "../resource.h"
-#include "common.h"
 #include <commctrl.h>
-#include "winsize.h"
 #include <ComLib/global.h>
 
 enum ProcSortType

@@ -69,13 +69,13 @@ BEGIN
     BEGIN
         BLOCK "080404b0"
         BEGIN
-            VALUE "CompanyName", "Shan Dong Chinasoft Gold Shield Software Co.,Ltd"
-            VALUE "FileDescription", "dpmsg"
-            VALUE "FileVersion", "10, 3, 0, 31046"
-            VALUE "InternalName", "dpmsg"
-            VALUE "LegalCopyright", "Shan Dong Chinasoft Gold Shield Software Co.,Ltd (C) 2017"
-            VALUE "OriginalFilename", "dpmsg"
-            VALUE "ProductVersion", "10, 3, 0, 31046"
+            VALUE "CompanyName", "vdebug by lougdhr@126.com"
+            VALUE "FileDescription", "vdebug消息中间件"
+            VALUE "FileVersion", "1, 1, 0, 1"
+            VALUE "InternalName", "mq"
+            VALUE "LegalCopyright", ""
+            VALUE "OriginalFilename", "mq"
+            VALUE "ProductVersion", "1, 1, 0, 1"
         END
     END
     BLOCK "VarFileInfo"

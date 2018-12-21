@@ -41,6 +41,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
+				AdditionalIncludeDirectories="../"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;COMLIB_EXPORTS;CJSON_EXPORT_SYMBOLS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -186,7 +187,15 @@
 				>
 			</File>
 			<File
+				RelativePath=".\crc32.c"
+				>
+			</File>
+			<File
 				RelativePath=".\dllmain.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\md5.c"
 				>
 			</File>
 			<File
@@ -199,6 +208,10 @@
 			</File>
 			<File
 				RelativePath=".\tpool.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\winsize.cpp"
 				>
 			</File>
 		</Filter>
@@ -216,6 +229,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\crc32.h"
+				>
+			</File>
+			<File
 				RelativePath=".\global.h"
 				>
 			</File>
@@ -228,6 +245,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\md5.h"
+				>
+			</File>
+			<File
 				RelativePath=".\StrSafe.h"
 				>
 			</File>
@@ -237,6 +258,10 @@
 			</File>
 			<File
 				RelativePath=".\tpool.h"
+				>
+			</File>
+			<File
+				RelativePath=".\winsize.h"
 				>
 			</File>
 		</Filter>
