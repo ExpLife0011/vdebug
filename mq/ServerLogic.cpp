@@ -1,7 +1,7 @@
 #include "ServerLogic.h"
 #include <ComLib/logger.h>
 #include "protocol.h"
-#include <ComLib/global.h>
+#include <ComLib/ComLib.h>
 #include <ComLib/cJSON.h>
 
 CServerLogic::CServerLogic() :m_bServInit(FALSE){

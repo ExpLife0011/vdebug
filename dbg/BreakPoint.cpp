@@ -4,7 +4,7 @@
 #include "ProcDbg.h"
 //#include <SyntaxHlpr/SyntaxView.h>
 //#include <SyntaxHlpr/SyntaxParser.h>
-#include <ComLib/global.h>
+#include <ComLib/ComLib.h>
 
 CBreakPointMgr::CBreakPointMgr()
 {}

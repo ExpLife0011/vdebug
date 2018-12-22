@@ -1,5 +1,5 @@
-#ifndef GLOBAL_COMLIB_H_H_
-#define GLOBAL_COMLIB_H_H_
+#ifndef COMLIB_COMLIB_H_H_
+#define COMLIB_COMLIB_H_H_
 #include "cJSON.h"
 #include "ComUtil.h"
 #include "tpool.h"
@@ -27,4 +27,4 @@
 #endif //COMLIB_EXPORTS
 
 #define TCP_PORT_MQ     6011
-#endif //GLOBAL_COMLIB_H_H_
+#endif //COMLIB_COMLIB_H_H_

@@ -207,6 +207,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\DbgProtocol.h"
+				>
+			</File>
+			<File
 				RelativePath=".\DbgService.h"
 				>
 			</File>

@@ -2,7 +2,7 @@
 #define OPENVIEW_VDEBUG_H_H_
 #include <Windows.h>
 #include "ViewBase.h"
-#include <ComLib/global.h>
+#include <ComLib/ComLib.h>
 #include <ComStatic/ComStatic.h>
 
 using namespace std;

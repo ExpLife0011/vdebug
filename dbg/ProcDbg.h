@@ -7,7 +7,7 @@
 #include "CmdBase.h"
 #include "DbgProxy.h"
 #include "TitanEngine/TitanEngine.h"
-#include <ComLib/global.h>
+#include <ComLib/ComLib.h>
 //#include "common.h"
 
 using namespace std;

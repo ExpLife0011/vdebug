@@ -7,7 +7,7 @@
 #include <Psapi.h>
 #include <Winternl.h>
 #include <shobjidl.h>
-#include <ComLib/global.h>
+#include <ComLib/ComLib.h>
 
 #pragma comment(lib, "Psapi.lib")
 #pragma comment(lib, "Version.lib")

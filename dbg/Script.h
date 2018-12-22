@@ -4,7 +4,7 @@
 #include <map>
 #include <ComStatic/ComStatic.h>
 #include "TitanEngine/TitanEngine.h"
-#include <ComLib/global.h>
+#include <ComLib/ComLib.h>
 #include "DbgBase.h"
 
 extern "C"

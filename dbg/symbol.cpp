@@ -1,9 +1,9 @@
 #include <Windows.h>
 #include <DbgHelp.h>
 #include "symbol.h"
-#include <ComLib/global.h>
+#include <ComLib/ComLib.h>
 //#include "view/MainView.h"
-#include <ComLib/global.h>
+#include <ComLib/ComLib.h>
 
 CSymbolHlpr::CSymbolHlpr(const ustring &wstrSymbolPath)
 {

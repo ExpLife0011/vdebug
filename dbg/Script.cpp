@@ -6,7 +6,7 @@
 //#include "crc32.h"
 #include "memory.h"
 //#include "MainView.h"
-#include <ComLib/global.h>
+#include <ComLib/ComLib.h>
 
 //´«µÝ¸øluaµÄ´íÎóÂë
 #define SCRIPT_ERROR_SUCCESS            0

@@ -8,6 +8,8 @@ enum DbggerType {
     em_dbg_dump64
 };
 
+typedef long HDbgCtrl;
+
 #ifndef DBGCTRL_EXPORTS
     #define DbgCtrlApi _declspec(dllimport)
 #else

@@ -1,7 +1,7 @@
 #include <Windows.h>
 #include <CommCtrl.h>
 //#include "common.h"
-#include <ComLib/global.h>
+#include <ComLib/ComLib.h>
 #include "ProcView.h"
 #include "../resource.h"
 #include <SyntaxHlpr/SyntaxCfg.h>

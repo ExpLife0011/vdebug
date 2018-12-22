@@ -1,6 +1,6 @@
 #ifndef LOGGER_COMLIB_H_H_
 #define LOGGER_COMLIB_H_H_
-#include "global.h"
+#include "ComLib.h"
 
 class Logger {
 public:

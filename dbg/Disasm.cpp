@@ -2,7 +2,7 @@
 #include "memory.h"
 //#include "MainView.h"
 //#include "common.h"
-#include <ComLib/global.h>
+#include <ComLib/ComLib.h>
 
 #define MAX_DISASM_SIZE     (1024 * 1024)
 #define MAX_ASMOPT_SIZE     16

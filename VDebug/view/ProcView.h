@@ -8,7 +8,7 @@
 //#include "common.h"
 //#include "LockBase.h"
 #include <ComStatic/ComStatic.h>
-#include <ComLib/global.h>
+#include <ComLib/ComLib.h>
 
 using namespace std;
 

@@ -3,7 +3,7 @@
 #include <Windows.h>
 #include <list>
 #include <ComStatic/ComStatic.h>
-#include <ComLib/global.h>
+#include <ComLib/ComLib.h>
 #include "CmdBase.h"
 #include "DbgBase.h"
 

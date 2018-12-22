@@ -1,6 +1,6 @@
 #include "ClientLogic.h"
 #include "protocol.h"
-#include <ComLib/global.h>
+#include <ComLib/ComLib.h>
 
 CClientLogic *CClientLogic::GetInstance() {
     static CClientLogic *s_ptr = NULL;

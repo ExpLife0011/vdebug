@@ -225,15 +225,15 @@
 				>
 			</File>
 			<File
+				RelativePath=".\ComLib.h"
+				>
+			</File>
+			<File
 				RelativePath=".\ComUtil.h"
 				>
 			</File>
 			<File
 				RelativePath=".\crc32.h"
-				>
-			</File>
-			<File
-				RelativePath=".\global.h"
 				>
 			</File>
 			<File
