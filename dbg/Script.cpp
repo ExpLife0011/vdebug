@@ -557,7 +557,7 @@ LuaScriptInfo GetScriptInfo(const ustring &wstrScript)
     LuaScriptInfo info;
     info.m_wstrFilePath = wstr;
     mstring str(wstr);
-    info.m_wstrUniqueMark.format(L"%08x", std_crc32(str.c_str(), (int)str.size()));
+    info.m_wstrUniqueMark.format(L"%08x", crc32(str.c_str(), (int)str.size(), 0xffffffff));
     return info;
 }
 
