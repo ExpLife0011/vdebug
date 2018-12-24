@@ -1,5 +1,6 @@
 #include "DbgCtrlTool.h"
 #include <ComLib/ComLib.h>
+#include <ComStatic/ComStatic.h>
 
 using namespace std;
 
@@ -12,8 +13,8 @@ unsigned short CalPortFormUnique(const wstring &unique) {
         return (unsigned short)port;
     }
 
-    const char *p = WtoA(unique.c_str());
-    unsigned long crc = crc32(p, lstrlenA(p), 0xffffffff);
+    string p = WtoA(unique);
+    unsigned long crc = crc32(p.c_str(), p.size(), 0xffffffff);
     port = (6300 + crc % 500);
     return (unsigned short)port;
 }

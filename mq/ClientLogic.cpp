@@ -1,6 +1,7 @@
 #include "ClientLogic.h"
 #include "protocol.h"
 #include <ComLib/ComLib.h>
+#include <ComStatic/ComStatic.h>
 
 CClientLogic *CClientLogic::GetInstance() {
     static CClientLogic *s_ptr = NULL;
@@ -16,10 +17,11 @@ CClientLogic::CClientLogic() :
 m_tpool(NULL),
 m_curIndex(0xff11),
 m_bClientInit(FALSE),
-m_bConnectSucc(FALSE){
+m_bConnectSucc(FALSE),
+m_port(0){
 }
 
-bool CClientLogic::InitClient() {
+bool CClientLogic::InitClient(unsigned short port) {
     if (m_bClientInit)
     {
         return true;
@@ -35,7 +37,8 @@ bool CClientLogic::InitClient() {
         rand() % 0xffff,
         rand() % 0xffff
         );
-    m_bConnectSucc =  m_msgClient.InitClient("127.0.0.1", TCP_PORT_MQ, this, 3000);
+    m_port = port;
+    m_bConnectSucc =  m_msgClient.InitClient("127.0.0.1", port, this, 3000);
     if (!m_bConnectSucc)
     {
         CloseHandle(CreateThread(NULL, 0, ConnectThread, this, 0, NULL));
@@ -54,7 +57,7 @@ HANDLE_REGISTER CClientLogic::Register(const wstring &wstrKey, PMsgNotify pfn, v
     cJSON *content = cJSON_CreateObject();
     cJSON_AddStringToObject(content, "action", "register");
     cJSON_AddStringToObject(content, "clientUnique", m_clientUnique.c_str());
-    cJSON_AddStringToObject(content, "channel", WtoU(wstrKey.c_str()));
+    cJSON_AddStringToObject(content, "channel", WtoU(wstrKey).c_str());
 
     /*
     Value content;
@@ -110,13 +113,13 @@ bool CClientLogic::DispatchInternal(const wstring &wstrKey, const wstring &wstrV
     */
     cJSON *content = cJSON_CreateObject();
     cJSON_AddStringToObject(content, "action", "message");
-    cJSON_AddStringToObject(content, "channel", WtoU(wstrKey.c_str()));
-    cJSON_AddStringToObject(content, "content", WtoU(wstrValue.c_str()));
+    cJSON_AddStringToObject(content, "channel", WtoU(wstrKey).c_str());
+    cJSON_AddStringToObject(content, "content", WtoU(wstrValue).c_str());
 
     if (!wstrRoute.empty())
     {
         cJSON_AddNumberToObject(content, "result", 1);
-        cJSON_AddStringToObject(content, "route", WtoU(wstrRoute.c_str()));
+        cJSON_AddStringToObject(content, "route", WtoU(wstrRoute).c_str());
     }
 
     string strContent = cJSON_Print(content);
@@ -204,8 +207,8 @@ bool CClientLogic::DispatchInCache(const wstring &wstrKey, const wstring &wstrVa
                         PackageHeader header;
                         cJSON *json = cJSON_CreateObject();
                         cJSON_AddStringToObject(json, "action", "reply");
-                        cJSON_AddStringToObject(json, "route", WtoU(mParam->wstrRoute.c_str()));
-                        cJSON_AddStringToObject(json, "content", WtoU(wstr.c_str()));
+                        cJSON_AddStringToObject(json, "route", WtoU(mParam->wstrRoute).c_str());
+                        cJSON_AddStringToObject(json, "content", WtoU(wstr).c_str());
 
                         string content = cJSON_Print(json);
                         cJSON_Delete(json);
@@ -336,7 +339,7 @@ void CClientLogic::OnClientConnect(CMsgClient &client) {
 
     for (map<wstring, list<NotifyProcInfo>>::const_iterator it = m_notifyMap.begin() ; it != m_notifyMap.end() ; it++)
     {
-        cJSON_AddItemToArray(arry, cJSON_CreateString(WtoU(it->first.c_str())));
+        cJSON_AddItemToArray(arry, cJSON_CreateString(WtoU(it->first).c_str()));
     }
     cJSON_AddItemToObject(root, "channel", arry);
 

@@ -4,7 +4,7 @@
 #include <ComLib/ComLib.h>
 #include <ComLib/cJSON.h>
 
-CServerLogic::CServerLogic() :m_bServInit(FALSE){
+CServerLogic::CServerLogic() :m_bServInit(FALSE), m_port(0){
 }
 
 CServerLogic *CServerLogic::GetInstance() {
@@ -17,13 +17,14 @@ CServerLogic *CServerLogic::GetInstance() {
     return s_ptr;
 }
 
-bool CServerLogic::InitServ() {
+bool CServerLogic::InitServ(unsigned short port) {
     if (m_bServInit)
     {
         return true;
     }
     m_bServInit = true;
-    return m_msgServ.InitServ(TCP_PORT_MQ, this);
+    m_port = port;
+    return m_msgServ.InitServ(port, this);
 }
 
 list<string> CServerLogic::ParsePackage(string &strPackage) const {

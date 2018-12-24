@@ -23,7 +23,7 @@ private:
     CServerLogic();
 public:
     static CServerLogic *GetInstance();
-    bool InitServ();
+    bool InitServ(unsigned short port);
 
 private:
     list<string> ParsePackage(string &strPackage) const;
@@ -42,6 +42,7 @@ private:
 
 private:
     bool m_bServInit;
+    unsigned short m_port;
 
     /**
     server缓存相关数据

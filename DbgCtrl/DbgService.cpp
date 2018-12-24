@@ -5,6 +5,7 @@
 #include <map>
 #include <list>
 #include <ComLib/ComLib.h>
+#include <ComStatic/ComStatic.h>
 
 using namespace std;
 
@@ -50,7 +51,7 @@ LPCWSTR DbgService::ServerNotify(LPCWSTR wszChannel, LPCWSTR wszContent, void *p
     {
         if (0 == lstrcmpW(wszChannel, MQ_CHANNEL_DBG_SERVER))
         {
-            cJSON *root = cJSON_Parse(WtoU(wszContent));
+            cJSON *root = cJSON_Parse(WtoU(wszContent).c_str());
 
             if (!root || root->type != cJSON_Object)
             {
@@ -92,7 +93,7 @@ bool DbgService::InitDbgService(const wchar_t *unique) {
     m_unique = unique;
     m_port = CalPortFormUnique(unique);
 
-    MsgInitServ();
+    MsgInitServ(m_port);
     MsgRegister(MQ_CHANNEL_DBG_SERVER, ServerNotify, this);
     return true;
 }

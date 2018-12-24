@@ -29,7 +29,7 @@ private:
     CClientLogic();
 public:
     static CClientLogic *GetInstance();
-    bool InitClient();
+    bool InitClient(unsigned short port);
 
     HANDLE_REGISTER Register(const wstring &wstrKey, PMsgNotify pfn, void *pParam);
     bool UnRegister(HANDLE_REGISTER hRegister);
@@ -54,6 +54,7 @@ private:
 private:
     bool m_bClientInit;
     bool m_bConnectSucc;
+    unsigned short m_port;
     /**
     client缓存相关数据
     */

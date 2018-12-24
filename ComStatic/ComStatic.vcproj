@@ -158,6 +158,10 @@
 				RelativePath=".\mstring.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\StrUtil.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Í·ÎÄ¼þ"
@@ -170,6 +174,10 @@
 			</File>
 			<File
 				RelativePath=".\mstring.h"
+				>
+			</File>
+			<File
+				RelativePath=".\StrUtil.h"
 				>
 			</File>
 		</Filter>

@@ -9,15 +9,6 @@ DestroyThreadPool
 SafeStrCopyA
 SafeStrCopyW
 
-FormatW
-FormatA
-AtoU
-UtoA
-AtoW
-WtoA
-UtoW
-WtoU
-
 MappingFileW
 CloseFileMapping
 

@@ -52,12 +52,12 @@ typedef long HANDLE_REGISTER;                       //索引句柄，用于删除注册
 /**
 初始化消息分发服务，一台终端只需要一个消息服务
 */
-BOOL WINAPI MsgInitServ();
+BOOL WINAPI MsgInitServ(unsigned short servPort);
 
 /**
 初始化消息接收端，同一进程只需初始化一次即可
 */
-BOOL WINAPI MsgInitClient();
+BOOL WINAPI MsgInitClient(unsigned short servPort);
 
 /**
 字符串分配接口

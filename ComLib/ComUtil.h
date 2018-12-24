@@ -10,16 +10,6 @@
 
 #define EXPAND_ARG(arg)                 (arg), RTL_NUMBER_OF((arg))
 
-const wchar_t *__stdcall FormatW(const wchar_t *format, ...);
-const char *__stdcall FormatA(const char *fmt, ...);
-
-const char *__stdcall AtoU(const char *);
-const char *__stdcall UtoA(const char *);
-const wchar_t *__stdcall AtoW(const char *);
-const char *_stdcall WtoA(const wchar_t *);
-const wchar_t *__stdcall UtoW(const char *);
-const char *__stdcall WtoU(const wchar_t *);
-
 typedef struct _FILE_MAPPING_STRUCT
 {
     HANDLE hFile;

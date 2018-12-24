@@ -825,7 +825,7 @@ DWORD CScriptEngine::ScriptExecThread(LPVOID pParam)
     pLuaInfo->m_eScriptStat = em_script_stat_wait;
     try
     {
-        if (0 != luaL_dofile(pLuaStat, WtoA(pLuaInfo->m_wstrFilePath.c_str())))
+        if (0 != luaL_dofile(pLuaStat, WtoA(pLuaInfo->m_wstrFilePath).c_str()))
         {
             dp(L"Ö´ÐÐ½Å±¾Ê§°Ü£¬Err:%hs", lua_tostring(pLuaStat, -1));
             pLuaInfo->m_eScriptStat = em_script_stat_faild;

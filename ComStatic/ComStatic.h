@@ -3,6 +3,7 @@
 #include <Windows.h>
 #include <list>
 #include <ComStatic/mstring.h>
+#include <ComStatic/StrUtil.h>
 
 #ifndef COMLIB_EXPORTS
     #if _WIN64 || WIN64

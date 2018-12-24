@@ -9,19 +9,19 @@ static BOOL gs_bClientInit = FALSE;
 /**
 初始化消息分发服务，一台终端只需要初始化一次
 */
-BOOL WINAPI MsgInitServ() {
+BOOL WINAPI MsgInitServ(unsigned short port) {
     if (gs_bServInit)
     {
         return TRUE;
     }
-    return (gs_bServInit = CServerLogic::GetInstance()->InitServ());
+    return (gs_bServInit = CServerLogic::GetInstance()->InitServ(port));
 }
 
-BOOL WINAPI MsgInitClient() {
+BOOL WINAPI MsgInitClient(unsigned short port) {
     if (gs_bClientInit) {
         return TRUE;
     }
-    return (gs_bClientInit = CClientLogic::GetInstance()->InitClient());
+    return (gs_bClientInit = CClientLogic::GetInstance()->InitClient(port));
 }
 
 /**
