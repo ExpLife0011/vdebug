@@ -33,6 +33,8 @@ void __stdcall IterateProcW(pfnProcHandlerW handler, void* lpParam);
 
 BOOL  __stdcall IsPeFileW(LPCWSTR fileName, BOOL* b64);
 
+BOOL __stdcall IsSameFileW(LPCWSTR file1, LPCWSTR file2);
+
 BOOL __stdcall GetPeVersionW(LPCWSTR lpszFileName, LPWSTR outBuf, UINT size);
 
 PVOID __stdcall DisableWow64Red();

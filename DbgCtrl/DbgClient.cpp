@@ -91,7 +91,11 @@ HDbgCtrl DbgClient::RegisterCtrlHandler(const wchar_t *cmd, pfnDbgClientProc pfn
 bool DbgClient::SendDbgEvent(const wchar_t *cmd, const wchar_t *content) {
     cJSON *json = cJSON_CreateObject();
     string t1 = WtoU(cmd);
-    //cJSON_AddStringToObject(json, WtoU(cmd));
+    cJSON_AddStringToObject(json, "cmd", WtoU(cmd).c_str());
+    cJSON_AddStringToObject(json, "content", WtoU(content).c_str());
+
+    MsgSend(MQ_CHANNEL_DBG_SERVER, UtoW(cJSON_Print(json)).c_str());
+    cJSON_Delete(json);
     return true;
 }
 

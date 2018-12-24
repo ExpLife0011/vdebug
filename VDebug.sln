@@ -36,6 +36,11 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ComStatic", "ComStatic\ComS
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DbgCtrl", "DbgCtrl\DbgCtrl.vcproj", "{AC5297FB-D1BD-439F-A8CC-BE8A85D49BD0}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "runner", "runner\runner.vcproj", "{29A41601-2B64-4F24-9083-55FC8F1D5E77}"
+	ProjectSection(ProjectDependencies) = postProject
+		{BED3BF35-ADFF-4DDE-B880-12607C70ADB4} = {BED3BF35-ADFF-4DDE-B880-12607C70ADB4}
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -88,6 +93,12 @@ Global
 		{AC5297FB-D1BD-439F-A8CC-BE8A85D49BD0}.Release|Win32.ActiveCfg = Release|Win32
 		{AC5297FB-D1BD-439F-A8CC-BE8A85D49BD0}.Release|Win32.Build.0 = Release|Win32
 		{AC5297FB-D1BD-439F-A8CC-BE8A85D49BD0}.Release|x64.ActiveCfg = Release|Win32
+		{29A41601-2B64-4F24-9083-55FC8F1D5E77}.Debug|Win32.ActiveCfg = Debug|Win32
+		{29A41601-2B64-4F24-9083-55FC8F1D5E77}.Debug|Win32.Build.0 = Debug|Win32
+		{29A41601-2B64-4F24-9083-55FC8F1D5E77}.Debug|x64.ActiveCfg = Debug|Win32
+		{29A41601-2B64-4F24-9083-55FC8F1D5E77}.Release|Win32.ActiveCfg = Release|Win32
+		{29A41601-2B64-4F24-9083-55FC8F1D5E77}.Release|Win32.Build.0 = Release|Win32
+		{29A41601-2B64-4F24-9083-55FC8F1D5E77}.Release|x64.ActiveCfg = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

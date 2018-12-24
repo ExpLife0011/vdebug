@@ -21,7 +21,7 @@
 	<Configurations>
 		<Configuration
 			Name="Debug|Win32"
-			OutputDirectory="$(SolutionDir)$(ConfigurationName)\x32"
+			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="1"
 			CharacterSet="1"
@@ -67,6 +67,8 @@
 				Name="VCLinkerTool"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="capstone;"
+				UACExecutionLevel="2"
+				DelayLoadDLLs="ComLib32.dll;mq32.dll;DbgCtrl32.dll"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				TargetMachine="1"
@@ -334,6 +336,10 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
+				RelativePath=".\DbgService.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\main.cpp"
 				>
 			</File>
@@ -343,6 +349,10 @@
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
+			<File
+				RelativePath=".\DbgService.h"
+				>
+			</File>
 			<File
 				RelativePath=".\resource.h"
 				>
@@ -407,314 +417,6 @@
 			</File>
 			<File
 				RelativePath=".\view\ViewBase.h"
-				>
-			</File>
-		</Filter>
-		<Filter
-			Name="TitanEngine"
-			>
-			<File
-				RelativePath=".\TitanEngine\TitanEngine.h"
-				>
-			</File>
-		</Filter>
-		<Filter
-			Name="capstone"
-			>
-			<File
-				RelativePath=".\capstone\arm.h"
-				>
-			</File>
-			<File
-				RelativePath=".\capstone\arm64.h"
-				>
-			</File>
-			<File
-				RelativePath=".\capstone\capstone.h"
-				>
-			</File>
-			<File
-				RelativePath=".\capstone\m68k.h"
-				>
-			</File>
-			<File
-				RelativePath=".\capstone\mips.h"
-				>
-			</File>
-			<File
-				RelativePath=".\capstone\platform.h"
-				>
-			</File>
-			<File
-				RelativePath=".\capstone\ppc.h"
-				>
-			</File>
-			<File
-				RelativePath=".\capstone\sparc.h"
-				>
-			</File>
-			<File
-				RelativePath=".\capstone\systemz.h"
-				>
-			</File>
-			<File
-				RelativePath=".\capstone\x86.h"
-				>
-			</File>
-			<File
-				RelativePath=".\capstone\xcore.h"
-				>
-			</File>
-		</Filter>
-		<Filter
-			Name="lua"
-			>
-			<File
-				RelativePath=".\lua\lapi.c"
-				>
-			</File>
-			<File
-				RelativePath=".\lua\lapi.h"
-				>
-			</File>
-			<File
-				RelativePath=".\lua\lauxlib.c"
-				>
-			</File>
-			<File
-				RelativePath=".\lua\lauxlib.h"
-				>
-			</File>
-			<File
-				RelativePath=".\lua\lbaselib.c"
-				>
-			</File>
-			<File
-				RelativePath=".\lua\lbitlib.c"
-				>
-			</File>
-			<File
-				RelativePath=".\lua\lcode.c"
-				>
-			</File>
-			<File
-				RelativePath=".\lua\lcode.h"
-				>
-			</File>
-			<File
-				RelativePath=".\lua\lcorolib.c"
-				>
-			</File>
-			<File
-				RelativePath=".\lua\lctype.c"
-				>
-			</File>
-			<File
-				RelativePath=".\lua\lctype.h"
-				>
-			</File>
-			<File
-				RelativePath=".\lua\ldblib.c"
-				>
-			</File>
-			<File
-				RelativePath=".\lua\ldebug.c"
-				>
-			</File>
-			<File
-				RelativePath=".\lua\ldebug.h"
-				>
-			</File>
-			<File
-				RelativePath=".\lua\ldo.c"
-				>
-			</File>
-			<File
-				RelativePath=".\lua\ldo.h"
-				>
-			</File>
-			<File
-				RelativePath=".\lua\ldump.c"
-				>
-			</File>
-			<File
-				RelativePath=".\lua\lfunc.c"
-				>
-			</File>
-			<File
-				RelativePath=".\lua\lfunc.h"
-				>
-			</File>
-			<File
-				RelativePath=".\lua\lgc.c"
-				>
-			</File>
-			<File
-				RelativePath=".\lua\lgc.h"
-				>
-			</File>
-			<File
-				RelativePath=".\lua\linit.c"
-				>
-			</File>
-			<File
-				RelativePath=".\lua\liolib.c"
-				>
-			</File>
-			<File
-				RelativePath=".\lua\llex.c"
-				>
-			</File>
-			<File
-				RelativePath=".\lua\llex.h"
-				>
-			</File>
-			<File
-				RelativePath=".\lua\llimits.h"
-				>
-			</File>
-			<File
-				RelativePath=".\lua\lmathlib.c"
-				>
-			</File>
-			<File
-				RelativePath=".\lua\lmem.c"
-				>
-			</File>
-			<File
-				RelativePath=".\lua\lmem.h"
-				>
-			</File>
-			<File
-				RelativePath=".\lua\loadlib.c"
-				>
-			</File>
-			<File
-				RelativePath=".\lua\lobject.c"
-				>
-			</File>
-			<File
-				RelativePath=".\lua\lobject.h"
-				>
-			</File>
-			<File
-				RelativePath=".\lua\lopcodes.c"
-				>
-			</File>
-			<File
-				RelativePath=".\lua\lopcodes.h"
-				>
-			</File>
-			<File
-				RelativePath=".\lua\loslib.c"
-				>
-			</File>
-			<File
-				RelativePath=".\lua\lparser.c"
-				>
-			</File>
-			<File
-				RelativePath=".\lua\lparser.h"
-				>
-			</File>
-			<File
-				RelativePath=".\lua\lprefix.h"
-				>
-			</File>
-			<File
-				RelativePath=".\lua\lstate.c"
-				>
-			</File>
-			<File
-				RelativePath=".\lua\lstate.h"
-				>
-			</File>
-			<File
-				RelativePath=".\lua\lstring.c"
-				>
-			</File>
-			<File
-				RelativePath=".\lua\lstring.h"
-				>
-			</File>
-			<File
-				RelativePath=".\lua\lstrlib.c"
-				>
-			</File>
-			<File
-				RelativePath=".\lua\ltable.c"
-				>
-			</File>
-			<File
-				RelativePath=".\lua\ltable.h"
-				>
-			</File>
-			<File
-				RelativePath=".\lua\ltablib.c"
-				>
-			</File>
-			<File
-				RelativePath=".\lua\ltm.c"
-				>
-			</File>
-			<File
-				RelativePath=".\lua\ltm.h"
-				>
-			</File>
-			<File
-				RelativePath=".\lua\lua.c"
-				>
-			</File>
-			<File
-				RelativePath=".\lua\lua.h"
-				>
-			</File>
-			<File
-				RelativePath=".\lua\lua.hpp"
-				>
-			</File>
-			<File
-				RelativePath=".\lua\luac.c"
-				>
-			</File>
-			<File
-				RelativePath=".\lua\luaconf.h"
-				>
-			</File>
-			<File
-				RelativePath=".\lua\lualib.h"
-				>
-			</File>
-			<File
-				RelativePath=".\lua\lundump.c"
-				>
-			</File>
-			<File
-				RelativePath=".\lua\lundump.h"
-				>
-			</File>
-			<File
-				RelativePath=".\lua\lutf8lib.c"
-				>
-			</File>
-			<File
-				RelativePath=".\lua\lvm.c"
-				>
-			</File>
-			<File
-				RelativePath=".\lua\lvm.h"
-				>
-			</File>
-			<File
-				RelativePath=".\lua\lzio.c"
-				>
-			</File>
-			<File
-				RelativePath=".\lua\lzio.h"
-				>
-			</File>
-			<File
-				RelativePath=".\lua\Makefile"
 				>
 			</File>
 		</Filter>

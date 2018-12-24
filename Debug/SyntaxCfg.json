@@ -2,45 +2,118 @@
     "globalCfg": {
         "lineNumber": 1,
         "defTextColour": "0,0,255",
-        "defBackColour": "null",
-        "viewBackColour": "0,0,0",
-        "curLineColour": "50,50,50"
+        "defBackColour": "40,40,40",
+        "viewBackColour": "40,40,40",
+        "curLineColour": "60,56,54"
     },
-    "SyntaxCfg": {
+    "syntaxCfg": {
         "addr": {
-            "textColour": "0,0,255",
+            "textColour": "128,255,255",
             "backColour": "null",
             "bold": 1,
             "italic": 1
         },
-		"error": {
-            "textColour": "255,0,0",
+        "error": {
+            "textColour": "252,205,109",
             "backColour": "null",
             "bold": 1,
             "italic": 1
         },
-		"msg": {
-            "textColour": "0,254,231",
+        "msg": {
+            "textColour": "252,205,109",
             "backColour": "null",
-            "bold": 1,
+            "bold": 0,
             "italic": 1
         },
-		"function": {
-            "textColour": "0,254,231",
+		 "default": {
+            "textColour": "252,205,109",
             "backColour": "null",
-            "bold": 1,
+            "bold": 0,
             "italic": 1
         },
-		"default": {
-            "textColour": "0,254,231",
+        "hex": {
+            "textColour": "252,153,60",
             "backColour": "null",
-            "bold": 1,
+            "bold": 0,
             "italic": 1
         },
-		"number": {
-            "textColour": "0,254,231",
+        "data": {
+            "textColour": "153,153,153",
             "backColour": "null",
-            "bold": 1,
+            "bold": 0,
+            "italic": 1
+        },
+        "btye": {
+            "textColour": "255,128,128",
+            "backColour": "null",
+            "bold": 0,
+            "italic": 1
+        },
+		"inst": {
+            "textColour": "255,165,70",
+            "backColour": "null",
+            "bold": 0,
+            "italic": 1
+        },
+        "inst2": {
+            "textColour": "255,165,70",
+            "backColour": "null",
+            "bold": 0,
+            "italic": 1
+        },
+        "call": {
+            "textColour": "101,132,92",
+            "backColour": "null",
+            "bold": 0,
+            "italic": 1
+        },
+        "jmp": {
+            "textColour": "101,132,91",
+            "backColour": "null",
+            "bold": 0,
+            "italic": 1
+        },
+        "proc": {
+            "textColour": "252,205,109",
+            "backColour": "null",
+            "bold": 0,
+            "italic": 1
+        },
+        "module": {
+            "textColour": "252,205,109",
+            "backColour": "null",
+            "bold": 0,
+            "italic": 1
+        },
+        "param": {
+            "textColour": "153,153,153",
+            "backColour": "null",
+            "bold": 0,
+            "italic": 1
+        },
+        "num": {
+            "textColour": "255,255,128",
+            "backColour": "null",
+            "bold": 0,
+            "italic": 1
+        }
+		,
+        "keyword": {
+            "textColour": "128,128,192",
+            "backColour": "null",
+            "bold": 0,
+            "italic": 1
+        },
+        "register": {
+            "textColour": "128,222,84",
+            "backColour": "null",
+            "bold": 0,
+            "italic": 1
+        },
+        "hight": {
+            "textColour": "19,255,192",
+            "backColour": "null",
+            "bold": 0,
             "italic": 1
         }
     }

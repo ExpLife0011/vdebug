@@ -155,7 +155,15 @@
 				>
 			</File>
 			<File
+				RelativePath=".\DllLoader.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\mstring.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\servhlpr.cpp"
 				>
 			</File>
 			<File
@@ -173,7 +181,15 @@
 				>
 			</File>
 			<File
+				RelativePath=".\DllLoader.h"
+				>
+			</File>
+			<File
 				RelativePath=".\mstring.h"
+				>
+			</File>
+			<File
+				RelativePath=".\servhlpr.h"
 				>
 			</File>
 			<File

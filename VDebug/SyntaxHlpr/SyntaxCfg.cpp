@@ -120,7 +120,7 @@ BOOL LoadSyntaxCfg(const wstring &path)
         gs_defBackColour = cJSON_GetObjectItem(golbal, "defBackColour")->valueint;
         gs_CaretLineColour = cJSON_GetObjectItem(golbal, "curLineColour")->valueint;
 
-        for (cJSON *it = cfg ; it != NULL ; it = it->next) {
+        for (cJSON *it = cfg->child ; it != NULL ; it = it->next) {
             SyntaxColourDesc *desc = _GetDescFromJson(it);
 
             map<mstring, int>::const_iterator ij = gs_pSyntaxMap->find(desc->m_strDesc);

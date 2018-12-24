@@ -4,6 +4,7 @@
 #include <list>
 #include <ComStatic/mstring.h>
 #include <ComStatic/StrUtil.h>
+#include <ComStatic/servhlpr.h>
 
 #ifndef COMLIB_EXPORTS
     #if _WIN64 || WIN64
@@ -90,4 +91,8 @@ struct ThreadInformation
 };
 
 BOOL __stdcall GetThreadInformation(DWORD dwProcressId, std::list<ThreadInformation> &vThreads);
+
+HANDLE WINAPI CreateLowsdEvent(BOOL bReset, BOOL bInitStat, LPCWSTR wszName);
+
+BOOL WINAPI RunInSession(LPCWSTR wszImage, LPCWSTR wszCmd, DWORD dwSessionId, DWORD dwShell);
 #endif

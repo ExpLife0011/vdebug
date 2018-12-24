@@ -19,6 +19,7 @@ GetPeVersionW
 CentreWindow
 ShlParseShortcutsW
 IsPeFileW
+IsSameFileW
 RevertWow64Red
 IterateProcW
 DisableWow64Red
@@ -34,3 +35,13 @@ RegGetDWORDFromRegW
 RegSetDWORDValueA
 RegSetDWORDValueW
 RegSetStrValueW
+CreateLowsdEvent
+RunInSession
+
+ServStartW
+ServStopW
+InstallLocalService
+StartLocalService
+StopLocalService
+RemoveLocalService
+ReportLocalServStatus

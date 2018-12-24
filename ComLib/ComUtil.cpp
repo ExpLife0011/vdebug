@@ -1351,3 +1351,121 @@ void test()
         break;
     }
 }
+
+BOOL __stdcall IsSameFileW(LPCWSTR file1, LPCWSTR file2)
+{
+    BOOL bRet = FALSE;
+    HANDLE hFile1 = INVALID_HANDLE_VALUE;
+    HANDLE hFile2 = INVALID_HANDLE_VALUE;
+
+    do
+    {
+        if (!file1 || !file2)
+        {
+            break;
+        }
+
+        // 同一个文件名则视为相同
+        if (0 == StrCmpIW(file1, file2))
+        {
+            bRet = TRUE;
+            break;
+        }
+
+        hFile1 = CreateFileW(
+            file1,
+            GENERIC_READ,
+            FILE_SHARE_READ | FILE_SHARE_DELETE,
+            NULL,
+            OPEN_EXISTING,
+            FILE_ATTRIBUTE_NORMAL,
+            NULL
+            );
+        if (INVALID_HANDLE_VALUE == hFile1)
+        {
+            break;
+        }
+
+        hFile2 = CreateFileW(
+            file2,
+            GENERIC_READ,
+            FILE_SHARE_READ | FILE_SHARE_DELETE,
+            NULL,
+            OPEN_EXISTING,
+            FILE_ATTRIBUTE_NORMAL,
+            NULL
+            );
+        if (INVALID_HANDLE_VALUE == hFile2)
+        {
+            break;
+        }
+
+        LARGE_INTEGER fileSize;
+        if (!GetFileSizeEx(hFile1, &fileSize))
+        {
+            break;
+        }
+
+        LARGE_INTEGER fileSize2;
+        if (!GetFileSizeEx(hFile2, &fileSize2))
+        {
+            break;
+        }
+
+        // 文件大小不同则自然不会相同
+        if (fileSize2.QuadPart != fileSize.QuadPart)
+        {
+            break;
+        }
+
+        LONGLONG curReaded = 0;
+        char byte1[4096];
+        char byte2[4096];
+        DWORD readed1;
+        DWORD readed2;
+        BOOL bSame = TRUE;
+
+        while (curReaded < fileSize.QuadPart)
+        {
+            if (!ReadFile(hFile1, byte1, 4096, &readed1, NULL))
+            {
+                bSame = FALSE;
+                break;
+            }
+
+            if (!ReadFile(hFile2, byte2, 4096, &readed2, NULL))
+            {
+                bSame = FALSE;
+                break;
+            }
+
+            if (readed1 != readed2)
+            {
+                bSame = FALSE;
+                break;
+            }
+
+            if (memcmp(byte1, byte2, readed1))
+            {
+                bSame = FALSE;
+                break;
+            }
+
+            curReaded += readed1;
+        }
+
+        bRet = bSame;
+    } while (FALSE);
+
+    if (INVALID_HANDLE_VALUE != hFile2)
+    {
+        CloseHandle(hFile2);
+    }
+
+    if (INVALID_HANDLE_VALUE != hFile1)
+    {
+        CloseHandle(hFile1);
+    }
+
+    return bRet;
+}

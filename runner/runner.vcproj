@@ -2,9 +2,9 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="9.00"
-	Name="ComLib"
-	ProjectGUID="{652CC710-0062-496A-8F38-4A8D779F34CB}"
-	RootNamespace="ComLib"
+	Name="runner"
+	ProjectGUID="{29A41601-2B64-4F24-9083-55FC8F1D5E77}"
+	RootNamespace="ProcRunner"
 	Keyword="Win32Proj"
 	TargetFrameworkVersion="196613"
 	>
@@ -20,7 +20,7 @@
 			Name="Debug|Win32"
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
-			ConfigurationType="2"
+			ConfigurationType="1"
 			CharacterSet="1"
 			>
 			<Tool
@@ -42,7 +42,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories="../"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;COMLIB_EXPORTS;CJSON_EXPORT_SYMBOLS"
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
@@ -61,9 +61,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="$(OutDir)\$(ProjectName)32.dll"
 				LinkIncremental="2"
-				ModuleDefinitionFile="ComLib.def"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				TargetMachine="1"
@@ -94,7 +92,7 @@
 			Name="Release|Win32"
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
-			ConfigurationType="2"
+			ConfigurationType="1"
 			CharacterSet="1"
 			WholeProgramOptimization="1"
 			>
@@ -117,7 +115,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;COMLIB_EXPORTS"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="0"
@@ -136,7 +134,6 @@
 			<Tool
 				Name="VCLinkerTool"
 				LinkIncremental="1"
-				ModuleDefinitionFile="ComLib.def"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"
@@ -175,43 +172,11 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath=".\cJSON.c"
+				RelativePath=".\main.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\ComLib.def"
-				>
-			</File>
-			<File
-				RelativePath=".\ComUtil.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\crc32.c"
-				>
-			</File>
-			<File
-				RelativePath=".\dllmain.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\md5.c"
-				>
-			</File>
-			<File
-				RelativePath=".\StrSafte.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\SyntaxFormat.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\tpool.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\winsize.cpp"
+				RelativePath=".\ServiceRunner.cpp"
 				>
 			</File>
 		</Filter>
@@ -221,55 +186,11 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
-				RelativePath=".\cJSON.h"
+				RelativePath=".\runner.h"
 				>
 			</File>
 			<File
-				RelativePath=".\ComLib.h"
-				>
-			</File>
-			<File
-				RelativePath=".\ComUtil.h"
-				>
-			</File>
-			<File
-				RelativePath=".\crc32.h"
-				>
-			</File>
-			<File
-				RelativePath=".\crc32_imp.h"
-				>
-			</File>
-			<File
-				RelativePath=".\DllTest.h"
-				>
-			</File>
-			<File
-				RelativePath=".\LockBase.h"
-				>
-			</File>
-			<File
-				RelativePath=".\logger.h"
-				>
-			</File>
-			<File
-				RelativePath=".\md5.h"
-				>
-			</File>
-			<File
-				RelativePath=".\StrSafe.h"
-				>
-			</File>
-			<File
-				RelativePath=".\SyntaxFormat.h"
-				>
-			</File>
-			<File
-				RelativePath=".\tpool.h"
-				>
-			</File>
-			<File
-				RelativePath=".\winsize.h"
+				RelativePath=".\ServiceRunner.h"
 				>
 			</File>
 		</Filter>
