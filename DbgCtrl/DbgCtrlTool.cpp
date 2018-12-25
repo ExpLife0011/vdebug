@@ -4,7 +4,11 @@
 
 using namespace std;
 
+#if WIN64 || _WIN64
+#define REG_VDEBUG_CACHE    L"SoftWare\WOW6432Node\\vdebug\\config\\dbgport"
+#else
 #define REG_VDEBUG_CACHE    L"SoftWare\\vdebug\\config\\dbgport"
+#endif
 
 unsigned short CalPortFormUnique(const wstring &unique) {
     DWORD port = RegGetDWORDFromRegW(HKEY_LOCAL_MACHINE, REG_VDEBUG_CACHE, unique.c_str(), 0);

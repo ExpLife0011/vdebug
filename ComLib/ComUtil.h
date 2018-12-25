@@ -26,7 +26,7 @@ VOID __stdcall CentreWindow(HWND hSrcWnd, HWND hDstWnd = NULL);
 DWORD __stdcall GetColourFromStr(LPCSTR szColour);
 
 VOID __stdcall PrintDbgInternal(LPCWSTR wszTarget, LPCSTR wszFile, DWORD dwLine, LPCWSTR wszFormat, ...);
-#define dp(f, ...) PrintDbgInternal(L"[gdprotect]", __FILE__, __LINE__, f, ##__VA_ARGS__)
+#define dp(f, ...) PrintDbgInternal(L"[vdebug]", __FILE__, __LINE__, f, ##__VA_ARGS__)
 
 typedef BOOL (__stdcall* pfnProcHandlerW)(PPROCESSENTRY32W, void*);
 void __stdcall IterateProcW(pfnProcHandlerW handler, void* lpParam);

@@ -6,6 +6,7 @@
 #include <ComLib/ComLib.h>
 #include <ComStatic/ComStatic.h>
 #include <Shlwapi.h>
+#include "DbgCtrlService.h"
 
 #pragma comment(lib, "Ws2_32.lib")
 
@@ -143,24 +144,13 @@ static BOOL _StartService() {
 
 int WINAPI WinMain(HINSTANCE m, HINSTANCE p, LPSTR cmd, int show)
 {
-    int count = 0;
-    LPWSTR *args = CommandLineToArgvW(GetCommandLineW(), &count);
-
     g_hInstance = m;
+    LoadLibraryW(L"ComLib32.dll");
+    LoadLibraryW(L"mq32.dll");
+    LoadLibraryW(L"DbgCtrl32.dll");
 
-    do
-    {
-        if (1 == count)
-        {
-            _StartService();
-
-            if (!_StartViewProc())
-            {
-                break;
-            }
-        }
-    } while (FALSE);
-
-    LocalFree(args);
+    _StartService();
+    DbgCtrlService::GetInstance()->InitCtrlService();
+    _StartViewProc();
     return 0;
 }

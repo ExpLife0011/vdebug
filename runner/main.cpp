@@ -9,7 +9,6 @@ int WINAPI WinMain(HINSTANCE m, HINSTANCE p, LPSTR cmd, int show)
 
     if (count == 2 && 0 == lstrcmpiW(args[1], L"-service"))
     {
-        OutputDebugStringA("runner:111");
         ServiceRunner::GetInstance()->InitServiceRunner();
     }
     LocalFree(args);

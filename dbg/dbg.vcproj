@@ -582,6 +582,26 @@
 				>
 			</File>
 		</Filter>
+		<Filter
+			Name="proxy"
+			>
+			<File
+				RelativePath=".\DumpDbgProxy.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\DumpDbgProxy.h"
+				>
+			</File>
+			<File
+				RelativePath=".\ProcDbgProxy.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\ProcDbgProxy.h"
+				>
+			</File>
+		</Filter>
 	</Files>
 	<Globals>
 	</Globals>

@@ -5,6 +5,7 @@
 #include <ComStatic/mstring.h>
 #include <ComStatic/StrUtil.h>
 #include <ComStatic/servhlpr.h>
+#include <ComStatic/GlobalDef.h>
 
 #ifndef COMLIB_EXPORTS
     #if _WIN64 || WIN64

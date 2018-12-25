@@ -36,6 +36,10 @@ private:
     map<wstring, list<DbgClientCache *>> m_RegisterSet;
 };
 
+DbgClientBase *DbgClientBase::newInstance() {
+    return new DbgClient();
+}
+
 DbgClient::DbgClient() :
 m_init(false),
 m_type(em_dbg_proc86),

@@ -11,6 +11,6 @@ public:
     virtual HDbgCtrl RegisterCtrlHandler(const wchar_t *cmd, pfnDbgClientProc pfn, void *param) = 0;
     virtual bool SendDbgEvent(const wchar_t *cmd, const wchar_t *content) = 0;
 
-    static DbgClientBase *__stdcall GetInstance();
+    static DbgClientBase *__stdcall newInstance();
 }; 
 #endif //DBGCLIENT_DBGCTRL_H_H_

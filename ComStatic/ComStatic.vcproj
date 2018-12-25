@@ -185,6 +185,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\GlobalDef.h"
+				>
+			</File>
+			<File
 				RelativePath=".\mstring.h"
 				>
 			</File>
