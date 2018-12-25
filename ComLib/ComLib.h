@@ -13,15 +13,15 @@
 #ifndef COMLIB_EXPORTS
     #if _WIN64 || WIN64
         #ifdef _DEBUG
-        #pragma comment(lib, "../Debug/x64/ComLib64.lib")
+        #pragma comment(lib, "../Debug/ComLib64.lib")
         #else
-        #pragma comment(lib, "../Release/x64/ComLib64.lib")
+        #pragma comment(lib, "../Release/ComLib64.lib")
         #endif //_DEBUG
     #else
         #ifdef _DEBUG
-        #pragma comment(lib, "../Debug/x32/ComLib32.lib")
+        #pragma comment(lib, "../Debug/ComLib32.lib")
         #else
-        #pragma comment(lib, "../Release/x32/ComLib32.lib")
+        #pragma comment(lib, "../Release/ComLib32.lib")
         #endif //_DEBUG
     #endif //_WIN64
 #endif //COMLIB_EXPORTS

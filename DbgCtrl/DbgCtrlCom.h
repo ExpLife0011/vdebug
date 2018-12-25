@@ -15,4 +15,6 @@ typedef long HDbgCtrl;
 #else
     #define DbgCtrlApi _declspec(dllexport)
 #endif //DBGCTRL_EXPORTS
+
+const char *__stdcall MakeDbgRequest(const char *cmd, const char *content);
 #endif //COMMON_DBGCTRL_H_H_

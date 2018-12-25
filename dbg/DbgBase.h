@@ -12,13 +12,6 @@ using namespace std;
 typedef DWORD (__stdcall *pfnReadMemoryProc)(IN DWORD64 dwAddr, IN DWORD dwReadLength, OUT char *pBuffer);
 typedef DWORD (__stdcall *pfnWriteMemoryProc)(IN DWORD64 dwAddr, IN DWORD dwWriteLength, IN const char *pBuffer);
 
-enum DebuggerStatus
-{
-    em_dbg_status_init,
-    em_dbg_status_busy,
-    em_dbg_status_free
-};
-
 struct DbgProcModuleProcInfo
 {
     ustring m_wstrName;     //Ãû³Æ

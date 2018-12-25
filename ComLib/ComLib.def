@@ -45,3 +45,9 @@ StartLocalService
 StopLocalService
 RemoveLocalService
 ReportLocalServStatus
+
+GetThreadPool
+DestroyThreadPool
+
+GetPrintFormater
+FreePrintFormater

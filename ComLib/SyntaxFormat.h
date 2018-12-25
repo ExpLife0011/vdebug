@@ -26,15 +26,6 @@ public:
     virtual const char *GetResult() = 0;
 };
 
-static PrintFormater *_GetPrintFormater() {
-    typedef PrintFormater *(__stdcall *pfnGetPrintFormater)();
-    pfnGetPrintFormater pfn = (pfnGetPrintFormater)GetProcAddress(_GetComLib(), "GetPrintFormater");
-    return pfn();
-}
-
-static void _FreePrintFormater(PrintFormater *p) {
-    typedef void (__stdcall *pFreePrintFormater)(PrintFormater *p);
-    pFreePrintFormater pfn = (pFreePrintFormater)GetProcAddress(_GetComLib(), "FreePrintFormater");
-    pfn(p);
-}
+PrintFormater *__stdcall GetPrintFormater();
+void __stdcall FreePrintFormater(PrintFormater *p);
 #endif

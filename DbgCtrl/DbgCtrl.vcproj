@@ -184,6 +184,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\DbgCtrlCom.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\DbgCtrlTool.cpp"
 				>
 			</File>

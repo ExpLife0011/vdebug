@@ -34,6 +34,7 @@ private:
     wstring m_unique;
     unsigned short m_port;
     long m_curIndex;
+    wstring m_curChannel;
 };
 
 DbgService::DbgService() :m_port(0), m_curIndex(0xffea){
@@ -99,10 +100,29 @@ bool DbgService::InitDbgService(const wchar_t *unique) {
 }
 
 const wchar_t *DbgService::DispatchCurDbgger(const wchar_t *cmd, const wchar_t *content) {
-    return NULL;
+    cJSON *root = cJSON_CreateObject();
+    cJSON_AddStringToObject(root, "cmd", WtoU(cmd).c_str());
+    cJSON_AddStringToObject(root, "content", WtoU(content).c_str());
+    LPCWSTR wsz = MsgSendForResult(m_curChannel.c_str(), UtoW(cJSON_Print(root)).c_str());
+    cJSON_Delete(root);
+    return wsz;
 }
 
 bool DbgService::SetActivity(DbggerType type) {
+    switch (type) {
+        case em_dbg_proc86:
+            m_curChannel = MQ_CHANNEL_DBG_CLIENT32;
+            break;
+        case em_dbg_proc64:
+            m_curChannel = MQ_CHANNEL_DBG_CLIENT64;
+            break;
+        case em_dbg_dump86:
+            m_curChannel = MQ_CHANNEL_DBG_DUMP32;
+            break;
+        case em_dbg_dump64:
+            m_curChannel = MQ_CHANNEL_DBG_DUMP64;
+            break;
+    }
     return true;
 }
 

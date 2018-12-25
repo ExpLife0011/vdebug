@@ -107,7 +107,7 @@ void CProcDbgger::ResetCache()
     m_vDbgProcInfo.Clear();
     m_vModuleInfo.clear();
     m_dwCurrentThreadId = 0;
-    m_eDbggerStat = em_dbg_status_init;
+    //m_eDbggerStat = em_dbg_status_init;
     m_vBreakPoint.clear();
     m_dwLastBpSerial = 0;
     m_bDetachDbgger = FALSE;

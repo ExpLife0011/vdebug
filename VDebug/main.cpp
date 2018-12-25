@@ -69,7 +69,7 @@ static BOOL _StartService() {
     PathAppendW(wszRunner, L"../runner.exe");
 
     GetWindowsDirectoryW(wszServ, MAX_PATH);
-    PathAppendW(wszServ, L"DbgRunner.exe");
+    PathAppendW(wszServ, L"DbgService.exe");
 
     BOOL bServ = TRUE;
     BOOL bStat = FALSE;
@@ -86,7 +86,7 @@ static BOOL _StartService() {
             {
                 ustring wstrTemp(wszServ);
                 ustring wstrName;
-                wstrName.format(L"..\\DbgRunner%08x.tmp", GetTickCount());
+                wstrName.format(L"..\\DbgService%08x.tmp", GetTickCount());
                 wstrTemp.path_append(wstrName.c_str());
 
                 MoveFileExW(wszServ, wstrTemp.c_str(), MOVEFILE_REPLACE_EXISTING);

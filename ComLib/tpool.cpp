@@ -120,8 +120,8 @@ DWORD ThreadPool::ThreadProc(LPVOID pParam) {
     return 0;
 }
 
-ThreadPoolBase *__stdcall GetThreadPool() {
-    return new ThreadPool();
+ThreadPoolBase *__stdcall GetThreadPool(int initCount, int maxCount) {
+    return new ThreadPool(initCount, maxCount);
 }
 
 void __stdcall DestroyThreadPool(ThreadPoolBase *p) {

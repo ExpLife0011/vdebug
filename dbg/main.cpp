@@ -4,6 +4,7 @@
 #include <ComStatic/ComStatic.h>
 #include <ComLib/ComLib.h>
 #include <runner/runner.h>
+#include "ProcDbgProxy.h"
 
 using namespace std;
 
@@ -70,9 +71,7 @@ int WINAPI WinMain(HINSTANCE hT, HINSTANCE hP, LPSTR szCmdLine, int iShow)
     size_t pos = cmd.rfind('_');
     ustring unique = cmd.substr(pos + 1, cmd.size() - pos - 1);
 
-#if _WIN64 || WIN64
-#else
-#endif
+    ProcDbgProxy::GetInstance()->InitProcDbgProxy(unique.c_str());
     _KeepAlive(unique);
     WSACleanup();
     return 0;

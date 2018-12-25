@@ -1,17 +1,16 @@
 #include <Windows.h>
 #include <CommCtrl.h>
-//#include "common.h"
 #include <ComLib/ComLib.h>
-#include "ProcView.h"
-#include "../resource.h"
 #include <SyntaxHlpr/SyntaxCfg.h>
+#include <SyntaxHlpr/SyntaxView.h>
+#include <SyntaxHlpr/SyntaxParser.h>
+
+#include "ProcView.h"
+#include "resource.h"
 #include "MainView.h"
 #include "CmdQueue.h"
 #include "OpenView.h"
-//#include "../DbgProxy.h"
-//#include "../ProcDbg.h"
-#include <SyntaxHlpr/SyntaxView.h>
-#include <SyntaxHlpr/SyntaxParser.h>
+#include "DbgCtrlService.h"
 
 #pragma comment(lib, "comctl32.lib")
 
@@ -42,7 +41,7 @@
 #define IDT_ABOUT       IDC_CMD_ABOUT
 
 #define  MSG_EXEC_COMMAND   (WM_USER + 610)
-#define  MSG_PAGE_CHANGE       (WM_USER + 620)
+#define  MSG_PAGE_CHANGE    (WM_USER + 620)
 #define  IDC_STATUS_BAR 100077
 #define  TIMER_CFG_CHECK 5001
 
@@ -58,16 +57,7 @@ static ustring gs_wstrCfgFile;
 static CProcSelectView *gs_pProcSelect = NULL;
 static CPeFileOpenView *gs_pPeOpenView = NULL;
 static CCmdQueue *gs_pCmdQueue = NULL;
-//static CProcDbgger *//gs_pProcDbgger = NULL;
-//static CDbggerProxy *//gs_pCurDbgger = NULL;
 static PrintFormater *gs_pFormater = NULL;
-
-/*
-CDbggerProxy *GetCurrentDbgger()
-{
-    return //gs_pCurDbgger;
-}
-*/
 
 SyntaxView *GetSyntaxView()
 {
@@ -146,7 +136,6 @@ static VOID _LoadDefaultFont()
         lstrcpynW(ft.lfFaceName, s_vFontArry[dwIdex], RTL_NUMBER_OF(ft.lfFaceName));
         if (gs_hFont = CreateFontIndirectW(&ft))
         {
-            //gs_pSyntaxView->SetFont(gs_hFont);
             SendMessage(gs_hMainView,WM_SETFONT, (WPARAM)gs_hFont, 1);
             SendMessage(gs_hStatBar,WM_SETFONT, (WPARAM)gs_hFont, 1);
             SendMessage(gs_hStatEdit,WM_SETFONT, (WPARAM)gs_hFont, 1);
@@ -270,15 +259,11 @@ static void _InitSyntaxView() {
 
 static VOID _OnInitDialog(HWND hwnd, WPARAM wp, LPARAM lp)
 {
-    //gs_pProcDbgger = GetProcDbgger();
-    //gs_pCurDbgger = gs_pProcDbgger;
-    gs_pFormater = _GetPrintFormater();
+    gs_pFormater = GetPrintFormater();
 
     SendMessageW(hwnd, WM_SETICON, (WPARAM)ICON_BIG, (LPARAM)LoadIconW(g_hInstance, MAKEINTRESOURCEW(IDI_MAIN)));
     SendMessageW(hwnd, WM_SETICON, (WPARAM)ICON_SMALL, (LPARAM)LoadIconW(g_hInstance, MAKEINTRESOURCEW(IDI_MAIN)));
     CentreWindow(hwnd);
-    //SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
-
     gs_hMainView = hwnd;
     gs_hStatEdit = GetDlgItem(hwnd, IDC_EDT_STATUS);
     gs_hCommand = GetDlgItem(hwnd, IDC_EDT_COMMAND);
@@ -298,8 +283,6 @@ static VOID _OnInitDialog(HWND hwnd, WPARAM wp, LPARAM lp)
     GetModuleFileNameW(NULL, gs_wstrCfgFile.alloc(MAX_PATH), MAX_PATH);
     gs_wstrCfgFile.setbuffer();
     gs_wstrCfgFile.path_append(L"..\\SyntaxCfg.json");
-    //gs_pSyntaxView->ReloadSynbaxCfg(gs_wstrCfgFile.c_str());
-    //_LoadDebugFile();
     LoadSyntaxCfg(gs_wstrCfgFile.c_str());
     UpdateSyntaxView(gs_pSyntaxView);
 
@@ -321,20 +304,13 @@ static VOID _OnInitDialog(HWND hwnd, WPARAM wp, LPARAM lp)
     GetPeVersionW(wszBuf, wstrVersion.alloc(MAX_PATH), MAX_PATH);
     wstrVersion.setbuffer();
 
-    //gs_pSyntaxView->AppendText(SCI_LABEL_DEFAULT, FormatA("VDebugµ÷ÊÔÆ÷£¬°æ±¾£º%ls\n", wstrVersion.c_str()));
+    gs_pSyntaxView->AppendText(SCI_LABEL_DEFAULT, FormatA("VDebugµ÷ÊÔÆ÷£¬°æ±¾£º%ls\n", wstrVersion.c_str()));
     gs_pFormater->Reset();
 
-    PrintFormater &pf = *gs_pFormater;
-    pf << "ÊÀ½ç"  << "ÄãºÃ"   << "hello world" << line_end;
-    pf << "aaaaa" << "22"     << "33"          << line_end;
-    pf << space   << ""       << "¹þ¹þ¹þ"      << line_end;
-    gs_pSyntaxView->AppendText(SCI_LABEL_DEFAULT, pf.GetResult());
-
-    //SetCmdNotify(em_dbg_status_init, L"³õÊ¼×´Ì¬");
+    SetCmdNotify(em_dbg_status_init, L"³õÊ¼×´Ì¬");
     gs_pfnCommandProc = (PWIN_PROC)SetWindowLongPtr(gs_hCommand, GWLP_WNDPROC, (LONG_PTR)_CommandProc);
     gs_pCmdQueue = new CCmdQueue();
     SetTimer(hwnd, TIMER_CFG_CHECK, 3000, NULL);
-    //CDbggerProxy::InitHelpEngine();
 }
 
 static VOID _OnCommand(HWND hwnd, WPARAM wp, LPARAM lp)
@@ -426,12 +402,10 @@ static VOID _OnExecCommand(HWND hwnd, WPARAM wp, LPARAM lp)
 
 static VOID _OnPageChange(HWND hwnd, WPARAM wp, LPARAM lp)
 {
-    /*
-    if (gs_pCurDbgger->GetStatus() != em_dbg_status_free)
+    if (DbgCtrlService::GetInstance()->GetDebuggerStat() != em_dbg_status_free)
     {
         return;
     }
-    */
 
     ustring wstr;
     if (VK_UP == wp)
@@ -509,35 +483,28 @@ static void _EnableCtrls()
     SendMessageW(gs_hToolbar, TB_ENABLEBUTTON, IDT_OPEN_DUMP, TRUE);
 }
 
-/*
-VOID SetCmdNotify(DebuggerStatus uStatus, const ustring &wstrShowMsg)
+VOID SetCmdNotify(DebuggerStatus status, const ustring &wstrShowMsg)
 {
     SetWindowTextW(gs_hStatEdit, wstrShowMsg.c_str());
-    if (em_dbg_status_init == uStatus)
+    if (em_dbg_status_init == status)
     {
         SetWindowTextW(gs_hCommand, L"");
         SendMessageW(gs_hCommand, EM_SETREADONLY, 1, 0);
         _EnableCtrls();
     }
-    else if (em_dbg_status_free == uStatus)
+    else if (em_dbg_status_free == status)
     {
         SendMessageW(gs_hCommand, EM_SETREADONLY, 0, 0);
-        //debug
-        wstring wstr = L"bp kernelbase!createfilew";
-        SetWindowTextW(gs_hCommand, wstr.c_str());
         SetFocus(gs_hCommand);
-        SendMessageW(gs_hCommand, EM_SETSEL, wstr.size(), wstr.size());
         _DisableCtrls();
     }
-    else if (em_dbg_status_busy == uStatus)
+    else if (em_dbg_status_busy == status)
     {
         SetWindowTextW(gs_hCommand, L"");
         SendMessageW(gs_hCommand, EM_SETREADONLY, 1, 0);
         _DisableCtrls();
     }
-    //GetCurrentDbgger()->SetStatus(uStatus);
 }
-*/
 
 VOID SetMainviewTitle(const ustring &wstrTitle)
 {

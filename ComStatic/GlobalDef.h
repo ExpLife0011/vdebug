@@ -17,4 +17,13 @@
 #else
 #define REG_VDEBUG_CACHE    L"SoftWare\\vdebug\\config\\dbgport"
 #endif
+
+#define UNIQUE_DEBUG    L"debug"    //µ˜ ‘”√
+
+enum DebuggerStatus
+{
+    em_dbg_status_init,
+    em_dbg_status_busy,
+    em_dbg_status_free
+};
 #endif //GLOBALDEF_H_H_

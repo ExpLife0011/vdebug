@@ -21,18 +21,7 @@ public:
     virtual bool exec(ThreadRunable *runable) = 0;
 };
 
-//ThreadPoolBase __stdcall *GetThreadPool(int, int);
-//void __stdcall DestroyThreadPool(ThreadPoolBase *);
+ThreadPoolBase * __stdcall GetThreadPool(int initCount, int maxCount);
 
-static ThreadPoolBase *_GetThreadPool(int initCount, int maxCount) {
-    typedef ThreadPoolBase *(__stdcall *pfnGetThreadPool)(int, int);
-    pfnGetThreadPool pfn = (pfnGetThreadPool)GetProcAddress(_GetComLib(), "GetThreadPool");
-    return pfn(initCount, maxCount);
-}
-
-static void _DestroyThreadPool(ThreadPoolBase *p) {
-    typedef void (__stdcall *pfnDestroyThreadPool)(ThreadPoolBase *);
-    pfnDestroyThreadPool pfn = (pfnDestroyThreadPool)GetProcAddress(_GetComLib(), "DestroyThreadPool");
-    pfn(p);
-}
+void __stdcall DestroyThreadPool();
 #endif //TPOOL_DPMSG_H_H_

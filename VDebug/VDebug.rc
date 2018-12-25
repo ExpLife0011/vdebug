@@ -138,8 +138,8 @@ IDB_TOOLBAR             BITMAP                  "res\\toolbar.bmp"
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 1,0,0,1
- PRODUCTVERSION 1,0,0,1
+ FILEVERSION 1,0,0,5
+ PRODUCTVERSION 1,0,0,5
  FILEFLAGSMASK 0x17L
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -156,12 +156,12 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "lougdhr@126.com"
             VALUE "FileDescription", "VDebugµ÷ÊÔÆ÷"
-            VALUE "FileVersion", "1, 0, 0, 1"
+            VALUE "FileVersion", "1, 0, 0, 5"
             VALUE "InternalName", "VDebug"
             VALUE "LegalCopyright", "Copyright (C) 2017"
             VALUE "OriginalFilename", "VDebug.exe"
             VALUE "ProductName", "VDebugµ÷ÊÔÆ÷"
-            VALUE "ProductVersion", "1, 0, 0, 1"
+            VALUE "ProductVersion", "1, 0, 0, 5"
         END
     END
     BLOCK "VarFileInfo"

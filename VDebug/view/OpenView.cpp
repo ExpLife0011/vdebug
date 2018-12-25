@@ -1,6 +1,7 @@
+#include <Windows.h>
+#include "DbgCtrlService.h"
 #include "OpenView.h"
-//#include "common.h"
-#include "../resource.h"
+#include "resource.h"
 #include "MainView.h"
 
 #define REG_KEY_PROCCACHE       L"software\\vdebug\\proccache"
@@ -103,17 +104,23 @@ void CPeFileOpenView::OnCommand(HWND hwnd, WPARAM wp, LPARAM lp)
     {
         WCHAR wszBuffer[MAX_PATH] = {0};
         GetWindowTextW(m_hPePath, wszBuffer, MAX_PATH);
+        WCHAR param[MAX_PATH] = {0};
+        GetWindowTextW(m_hPeCmd, param, MAX_PATH);
 
-        /*
-        if (GetCurrentDbgger()->Connect(wszBuffer, NULL))
+        BOOL x64 = FALSE;
+        if (!IsPeFileW(wszBuffer, &x64))
         {
-            EndDialog(m_hwnd, 0);
+            SetWindowTextW(m_hStatus, L"不是有效的pe文件");
+            return;
         }
-        else
+
+        if (x64)
         {
-            SetWindowTextW(m_hStatus, L"启动调试进程失败");
+            DbgCtrlService::GetInstance()->SetDebuggerStat(em_dbg_proc64);
+        } else {
+            DbgCtrlService::GetInstance()->SetDebuggerStat(em_dbg_proc86);
         }
-        */
+        DbgCtrlService::GetInstance()->ExecProc(wszBuffer, param);
     }
 }
 

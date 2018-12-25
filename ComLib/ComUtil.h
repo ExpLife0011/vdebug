@@ -64,22 +64,4 @@ DWORD __stdcall RegGetDWORDFromRegW(HKEY hKey, LPCWSTR subKey, LPCWSTR value, DW
 BOOL __stdcall RegSetDWORDValueA(HKEY hKey, LPCSTR szSubKey, LPCSTR szValue, DWORD dwData);
 BOOL __stdcall RegSetDWORDValueW(HKEY hKey, LPCWSTR wszSubKey, LPCWSTR wszValue, DWORD dwData);
 BOOL __stdcall RegSetStrValueW(HKEY hKey, LPCWSTR wszSubKey, LPCWSTR wszValue, LPCWSTR wszData);
-
-static HMODULE _GetComLib() {
-#if _WIN64 || WIN64
-    #define COMLIB_NAME "ComLib64.dll"
-#else
-    #define COMLIB_NAME "ComLib32.dll"
-#endif
-    HMODULE m = GetModuleHandleA(COMLIB_NAME);
-    if (!m)
-    {
-        char path[256];
-        GetModuleFileNameA(NULL, path, 256);
-
-        PathAppendA(path, ".." COMLIB_NAME);
-        return LoadLibraryA(path);
-    }
-    return m;
-}
 #endif //COMUTIL_COMLIB_H_H_

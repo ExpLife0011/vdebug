@@ -27,7 +27,7 @@ bool CClientLogic::InitClient(unsigned short port) {
         return true;
     }
     m_bClientInit = true;
-    m_tpool = _GetThreadPool(1, 4);
+    m_tpool = GetThreadPool(1, 4);
 
     static int s_magic = 0xff23;
     srand(GetTickCount() + s_magic++);

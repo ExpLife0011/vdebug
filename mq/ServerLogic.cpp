@@ -100,87 +100,100 @@ void CServerLogic::OnServRecvComplete(SOCKET client, const string &strData) {
     */
 
     cJSON *root = cJSON_Parse(strData.c_str());
-    if (root->type != cJSON_Object)
+    do 
     {
-        return;
-    }
-
-    string strAction = cJSON_GetObjectItem(root, "action")->valuestring;
-    string strRoute = cJSON_GetObjectItem(root, "route")->valuestring;
-
-    PackageHeader header;
-    string str;
-    if (strAction == "message")
-    {
-        /**
-        需要路由的情况将路由表加入路由缓存
-        */
-        if (!strRoute.empty())
+        if (root->type != cJSON_Object)
         {
-            m_routeCache[strRoute] = client;
+            break;
         }
 
-        CScopedLocker lock(&m_servLock);
-        string strChannel = cJSON_GetObjectItem(root, "channel")->valuestring;
-        string package;
-        for (list<ClientRegiserCache *>::const_iterator it = m_RegisterCache.begin() ; it != m_RegisterCache.end() ; it++)
+        string strAction = cJSON_GetObjectItem(root, "action")->valuestring;
+        string strRoute;
+        cJSON *route = cJSON_GetObjectItem(root, "route");
+        if (route != NULL && route->type == cJSON_String)
         {
-            ClientRegiserCache *ij = *it;
-            if (ij->mChannels.end() != ij->mChannels.find(strChannel))
+            strRoute = route->valuestring;
+        }
+
+        PackageHeader header;
+        string str;
+        if (strAction == "message")
+        {
+            /**
+            需要路由的情况将路由表加入路由缓存
+            */
+            if (!strRoute.empty())
             {
-                package = GetMsgPackage(strData);
-                LOGGER_PRINT(L"send message");
-                ::send(ij->mClientSocket, package.c_str(), (int)package.size(), 0);
+                m_routeCache[strRoute] = client;
             }
-        }
-    } else if (strAction == "reply")
-    {
-        CScopedLocker lock(&m_servLock);
-        map<string, SOCKET>::const_iterator ij = m_routeCache.find(strRoute);
-        if (ij != m_routeCache.end())
-        {
-            header.m_size = sizeof(PackageHeader) + static_cast<unsigned short>(strData.size());
-            str.clear();
-            str.append((const char *)&header, sizeof(PackageHeader));
-            str += strData;
-            ::send(ij->second, str.c_str(), static_cast<int>(str.size()), 0);
-            m_routeCache.erase(ij);
-        }
-    } else if (strAction == "register")
-    {
-        /**
-        {
-            "clientUnique":"aabbccdd",
-            "channel":["1122", "3344", "aabb"]
-        }
-        */
-        CScopedLocker lock(&m_servLock);
-        LOGGER_PRINT(L"register %hs", strData.c_str());
-        //string clientUnique = vContent["clientUnique"].asString();
-        string clientUnique = cJSON_GetObjectItem(root, "clientUnique")->valuestring;
-        //Value channels = vContent["channel"];
-        cJSON *channels = cJSON_GetObjectItem(root, "channel");
-        if (channels->type != cJSON_Array)
-        {
-            return;
-        }
 
-        set<string> tmp;
-        for (int i = 0 ; i < cJSON_GetArraySize(channels) ; i++)
+            CScopedLocker lock(&m_servLock);
+            string strChannel = cJSON_GetObjectItem(root, "channel")->valuestring;
+            string package;
+            for (list<ClientRegiserCache *>::const_iterator it = m_RegisterCache.begin() ; it != m_RegisterCache.end() ; it++)
+            {
+                ClientRegiserCache *ij = *it;
+                if (ij->mChannels.end() != ij->mChannels.find(strChannel))
+                {
+                    package = GetMsgPackage(strData);
+                    LOGGER_PRINT(L"send message");
+                    ::send(ij->mClientSocket, package.c_str(), (int)package.size(), 0);
+                }
+            }
+        } else if (strAction == "reply")
         {
-            tmp.insert(cJSON_GetArrayItem(channels, i)->valuestring);
-        }
+            CScopedLocker lock(&m_servLock);
+            map<string, SOCKET>::const_iterator ij = m_routeCache.find(strRoute);
+            if (ij != m_routeCache.end())
+            {
+                header.m_size = sizeof(PackageHeader) + static_cast<unsigned short>(strData.size());
+                str.clear();
+                str.append((const char *)&header, sizeof(PackageHeader));
+                str += strData;
+                ::send(ij->second, str.c_str(), static_cast<int>(str.size()), 0);
+                m_routeCache.erase(ij);
+            }
+        } else if (strAction == "register")
+        {
+            /**
+            {
+                "clientUnique":"aabbccdd",
+                "channel":["1122", "3344", "aabb"]
+            }
+            */
+            CScopedLocker lock(&m_servLock);
+            LOGGER_PRINT(L"register %hs", strData.c_str());
+            //string clientUnique = vContent["clientUnique"].asString();
+            string clientUnique = cJSON_GetObjectItem(root, "clientUnique")->valuestring;
+            //Value channels = vContent["channel"];
+            cJSON *channels = cJSON_GetObjectItem(root, "channel");
+            if (channels->type != cJSON_Array)
+            {
+                break;
+            }
 
-        ClientRegiserCache *ptr = FindClientInCache(clientUnique);
-        if (ptr == NULL)
-        {
-            ptr = new ClientRegiserCache();
-            ptr->mClientUnique = clientUnique;
-            ptr->mClientSocket = client;
-            m_RegisterCache.push_back(ptr);
+            set<string> tmp;
+            for (int i = 0 ; i < cJSON_GetArraySize(channels) ; i++)
+            {
+                tmp.insert(cJSON_GetArrayItem(channels, i)->valuestring);
+            }
+
+            ClientRegiserCache *ptr = FindClientInCache(clientUnique);
+            if (ptr == NULL)
+            {
+                ptr = new ClientRegiserCache();
+                ptr->mClientUnique = clientUnique;
+                ptr->mClientSocket = client;
+                m_RegisterCache.push_back(ptr);
+            }
+            ptr->mChannels.insert(tmp.begin(), tmp.end());
+            LOGGER_PRINT(L"register success");
         }
-        ptr->mChannels.insert(tmp.begin(), tmp.end());
-        LOGGER_PRINT(L"register success");
+    } while (false);
+
+    if (root)
+    {
+        cJSON_Delete(root);
     }
 }
 
