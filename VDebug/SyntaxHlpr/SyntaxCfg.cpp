@@ -111,14 +111,13 @@ BOOL LoadSyntaxCfg(const wstring &path)
             break;
         }
 
-
         //Global Config
         cJSON *golbal = cJSON_GetObjectItem(root, "globalCfg");
         cJSON *cfg = cJSON_GetObjectItem(root, "syntaxCfg");
 
-        gs_defTextColour = cJSON_GetObjectItem(golbal, "defTextColour")->valueint;
-        gs_defBackColour = cJSON_GetObjectItem(golbal, "defBackColour")->valueint;
-        gs_CaretLineColour = cJSON_GetObjectItem(golbal, "curLineColour")->valueint;
+        gs_defTextColour = GetColourFromStr(cJSON_GetObjectItem(golbal, "defTextColour")->valuestring);
+        gs_defBackColour = GetColourFromStr(cJSON_GetObjectItem(golbal, "defBackColour")->valuestring);
+        gs_CaretLineColour = GetColourFromStr(cJSON_GetObjectItem(golbal, "curLineColour")->valuestring);
 
         for (cJSON *it = cfg->child ; it != NULL ; it = it->next) {
             SyntaxColourDesc *desc = _GetDescFromJson(it);

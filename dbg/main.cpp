@@ -7,6 +7,7 @@
 
 using namespace std;
 
+#pragma comment(lib, "Ws2_32.lib")
 #pragma comment(lib, "Dbghelp.lib")
 #if _WIN64 || WIN64
 #pragma comment(lib, "capstone/capstone_x64.lib")
@@ -26,6 +27,9 @@ static void _KeepAlive(const ustring &unique) {
         CloseHandle(service);
         Sleep(5000);
     }
+
+    //clean cache
+    SHDeleteValueW(HKEY_LOCAL_MACHINE, REG_VDEBUG_CACHE, unique.c_str());
 }
 
 int WINAPI WinMain(HINSTANCE hT, HINSTANCE hP, LPSTR szCmdLine, int iShow)
@@ -45,6 +49,9 @@ int WINAPI WinMain(HINSTANCE hT, HINSTANCE hP, LPSTR szCmdLine, int iShow)
     {
         return 0;
     }
+
+    WSADATA wsaData;
+    WSAStartup(MAKEWORD(2, 2), &wsaData);
 
     WCHAR path[256];
     GetModuleFileNameW(NULL, path, 256);
@@ -67,5 +74,6 @@ int WINAPI WinMain(HINSTANCE hT, HINSTANCE hP, LPSTR szCmdLine, int iShow)
 #else
 #endif
     _KeepAlive(unique);
+    WSACleanup();
     return 0;
 }

@@ -145,6 +145,10 @@ static BOOL _StartService() {
 int WINAPI WinMain(HINSTANCE m, HINSTANCE p, LPSTR cmd, int show)
 {
     g_hInstance = m;
+
+    WSADATA wsaData;
+    WSAStartup(MAKEWORD(2, 2), &wsaData);
+
     LoadLibraryW(L"ComLib32.dll");
     LoadLibraryW(L"mq32.dll");
     LoadLibraryW(L"DbgCtrl32.dll");
@@ -152,5 +156,6 @@ int WINAPI WinMain(HINSTANCE m, HINSTANCE p, LPSTR cmd, int show)
     _StartService();
     DbgCtrlService::GetInstance()->InitCtrlService();
     _StartViewProc();
+    WSACleanup();
     return 0;
 }
