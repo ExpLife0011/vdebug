@@ -3,12 +3,11 @@
 #include <Windows.h>
 #include <map>
 #include <ComStatic/ComStatic.h>
+#include <ComLib/ComLib.h>
 #include "DbgBase.h"
 #include "CmdBase.h"
 #include "DbgProxy.h"
 #include "TitanEngine/TitanEngine.h"
-#include <ComLib/ComLib.h>
-//#include "common.h"
 
 using namespace std;
 
@@ -102,8 +101,10 @@ struct ProcDbgBreakPoint
 
 class CProcDbgger : public CDbggerProxy
 {
-public:
+private:
     CProcDbgger();
+public:
+    static CProcDbgger *GetInstance();
     virtual ~CProcDbgger();
 
     virtual BOOL Connect(LPCWSTR wszTarget, LPVOID pParam);
@@ -202,6 +203,4 @@ protected:
 
     static void __cdecl GuCmdCallback();
 };
-
-CProcDbgger *GetProcDbgger();
 #endif

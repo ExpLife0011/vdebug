@@ -21,7 +21,7 @@ public:
     DbgService();
     virtual ~DbgService();
     virtual bool InitDbgService(const wchar_t *unique);
-    virtual const wchar_t *DispatchCurDbgger(const wchar_t *cmd, const wchar_t *content);
+    virtual std::ustring DispatchCurDbgger(const std::ustring &cmd, const std::ustring &content);
     virtual HDbgCtrl RegisterDbgEvent(const wchar_t *event, pfnDbgEventProc pfn, void *param);
     virtual bool SetActivity(DbggerType type);
 
@@ -100,13 +100,15 @@ bool DbgService::InitDbgService(const wchar_t *unique) {
     return true;
 }
 
-const wchar_t *DbgService::DispatchCurDbgger(const wchar_t *cmd, const wchar_t *content) {
+ustring DbgService::DispatchCurDbgger(const ustring &cmd, const ustring &content) {
     cJSON *root = cJSON_CreateObject();
     cJSON_AddStringToObject(root, "cmd", WtoU(cmd).c_str());
     cJSON_AddStringToObject(root, "content", WtoU(content).c_str());
     LPCWSTR wsz = MsgSendForResult(m_curChannel.c_str(), UtoW(cJSON_PrintUnformatted(root)).c_str());
     cJSON_Delete(root);
-    return wsz;
+    ustring result = wsz;
+    MsgStrFree(wsz);
+    return result;
 }
 
 bool DbgService::SetActivity(DbggerType type) {

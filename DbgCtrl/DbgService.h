@@ -1,14 +1,15 @@
 #ifndef DBGSERVICE_DBGCTRL_H_H_
 #define DBGSERVICE_DBGCTRL_H_H_
+#include <ComStatic/ComStatic.h>
 #include "DbgCtrlCom.h"
 
-typedef void (__stdcall *pfnDbgEventProc)(const wchar_t *event, const wchar_t *content, void *param);
+typedef void (__stdcall *pfnDbgEventProc)(const std::ustring &event, const std::ustring &content, void *param);
 
 class DbgCtrlApi DbgServiceBase {
 public:
     virtual ~DbgServiceBase() {};
     virtual bool InitDbgService(const wchar_t *unique) = 0;
-    virtual const wchar_t * DispatchCurDbgger(const wchar_t *cmd, const wchar_t *content) = 0;
+    virtual std::ustring DispatchCurDbgger(const std::ustring &cmd, const std::ustring &content) = 0;
     virtual HDbgCtrl RegisterDbgEvent(const wchar_t *event, pfnDbgEventProc pfn, void *param) = 0;
     virtual bool SetActivity(DbggerType type) = 0;
 

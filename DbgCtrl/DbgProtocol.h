@@ -3,13 +3,23 @@
 
 /*
 {
-    "cmd":"DbgMessage_c2s",
+    "cmd":"event",
     "content":{
-        "msg":"abcdef"
+        "type":"DbgMessage",
+        "data":{
+            "abcdef"
+        }
     }
 }
 */
-#define DBG_EVENT_DBGMESSAGE        L"DbgMessage_c2s"
+#define DBG_DBG_EVENT               L"event"
+
+//Debug Event
+#define DBG_EVENT_MSG               L"dbgmsg"
+#define DBG_EVENT_PROC_START        L"procstart"
+#define DBG_EVENT_PROC_END          L"procend"
+#define DBG_EVENT_MODULE_LOAD       L"moduleload"
+#define DBG_EVENT_MODULE_UNLOAD     L"moduelunload"
 
 /*
 {

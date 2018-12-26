@@ -25,7 +25,6 @@ public:
     virtual bool SendDbgEvent(const wchar_t *cmd, const wchar_t *content);
 
 private:
-    static wstring MakeRelpy(int status, const wstring &reason, const wstring &result);
     static LPCWSTR WINAPI ClientNotify(LPCWSTR wszChannel, LPCWSTR wszContent, void *pParam);
 
 private:
@@ -104,28 +103,6 @@ bool DbgClient::SendDbgEvent(const wchar_t *cmd, const wchar_t *content) {
     return true;
 }
 
-wstring DbgClient::MakeRelpy(int status, const wstring &reason, const wstring &result) {
-    cJSON *root = cJSON_CreateObject();
-    cJSON *content = cJSON_CreateObject();
-    cJSON_AddStringToObject(root, "cmd", "reply");
-    cJSON_AddNumberToObject(content, "status", status);
-    cJSON_AddStringToObject(content, "reason", WtoU(reason).c_str());
-    cJSON *tmp = cJSON_Parse(WtoU(result).c_str());
-    if (tmp)
-    {
-        if (tmp->type == cJSON_Invalid)
-        {
-            cJSON_Delete(tmp);
-            tmp = cJSON_Parse("{}");
-        }
-        cJSON_AddItemToObject(content, "content", tmp);
-    }
-    cJSON_AddItemToObject(root, "content", content);
-    wstring res = UtoW(cJSON_PrintUnformatted(root));
-    cJSON_Delete(root);
-    return res;
-}
-
 LPCWSTR DbgClient::ClientNotify(LPCWSTR wszChannel, LPCWSTR wszContent, void *pParam) {
     DbgClient *pThis = (DbgClient *)pParam;
     cJSON *root = cJSON_Parse(WtoU(wszContent).c_str());
@@ -138,8 +115,8 @@ LPCWSTR DbgClient::ClientNotify(LPCWSTR wszChannel, LPCWSTR wszContent, void *pP
             break;
         }
 
-        wstring cmd = UtoW(cJSON_GetObjectItem(root, "cmd")->valuestring);
-        wstring content = UtoW(cJSON_GetObjectItem(root, "content")->valuestring);
+        ustring cmd = UtoW(cJSON_GetObjectItem(root, "cmd")->valuestring);
+        ustring content = UtoW(cJSON_GetObjectItem(root, "content")->valuestring);
 
         {
             CScopedLocker lock(pThis);
@@ -155,14 +132,8 @@ LPCWSTR DbgClient::ClientNotify(LPCWSTR wszChannel, LPCWSTR wszContent, void *pP
             for (list<DbgClientCache *>::const_iterator ij = tmp.begin() ; ij != tmp.end() ; ij++)
             {
                 DbgClientCache *ptr = *ij;
-                LPCWSTR p = ptr->m_proc(cmd.c_str(), content.c_str(), ptr->m_param);
-
-                if (!p)
-                {
-                    result = MakeRelpy(1, L"request error", L"");
-                } else {
-                    result = MakeRelpy(0, L"success", p);
-                }
+                ustring p = ptr->m_proc(cmd, content, ptr->m_param);
+                result = UtoW(MakeDbgRelpy(0, "success", WtoU(p).c_str()));
             }
         }
     } while (FALSE);

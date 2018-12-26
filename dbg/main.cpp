@@ -5,6 +5,7 @@
 #include <ComLib/ComLib.h>
 #include <runner/runner.h>
 #include "ProcDbgProxy.h"
+#include "symbol.h"
 
 using namespace std;
 
@@ -71,6 +72,7 @@ int WINAPI WinMain(HINSTANCE hT, HINSTANCE hP, LPSTR szCmdLine, int iShow)
     PathAppendW(path, L"..\\DbgCtrl32.dll");
     LoadLibraryW(path);
 #endif
+    InitSymbolHlpr(L"H:\\mysymbols");
 
     size_t pos = cmd.rfind('_');
     ustring unique = cmd.substr(pos + 1, cmd.size() - pos - 1);
