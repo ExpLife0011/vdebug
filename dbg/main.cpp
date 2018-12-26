@@ -61,10 +61,14 @@ int WINAPI WinMain(HINSTANCE hT, HINSTANCE hP, LPSTR szCmdLine, int iShow)
     LoadLibraryW(path);
     PathAppendW(path, L"..\\mq64.dll");
     LoadLibraryW(path);
+    PathAppendW(path, L"..\\DbgCtrl64.dll");
+    LoadLibraryW(path);
 #else
     PathAppendW(path, L"..\\..\\ComLib32.dll");
     LoadLibraryW(path);
     PathAppendW(path, L"..\\mq32.dll");
+    LoadLibraryW(path);
+    PathAppendW(path, L"..\\DbgCtrl32.dll");
     LoadLibraryW(path);
 #endif
 
@@ -72,7 +76,11 @@ int WINAPI WinMain(HINSTANCE hT, HINSTANCE hP, LPSTR szCmdLine, int iShow)
     ustring unique = cmd.substr(pos + 1, cmd.size() - pos - 1);
 
     ProcDbgProxy::GetInstance()->InitProcDbgProxy(unique.c_str());
+#ifdef _DEBUG
+    MessageBoxA(0, "DbgTest", "dbg", 0);
+#else
     _KeepAlive(unique);
+#endif;
     WSACleanup();
     return 0;
 }

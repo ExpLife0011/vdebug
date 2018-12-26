@@ -55,17 +55,19 @@ HANDLE_REGISTER CClientLogic::Register(const wstring &wstrKey, PMsgNotify pfn, v
     m_notifyMap[wstrKey].push_back(notify);
 
     cJSON *content = cJSON_CreateObject();
+    cJSON *arry = cJSON_CreateArray();
     cJSON_AddStringToObject(content, "action", "register");
     cJSON_AddStringToObject(content, "clientUnique", m_clientUnique.c_str());
-    cJSON_AddStringToObject(content, "channel", WtoU(wstrKey).c_str());
 
+    cJSON_AddItemToArray(arry, cJSON_CreateString(WtoU(wstrKey).c_str()));
+    cJSON_AddItemToObject(content, "channel", arry);
     /*
     Value content;
     content["action"] = "register";
     content["clientUnique"] = m_clientUnique;
     content["channel"].append(WtoU(wstrKey));
     */
-    string result = GetMsgPackage(cJSON_Print(content));
+    string result = GetMsgPackage(cJSON_PrintUnformatted(content));
     cJSON_Delete(content);
     m_msgClient.Send(result);
     return notify.index;
@@ -122,7 +124,7 @@ bool CClientLogic::DispatchInternal(const wstring &wstrKey, const wstring &wstrV
         cJSON_AddStringToObject(content, "route", WtoU(wstrRoute).c_str());
     }
 
-    string strContent = cJSON_Print(content);
+    string strContent = cJSON_PrintUnformatted(content);
     cJSON_Delete(content);
 
     PackageHeader header;
@@ -210,7 +212,7 @@ bool CClientLogic::DispatchInCache(const wstring &wstrKey, const wstring &wstrVa
                         cJSON_AddStringToObject(json, "route", WtoU(mParam->wstrRoute).c_str());
                         cJSON_AddStringToObject(json, "content", WtoU(wstr).c_str());
 
-                        string content = cJSON_Print(json);
+                        string content = cJSON_PrintUnformatted(json);
                         cJSON_Delete(json);
 
                         string strReply = GetMsgPackage(content);
@@ -238,7 +240,7 @@ DWORD CClientLogic::ConnectThread(LPVOID pParam) {
         if (!GetInstance()->m_bConnectSucc)
         {
             LOGGER_PRINT(L"尝试连接服务端...");
-            GetInstance()->m_bConnectSucc = GetInstance()->m_msgClient.InitClient("127.0.0.1", TCP_PORT_MQ, GetInstance(), 3000);
+            GetInstance()->m_bConnectSucc = GetInstance()->m_msgClient.InitClient("127.0.0.1", GetInstance()->m_port, GetInstance(), 3000);
         } else {
             break;
         }
@@ -343,7 +345,7 @@ void CClientLogic::OnClientConnect(CMsgClient &client) {
     }
     cJSON_AddItemToObject(root, "channel", arry);
 
-    string package = GetMsgPackage(cJSON_Print(root));
+    string package = GetMsgPackage(cJSON_PrintUnformatted(root));
     cJSON_Delete(root);
     client.Send(package);
 }

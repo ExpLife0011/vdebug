@@ -95,6 +95,7 @@ bool DbgService::InitDbgService(const wchar_t *unique) {
     m_port = CalPortFormUnique(unique);
 
     MsgInitServ(m_port);
+    MsgInitClient(m_port);
     MsgRegister(MQ_CHANNEL_DBG_SERVER, ServerNotify, this);
     return true;
 }
@@ -103,7 +104,7 @@ const wchar_t *DbgService::DispatchCurDbgger(const wchar_t *cmd, const wchar_t *
     cJSON *root = cJSON_CreateObject();
     cJSON_AddStringToObject(root, "cmd", WtoU(cmd).c_str());
     cJSON_AddStringToObject(root, "content", WtoU(content).c_str());
-    LPCWSTR wsz = MsgSendForResult(m_curChannel.c_str(), UtoW(cJSON_Print(root)).c_str());
+    LPCWSTR wsz = MsgSendForResult(m_curChannel.c_str(), UtoW(cJSON_PrintUnformatted(root)).c_str());
     cJSON_Delete(root);
     return wsz;
 }

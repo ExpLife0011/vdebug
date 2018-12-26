@@ -25,6 +25,7 @@ public:
     virtual bool SendDbgEvent(const wchar_t *cmd, const wchar_t *content);
 
 private:
+    static wstring MakeRelpy(int status, const wstring &reason, const wstring &result);
     static LPCWSTR WINAPI ClientNotify(LPCWSTR wszChannel, LPCWSTR wszContent, void *pParam);
 
 private:
@@ -98,9 +99,31 @@ bool DbgClient::SendDbgEvent(const wchar_t *cmd, const wchar_t *content) {
     cJSON_AddStringToObject(json, "cmd", WtoU(cmd).c_str());
     cJSON_AddStringToObject(json, "content", WtoU(content).c_str());
 
-    MsgSend(MQ_CHANNEL_DBG_SERVER, UtoW(cJSON_Print(json)).c_str());
+    MsgSend(MQ_CHANNEL_DBG_SERVER, UtoW(cJSON_PrintUnformatted(json)).c_str());
     cJSON_Delete(json);
     return true;
+}
+
+wstring DbgClient::MakeRelpy(int status, const wstring &reason, const wstring &result) {
+    cJSON *root = cJSON_CreateObject();
+    cJSON *content = cJSON_CreateObject();
+    cJSON_AddStringToObject(root, "cmd", "reply");
+    cJSON_AddNumberToObject(content, "status", status);
+    cJSON_AddStringToObject(content, "reason", WtoU(reason).c_str());
+    cJSON *tmp = cJSON_Parse(WtoU(result).c_str());
+    if (tmp)
+    {
+        if (tmp->type == cJSON_Invalid)
+        {
+            cJSON_Delete(tmp);
+            tmp = cJSON_Parse("{}");
+        }
+        cJSON_AddItemToObject(content, "content", tmp);
+    }
+    cJSON_AddItemToObject(root, "content", content);
+    wstring res = UtoW(cJSON_PrintUnformatted(root));
+    cJSON_Delete(root);
+    return res;
 }
 
 LPCWSTR DbgClient::ClientNotify(LPCWSTR wszChannel, LPCWSTR wszContent, void *pParam) {
@@ -132,7 +155,14 @@ LPCWSTR DbgClient::ClientNotify(LPCWSTR wszChannel, LPCWSTR wszContent, void *pP
             for (list<DbgClientCache *>::const_iterator ij = tmp.begin() ; ij != tmp.end() ; ij++)
             {
                 DbgClientCache *ptr = *ij;
-                result = ptr->m_proc(cmd.c_str(), content.c_str(), ptr->m_param);
+                LPCWSTR p = ptr->m_proc(cmd.c_str(), content.c_str(), ptr->m_param);
+
+                if (!p)
+                {
+                    result = MakeRelpy(1, L"request error", L"");
+                } else {
+                    result = MakeRelpy(0, L"success", p);
+                }
             }
         }
     } while (FALSE);
