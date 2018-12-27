@@ -291,25 +291,24 @@ void CClientLogic::OnClientSocketErr(CMsgClient &client) {
 
 void CClientLogic::OnClientRecvComplete(const string &strData) {
     cJSON *content = cJSON_Parse(strData.c_str());
+    JsonAutoDelete tmp(content);
 
     if (cJSON_Object != content->type)
     {
         return;
     }
 
-    string strAction = cJSON_GetObjectItem(content, "action")->valuestring;
-    string strRoute = cJSON_GetObjectItem(content, "route")->valuestring;
-    string strContent = cJSON_GetObjectItem(content, "content")->valuestring;
+    utf8_mstring strAction = GetStrFormJson(content, "action");
+    utf8_mstring strRoute = GetStrFormJson(content, "route");
+    utf8_mstring strContent = GetStrFormJson(content, "content");
 
     if (strAction == "message")
     {
         string strChannel = cJSON_GetObjectItem(content, "channel")->valuestring;
-        cJSON_Delete(content);
         //推送给所有频道
         DispatchInCache(UtoW(strChannel.c_str()), UtoW(strContent.c_str()), UtoW(strRoute.c_str()));
     } else if (strAction == "reply")
     {
-        cJSON_Delete(content);
         if (strRoute.empty())
         {
             return;

@@ -18,6 +18,10 @@
 namespace std
 {
     class ustring;
+    class mstring;
+
+    typedef string utf8_string;
+    typedef mstring utf8_mstring;
  
     //×Ö·û´®½âÎöÀàmultibyte°æ±¾
     class mstring : public string

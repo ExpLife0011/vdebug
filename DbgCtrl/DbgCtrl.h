@@ -18,4 +18,5 @@
 #include "DbgService.h"
 #include "DbgClient.h"
 #include "DbgCtrlCom.h"
+#include "DbgProtocol.h"
 #endif //DBGCTRL_DBGCTRL_H_H_

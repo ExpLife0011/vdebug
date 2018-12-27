@@ -1,14 +1,13 @@
+#include <ComLib/ComLib.h>
+#include <mq/mq.h>
+#include <DbgCtrl/DbgCtrl.h>
 #include "ProcDbg.h"
 #include "TitanEngine/TitanEngine.h"
-//#include "common/common.h"
-//#include "view/MainView.h"
 #include "symbol.h"
 #include "BreakPoint.h"
 #include "Disasm.h"
 #include "Script.h"
 #include "memory.h"
-//#include <SyntaxHlpr/SyntaxParser.h>
-#include <ComLib/ComLib.h>
 
 #if WIN64 || _WIN64
 #pragma comment(lib, "TitanEngine/TitanEngine_x64.lib")
@@ -294,21 +293,30 @@ DWORD CProcDbgger::WriteDbgProcMemory(IN DWORD64 dwAddr, IN DWORD dwWriteLength,
     return 0;
 }
 
+/*
+{
+    "cmd":"event",
+    "content":{
+        "type":"proccreate",
+        "data":{
+            "pid":"0xabcd",
+            "image":"d:\\desktop\\1234.exe",
+            "baseAddr":"0x4344353",
+            "entryAddr":"0x4344389"
+        }
+    }
+}
+*/
 void CProcDbgger::OnCreateProcess(CREATE_PROCESS_DEBUG_INFO* pCreateProcessInfo)
 {
-    DWORD dwId = ((DEBUG_EVENT*)GetDebugData())->dwThreadId;
-
-    mstring data;
-    data += "进程路径\n";
-    data += GetInstance()->m_vDbgProcInfo.m_wstrPePath.c_str();
-    data += "\n";
-    data += "进程基地址";
-    data += FormatW(L"0x%08x", pCreateProcessInfo->lpBaseOfImage);
-    data += "\n";
-    data += "进程入口地址";
-    data += FormatW(L"0x%08x", pCreateProcessInfo->lpStartAddress);
-    data += "\n";
-    //GetSyntaxView()->AppendText(SCI_LABEL_DEFAULT, data);
+    cJSON *content = cJSON_CreateObject();
+    cJSON_AddStringToObject(content, "pid", FormatA("0x%x", GetProcessId(pCreateProcessInfo->hProcess)).c_str());
+    cJSON_AddStringToObject(content, "image", WtoU(GetInstance()->m_vDbgProcInfo.m_wstrPePath).c_str());
+    cJSON_AddStringToObject(content, "baseAddr", FormatA("0x%p", pCreateProcessInfo->lpBaseOfImage).c_str());
+    cJSON_AddStringToObject(content, "entryAddr", FormatA("0x%p", pCreateProcessInfo->lpStartAddress).c_str());
+    mstring event = MakeDbgEvent(DBG_EVENT_PROC_CREATE, cJSON_PrintUnformatted(content));
+    MsgSend(MQ_CHANNEL_DBG_SERVER, UtoW(event).c_str());
+    cJSON_Delete(content);
 
     CSymbolTaskHeader task;
     CTaskSymbolInit param;
@@ -319,6 +327,7 @@ void CProcDbgger::OnCreateProcess(CREATE_PROCESS_DEBUG_INFO* pCreateProcessInfo)
 
     GetSymbolHlpr()->SendTask(&task);
 
+    DWORD dwId = ((DEBUG_EVENT*)GetDebugData())->dwThreadId;
     DbgProcThreadInfo tp;
     tp.m_dwThreadId = dwId;
     tp.m_hThread = pCreateProcessInfo->hThread;

@@ -2,9 +2,10 @@
 #define COMUTIL_COMLIB_H_H_
 #include <Windows.h>
 #include <Shlwapi.h>
-#include <string>
 #include <stdlib.h>
 #include <TlHelp32.h>
+#include <ComStatic/ComStatic.h>
+#include "cJSON.h"
 
 #pragma comment(lib, "shlwapi.lib")
 
@@ -64,4 +65,24 @@ DWORD __stdcall RegGetDWORDFromRegW(HKEY hKey, LPCWSTR subKey, LPCWSTR value, DW
 BOOL __stdcall RegSetDWORDValueA(HKEY hKey, LPCSTR szSubKey, LPCSTR szValue, DWORD dwData);
 BOOL __stdcall RegSetDWORDValueW(HKEY hKey, LPCWSTR wszSubKey, LPCWSTR wszValue, DWORD dwData);
 BOOL __stdcall RegSetStrValueW(HKEY hKey, LPCWSTR wszSubKey, LPCWSTR wszValue, LPCWSTR wszData);
+
+class JsonAutoDelete {
+public:
+    inline JsonAutoDelete(cJSON *ptr) {
+        mPtr = ptr;
+    }
+
+    inline virtual ~JsonAutoDelete() {
+        if (mPtr)
+        {
+            cJSON_Delete(mPtr);
+        }
+    }
+
+private:
+    cJSON *mPtr;
+};
+
+std::mstring __stdcall GetStrFormJson(cJSON *json, const std::mstring &name);
+int __stdcall GetIntFromJson(cJSON *json, const std::mstring &name);
 #endif //COMUTIL_COMLIB_H_H_

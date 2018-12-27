@@ -51,3 +51,6 @@ DestroyThreadPool
 
 GetPrintFormater
 FreePrintFormater
+
+GetStrFormJson
+GetIntFromJson

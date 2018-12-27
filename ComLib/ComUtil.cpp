@@ -1469,3 +1469,24 @@ BOOL __stdcall IsSameFileW(LPCWSTR file1, LPCWSTR file2)
 
     return bRet;
 }
+
+std::mstring __stdcall GetStrFormJson(cJSON *json, const std::mstring &name) {
+    cJSON *data = cJSON_GetObjectItem(json, name.c_str());
+    if (data)
+    {
+        if (data->type == cJSON_Object || data->type == cJSON_String)
+        {
+            return data->valuestring;
+        }
+    }
+    return "";
+}
+
+int __stdcall GetIntFromJson(cJSON *json, const std::mstring &name) {
+    cJSON *data = cJSON_GetObjectItem(json, name.c_str());
+    if (data && data->type == cJSON_Number)
+    {
+        return data->valueint;
+    }
+    return 0;
+}

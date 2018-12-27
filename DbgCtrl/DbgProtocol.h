@@ -15,8 +15,33 @@
 #define DBG_DBG_EVENT               L"event"
 
 //Debug Event
+/*
+{
+    "cmd":"event",
+    "content":{
+        "type":"DbgMessage",
+        "data":{
+            "abcdef"
+        }
+    }
+}
+*/
 #define DBG_EVENT_MSG               L"dbgmsg"
-#define DBG_EVENT_PROC_START        L"procstart"
+/*
+{
+    "cmd":"event",
+    "content":{
+        "type":"proccreate",
+        "data":{
+            "pid":1234,
+            "image":"d:\\desktop\\1234.exe",
+            "baseAddr":"0x4344353",
+            "entryAddr":"0x4344389"
+        }
+    }
+}
+*/
+#define DBG_EVENT_PROC_CREATE       L"proccreate"
 #define DBG_EVENT_PROC_END          L"procend"
 #define DBG_EVENT_MODULE_LOAD       L"moduleload"
 #define DBG_EVENT_MODULE_UNLOAD     L"moduelunload"

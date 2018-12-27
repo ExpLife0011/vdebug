@@ -1,11 +1,12 @@
-#include "DbgService.h"
 #include <string>
-#include "DbgCtrlTool.h"
 #include <mq/mq.h>
 #include <map>
 #include <list>
 #include <ComLib/ComLib.h>
 #include <ComStatic/ComStatic.h>
+#include "DbgProtocol.h"
+#include "DbgService.h"
+#include "DbgCtrlTool.h"
 
 using namespace std;
 
@@ -26,7 +27,7 @@ public:
     virtual bool SetActivity(DbggerType type);
 
 private:
-    bool DispatchToRegister(const wstring &cmd, const wstring &content) const;
+    bool DispatchEventToRegister(const utf8_mstring &cmd, const utf8_mstring &content) const;
     static LPCWSTR WINAPI ServerNotify(LPCWSTR wszChannel, LPCWSTR wszContent, void *pParam);
 
 private:
@@ -53,16 +54,35 @@ LPCWSTR DbgService::ServerNotify(LPCWSTR wszChannel, LPCWSTR wszContent, void *p
         if (0 == lstrcmpW(wszChannel, MQ_CHANNEL_DBG_SERVER))
         {
             cJSON *root = cJSON_Parse(WtoU(wszContent).c_str());
+            JsonAutoDelete tmp(root);
 
             if (!root || root->type != cJSON_Object)
             {
                 break;
             }
 
-            cJSON *cmd = cJSON_GetObjectItem(root, "cmd");
+            utf8_mstring cmd = GetStrFormJson(root, "cmd");
             cJSON *content = cJSON_GetObjectItem(root, "content");
 
-            pThis->DispatchToRegister(UtoW(cmd->valuestring), UtoW(content->valuestring));
+            if (cmd == WtoU(DBG_DBG_EVENT))
+            {
+                /*
+                {
+                    "cmd":"event",
+                    "content":{
+                        "type":"proccreate",
+                        "data":{
+                            "pid":1234,
+                            "image":"d:\\desktop\\1234.exe",
+                            "baseAddr":"0x4344353",
+                            "entryAddr":"0x4344389"
+                        }
+                    }
+                }*/
+                utf8_mstring event = GetStrFormJson(content, "type");
+                utf8_mstring data = GetStrFormJson(content, "data");
+                pThis->DispatchEventToRegister(event, data);
+            }
         } else {
         }
     } while (false);
@@ -74,8 +94,22 @@ LPCWSTR DbgService::ServerNotify(LPCWSTR wszChannel, LPCWSTR wszContent, void *p
     return MsgStrCopy(result.c_str());
 }
 
-bool DbgService::DispatchToRegister(const wstring &cmd, const wstring &content) const {
-    map<wstring, list<DbgServiceCache *>>::const_iterator it = m_RegisterSet.find(cmd);
+/*
+{
+    "cmd":"event",
+    "content":{
+        "type":"proccreate",
+        "data":{
+            "pid":1234,
+            "image":"d:\\desktop\\1234.exe",
+            "baseAddr":"0x4344353",
+            "entryAddr":"0x4344389"
+        }
+    }
+}
+*/
+bool DbgService::DispatchEventToRegister(const utf8_mstring &cmd, const utf8_mstring &content) const {
+    map<wstring, list<DbgServiceCache *>>::const_iterator it = m_RegisterSet.find(UtoW(cmd));
 
     if (it == m_RegisterSet.end())
     {
@@ -85,7 +119,7 @@ bool DbgService::DispatchToRegister(const wstring &cmd, const wstring &content) 
     for (list<DbgServiceCache *>::const_iterator ij = it->second.begin() ; ij != it->second.end() ; ij++)
     {
         DbgServiceCache *ptr = *ij;
-        ptr->m_proc(cmd.c_str(), content.c_str(), ptr->m_param);
+        ptr->m_proc(UtoW(cmd), UtoW(content), ptr->m_param);
     }
     return true;
 }

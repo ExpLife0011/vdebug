@@ -133,7 +133,7 @@ LPCWSTR DbgClient::ClientNotify(LPCWSTR wszChannel, LPCWSTR wszContent, void *pP
             {
                 DbgClientCache *ptr = *ij;
                 ustring p = ptr->m_proc(cmd, content, ptr->m_param);
-                result = UtoW(MakeDbgRelpy(0, "success", WtoU(p).c_str()));
+                result = p;
             }
         }
     } while (FALSE);
