@@ -155,10 +155,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\DllLoader.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\mstring.cpp"
 				>
 			</File>

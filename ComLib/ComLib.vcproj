@@ -237,10 +237,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\DllTest.h"
-				>
-			</File>
-			<File
 				RelativePath=".\LockBase.h"
 				>
 			</File>

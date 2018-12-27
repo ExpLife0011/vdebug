@@ -1,4 +1,7 @@
+#include <list>
+#include "mstring.h"
 #include "PrintFormater.h"
+#include "StrUtil.h"
 
 using namespace std;
 
@@ -8,10 +11,6 @@ PrintFormater::PrintFormater() {
 PrintFormater::~PrintFormater() {
 }
 
-bool PrintFormater::InitRule(const mstring &type, const mstring &rule) {
-    return true;
-}
-
 bool PrintFormater::Reset() {
     m_matrix1.clear();
     m_matrix2.clear();
@@ -19,6 +18,12 @@ bool PrintFormater::Reset() {
 }
 
 bool PrintFormater::SetRule(const mstring &type) {
+    list<mstring> result = SplitStrA(type, ";");
+    m_rule.clear();
+    for (list<mstring>::const_iterator it = result.begin() ; it != result.end() ; it++)
+    {
+        m_rule.push_back(atoi(it->c_str()));
+    }
     return true;
 }
 
@@ -54,34 +59,44 @@ bool PrintFormater::EndSession() {
 
 const char *PrintFormater::GetResult() {
     static string s_result;
-    vector<int> rule;
+
+    int nodeSize = (int)m_matrix2[0].size();
+    int lineSize = (int)m_matrix2.size();
+
+    //init format rule
+    while ((int)m_rule.size() < nodeSize) {
+        m_rule.push_back(0);
+    }
     int i = 0;
     int j = 0;
-    for (i = 0 ; i < (int)m_matrix2[0].size() ; i++)
+    for (i = 0 ; i < nodeSize ; i++)
     {
-        int tmp = 0;
-        for (j = 0 ; j < (int)m_matrix2.size() ; j++)
+        int maxSize = 0;
+        for (j = 0 ; j < lineSize ; j++)
         {
-            if ((int)m_matrix2[j][i].size() > tmp)
+            if ((int)m_matrix2[j][i].size() > maxSize)
             {
-                tmp = m_matrix2[j][i].size();
+                maxSize = m_matrix2[j][i].size();
             }
         }
-        rule.push_back(tmp);
+
+        if (m_rule[i] == 0)
+        {
+            m_rule[i] = maxSize;
+        }
     }
 
     s_result.clear();
-    for (i = 0 ; i < (int)m_matrix2.size() ; i++)
+    for (i = 0 ; i < lineSize ; i++)
     {
-        int border = (int)m_matrix2[0].size();
-        for (j = 0 ; j < border ; j++)
+        for (j = 0 ; j < nodeSize ; j++)
         {
             string node = m_matrix2[i][j];
-            if ((int)node.size() < rule[j])
+            if ((int)node.size() < m_rule[j])
             {
-                if (j != (border - 1))
+                if (j != (nodeSize - 1))
                 {
-                    int count = rule[j] - node.size();
+                    int count = m_rule[j] - node.size();
                     while (count > 0) {
                         node += " ";
                         count--;
@@ -93,7 +108,7 @@ const char *PrintFormater::GetResult() {
                 s_result += node;
             }
 
-            if (j != (border - 1))
+            if (j != (nodeSize - 1))
             {
                 for (int k = 0 ; k < ms_space ; k++)
                 {

@@ -1,6 +1,7 @@
 #include <Windows.h>
 #include <string>
 #include <Shlwapi.h>
+#include "StrUtil.h"
 
 using namespace std;
 
@@ -152,4 +153,62 @@ wstring __stdcall FormatW(const wchar_t *format, ...)
     va_end(val);
 
     return szText;
+}
+
+list<mstring> SplitStrA(const mstring &str, const mstring &split) {
+    list<mstring> result;
+    if (split.empty())
+    {
+        return result;
+    }
+
+    size_t last = 0;
+    size_t pos = 0;
+    while (true) {
+        pos = str.find(split, last);
+
+        if (pos == mstring::npos)
+        {
+            if (str.size() > last)
+            {
+                result.push_back(str.substr(last));
+            }
+            return result;
+        }
+
+        if (pos > last)
+        {
+            result.push_back(str.substr(last, pos - last));
+        }
+        last = pos + split.size();
+    }
+}
+
+list<ustring> SplitStrW(const ustring &str, const ustring &split) {
+    list<ustring> result;
+    if (split.empty())
+    {
+        return result;
+    }
+
+    size_t last = 0;
+    size_t pos = 0;
+    while (true) {
+        pos = str.find(split, last);
+
+        if (pos == ustring::npos)
+        {
+            if (str.size() > last)
+            {
+                result.push_back(str.substr(last));
+            }
+            return result;
+        }
+
+        if (pos > last)
+        {
+            result.push_back(str.substr(last, pos - last));
+        }
+        last = pos + split.size();
+    }
 }
