@@ -310,13 +310,13 @@ DWORD CProcDbgger::WriteDbgProcMemory(IN DWORD64 dwAddr, IN DWORD dwWriteLength,
 void CProcDbgger::OnCreateProcess(CREATE_PROCESS_DEBUG_INFO* pCreateProcessInfo)
 {
     cJSON *content = cJSON_CreateObject();
+    JsonAutoDelete tmp(content);
     cJSON_AddStringToObject(content, "pid", FormatA("0x%x", GetProcessId(pCreateProcessInfo->hProcess)).c_str());
     cJSON_AddStringToObject(content, "image", WtoU(GetInstance()->m_vDbgProcInfo.m_wstrPePath).c_str());
     cJSON_AddStringToObject(content, "baseAddr", FormatA("0x%p", pCreateProcessInfo->lpBaseOfImage).c_str());
     cJSON_AddStringToObject(content, "entryAddr", FormatA("0x%p", pCreateProcessInfo->lpStartAddress).c_str());
     mstring event = MakeDbgEvent(DBG_EVENT_PROC_CREATE, cJSON_PrintUnformatted(content));
-    MsgSend(MQ_CHANNEL_DBG_SERVER, UtoW(event).c_str());
-    cJSON_Delete(content);
+    MsgSend(MQ_CHANNEL_DBG_SERVER, UtoW(event).c_str());;
 
     CSymbolTaskHeader task;
     CTaskSymbolInit param;
@@ -416,21 +416,27 @@ bool CProcDbgger::LoadModuleInfo(HANDLE hFile, DWORD64 dwBaseOfModule)
     GetSymbolHlpr()->SendTask(&task);
     //两个结构完全一样，考虑到和dump可能有区别分别命名
     m_vModuleInfo[dwBaseOfModule] = loadInfo.m_ModuleInfo;
-    /**
-    //CSyntaxDescHlpr hlpr;
-    hlpr.FormatDesc(L"模块加载 ", COLOUR_MSG);
 
-    if (GetCurrentDbgger()->IsDbgProcx64())
+    /*
     {
-        hlpr.FormatDesc(FormatW(L"0x%016llx 0x%016llx  ", loadInfo.m_ModuleInfo.m_dwBaseOfImage, loadInfo.m_ModuleInfo.m_dwEndAddr), COLOUR_MSG);
+        "cmd":"event",
+        "content":{
+            "type":"moduleload",
+            "data":{
+                "name":"kernel32.dll",
+                "baseAddr":"0x4344353",
+                "endAddr":"0x43443ff"
+            }
+        }
     }
-    else
-    {
-        hlpr.FormatDesc(FormatW(L"0x%08x 0x%08x  ", loadInfo.m_ModuleInfo.m_dwBaseOfImage, loadInfo.m_ModuleInfo.m_dwEndAddr), COLOUR_MSG);
-    }
-    hlpr.FormatDesc(loadInfo.m_ModuleInfo.m_wstrDllName, COLOUR_MODULE);
     */
-    //GetSyntaxView()->AppendSyntaxDesc(hlpr.GetResult());
+    cJSON *data = cJSON_CreateObject();
+    JsonAutoDelete abc(data);
+    cJSON_AddStringToObject(data, "name", WtoU(loadInfo.m_ModuleInfo.m_wstrDllName).c_str());
+    cJSON_AddStringToObject(data, "baseAddr", FormatA("0x%p", loadInfo.m_ModuleInfo.m_dwBaseOfImage).c_str());
+    cJSON_AddStringToObject(data, "endAddr", FormatA("0x%p", loadInfo.m_ModuleInfo.m_dwEndAddr).c_str());
+    utf8_mstring package = MakeDbgEvent(DBG_EVENT_MODULE_LOAD, cJSON_PrintUnformatted(data));
+    MsgSend(MQ_CHANNEL_DBG_SERVER, UtoW(package).c_str());
     return true;
 }
 
@@ -441,10 +447,6 @@ void CProcDbgger::OnLoadDll(LOAD_DLL_DEBUG_INFO* LoadDll)
 
 void CProcDbgger::OnUnloadDll(UNLOAD_DLL_DEBUG_INFO* UnloadDll)
 {
-    /*
-    //CSyntaxDescHlpr hlpr;
-    hlpr.FormatDesc(L"模块卸载", COLOUR_MSG, 10);
-    */
 }
 
 void CProcDbgger::OnOutputDebugString(OUTPUT_DEBUG_STRING_INFO* DebugString)

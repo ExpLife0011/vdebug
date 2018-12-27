@@ -1,8 +1,5 @@
 EXPORTS
 
-GetPrintFormater
-FreePrintFormater
-
 GetThreadPool
 DestroyThreadPool
 
@@ -48,9 +45,6 @@ ReportLocalServStatus
 
 GetThreadPool
 DestroyThreadPool
-
-GetPrintFormater
-FreePrintFormater
 
 GetStrFormJson
 GetIntFromJson

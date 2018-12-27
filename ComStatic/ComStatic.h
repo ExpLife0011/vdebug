@@ -6,6 +6,7 @@
 #include <ComStatic/StrUtil.h>
 #include <ComStatic/servhlpr.h>
 #include <ComStatic/GlobalDef.h>
+#include <ComStatic/PrintFormater.h>
 
 #ifndef COMLIB_EXPORTS
     #if _WIN64 || WIN64

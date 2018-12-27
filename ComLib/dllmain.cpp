@@ -14,3 +14,6 @@ BOOL WINAPI DllMain(HMODULE hThisModule, DWORD dwReason, LPVOID reserved)
     }
     return TRUE;
 }
+
+VOID WINAPI RundllFun(HWND hwnd, HINSTANCE hinst, LPSTR cmd, int show) {
+}

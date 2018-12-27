@@ -43,6 +43,20 @@
 */
 #define DBG_EVENT_PROC_CREATE       L"proccreate"
 #define DBG_EVENT_PROC_END          L"procend"
+
+/*
+{
+    "cmd":"event",
+    "content":{
+        "type":"moduleload",
+        "data":{
+            "name":"kernel32.dll",
+            "baseAddr":"0x4344353",
+            "endAddr":"0x43443ff"
+        }
+    }
+}
+*/
 #define DBG_EVENT_MODULE_LOAD       L"moduleload"
 #define DBG_EVENT_MODULE_UNLOAD     L"moduelunload"
 

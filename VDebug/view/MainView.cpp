@@ -57,7 +57,26 @@ static ustring gs_wstrCfgFile;
 static CProcSelectView *gs_pProcSelect = NULL;
 static CPeFileOpenView *gs_pPeOpenView = NULL;
 static CCmdQueue *gs_pCmdQueue = NULL;
-static PrintFormater *gs_pFormater = NULL;
+
+struct SyntaxShowData {
+    mstring m_label;
+    mstring m_data;
+};
+
+#define MSG_APPEND_MSG (WM_USER + 651)
+static CCriticalSectionLockable gs_dataLock;
+static list<SyntaxShowData *> gs_showData;
+
+void AppendToSyntaxView(const std::mstring &label, const std::mstring &data) {
+    {
+        CScopedLocker lock(&gs_dataLock);
+        SyntaxShowData *p = new SyntaxShowData();
+        p->m_label = label;
+        p->m_data = data;
+        gs_showData.push_back(p);
+    }
+    PostMessageW(gs_hMainView, MSG_APPEND_MSG, 0, 0);
+}
 
 SyntaxView *GetSyntaxView()
 {
@@ -259,8 +278,6 @@ static void _InitSyntaxView() {
 
 static VOID _OnInitDialog(HWND hwnd, WPARAM wp, LPARAM lp)
 {
-    gs_pFormater = GetPrintFormater();
-
     SendMessageW(hwnd, WM_SETICON, (WPARAM)ICON_BIG, (LPARAM)LoadIconW(g_hInstance, MAKEINTRESOURCEW(IDI_MAIN)));
     SendMessageW(hwnd, WM_SETICON, (WPARAM)ICON_SMALL, (LPARAM)LoadIconW(g_hInstance, MAKEINTRESOURCEW(IDI_MAIN)));
     CentreWindow(hwnd);
@@ -304,8 +321,7 @@ static VOID _OnInitDialog(HWND hwnd, WPARAM wp, LPARAM lp)
     GetPeVersionW(wszBuf, wstrVersion.alloc(MAX_PATH), MAX_PATH);
     wstrVersion.setbuffer();
 
-    gs_pSyntaxView->AppendText(SCI_LABEL_DEFAULT, FormatA("VDebugµ÷ÊÔÆ÷£¬°æ±¾£º%ls\n", wstrVersion.c_str()));
-    gs_pFormater->Reset();
+    AppendToSyntaxView(SCI_LABEL_DEFAULT, FormatA("VDebugµ÷ÊÔÆ÷£¬°æ±¾£º%ls\n", wstrVersion.c_str()));
 
     SetCmdNotify(em_dbg_status_init, L"³õÊ¼×´Ì¬");
     gs_pfnCommandProc = (PWIN_PROC)SetWindowLongPtr(gs_hCommand, GWLP_WNDPROC, (LONG_PTR)_CommandProc);
@@ -420,6 +436,22 @@ static VOID _OnPageChange(HWND hwnd, WPARAM wp, LPARAM lp)
     SendMessageW(gs_hCommand, EM_SETSEL, wstr.size(), wstr.size());
 }
 
+static void _OnAppendMsg() {
+    list<SyntaxShowData *> tmp;
+    {
+        CScopedLocker lock(&gs_dataLock);
+        tmp = gs_showData;
+        gs_showData.clear();
+    }
+
+    for (list<SyntaxShowData *>::const_iterator it = tmp.begin() ; it != tmp.end() ; it++)
+    {
+        SyntaxShowData *p = *it;
+        gs_pSyntaxView->AppendText(p->m_label, p->m_data);
+        delete p;
+    }
+}
+
 static INT_PTR CALLBACK _MainViewProc(HWND hdlg, UINT msg, WPARAM wp, LPARAM lp)
 {
     int ret = 0;
@@ -448,6 +480,11 @@ static INT_PTR CALLBACK _MainViewProc(HWND hdlg, UINT msg, WPARAM wp, LPARAM lp)
     case  MSG_PAGE_CHANGE:
         {
             _OnPageChange(hdlg, wp, lp);
+        }
+        break;
+    case MSG_APPEND_MSG:
+        {
+            _OnAppendMsg();
         }
         break;
     case WM_CLOSE:

@@ -3,8 +3,9 @@
 #include <Windows.h>
 #include <string>
 #include <map>
-#include "SyntaxParser.h"
+#include <ComStatic/ComStatic.h>
 #include <SyntaxView/include/Scintilla.h>
+#include "SyntaxParser.h"
 
 typedef int (* SCINTILLA_FUNC) (void*, int, int, int);
 typedef void * SCINTILLA_PTR;
@@ -16,8 +17,8 @@ public:
 
     bool CreateView(HWND parent, int x, int y, int cx, int cy);
     size_t SendMsg(UINT msg, WPARAM wp, LPARAM lp) const;
-    void AppendText(const std::string &label, const std::string &text) const;
-    void SetText(const std::string &label, const std::string &text) const;
+    void AppendText(const std::mstring &label, const std::mstring &text) const;
+    void SetText(const std::mstring &label, const std::mstring &text) const;
     void ClearView();
     HWND GetWindow() {
         return m_hwnd;
@@ -27,7 +28,7 @@ public:
     void ShowMargin(bool bShow);
     void SetDefStyle(unsigned int textColour, unsigned int backColour);
     void ShowScrollBar(bool show);
-    void LoadSyntaxCfgFile(const std::string path);
+    void LoadSyntaxCfgFile(const std::mstring path);
     std::string GetFont();
     void SetFont(const std::string &fontName);
     void SetCaretColour(unsigned int colour);

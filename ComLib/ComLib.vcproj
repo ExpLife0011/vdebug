@@ -203,10 +203,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\SyntaxFormat.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\tpool.cpp"
 				>
 			</File>
@@ -258,10 +254,6 @@
 			</File>
 			<File
 				RelativePath=".\StrSafe.h"
-				>
-			</File>
-			<File
-				RelativePath=".\SyntaxFormat.h"
 				>
 			</File>
 			<File

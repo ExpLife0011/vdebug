@@ -3,7 +3,6 @@
 #include "cJSON.h"
 #include "ComUtil.h"
 #include "tpool.h"
-#include "SyntaxFormat.h"
 #include "StrSafe.h"
 #include "LockBase.h"
 #include "logger.h"

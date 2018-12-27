@@ -1,13 +1,12 @@
-#include "ComUtil.h"
-#include "SyntaxFormat.h"
-#include <string>
-#include "StrSafe.h"
-#include <ComStatic/ComStatic.h>
 #include <Windows.h>
 #include <Psapi.h>
 #include <Winternl.h>
 #include <shobjidl.h>
+#include <string>
 #include <ComLib/ComLib.h>
+#include <ComStatic/ComStatic.h>
+#include "ComUtil.h"
+#include "StrSafe.h"
 
 #pragma comment(lib, "Psapi.lib")
 #pragma comment(lib, "Version.lib")

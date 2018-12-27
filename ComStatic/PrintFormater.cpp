@@ -1,52 +1,29 @@
-#include "SyntaxFormat.h"
-#include "ComUtil.h"
-
-class SyntaxFormater : public PrintFormater {
-public:
-    SyntaxFormater();
-    virtual ~SyntaxFormater();
-
-    virtual bool InitRule(const char *type, const char *rule);
-    virtual bool SetRule(const char *type);
-    virtual bool Reset();
-
-    virtual PrintFormater &operator << (const char*);
-    virtual PrintFormater &operator << (PrintFormatStat stat);
-
-    virtual bool StartSession(const char *type);
-    virtual bool EndSession();
-    virtual const char *GetResult();
-private:
-    map<string, vector<int>> m_FormatRule;
-    vector<string> m_matrix1;
-    vector<vector<string>> m_matrix2;
-    static const int ms_space = 2;
-};
+#include "PrintFormater.h"
 
 using namespace std;
 
-SyntaxFormater::SyntaxFormater() {
+PrintFormater::PrintFormater() {
 }
 
-SyntaxFormater::~SyntaxFormater() {
+PrintFormater::~PrintFormater() {
 }
 
-bool SyntaxFormater::InitRule(const char *type, const char *rule) {
+bool PrintFormater::InitRule(const mstring &type, const mstring &rule) {
     return true;
 }
 
-bool SyntaxFormater::Reset() {
+bool PrintFormater::Reset() {
     m_matrix1.clear();
     m_matrix2.clear();
     return true;
 }
 
-bool SyntaxFormater::SetRule(const char *type) {
+bool PrintFormater::SetRule(const mstring &type) {
     return true;
 }
 
-PrintFormater &SyntaxFormater::operator << (const char *data) {
-    if (!data || !data[0])
+PrintFormater &PrintFormater::operator << (const mstring &data) {
+    if (data.empty())
     {
         m_matrix1.push_back(" ");
     } else {
@@ -55,7 +32,7 @@ PrintFormater &SyntaxFormater::operator << (const char *data) {
     return *this;
 }
 
-PrintFormater &SyntaxFormater::operator << (PrintFormatStat stat) {
+PrintFormater &PrintFormater::operator << (PrintFormatStat stat) {
     if (stat == line_end)
     {
         m_matrix2.push_back(m_matrix1);
@@ -67,15 +44,15 @@ PrintFormater &SyntaxFormater::operator << (PrintFormatStat stat) {
     return *this;
 }
 
-bool SyntaxFormater::StartSession(const char *type) {
+bool PrintFormater::StartSession(const mstring &type) {
     return true;
 }
 
-bool SyntaxFormater::EndSession() {
+bool PrintFormater::EndSession() {
     return true;
 }
 
-const char *SyntaxFormater::GetResult() {
+const char *PrintFormater::GetResult() {
     static string s_result;
     vector<int> rule;
     int i = 0;
@@ -127,22 +104,4 @@ const char *SyntaxFormater::GetResult() {
         s_result += "\n";
     }
     return s_result.c_str();
-}
-
-VOID WINAPI RundllFun(HWND hwnd, HINSTANCE hinst, LPSTR cmd, int show) {
-    SyntaxFormater *p = new SyntaxFormater();
-    SyntaxFormater &ff = *p;
-    ff << "ÄãºÃ£¬ÊÀ½ç" << "1111" << "222" << line_end;
-    ff << "11"         << "aa"   << "bb"  << line_end;
-    string dd = p->GetResult();
-    OutputDebugStringA(dd.c_str());
-    MessageBoxA(0, 0, 0, 0);
-}
-
-PrintFormater *__stdcall GetPrintFormater() {
-    return new SyntaxFormater();
-}
-
-void __stdcall FreePrintFormater(PrintFormater *p) {
-    delete p;
 }

@@ -163,6 +163,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\PrintFormater.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\servhlpr.cpp"
 				>
 			</File>
@@ -186,6 +190,10 @@
 			</File>
 			<File
 				RelativePath=".\mstring.h"
+				>
+			</File>
+			<File
+				RelativePath=".\PrintFormater.h"
 				>
 			</File>
 			<File

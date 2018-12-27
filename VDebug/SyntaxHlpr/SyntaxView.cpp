@@ -116,7 +116,7 @@ unsigned int SyntaxView::GetCaretColour() {
     return 0;
 }
 
-void SyntaxView::AppendText(const std::string &label, const std::string &text) const {
+void SyntaxView::AppendText(const std::mstring &label, const std::mstring &text) const {
     VdebugRuleParam param;
     param.label = label.c_str();
     param.content = text.c_str();
@@ -131,7 +131,7 @@ void SyntaxView::AppendText(const std::string &label, const std::string &text) c
     SendMsg(SCI_SETREADONLY, 1, 0);
 }
 
-void SyntaxView::SetText(const std::string &label, const std::string &text) const {
+void SyntaxView::SetText(const std::mstring &label, const std::mstring &text) const {
     VdebugRuleParam param;
     param.label = label.c_str();
     param.content = text.c_str();
