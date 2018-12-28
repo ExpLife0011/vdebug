@@ -4,7 +4,10 @@
         "defTextColour": "0,0,255",
         "defBackColour": "40,40,40",
         "viewBackColour": "40,40,40",
-        "curLineColour": "60,56,54"
+        "curLineColour": "60,56,54",
+		"selTextColour": "255,0,0",
+		"selBackColour": "255,255,255",
+		"selAlpha":70
     },
     "syntaxCfg": {
         "addr": {

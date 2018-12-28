@@ -177,10 +177,6 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath=".\gdcharconv.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\SyntaxView.def"
 				>
 			</File>
@@ -192,10 +188,6 @@
 			>
 			<File
 				RelativePath=".\export.h"
-				>
-			</File>
-			<File
-				RelativePath=".\gdcharconv.h"
 				>
 			</File>
 			<File
@@ -630,26 +622,6 @@
 			</File>
 			<File
 				RelativePath=".\LexVdebug.h"
-				>
-			</File>
-		</Filter>
-		<Filter
-			Name="common"
-			>
-			<File
-				RelativePath=".\common.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\common.h"
-				>
-			</File>
-			<File
-				RelativePath=".\mstring.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\mstring.h"
 				>
 			</File>
 		</Filter>

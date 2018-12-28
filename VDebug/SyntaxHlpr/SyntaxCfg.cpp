@@ -16,6 +16,9 @@ static bool gs_bInit = false;
 static DWORD gs_defTextColour = 0;
 static DWORD gs_defBackColour = 0;
 static DWORD gs_CaretLineColour = 0;
+static DWORD gs_SelTextColour = 0;
+static DWORD gs_SelBackColour = 0;
+static DWORD gs_SelAlpha = 0;
 
 SyntaxColourDesc *GetSyntaxCfg(int type)
 {
@@ -74,6 +77,9 @@ static void _InitSyntaxCfg() {
 BOOL UpdateSyntaxView(SyntaxView *pSyntaxView) {
     pSyntaxView->SetDefStyle(gs_defTextColour, gs_defBackColour);
     pSyntaxView->ShowCaretLine(true, gs_CaretLineColour);
+    //pSyntaxView->SendMsg(SCI_SETSELFORE, 1, gs_SelTextColour);
+    pSyntaxView->SendMsg(SCI_SETSELBACK, 1, gs_SelBackColour);
+    pSyntaxView->SendMsg(SCI_SETSELALPHA, gs_SelAlpha, 0);
 
     map<int, SyntaxColourDesc *>::const_iterator it;
     for (it = gs_pSyntaxCfg->begin() ; it != gs_pSyntaxCfg->end() ; it++)
@@ -97,7 +103,7 @@ BOOL LoadSyntaxCfg(const wstring &path)
     PFILE_MAPPING_STRUCT pMapping = NULL;
     BOOL stat = FALSE;
 
-    do 
+    do
     {
         pMapping = MappingFileW(path.c_str());
         if (pMapping == NULL || pMapping->hFile == INVALID_HANDLE_VALUE)
@@ -106,6 +112,7 @@ BOOL LoadSyntaxCfg(const wstring &path)
         }
 
         cJSON *root = cJSON_Parse((const char *)pMapping->lpView);
+        JsonAutoDelete abc(root);
         if (!root || root->type != cJSON_Object)
         {
             break;
@@ -115,9 +122,24 @@ BOOL LoadSyntaxCfg(const wstring &path)
         cJSON *golbal = cJSON_GetObjectItem(root, "globalCfg");
         cJSON *cfg = cJSON_GetObjectItem(root, "syntaxCfg");
 
-        gs_defTextColour = GetColourFromStr(cJSON_GetObjectItem(golbal, "defTextColour")->valuestring);
-        gs_defBackColour = GetColourFromStr(cJSON_GetObjectItem(golbal, "defBackColour")->valuestring);
-        gs_CaretLineColour = GetColourFromStr(cJSON_GetObjectItem(golbal, "curLineColour")->valuestring);
+        /*
+        {
+            "lineNumber": 1,
+            "defTextColour": "0,0,255",
+            "defBackColour": "40,40,40",
+            "viewBackColour": "40,40,40",
+            "curLineColour": "60,56,54",
+            "selTextColour": "255,0,0",
+            "selBackColour": "0,255,0",
+            "selAlpha":100
+        }
+        */
+        gs_defTextColour = GetColourFromStr(GetStrFormJson(golbal, "defTextColour").c_str());
+        gs_defBackColour = GetColourFromStr(GetStrFormJson(golbal, "defBackColour").c_str());
+        gs_CaretLineColour = GetColourFromStr(GetStrFormJson(golbal, "curLineColour").c_str());
+        gs_SelTextColour = GetColourFromStr(GetStrFormJson(golbal, "selTextColour").c_str());
+        gs_SelBackColour = GetColourFromStr(GetStrFormJson(golbal, "selBackColour").c_str());
+        gs_SelAlpha = GetIntFromJson(golbal, "selAlpha");
 
         for (cJSON *it = cfg->child ; it != NULL ; it = it->next) {
             SyntaxColourDesc *desc = _GetDescFromJson(it);
@@ -133,11 +155,6 @@ BOOL LoadSyntaxCfg(const wstring &path)
     if (pMapping)
     {
         CloseFileMapping(pMapping);
-    }
-
-    if (root)
-    {
-        cJSON_Delete(root);
     }
     return stat;
 }

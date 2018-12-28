@@ -57,8 +57,8 @@ bool PrintFormater::EndSession() {
     return true;
 }
 
-const char *PrintFormater::GetResult() {
-    static string s_result;
+mstring PrintFormater::GetResult() {
+    mstring result;
 
     int nodeSize = (int)m_matrix2[0].size();
     int lineSize = (int)m_matrix2.size();
@@ -86,7 +86,7 @@ const char *PrintFormater::GetResult() {
         }
     }
 
-    s_result.clear();
+    result.clear();
     for (i = 0 ; i < lineSize ; i++)
     {
         for (j = 0 ; j < nodeSize ; j++)
@@ -103,20 +103,20 @@ const char *PrintFormater::GetResult() {
                     }
                 }
 
-                s_result += node;
+                result += node;
             } else {
-                s_result += node;
+                result += node;
             }
 
             if (j != (nodeSize - 1))
             {
                 for (int k = 0 ; k < ms_space ; k++)
                 {
-                    s_result += " ";
+                    result += " ";
                 }
             }
         }
-        s_result += "\n";
+        result += "\n";
     }
-    return s_result.c_str();
+    return result;
 }

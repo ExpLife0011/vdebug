@@ -23,7 +23,7 @@ public:
     PrintFormater &operator << (const std::mstring &);
     PrintFormater &operator << (PrintFormatStat stat);
     bool EndSession();
-    const char *GetResult();
+    std::mstring GetResult();
 
 private:
     std::vector<int> m_rule;
