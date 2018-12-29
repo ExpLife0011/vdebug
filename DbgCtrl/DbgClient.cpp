@@ -22,7 +22,6 @@ public:
     virtual ~DbgClient();
     virtual bool InitClient(DbggerType type, const wchar_t *unique);
     virtual HDbgCtrl RegisterCtrlHandler(const wchar_t *cmd, pfnDbgClientProc pfn, void *param);
-    virtual bool SendDbgEvent(const wchar_t *cmd, const wchar_t *content);
 
 private:
     static LPCWSTR WINAPI ClientNotify(LPCWSTR wszChannel, LPCWSTR wszContent, void *pParam);
@@ -90,17 +89,6 @@ HDbgCtrl DbgClient::RegisterCtrlHandler(const wchar_t *cmd, pfnDbgClientProc pfn
     cache->m_idex = m_curIndex++;
     m_RegisterSet[cmd].push_back(cache);
     return cache->m_idex ;
-}
-
-bool DbgClient::SendDbgEvent(const wchar_t *cmd, const wchar_t *content) {
-    cJSON *json = cJSON_CreateObject();
-    string t1 = WtoU(cmd);
-    cJSON_AddStringToObject(json, "cmd", WtoU(cmd).c_str());
-    cJSON_AddStringToObject(json, "content", WtoU(content).c_str());
-
-    MsgSend(MQ_CHANNEL_DBG_SERVER, UtoW(cJSON_PrintUnformatted(json)).c_str());
-    cJSON_Delete(json);
-    return true;
 }
 
 LPCWSTR DbgClient::ClientNotify(LPCWSTR wszChannel, LPCWSTR wszContent, void *pParam) {

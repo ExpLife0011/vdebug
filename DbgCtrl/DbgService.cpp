@@ -23,10 +23,12 @@ public:
     virtual ~DbgService();
     virtual bool InitDbgService(const wchar_t *unique);
     virtual std::ustring DispatchCurDbgger(const std::ustring &cmd, const std::ustring &content);
+    virtual std::ustring DispatchSpecDbgger(DbggerType type, const std::ustring &cmd, const std::ustring &content);
     virtual HDbgCtrl RegisterDbgEvent(const wchar_t *event, pfnDbgEventProc pfn, void *param);
     virtual bool SetActivity(DbggerType type);
 
 private:
+    std::ustring GetSpecChannel(DbggerType type) const;
     bool DispatchEventToRegister(const utf8_mstring &cmd, const utf8_mstring &content) const;
     static LPCWSTR WINAPI ServerNotify(LPCWSTR wszChannel, LPCWSTR wszContent, void *pParam);
 
@@ -36,6 +38,7 @@ private:
     unsigned short m_port;
     long m_curIndex;
     wstring m_curChannel;
+    DbggerType m_DbgClient;
 };
 
 DbgService::DbgService() :m_port(0), m_curIndex(0xffea){
@@ -135,31 +138,44 @@ bool DbgService::InitDbgService(const wchar_t *unique) {
 }
 
 ustring DbgService::DispatchCurDbgger(const ustring &cmd, const ustring &content) {
+    return DispatchSpecDbgger(m_DbgClient, cmd, content);
+}
+
+ustring DbgService::DispatchSpecDbgger(DbggerType type, const ustring &cmd, const ustring &content) {
+    ustring channel = GetSpecChannel(type);
+
     cJSON *root = cJSON_CreateObject();
+    JsonAutoDelete abc(root);
     cJSON_AddStringToObject(root, "cmd", WtoU(cmd).c_str());
     cJSON_AddStringToObject(root, "content", WtoU(content).c_str());
-    LPCWSTR wsz = MsgSendForResult(m_curChannel.c_str(), UtoW(cJSON_PrintUnformatted(root)).c_str());
-    cJSON_Delete(root);
+    LPCWSTR wsz = MsgSendForResult(channel.c_str(), UtoW(cJSON_PrintUnformatted(root)).c_str());
     ustring result = wsz;
     MsgStrFree(wsz);
     return result;
 }
 
-bool DbgService::SetActivity(DbggerType type) {
+ustring DbgService::GetSpecChannel(DbggerType type) const {
+    ustring channel;
     switch (type) {
         case em_dbg_proc86:
-            m_curChannel = MQ_CHANNEL_DBG_CLIENT32;
+            channel = MQ_CHANNEL_DBG_CLIENT32;
             break;
         case em_dbg_proc64:
-            m_curChannel = MQ_CHANNEL_DBG_CLIENT64;
+            channel = MQ_CHANNEL_DBG_CLIENT64;
             break;
         case em_dbg_dump86:
-            m_curChannel = MQ_CHANNEL_DBG_DUMP32;
+            channel = MQ_CHANNEL_DBG_DUMP32;
             break;
         case em_dbg_dump64:
-            m_curChannel = MQ_CHANNEL_DBG_DUMP64;
+            channel = MQ_CHANNEL_DBG_DUMP64;
             break;
     }
+    return channel;
+}
+
+bool DbgService::SetActivity(DbggerType type) {
+    m_DbgClient = type;
+    m_curChannel = GetSpecChannel(type);
     return true;
 }
 

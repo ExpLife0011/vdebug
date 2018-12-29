@@ -1117,7 +1117,7 @@ typedef struct _PEB32
     ULONGLONG CsrServerReadOnlySharedMemoryBase;
 } PEB32, *PPEB32;
 
-static ustring _GetProcressPebString(HANDLE hProcress, ULONG eOffsetType)
+static BOOL _GetProcressPebString(HANDLE hProcress, ULONG eOffsetType, char *buffer, DWORD *pLength)
 {
     ULONG uOffset = 0;
     switch (eOffsetType)
@@ -1133,17 +1133,16 @@ static ustring _GetProcressPebString(HANDLE hProcress, ULONG eOffsetType)
         uOffset = FIELD_OFFSET(RTL_USER_PROCESS_PARAMETERS32, CommandLine);
         break;
     default:
-        break;
+        return FALSE;
     }
 
     pfnNtQueryInformationProcess pfn = GetNtQueryInformationProc();
-    char szBuffer[1024] = {0};
     //x86
     if (eOffsetType & PhpoWow64)
     {
         PVOID peb32;
         ULONG processParameters32;
-        UNICODE_STRING32 unicodeString32;
+        UNICODE_STRING unicodeString32;
 
         pfn(hProcress, ProcessWow64Information, &peb32, sizeof(PVOID), NULL);
         ReadProcessMemory(
@@ -1162,7 +1161,13 @@ static ustring _GetProcressPebString(HANDLE hProcress, ULONG eOffsetType)
             NULL
             );
 
-        UNICODE_STRING32 *pStr = (UNICODE_STRING32 *)szBuffer;
+        if (unicodeString32.Length + 1 >= (int)pLength[0])
+        {
+            pLength[0] = unicodeString32.Length;
+            return FALSE;
+        }
+
+        UNICODE_STRING32 *pStr = (UNICODE_STRING32 *)buffer;
         ReadProcessMemory(
             hProcress,
             (LPCVOID)unicodeString32.Buffer,
@@ -1170,7 +1175,6 @@ static ustring _GetProcressPebString(HANDLE hProcress, ULONG eOffsetType)
             unicodeString32.Length,
             NULL
             );
-        return (LPCWSTR)pStr->Buffer;
     }
     //x64
     else
@@ -1197,33 +1201,54 @@ static ustring _GetProcressPebString(HANDLE hProcress, ULONG eOffsetType)
             NULL
             );
 
-        UNICODE_STRING *pStr = (UNICODE_STRING *)szBuffer;
+        if (unicodeString.Length + 1 >= (int)pLength[0])
+        {
+            pLength[0] = unicodeString.Length + 512;
+            return FALSE;
+        }
+
+        UNICODE_STRING *pStr = (UNICODE_STRING *)buffer;
         ReadProcessMemory(hProcress,
             unicodeString.Buffer,
             pStr,
             unicodeString.Length,
             NULL
             );
-        return pStr->Buffer;
     }
+    return TRUE;
 }
 
-const wchar_t *__stdcall GetProcessCommandLine(_In_ DWORD dwPid, BOOL bx64)
+ustring __stdcall GetProcessCommandLine(_In_ DWORD dwPid, BOOL bx64)
 {
+    static char *s_buffer = new char[4096];
+    static DWORD s_size = 4096;
+
     HANDLE hProcess = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, dwPid);
     if (!hProcess)
     {
         return L"";
     }
 
+    DWORD size = s_size;
+    s_buffer[0] = 0;
     if (_IsWin81Later())
     {
-        char szBuffer[1024] = {0};
-        UNICODE_STRING *pStr = (UNICODE_STRING *)szBuffer;
-        DWORD dwLength = sizeof(szBuffer);
-        _PhpQueryProcessVariableSize(hProcess, VDProcessCommandLineInformation, szBuffer, &dwLength);
-        CloseHandle(hProcess);
-        return SafeStrCopyW(pStr->Buffer);
+        if (dwPid == 39364)
+        {
+            int ddd = 1234;
+        }
+
+        if (!_PhpQueryProcessVariableSize(hProcess, VDProcessCommandLineInformation, s_buffer, &size) && size > s_size)
+        {
+            s_size += (size + 1024);
+            delete []s_buffer;
+            s_buffer = new char[s_size];
+
+            size = s_size;
+            s_buffer[0] = 0;
+
+            _PhpQueryProcessVariableSize(hProcess, VDProcessCommandLineInformation, s_buffer, &size);
+        }
     }
     else
     {
@@ -1232,8 +1257,22 @@ const wchar_t *__stdcall GetProcessCommandLine(_In_ DWORD dwPid, BOOL bx64)
         {
             uFlag = PhpoCommandLine;
         }
-        return SafeStrCopyW(_GetProcressPebString(hProcess, uFlag).c_str());
+
+        size = s_size;
+        if (!_GetProcressPebString(hProcess, uFlag, s_buffer, &size) && size > s_size)
+        {
+            s_size += (size + 1024);
+            delete []s_buffer;
+            s_buffer = new char[s_size];
+
+            size = s_size;
+            s_buffer[0] = 0;
+            _GetProcressPebString(hProcess, uFlag, s_buffer, &size);
+        }
     }
+    CloseHandle(hProcess);
+    UNICODE_STRING *ptr = (UNICODE_STRING *)s_buffer;
+    return (LPCWSTR)ptr->Buffer;
 }
 
 BOOL __stdcall ShlParseShortcutsW(LPCWSTR wszLnkFile, PGDS_LINKINFO info)
@@ -1473,7 +1512,7 @@ std::mstring __stdcall GetStrFormJson(cJSON *json, const std::mstring &name) {
     cJSON *data = cJSON_GetObjectItem(json, name.c_str());
     if (data)
     {
-        if (data->type == cJSON_Object || data->type == cJSON_String)
+        if (data->type == cJSON_Object || data->type == cJSON_String || data->type == cJSON_Array)
         {
             return data->valuestring;
         }

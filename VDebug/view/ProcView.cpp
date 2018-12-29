@@ -115,35 +115,35 @@ DWORD CProcSelectView::RefushThread(LPVOID pParam)
 BOOL CProcSelectView::ProcHandlerW(PPROCESSENTRY32W pe, void *pParam)
 {
     CProcSelectView *ptr = (CProcSelectView *)pParam;
-    ProcInfo vProc;
-    vProc.m_wstrProcPath = GetProcPathByPid(pe->th32ProcessID);
+    ProcInfo *vProc = new ProcInfo();
+    vProc->m_wstrProcPath = GetProcPathByPid(pe->th32ProcessID);
 
-    if (vProc.m_wstrProcPath.empty())
+    if (vProc->m_wstrProcPath.empty())
     {
         return TRUE;
     }
 
-    vProc.m_dwPid = pe->th32ProcessID;
-    IsPeFileW(vProc.m_wstrProcPath .c_str(), &vProc.m_bIs64);
+    vProc->m_dwPid = pe->th32ProcessID;
+    IsPeFileW(vProc->m_wstrProcPath .c_str(), &vProc->m_bIs64);
 
-    vProc.m_wstrShowName = PathFindFileNameW(vProc.m_wstrProcPath.c_str());
-    if (!vProc.m_bIs64)
+    vProc->m_wstrShowName = PathFindFileNameW(vProc->m_wstrProcPath.c_str());
+    if (!vProc->m_bIs64)
     {
-        vProc.m_wstrShowName += L"(x86)";
+        vProc->m_wstrShowName += L"(x86)";
     }
     else
     {
-        vProc.m_wstrShowName += L"(x64)";
+        vProc->m_wstrShowName += L"(x64)";
     }
 
-    if (ustring::npos != vProc.m_wstrShowName.find(L"FeiQ."))
+    if (ustring::npos != vProc->m_wstrShowName.find(L"FeiQ."))
     {
         int d = 1;
     }
 
-    vProc.m_dwIcoIdex = ptr->GetFileIco(vProc.m_wstrProcPath);
-    ustring wstrCmd = GetProcessCommandLine(vProc.m_dwPid, vProc.m_bIs64);
-    //ustring wstrPath = vProc.m_wstrProcPath;
+    vProc->m_dwIcoIdex = ptr->GetFileIco(vProc->m_wstrProcPath);
+    ustring wstrCmd = GetProcessCommandLine(vProc->m_dwPid, vProc->m_bIs64);
+    //ustring wstrPath = vProc->m_wstrProcPath;
 
     ////去掉首尾的"
     //if (wstrCmd.c_str()[0] == L'"')
@@ -171,7 +171,7 @@ BOOL CProcSelectView::ProcHandlerW(PPROCESSENTRY32W pe, void *pParam)
     //        wstrCmd.erase(wstrCmd.size() - 1, 1);
     //    }
     //}
-    vProc.m_wstrCmd = wstrCmd;
+    vProc->m_wstrCmd = wstrCmd;
 
     HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION , FALSE, pe->th32ProcessID);
     if (hProcess)
@@ -185,7 +185,7 @@ BOOL CProcSelectView::ProcHandlerW(PPROCESSENTRY32W pe, void *pParam)
         FileTimeToLocalFileTime(&filetime, &local);
         SYSTEMTIME systime = {0};
         FileTimeToSystemTime(&local, &systime);
-        vProc.m_wstrStartTime.format(
+        vProc->m_wstrStartTime.format(
             L"%02d:%02d:%02d %03d",
             systime.wHour,
             systime.wMinute,
@@ -196,7 +196,7 @@ BOOL CProcSelectView::ProcHandlerW(PPROCESSENTRY32W pe, void *pParam)
     }
     else
     {
-        vProc.m_wstrStartTime = L"未知";
+        vProc->m_wstrStartTime = L"未知";
     }
     ptr->m_vTempInfo.push_back(vProc);
     return TRUE;
@@ -249,19 +249,18 @@ void CProcSelectView::RefushProc()
         CScopedLocker lock(this);
         //m_vProcInfo = m_vTempInfo;
         //增加的
-        for (vector<ProcInfo>::const_iterator it = m_vTempInfo.begin() ; it != m_vTempInfo.end() ; it++)
+        for (vector<ProcInfo *>::const_iterator it = m_vTempInfo.begin() ; it != m_vTempInfo.end() ; it++)
         {
-            ustring wstr = GetProcUnique(*it);
+            ProcInfo *ptr = *it;
+            ustring wstr = GetProcUnique(*ptr);
             if (IsProcInCache(wstr))
             {
+                delete ptr;
                 continue;
             }
             else
             {
                 InsertUnique(wstr);
-                ProcInfo *ptr = new ProcInfo();
-                *ptr = *it;
-
                 vector<ProcInfo *>::iterator it2;
                 int idex = 0;
                 switch (gs_eSortBy)
@@ -370,7 +369,7 @@ INT_PTR CProcSelectView::OnInitDlg(HWND hwnd, WPARAM wp, LPARAM lp)
     };
     SetCtlsCoord(hwnd, vArry, RTL_NUMBER_OF(vArry));
 
-     CloseHandle(CreateThread(NULL, 0, RefushThread, this, 0, NULL));
+    CloseHandle(CreateThread(NULL, 0, RefushThread, this, 0, NULL));
     return 0;
 }
 

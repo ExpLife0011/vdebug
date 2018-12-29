@@ -28,6 +28,7 @@ private:
     static void WINAPI OnProcExit(const std::ustring &event, const std::ustring &content, void *param);
     static void WINAPI OnModuleLoad(const std::ustring &event, const std::ustring &content, void *param);
     static void WINAPI OnModuleUnLoad(const std::ustring &event, const std::ustring &content, void *param);
+    static void WINAPI OnProcChanged(const std::ustring &event, const std::ustring &content, void *param);
 
 private:
     void RunProcInUser(LPCWSTR image, LPCWSTR cmd, DWORD session);

@@ -315,7 +315,7 @@ void CProcDbgger::OnCreateProcess(CREATE_PROCESS_DEBUG_INFO* pCreateProcessInfo)
     cJSON_AddStringToObject(content, "image", WtoU(GetInstance()->m_vDbgProcInfo.m_wstrPePath).c_str());
     cJSON_AddStringToObject(content, "baseAddr", FormatA("0x%p", pCreateProcessInfo->lpBaseOfImage).c_str());
     cJSON_AddStringToObject(content, "entryAddr", FormatA("0x%p", pCreateProcessInfo->lpStartAddress).c_str());
-    mstring event = MakeDbgEvent(DBG_EVENT_PROC_CREATE, cJSON_PrintUnformatted(content));
+    mstring event = MakeDbgEvent(DBG_EVENT_PROC_CHANGED, cJSON_PrintUnformatted(content));
     MsgSend(MQ_CHANNEL_DBG_SERVER, UtoW(event).c_str());;
 
     CSymbolTaskHeader task;

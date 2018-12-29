@@ -4,9 +4,9 @@
 #include <CommCtrl.h>
 #include <set>
 #include <vector>
-#include "ViewBase.h"
 #include <ComStatic/ComStatic.h>
 #include <ComLib/ComLib.h>
+#include "ViewBase.h"
 
 using namespace std;
 
@@ -92,7 +92,7 @@ protected:
     DWORD m_dwSelectPid;
 
     HIMAGELIST m_hImageList;
-    vector<ProcInfo> m_vTempInfo;
+    vector<ProcInfo *> m_vTempInfo;
     vector<ProcInfo *> m_vProcInfo;
     set<ustring> m_vProcUnique;
     map<ustring, int> m_PeIco;

@@ -10,6 +10,7 @@ public:
     virtual ~DbgServiceBase() {};
     virtual bool InitDbgService(const wchar_t *unique) = 0;
     virtual std::ustring DispatchCurDbgger(const std::ustring &cmd, const std::ustring &content) = 0;
+    virtual std::ustring DispatchSpecDbgger(DbggerType type, const std::ustring &cmd, const std::ustring &content) = 0;
     virtual HDbgCtrl RegisterDbgEvent(const wchar_t *event, pfnDbgEventProc pfn, void *param) = 0;
     virtual bool SetActivity(DbggerType type) = 0;
 

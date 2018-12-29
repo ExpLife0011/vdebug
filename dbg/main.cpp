@@ -6,6 +6,7 @@
 #include <runner/runner.h>
 #include "ProcDbgProxy.h"
 #include "symbol.h"
+#include "procmon.h"
 
 using namespace std;
 
@@ -32,6 +33,16 @@ static void _KeepAlive(const ustring &unique) {
 
     //clean cache
     SHDeleteValueW(HKEY_LOCAL_MACHINE, REG_VDEBUG_CACHE, unique.c_str());
+}
+
+static void _TestProc() {
+    class TestProcMon : public ProcListener {
+        virtual void OnProcChanged(HProcListener listener, const list<const ProcMonInfo *> &added, const list<DWORD> &killed) {
+            int dd = 1;
+        }
+    };
+
+    ProcMonitor::GetInstance()->RegisterListener(new TestProcMon());
 }
 
 int WINAPI WinMain(HINSTANCE hT, HINSTANCE hP, LPSTR szCmdLine, int iShow)

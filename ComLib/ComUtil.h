@@ -46,7 +46,7 @@ typedef BOOL (__stdcall* pfnModuleHandlerW)(PMODULEENTRY32W, void*);
 void __stdcall IterateModulesW(DWORD procId, pfnModuleHandlerW handler, void* lpParam);
 
 void __stdcall ErrMessage(const wchar_t *format, ...);
-const wchar_t *__stdcall GetProcessCommandLine(_In_ DWORD dwPid, BOOL bx64);
+std::ustring __stdcall GetProcessCommandLine(_In_ DWORD dwPid, BOOL bx64);
 
 typedef struct _GDS_LINKINFO
 {

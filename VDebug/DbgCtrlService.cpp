@@ -62,8 +62,8 @@ bool DbgCtrlService::InitCtrlService() {
 #endif
     //Debug Event Register
     m_pCtrlService->RegisterDbgEvent(DBG_EVENT_MSG, OnDbgMessage, this);
-    m_pCtrlService->RegisterDbgEvent(DBG_EVENT_PROC_CREATE, OnProcCreate, this);
-    m_pCtrlService->RegisterDbgEvent(DBG_EVENT_PROC_END, OnProcExit, this);
+    m_pCtrlService->RegisterDbgEvent(DBG_EVENT_DBG_PROC_CREATE, OnProcCreate, this);
+    m_pCtrlService->RegisterDbgEvent(DBG_EVENT_DBG_PROC_END, OnProcExit, this);
     m_pCtrlService->RegisterDbgEvent(DBG_EVENT_MODULE_LOAD, OnModuleLoad, this);
     m_pCtrlService->RegisterDbgEvent(DBG_EVENT_MODULE_UNLOAD, OnModuleUnLoad, this);
     return true;
@@ -231,4 +231,7 @@ void DbgCtrlService::OnModuleLoad(const ustring &event, const ustring &content, 
 }
 
 void DbgCtrlService::OnModuleUnLoad(const ustring &event, const ustring &content, void *param) {
+}
+
+void DbgCtrlService::OnProcChanged(const ustring &event, const ustring &content, void *param) {
 }

@@ -602,6 +602,18 @@
 				>
 			</File>
 		</Filter>
+		<Filter
+			Name="procmon"
+			>
+			<File
+				RelativePath=".\procmon.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\procmon.h"
+				>
+			</File>
+		</Filter>
 	</Files>
 	<Globals>
 	</Globals>

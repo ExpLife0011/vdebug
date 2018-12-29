@@ -41,8 +41,8 @@
     }
 }
 */
-#define DBG_EVENT_PROC_CREATE       L"proccreate"
-#define DBG_EVENT_PROC_END          L"procend"
+#define DBG_EVENT_DBG_PROC_CREATE       L"proccreate"
+#define DBG_EVENT_DBG_PROC_END          L"procend"
 
 /*
 {
@@ -109,4 +109,41 @@
 }
 */
 #define DBG_CTRL_RUNCMD              L"RunCmd"
+
+/*
+{
+    "cmd":"GetProcInfo",
+    "content":{
+        "start":1
+    }
+}
+*/
+#define DBG_TASK_GET_PROC           L"GetProcInfo"
+
+
+/*
+{
+    "cmd":"event",
+    "content":{
+        "type":"proc_add",
+        "data":{
+            "add":[
+                {
+                    "unique":12345,
+                    "pid":1234,
+                    "procPath":"d:\\abcdef.exe",
+                    "cmd":"abcdef",
+                    "startTime":"2018-11-11 11:11:11:123",
+                    "x64":1
+                },
+                ...
+            ],
+            "kill":[
+                1111,2222,3333
+            ]
+        }
+    }
+}
+*/
+#define DBG_EVENT_PROC_CHANGED      L"ProcChanged"
 #endif //DBGPROTOCOL_DBGCTRL_H_H_

@@ -121,6 +121,7 @@ void CPeFileOpenView::OnCommand(HWND hwnd, WPARAM wp, LPARAM lp)
             DbgCtrlService::GetInstance()->SetDebuggerStat(em_dbg_proc86);
         }
         DbgCtrlService::GetInstance()->ExecProc(wszBuffer, param);
+        EndDialog(m_hwnd, 0);
     }
 }
 
