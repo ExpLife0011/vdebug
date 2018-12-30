@@ -89,22 +89,17 @@
 }
 
 {
-    "cmd":"reply",
-    "content":{
-        "command":"kv",
-        "status":0,
-        "reason":"abcdef",
-        "result":{
-            [
-                {
-                    "retaddr":0x0xabcd12ff,
-                    "param0":0xabcd1234,
-                    "param1":0xabcd1234,
-                    "param2":0xabcd1233
-                },
-                ...
-            ]
-        }
+    "cmd": "reply",
+    "content": {
+        "command": "kv",
+        "status": 0,
+        "reason": "abcdef",
+        "result": [{
+            "retaddr": "0x0xabcd12ff",
+            "param0": "0xabcd1234",
+            "param1": "0xabcd1234",
+            "param2": "0xabcd1233"
+        }]
     }
 }
 */

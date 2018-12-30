@@ -48,6 +48,13 @@ void __stdcall IterateModulesW(DWORD procId, pfnModuleHandlerW handler, void* lp
 void __stdcall ErrMessage(const wchar_t *format, ...);
 std::ustring __stdcall GetProcessCommandLine(_In_ DWORD dwPid, BOOL bx64);
 
+//获取pe文件属性
+//Comments InternalName ProductName 
+//CompanyName LegalCopyright ProductVersion 
+//FileDescription LegalTrademarks PrivateBuild 
+//FileVersion OriginalFilename SpecialBuild 
+std::ustring __stdcall GetPeDescStr(const std::ustring &path, const std::ustring &attr);
+
 typedef struct _GDS_LINKINFO
 {
     WCHAR wszPath[MAX_PATH];
@@ -81,6 +88,23 @@ public:
 
 private:
     cJSON *mPtr;
+};
+
+class HandleAutoClose {
+public:
+    inline HandleAutoClose(HANDLE h) {
+        mHandle = h;
+    }
+
+    inline virtual ~HandleAutoClose() {
+        if (mHandle&& INVALID_HANDLE_VALUE != mHandle)
+        {
+            CloseHandle(mHandle);
+        }
+    }
+
+private:
+    HANDLE mHandle;
 };
 
 std::mstring __stdcall GetStrFormJson(cJSON *json, const std::mstring &name);

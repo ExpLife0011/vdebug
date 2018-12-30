@@ -23,15 +23,15 @@ MsgSend£ºÏûÏ¢·¢²¼½Ó¿Ú£¬µÚÒ»¸ö²ÎÊýÊÇÏûÏ¢Òª·¢²¼µ½µÄÆµµÀ£¬µÚ¶þ¸ö²ÎÊýÊÇÒª·¢²¼ÏûÏ¢µÄÄ
 #ifndef MQ_EXPORTS
     #if _WIN64 || WIN64
         #ifdef _DEBUG
-            #pragma comment(lib, "../Debug/x64/mq64.lib")
+            #pragma comment(lib, "../Debug/mq64.lib")
         #else
-            #pragma comment(lib, "../Release/x64/mq64.lib")
+            #pragma comment(lib, "../Release/mq64.lib")
         #endif //_DEBUG
     #else
         #ifdef _DEBUG
-            #pragma comment(lib, "../Debug/x32/mq32.lib")
+            #pragma comment(lib, "../Debug/mq32.lib")
         #else
-            #pragma comment(lib, "../Release/x32/mq32.lib")
+            #pragma comment(lib, "../Release/mq32.lib")
         #endif //_DEBUG
     #endif //_WIN64
 #endif //MQ_EXPORTS

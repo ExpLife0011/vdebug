@@ -76,6 +76,12 @@ BOOL ProcMonitor::ProcHandlerW(PPROCESSENTRY32W pe, void *pParam)
     ProcMonInfo *newProc = new ProcMonInfo();
     newProc->procUnique = unique;
     newProc->procPath = GetProcPathByPid(pe->th32ProcessID);
+    newProc->procDesc = GetPeDescStr(newProc->procPath, L"FileDescription");
+
+    if (newProc->procDesc.size())
+    {
+        int dd = 1234;
+    }
 
     if (newProc->procPath.empty())
     {
@@ -84,10 +90,16 @@ BOOL ProcMonitor::ProcHandlerW(PPROCESSENTRY32W pe, void *pParam)
     }
 
     newProc->procPid = pe->th32ProcessID;
+    newProc->parentPid = pe->th32ParentProcessID;
     IsPeFileW(newProc->procPath.c_str(), &newProc->x64);
 
     newProc->procCmd = GetProcessCommandLine(newProc->procPid, newProc->x64);
     HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION , FALSE, pe->th32ProcessID);
+    HandleAutoClose abc(hProcess);
+
+    GetProcSidAndUser(hProcess, newProc->procUserSid, newProc->procUser);
+    ProcessIdToSessionId(pe->th32ProcessID, &newProc->sessionId);
+
     if (hProcess)
     {
         FILETIME filetime = {0};
@@ -106,7 +118,6 @@ BOOL ProcMonitor::ProcHandlerW(PPROCESSENTRY32W pe, void *pParam)
             systime.wSecond,
             systime.wMilliseconds
             );
-        CloseHandle(hProcess);
     }
     else
     {
@@ -114,6 +125,61 @@ BOOL ProcMonitor::ProcHandlerW(PPROCESSENTRY32W pe, void *pParam)
     }
     ptr->addedProc[unique] = newProc;
     return TRUE;
+}
+
+bool ProcMonitor::GetProcSidAndUser(HANDLE process, ustring &sid, ustring &user) {
+    HANDLE token = NULL;
+    if(!OpenProcessToken(process, TOKEN_QUERY, &token)){
+        return false;
+    }
+
+    HandleAutoClose abc(token);
+
+    DWORD bufSize = 0;
+    char tokenInfoBuffer[256] = {0};
+    PTOKEN_USER tokenInfo = (PTOKEN_USER)tokenInfoBuffer;
+    if(!GetTokenInformation(
+        token,
+        TokenUser,
+        tokenInfoBuffer,
+        sizeof(tokenInfoBuffer),
+        &bufSize
+        )) 
+    {
+        return false;
+    }
+
+    typedef BOOL (WINAPI* pfnConvertSidToStringSidA)(PSID, LPSTR *);
+
+    HMODULE m1 = GetModuleHandleA("Advapi32.dll");
+    if (!m1)
+    {
+        m1 = LoadLibraryA("Advapi32.dll");
+    }
+
+    if (!m1)
+    {
+        return false;
+    }
+
+    pfnConvertSidToStringSidA pfn = (pfnConvertSidToStringSidA)GetProcAddress(m1,"ConvertSidToStringSidA");
+    LPSTR sidStr = NULL;
+    pfn(tokenInfo->User.Sid, (LPSTR *)&sidStr);
+
+    char buf1[512] = {0};
+    DWORD size1 = 512;
+    char buf2[512] = {0};
+    DWORD size2 = 512;
+    SID_NAME_USE type;
+    LookupAccountSidA(NULL, tokenInfo->User.Sid, buf1, &size1, buf2, &size2, &type);
+
+    sid = AtoW(sidStr);
+    user = FormatW(L"%hs\\%hs", buf2, buf1);
+    if (sidStr)
+    {
+        LocalFree((HLOCAL)sidStr);
+    }
+    return true;
 }
 
 void ProcMonitor::RefushProc() {

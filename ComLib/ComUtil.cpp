@@ -318,6 +318,88 @@ BOOL __stdcall IsPeFileW(LPCWSTR fileName, BOOL* b64)
     return bRet;
 }
 
+//获取pe文件属性
+ustring __stdcall GetPeDescStr(const ustring &path, const ustring &attr)
+{
+    struct LanguagePage
+    {
+        WORD m_language;
+        WORD m_page;
+    };
+
+    if (path.empty() || attr.empty())
+    {
+        return L"";
+    }
+
+    char buffer[2096];
+    buffer[0] = 0;
+    char *ptr = buffer;
+    DWORD size = 0;
+    DWORD ret = 0;
+    //获取版本信息大小
+    size = GetFileVersionInfoSizeA(WtoA(path).c_str(), NULL);
+    if (size == 0) 
+    { 
+        return L"";
+    }
+
+    if (size > sizeof(buffer))
+    {
+        ptr = new char[size + 1];
+    }
+    ptr[0] = 0;
+
+    //获取版本信息
+    ret = GetFileVersionInfoA(WtoA(path).c_str(), NULL, size, ptr);
+
+    LPVOID pInfo = NULL;
+    BOOL res = FALSE;
+    ustring result;
+    UINT len = 0;
+    do 
+    {
+        if(ret == 0) 
+        { 
+            break;
+        }
+
+        len = 0;
+        if (0 == VerQueryValueA(ptr, "\\VarFileInfo\\Translation", &pInfo, &len))
+        {
+            break;
+        }
+
+        UINT it = 0;
+        for (it = 0 ; it < (len / sizeof(LanguagePage)) ; it++)
+        {
+            LanguagePage *uu = ((LanguagePage *)(pInfo) + it);
+            const char *data = NULL;
+            UINT count = 0;
+            mstring vv;
+            vv.format("\\StringFileInfo\\%04x%04x\\%hs", uu->m_language, uu->m_page, WtoA(attr).c_str());
+            if (0 != VerQueryValueA(ptr, vv.c_str(), (LPVOID *)(&data), &count))
+            {
+                if (count > 0)
+                {
+                    result = AtoW(data);
+                    res = TRUE;
+                    break;
+                }
+            } else {
+                int err = GetLastError();
+                int ee = 123;
+            }
+        }
+    } while (FALSE);
+
+    if (ptr && ptr != buffer)
+    {
+        delete []ptr;
+    }
+    return result;
+}
+
 BOOL __stdcall GetPeVersionW(LPCWSTR lpszFileName, LPWSTR outBuf, UINT size)
 {
     WCHAR* szVersionBuffer = NULL;
@@ -1272,6 +1354,10 @@ ustring __stdcall GetProcessCommandLine(_In_ DWORD dwPid, BOOL bx64)
     }
     CloseHandle(hProcess);
     UNICODE_STRING *ptr = (UNICODE_STRING *)s_buffer;
+    if (!ptr || !ptr->Buffer)
+    {
+        return L"";
+    }
     return (LPCWSTR)ptr->Buffer;
 }
 

@@ -18,11 +18,18 @@ struct ProcMonInfo {
     std::ustring procCmd;
     BOOL x64;
     std::ustring startTime;
+    DWORD sessionId;
+    DWORD parentPid;
+    std::ustring procDesc;
+    std::ustring procUser;
+    std::ustring procUserSid;
 
     ProcMonInfo() {
         procUnique = 0;
         procPid = 0;
+        sessionId = 0;
         x64 = FALSE;
+        parentPid = 0;
     }
 };
 
@@ -50,6 +57,7 @@ public:
 
 private:
     void RefushProc();
+    static bool GetProcSidAndUser(HANDLE process, std::ustring &sid, std::ustring &user);
     static BOOL WINAPI ProcHandlerW(PPROCESSENTRY32W pe, void *pParam);
     static DWORD WINAPI MonitorThread(LPVOID pParam);
     void DispatchProcChanged();

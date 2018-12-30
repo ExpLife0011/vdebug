@@ -58,7 +58,7 @@ int WINAPI WinMain(HINSTANCE hT, HINSTANCE hP, LPSTR szCmdLine, int iShow)
 
     ustring cmd = args[1];
     LocalFree(args);
-    if (!cmd.startwith(L"runner"))
+    if (!cmd.startwith(L"dbg"))
     {
         return 0;
     }
@@ -84,6 +84,8 @@ int WINAPI WinMain(HINSTANCE hT, HINSTANCE hP, LPSTR szCmdLine, int iShow)
     LoadLibraryW(path);
 #endif
     InitSymbolHlpr(L"H:\\mysymbols");
+
+    _TestProc();
 
     size_t pos = cmd.rfind('_');
     ustring unique = cmd.substr(pos + 1, cmd.size() - pos - 1);

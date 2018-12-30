@@ -119,7 +119,10 @@ ustring ProcDbgProxy::GetProcInfo(const ustring &cmd, const ustring &content, vo
                     "procPath":"d:\\abcdef.exe",
                     "cmd":"abcdef",
                     "startTime":"2018-11-11 11:11:11:123",
-                    "x64":1
+                    "x64":1,
+                    "session":1,
+                    "user":"DESKTOP-DCTRL5K\\Administrator",
+                    "sid":"S-1-5-21-2669793992-3689076831-3814312677-500"
                 },
                 ...
             ],
@@ -145,6 +148,9 @@ void ProcDbgProxy::OnProcChanged(HProcListener listener, const list<const ProcMo
         cJSON_AddStringToObject(node, "cmd", WtoU(ptr->procCmd).c_str());
         cJSON_AddStringToObject(node, "startTime", WtoU(ptr->startTime).c_str());
         cJSON_AddNumberToObject(node, "x64", int(ptr->x64));
+        cJSON_AddNumberToObject(node, "session", ptr->sessionId);
+        cJSON_AddStringToObject(node, "user", WtoU(ptr->procUser).c_str());
+        cJSON_AddStringToObject(node, "sid", WtoU(ptr->procUserSid).c_str());
         cJSON_AddItemToArray(add, node);
     }
     cJSON_AddItemToObject(data, "add", add);

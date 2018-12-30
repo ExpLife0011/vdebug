@@ -23,6 +23,7 @@
 #define IDC_LIST_PROC                   1004
 #define IDC_BTN_ATTACH                  1005
 #define IDC_BTN_OPEN                    1006
+#define IDC_BTN_ATTACH2                 1006
 #define IDC_BTN_REFUSH                  1007
 #define IDC_EDIT2                       1008
 #define IDC_EDT_FILTER                  1008

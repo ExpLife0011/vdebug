@@ -8,8 +8,8 @@
 #define SFV_NOTIFY_NAME L"Global\\{784BC5BC-25D1-4861-8FED-38CFF9428877}"
 
 #define PATH_SERVICE_CACHE L"software\\vdebug\\runner"
-#define RUNNER_EVENT32  (L"runner32_%ls")
-#define RUNNER_EVENT64  (L"runner64_%ls")
+#define RUNNER_EVENT32  (L"dbg32_%ls")
+#define RUNNER_EVENT64  (L"dbg64_%ls")
 #define SERVICE_EVENT   (L"service_%ls")
 
 #if WIN64 || _WIN64

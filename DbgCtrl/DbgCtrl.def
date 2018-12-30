@@ -1,0 +1,6 @@
+EXPORTS
+MakeDbgEvent
+MakeDbgRequest
+MakeDbgRelpy
+IsDbgReplySucc
+ParserDbgReply
