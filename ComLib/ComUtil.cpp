@@ -1598,9 +1598,11 @@ std::mstring __stdcall GetStrFormJson(cJSON *json, const std::mstring &name) {
     cJSON *data = cJSON_GetObjectItem(json, name.c_str());
     if (data)
     {
-        if (data->type == cJSON_Object || data->type == cJSON_String || data->type == cJSON_Array)
+        if (data->type == cJSON_String)
         {
             return data->valuestring;
+        } else {
+            return cJSON_PrintUnformatted(data);
         }
     }
     return "";

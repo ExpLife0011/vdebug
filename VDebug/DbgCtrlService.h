@@ -20,6 +20,10 @@ public:
     bool DetachProc();
     bool RunCmdInCtrlService(const std::ustring &command);
 
+    //proc monitor
+    bool StartProcMon();
+    void StopProcMon();
+
 private:
     void OnCmdReply(const std::ustring &content);
     //Debug Event
@@ -37,5 +41,6 @@ private:
     std::ustring m_DbgChannel;
     std::ustring m_unique;
     DbgServiceBase *m_pCtrlService;
+    bool m_procMon;
 };
 #endif //DBGSERVICE_VDEBUG_H_H_

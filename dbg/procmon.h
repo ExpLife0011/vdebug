@@ -11,28 +11,6 @@
 
 typedef DWORD HProcListener;
 
-struct ProcMonInfo {
-    DWORD procUnique;
-    DWORD procPid;
-    std::ustring procPath;
-    std::ustring procCmd;
-    BOOL x64;
-    std::ustring startTime;
-    DWORD sessionId;
-    DWORD parentPid;
-    std::ustring procDesc;
-    std::ustring procUser;
-    std::ustring procUserSid;
-
-    ProcMonInfo() {
-        procUnique = 0;
-        procPid = 0;
-        sessionId = 0;
-        x64 = FALSE;
-        parentPid = 0;
-    }
-};
-
 class ProcListener {
 public:
     virtual void OnProcChanged(HProcListener listener, const std::list<const ProcMonInfo *> &added, const std::list<DWORD> &killed) = 0;

@@ -35,7 +35,11 @@ HProcListener ProcMonitor::RegisterListener(ProcListener *listener) {
         tmp.m_ProcCache.insert(it->first);
     }
     m_register[tmp.m_index] = tmp;
-    listener->OnProcChanged(tmp.m_index, added, list<DWORD>());
+
+    if (added.size() > 0)
+    {
+        listener->OnProcChanged(tmp.m_index, added, list<DWORD>());
+    }
 
     if (!m_hMonitorThread)
     {
@@ -224,9 +228,12 @@ void ProcMonitor::RefushProc() {
             m_ProcInfo[it->first] = it->second;
         }
 
-        for (map<HProcListener, ProcRegisterInfo>::const_iterator ij = m_register.begin() ; ij != m_register.end() ; ij++)
+        if (added.size() > 0 || killed.size() > 0)
         {
-            ij->second.m_listener->OnProcChanged(ij->first, added, killed);
+            for (map<HProcListener, ProcRegisterInfo>::const_iterator ij = m_register.begin() ; ij != m_register.end() ; ij++)
+            {
+                ij->second.m_listener->OnProcChanged(ij->first, added, killed);
+            }
         }
     }
 }

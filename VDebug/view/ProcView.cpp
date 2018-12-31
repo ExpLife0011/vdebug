@@ -1,7 +1,9 @@
-#include "ProcView.h"
-#include "../resource.h"
+#include <Windows.h>
 #include <commctrl.h>
 #include <ComLib/ComLib.h>
+#include "ProcView.h"
+#include "DbgCtrlService.h"
+#include "../resource.h"
 
 enum ProcSortType
 {
@@ -14,6 +16,8 @@ enum ProcSortType
 
 static ProcSortType gs_eSortBy = em_sortby_init;
 #define MSG_REFUSH      (WM_USER + 5001)
+
+map<ustring, HICON> CProcSelectView::ms_peIcon;
 
 BOOL CProcSelectView::SetFont(HFONT hFont)
 {
@@ -93,6 +97,7 @@ void CProcSelectView::InitListCtrl()
     SendMessageW(m_hProcList, LVM_INSERTCOLUMNW, 4, (LPARAM)&col);
 }
 
+/*
 DWORD CProcSelectView::RefushThread(LPVOID pParam)
 {
     CProcSelectView *ptr = (CProcSelectView *)pParam;
@@ -111,96 +116,7 @@ DWORD CProcSelectView::RefushThread(LPVOID pParam)
     CoUninitialize();
     return 0;
 }
-
-BOOL CProcSelectView::ProcHandlerW(PPROCESSENTRY32W pe, void *pParam)
-{
-    CProcSelectView *ptr = (CProcSelectView *)pParam;
-    ProcInfo *vProc = new ProcInfo();
-    vProc->m_wstrProcPath = GetProcPathByPid(pe->th32ProcessID);
-
-    if (vProc->m_wstrProcPath.empty())
-    {
-        return TRUE;
-    }
-
-    vProc->m_dwPid = pe->th32ProcessID;
-    IsPeFileW(vProc->m_wstrProcPath .c_str(), &vProc->m_bIs64);
-
-    vProc->m_wstrShowName = PathFindFileNameW(vProc->m_wstrProcPath.c_str());
-    if (!vProc->m_bIs64)
-    {
-        vProc->m_wstrShowName += L"(x86)";
-    }
-    else
-    {
-        vProc->m_wstrShowName += L"(x64)";
-    }
-
-    if (ustring::npos != vProc->m_wstrShowName.find(L"FeiQ."))
-    {
-        int d = 1;
-    }
-
-    vProc->m_dwIcoIdex = ptr->GetFileIco(vProc->m_wstrProcPath);
-    ustring wstrCmd = GetProcessCommandLine(vProc->m_dwPid, vProc->m_bIs64);
-    //ustring wstrPath = vProc->m_wstrProcPath;
-
-    ////去掉首尾的"
-    //if (wstrCmd.c_str()[0] == L'"')
-    //{
-    //    wstrCmd.erase(0, 1);
-    //}
-    //
-    //if (0 == wstrCmd.comparei(wstrPath))
-    //{
-    //    wstrCmd.erase(0, wstrPath.size());
-    //}
-    //wstrCmd.trim();
-    //if (wstrCmd.size())
-    //{
-    //    if (wstrCmd[0] == L'"')
-    //    {
-    //        wstrCmd.erase(0, 1);
-    //    }
-    //}
-
-    //if (wstrCmd.size())
-    //{
-    //    if (wstrCmd[wstrCmd.size() - 1] == L'"')
-    //    {
-    //        wstrCmd.erase(wstrCmd.size() - 1, 1);
-    //    }
-    //}
-    vProc->m_wstrCmd = wstrCmd;
-
-    HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION , FALSE, pe->th32ProcessID);
-    if (hProcess)
-    {
-        FILETIME filetime = {0};
-        FILETIME exittime = {0};
-        FILETIME kerneltime = {0};
-        FILETIME usertime = {0};
-        GetProcessTimes(hProcess, &filetime, &exittime, &kerneltime, &usertime);
-        FILETIME local = {0};
-        FileTimeToLocalFileTime(&filetime, &local);
-        SYSTEMTIME systime = {0};
-        FileTimeToSystemTime(&local, &systime);
-        vProc->m_wstrStartTime.format(
-            L"%02d:%02d:%02d %03d",
-            systime.wHour,
-            systime.wMinute,
-            systime.wSecond,
-            systime.wMilliseconds
-            );
-        CloseHandle(hProcess);
-    }
-    else
-    {
-        vProc->m_wstrStartTime = L"未知";
-    }
-    ptr->m_vTempInfo.push_back(vProc);
-    return TRUE;
-}
+*/
 
 int CProcSelectView::GetFileIco(const ustring &wstrFile)
 {
@@ -209,10 +125,12 @@ int CProcSelectView::GetFileIco(const ustring &wstrFile)
         return m_PeIco[wstrFile];
     }
 
+    CoInitialize(NULL);
     SHFILEINFOW info = {0};
     HICON hIcon = NULL;
     if (!SHGetFileInfoW(wstrFile.c_str(), 0, &info, sizeof(info), SHGFI_ICON))
     {
+        CoUninitialize();
         int e = GetLastError();
         return -1;
     }
@@ -220,25 +138,62 @@ int CProcSelectView::GetFileIco(const ustring &wstrFile)
     hIcon = info.hIcon;
     int iIdex = ImageList_AddIcon(m_hImageList, hIcon);
     m_PeIco[wstrFile] = iIdex;
-    m_vIcons.insert(info.hIcon);
+    //m_vIcons.insert(info.hIcon);
+    CoUninitialize();
     return iIdex;
 }
 
-bool CProcSelectView::IsProcInCache(const ustring &wstrUnique)
-{
-    return (m_vProcUnique.end() != m_vProcUnique.find(wstrUnique));
+void CProcSelectView::OnProcChanged(const list<ProcMonInfo *> &added, const list<DWORD> &killed) {
+    CScopedLocker lock(this);
+    list<ProcMonInfo *>::const_iterator it;
+    if (!IsWindow(m_hwnd))
+    {
+        for (it = added.begin() ; it != added.end() ; it++)
+        {
+            delete *it;
+        }
+        return;
+    }
+
+    for (it = added.begin() ; it != added.end() ; it++)
+    {
+        m_procAll.push_back(*it);
+    }
+
+    if (killed.size() > 0)
+    {
+        for (vector<ProcMonInfo *>::const_iterator ij = m_procAll.begin() ; ij != m_procAll.end() ;)
+        {
+            ProcMonInfo *ptr = *ij;
+            bool del = false;
+            for (list<DWORD>::const_iterator ij2 = killed.begin() ; ij2 != killed.end() ;ij2++)
+            {
+                if (ptr->procUnique == *ij2)
+                {
+                    del = true;
+                    break;
+                }
+            }
+
+            if (del)
+            {
+                ij = m_procAll.erase(ij);
+            } else {
+                ij++;
+            }
+        }
+    }
 }
 
-void CProcSelectView::InsertUnique(const ustring &wstrUnique)
-{
-    m_vProcUnique.insert(wstrUnique);
+void CProcSelectView::DeleteProcCache() {
+    CScopedLocker lock(this);
+    for (vector<ProcMonInfo *>::const_iterator it = m_procAll.begin() ; it != m_procAll.end() ; it++) {
+        delete *it;
+    }
+    m_procAll.clear();
 }
 
-ustring CProcSelectView::GetProcUnique(const ProcInfo &info)
-{
-    return ustring(FormatW(L"%d:%ls", info.m_dwPid, info.m_wstrShowName.c_str())).makelower();
-}
-
+/*
 void CProcSelectView::RefushProc()
 {
     PVOID ptr = DisableWow64Red();
@@ -347,10 +302,12 @@ void CProcSelectView::RefushProc()
     PostMessageW(m_hProcList, LVM_SETITEMCOUNT, m_vProcInfo.size(), LVSICF_NOSCROLL | LVSICF_NOINVALIDATEALL);
     PostMessageW(m_hProcList, LVM_REDRAWITEMS, 0, m_vProcInfo.size());
 }
+*/
 
 INT_PTR CProcSelectView::OnInitDlg(HWND hwnd, WPARAM wp, LPARAM lp)
 {
     extern HINSTANCE g_hInstance;
+    m_hParent = GetParent(hwnd);
     CentreWindow(m_hwnd, m_hParent);
     m_hProcList = GetDlgItem(hwnd, IDC_LIST_PROC);
     m_hEdit = GetDlgItem(hwnd, IDC_EDT_MSG);
@@ -368,8 +325,8 @@ INT_PTR CProcSelectView::OnInitDlg(HWND hwnd, WPARAM wp, LPARAM lp)
         {IDC_BTN_ATTACH, NULL, 1, 1, 0, 0}
     };
     SetCtlsCoord(hwnd, vArry, RTL_NUMBER_OF(vArry));
-
-    CloseHandle(CreateThread(NULL, 0, RefushThread, this, 0, NULL));
+    DeleteProcCache();
+    DbgCtrlService::GetInstance()->StartProcMon();
     return 0;
 }
 
@@ -381,6 +338,7 @@ VOID CProcSelectView::OnGetListCtrlDisplsy(IN OUT NMLVDISPINFOW* ptr)
     do
     {
         CScopedLocker lock(this);
+        /*
         ProcInfo *pInfo;
         {
             if (iItm >= (int)m_vProcInfo.size())
@@ -413,12 +371,13 @@ VOID CProcSelectView::OnGetListCtrlDisplsy(IN OUT NMLVDISPINFOW* ptr)
         }
 
         ptr->item.pszText = (LPWSTR)s_wstrBuf.c_str();
-
+        */
     } while (FALSE);
 }
 
 VOID CProcSelectView::OnListColumnClick(NMLISTVIEW* ptr)
 {
+    /*
     int id = ptr->iSubItem;
     CScopedLocker lock(this);
     vector<ProcInfo *>::iterator it;
@@ -510,6 +469,7 @@ VOID CProcSelectView::OnListColumnClick(NMLISTVIEW* ptr)
     default:
         break;
     }
+    */
 }
 
 INT_PTR CProcSelectView::OnNotify(HWND hwnd, WPARAM wp, LPARAM lp)
@@ -547,8 +507,8 @@ INT_PTR CProcSelectView::OnCommand(HWND hwnd, WPARAM wp, LPARAM lp)
     DWORD dwId = LOWORD(wp);
     if (IDC_BTN_REFUSH == dwId)
     {
-        SetEvent(m_hNotify);
     }
+
     else if (IDC_BTN_ATTACH == dwId)
     {
         int iSelect = (int)SendMessageW(m_hProcList, LVM_GETNEXTITEM, -1, LVNI_SELECTED);
@@ -558,9 +518,9 @@ INT_PTR CProcSelectView::OnCommand(HWND hwnd, WPARAM wp, LPARAM lp)
         }
         else
         {
-            CScopedLocker lock(this);
-            m_dwSelectPid = m_vProcInfo[iSelect]->m_dwPid;
-            PostMessageW(m_hwnd, WM_CLOSE, 0, 0);
+            //CScopedLocker lock(this);
+            //m_dwSelectPid = m_vProcInfo[iSelect]->m_dwPid;
+            //PostMessageW(m_hwnd, WM_CLOSE, 0, 0);
         }
     }
     return 0;
@@ -571,24 +531,9 @@ INT_PTR CProcSelectView::OnClose(HWND hwnd, WPARAM wp, LPARAM lp)
     ImageList_Destroy(m_hImageList);
     m_hImageList = NULL;
 
-    CScopedLocker lock(this);
-    m_vTempInfo.clear();
-
-    for (vector<ProcInfo *>::const_iterator it = m_vProcInfo.begin() ; it != m_vProcInfo.end() ; it++)
-    {
-        delete *it;
-    }
-    m_vProcInfo.clear();
-    m_vProcUnique.clear();
     m_PeIco.clear();
-    gs_eSortBy = em_sortby_init;
-    set<HICON>::iterator it;
-    for (it = m_vIcons.begin() ; it != m_vIcons.end() ; it++)
-    {
-        DestroyIcon(*it);
-    }
-    m_vIcons.clear();
-    SetEvent(m_hExit);
+    CScopedLocker lock(this);
+    DeleteProcCache();
     return 0;
 }
 

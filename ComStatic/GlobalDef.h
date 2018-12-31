@@ -26,4 +26,27 @@ enum DebuggerStatus
     em_dbg_status_busy,
     em_dbg_status_free
 };
+
+struct ProcMonInfo {
+    DWORD procUnique;
+    DWORD procPid;
+    std::ustring procPath;
+    std::ustring procCmd;
+    BOOL x64;
+    std::ustring startTime;
+    DWORD sessionId;
+    DWORD parentPid;
+    std::ustring procDesc;
+    std::ustring procUser;
+    std::ustring procUserSid;
+
+    ProcMonInfo() {
+        procUnique = 0;
+        procPid = 0;
+        sessionId = 0;
+        x64 = FALSE;
+        parentPid = 0;
+    }
+};
+
 #endif //GLOBALDEF_H_H_

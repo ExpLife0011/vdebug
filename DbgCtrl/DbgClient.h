@@ -10,7 +10,7 @@ public:
     virtual ~DbgClientBase() {};
     virtual bool InitClient(DbggerType type, const wchar_t *unique) = 0;
     virtual HDbgCtrl RegisterCtrlHandler(const wchar_t *cmd, pfnDbgClientProc pfn, void *param) = 0;
-
+    virtual bool ReportDbgEvent(const std::utf8_mstring &content) = 0;
     static DbgClientBase *__stdcall newInstance();
 }; 
 #endif //DBGCLIENT_DBGCTRL_H_H_

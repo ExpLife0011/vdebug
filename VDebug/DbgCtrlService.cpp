@@ -7,6 +7,7 @@
 #include "MainView.h"
 
 DbgCtrlService::DbgCtrlService() {
+    m_procMon = false;
 }
 
 DbgCtrlService::~DbgCtrlService() {
@@ -66,7 +67,21 @@ bool DbgCtrlService::InitCtrlService() {
     m_pCtrlService->RegisterDbgEvent(DBG_EVENT_DBG_PROC_END, OnProcExit, this);
     m_pCtrlService->RegisterDbgEvent(DBG_EVENT_MODULE_LOAD, OnModuleLoad, this);
     m_pCtrlService->RegisterDbgEvent(DBG_EVENT_MODULE_UNLOAD, OnModuleUnLoad, this);
+    m_pCtrlService->RegisterDbgEvent(DBG_EVENT_PROC_CHANGED, OnProcChanged, this);
+    StopProcMon();
     return true;
+}
+
+bool DbgCtrlService::StartProcMon() {
+    m_procMon = true;
+    m_pCtrlService->DispatchSpecDbgger(em_dbg_proc86, DBG_TASK_GET_PROC, L"{\"start\":1}");
+    return true;
+}
+
+void DbgCtrlService::StopProcMon() {
+    m_procMon = false;
+    m_pCtrlService->DispatchSpecDbgger(em_dbg_proc86, DBG_TASK_GET_PROC, L"{\"start\":0}");
+    return;
 }
 
 void DbgCtrlService::RunProcInUser(LPCWSTR image, LPCWSTR cmd, DWORD session) {
@@ -233,5 +248,87 @@ void DbgCtrlService::OnModuleLoad(const ustring &event, const ustring &content, 
 void DbgCtrlService::OnModuleUnLoad(const ustring &event, const ustring &content, void *param) {
 }
 
+/*
+{
+    "cmd":"event",
+    "content":{
+        "type":"proc_add",
+        "data":{
+            "add":[
+                {
+                    "unique":12345,
+                    "pid":1234,
+                    "procPath":"d:\\abcdef.exe",
+                    "procDesc":"desc",
+                    "cmd":"abcdef",
+                    "startTime":"2018-11-11 11:11:11:123",
+                    "x64":1,
+                    "session":1,
+                    "user":"DESKTOP-DCTRL5K\\Administrator",
+                    "sid":"S-1-5-21-2669793992-3689076831-3814312677-500"
+                },
+                ...
+            ],
+            "kill":[
+                1111,2222,3333
+            ]
+        }
+    }
+}
+*/
 void DbgCtrlService::OnProcChanged(const ustring &event, const ustring &content, void *param) {
+    CProcSelectView *pProcView = GetProcView();
+    if (!IsWindow(pProcView->GetWndHandle()))
+    {
+        return;
+    }
+
+    cJSON *data = cJSON_Parse(WtoU(content).c_str());
+    JsonAutoDelete abc(data);
+    cJSON *add = cJSON_GetObjectItem(data, "add");
+    cJSON *kill = cJSON_GetObjectItem(data, "kill");
+
+    list<ProcMonInfo *> addSet;
+    list<DWORD> killSet;
+    if (add && add->type == cJSON_Array)
+    {
+        for (cJSON *it = add->child; it != NULL ; it = it->next)
+        {
+            /*
+            {
+                "unique":12345,
+                "pid":1234,
+                "procPath":"d:\\abcdef.exe",
+                "procDesc":"desc",
+                "cmd":"abcdef",
+                "startTime":"2018-11-11 11:11:11:123",
+                "x64":1,
+                "session":1,
+                "user":"DESKTOP-DCTRL5K\\Administrator",
+                "sid":"S-1-5-21-2669793992-3689076831-3814312677-500"
+            }
+            */
+            ProcMonInfo *newProc = new ProcMonInfo();
+            newProc->procUnique = GetIntFromJson(it, "unique");
+            newProc->procPid = GetIntFromJson(it, "pid");
+            newProc->procPath = UtoW(GetStrFormJson(it, "procPath"));
+            newProc->procDesc = UtoW(GetStrFormJson(it, "procDesc"));
+            newProc->procCmd = UtoW(GetStrFormJson(it, "cmd"));
+            newProc->startTime = UtoW(GetStrFormJson(it, "startTime"));
+            newProc->x64 = GetIntFromJson(it, "x64");
+            newProc->sessionId = GetIntFromJson(it, "session");
+            newProc->procUser = UtoW(GetStrFormJson(it, "user"));
+            newProc->procUserSid = UtoW(GetStrFormJson(it, "sid"));
+            addSet.push_back(newProc);
+        }
+    }
+
+    if (kill && kill->type == cJSON_Array)
+    {
+        for (cJSON *ij = kill->child ; ij != NULL ; ij = ij->next)
+        {
+            killSet.push_back(ij->valueint);
+        }
+    }
+    pProcView->OnProcChanged(addSet, killSet);
 }

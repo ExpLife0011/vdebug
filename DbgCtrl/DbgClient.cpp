@@ -22,6 +22,7 @@ public:
     virtual ~DbgClient();
     virtual bool InitClient(DbggerType type, const wchar_t *unique);
     virtual HDbgCtrl RegisterCtrlHandler(const wchar_t *cmd, pfnDbgClientProc pfn, void *param);
+    virtual bool ReportDbgEvent(const std::utf8_mstring &content);
 
 private:
     static LPCWSTR WINAPI ClientNotify(LPCWSTR wszChannel, LPCWSTR wszContent, void *pParam);
@@ -77,6 +78,11 @@ bool DbgClient::InitClient(DbggerType type, const wchar_t *unique) {
 
     MsgInitClient(m_ServPort);
     MsgRegister(channel.c_str(), ClientNotify, this);
+    return true;
+}
+
+bool DbgClient::ReportDbgEvent(const std::utf8_mstring &content) {
+    MsgSend(MQ_CHANNEL_DBG_SERVER, UtoW(content).c_str());
     return true;
 }
 

@@ -103,7 +103,7 @@ ustring ProcDbgProxy::GetProcInfo(const ustring &cmd, const ustring &content, vo
     } else {
         ProcMonitor::GetInstance()->UnRegisterListener(GetInstance()->m_hProcListener);
     }
-    return L"";
+    return MakeDbgRelpy(0, "success", "");
 }
 
 /*
@@ -117,6 +117,7 @@ ustring ProcDbgProxy::GetProcInfo(const ustring &cmd, const ustring &content, vo
                     "unique":12345,
                     "pid":1234,
                     "procPath":"d:\\abcdef.exe",
+                    "procDesc":"desc",
                     "cmd":"abcdef",
                     "startTime":"2018-11-11 11:11:11:123",
                     "x64":1,
@@ -145,6 +146,7 @@ void ProcDbgProxy::OnProcChanged(HProcListener listener, const list<const ProcMo
         cJSON_AddNumberToObject(node, "unique", ptr->procUnique);
         cJSON_AddNumberToObject(node, "pid", ptr->procPid);
         cJSON_AddStringToObject(node, "procPath", WtoU(ptr->procPath).c_str());
+        cJSON_AddStringToObject(node, "procDesc", WtoU(ptr->procDesc).c_str());
         cJSON_AddStringToObject(node, "cmd", WtoU(ptr->procCmd).c_str());
         cJSON_AddStringToObject(node, "startTime", WtoU(ptr->startTime).c_str());
         cJSON_AddNumberToObject(node, "x64", int(ptr->x64));
@@ -161,5 +163,5 @@ void ProcDbgProxy::OnProcChanged(HProcListener listener, const list<const ProcMo
     }
     cJSON_AddItemToObject(data, "kill", kill);
     utf8_mstring packet = MakeDbgEvent(DBG_EVENT_PROC_CHANGED, cJSON_PrintUnformatted(data));
-    MsgSend(DBG_DBG_EVENT, UtoW(packet).c_str());
+    m_pDbgClient->ReportDbgEvent(packet);
 }

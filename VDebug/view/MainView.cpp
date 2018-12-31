@@ -83,6 +83,10 @@ SyntaxView *GetSyntaxView()
     return gs_pSyntaxView;
 }
 
+CProcSelectView *GetProcView() {
+    return gs_pProcSelect;
+}
+
 static VOID _CreateStatusBar(HWND hdlg)
 {
     gs_hStatBar = CreateStatusWindowW(WS_CHILD | WS_VISIBLE, NULL, hdlg, IDC_STATUS_BAR);
@@ -341,7 +345,7 @@ static VOID _OnCommand(HWND hwnd, WPARAM wp, LPARAM lp)
         break;
     case  IDC_CMD_OPEN:
         {
-            gs_pPeOpenView->CreateDlg(IDD_PROC_OPEN, hwnd, TRUE);
+            //gs_pPeOpenView->CreateDlg(IDD_PROC_OPEN, hwnd, TRUE);
         }
         break;
     case IDC_CMD_ATTACH:

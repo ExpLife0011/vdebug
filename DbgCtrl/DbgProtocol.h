@@ -127,9 +127,13 @@
                     "unique":12345,
                     "pid":1234,
                     "procPath":"d:\\abcdef.exe",
+                    "procDesc":"desc",
                     "cmd":"abcdef",
                     "startTime":"2018-11-11 11:11:11:123",
-                    "x64":1
+                    "x64":1,
+                    "session":1,
+                    "user":"DESKTOP-DCTRL5K\\Administrator",
+                    "sid":"S-1-5-21-2669793992-3689076831-3814312677-500"
                 },
                 ...
             ],
