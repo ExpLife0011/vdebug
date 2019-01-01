@@ -99,9 +99,16 @@ ustring ProcDbgProxy::GetProcInfo(const ustring &cmd, const ustring &content, vo
     int start = GetIntFromJson(root, "start");
     if (1 == start)
     {
+        if (GetInstance()->m_hProcListener != NULL)
+        {
+            ProcMonitor::GetInstance()->UnRegisterListener(GetInstance()->m_hProcListener);
+            GetInstance()->m_hProcListener = NULL;
+        }
+
         GetInstance()->m_hProcListener = ProcMonitor::GetInstance()->RegisterListener(GetInstance());
     } else {
         ProcMonitor::GetInstance()->UnRegisterListener(GetInstance()->m_hProcListener);
+        GetInstance()->m_hProcListener = NULL;
     }
     return MakeDbgRelpy(0, "success", "");
 }

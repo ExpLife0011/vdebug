@@ -208,10 +208,7 @@ void ProcMonitor::RefushProc() {
         {
             if (param.curProcSet.end() == param.curProcSet.find(it1->first))
             {
-                for (map<HProcListener, ProcRegisterInfo>::const_iterator ij1 = m_register.begin() ; ij1 != m_register.end() ; ij1++)
-                {
-                    killed.push_back(it1->first);
-                }
+                killed.push_back(it1->first);
 
                 delete it1->second;
                 it1 = m_ProcInfo.erase(it1);

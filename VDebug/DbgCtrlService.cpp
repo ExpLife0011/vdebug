@@ -288,7 +288,7 @@ void DbgCtrlService::OnProcChanged(const ustring &event, const ustring &content,
     cJSON *add = cJSON_GetObjectItem(data, "add");
     cJSON *kill = cJSON_GetObjectItem(data, "kill");
 
-    list<ProcMonInfo *> addSet;
+    list<ProcMonInfo> addSet;
     list<DWORD> killSet;
     if (add && add->type == cJSON_Array)
     {
@@ -308,17 +308,17 @@ void DbgCtrlService::OnProcChanged(const ustring &event, const ustring &content,
                 "sid":"S-1-5-21-2669793992-3689076831-3814312677-500"
             }
             */
-            ProcMonInfo *newProc = new ProcMonInfo();
-            newProc->procUnique = GetIntFromJson(it, "unique");
-            newProc->procPid = GetIntFromJson(it, "pid");
-            newProc->procPath = UtoW(GetStrFormJson(it, "procPath"));
-            newProc->procDesc = UtoW(GetStrFormJson(it, "procDesc"));
-            newProc->procCmd = UtoW(GetStrFormJson(it, "cmd"));
-            newProc->startTime = UtoW(GetStrFormJson(it, "startTime"));
-            newProc->x64 = GetIntFromJson(it, "x64");
-            newProc->sessionId = GetIntFromJson(it, "session");
-            newProc->procUser = UtoW(GetStrFormJson(it, "user"));
-            newProc->procUserSid = UtoW(GetStrFormJson(it, "sid"));
+            ProcMonInfo newProc;
+            newProc.procUnique = GetIntFromJson(it, "unique");
+            newProc.procPid = GetIntFromJson(it, "pid");
+            newProc.procPath = UtoW(GetStrFormJson(it, "procPath"));
+            newProc.procDesc = UtoW(GetStrFormJson(it, "procDesc"));
+            newProc.procCmd = UtoW(GetStrFormJson(it, "cmd"));
+            newProc.startTime = UtoW(GetStrFormJson(it, "startTime"));
+            newProc.x64 = GetIntFromJson(it, "x64");
+            newProc.sessionId = GetIntFromJson(it, "session");
+            newProc.procUser = UtoW(GetStrFormJson(it, "user"));
+            newProc.procUserSid = UtoW(GetStrFormJson(it, "sid"));
             addSet.push_back(newProc);
         }
     }

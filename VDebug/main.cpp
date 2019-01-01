@@ -152,12 +152,6 @@ int WINAPI WinMain(HINSTANCE m, HINSTANCE p, LPSTR cmd, int show)
     LoadLibraryW(L"mq32.dll");
     LoadLibraryW(L"DbgCtrl32.dll");
 
-    cJSON *root = cJSON_CreateObject();
-    cJSON_AddStringToObject(root, "aaa", "111");
-    cJSON *aaa = cJSON_GetObjectItem(root, "aaa");
-
-    const char *ppp = cJSON_PrintUnformatted(aaa);
-
     _StartService();
     DbgCtrlService::GetInstance()->InitCtrlService();
     _StartViewProc();

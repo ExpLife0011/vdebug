@@ -12,8 +12,10 @@ using namespace std;
 
 struct ProcShowInfo
 {
-    ProcMonInfo info;
-    DWORD m_dwIcoIdex;
+    ProcMonInfo info;       //proc info
+    DWORD m_dwIcoIdex;      //ico index
+    std::ustring m_indexStr;//index str
+    std::ustring m_procShow;//proc show
 
     ProcShowInfo() {
         m_dwIcoIdex = -1;
@@ -43,7 +45,8 @@ public:
         return m_dwSelectPid;
     }
 
-    void OnProcChanged(const list<ProcMonInfo *> &added, const list<DWORD> &killed);
+    void OnProcChanged(const list<ProcMonInfo> &added, const list<DWORD> &killed);
+    void DeleteFromSet(vector<ProcShowInfo *> &procSet, const list<DWORD> &killed, bool freeMem);
     void DeleteProcCache();
 protected:
     INT_PTR OnInitDlg(HWND hwnd, WPARAM wp, LPARAM lp);
@@ -55,12 +58,12 @@ protected:
     INT_PTR OnClose(HWND hwnd, WPARAM wp, LPARAM lp);
     INT_PTR OnCommand(HWND hwnd, WPARAM wp, LPARAM lp);
 
-    
 protected:
     void InitListCtrl();
     VOID CalWidthByColumns() const;
     void RefushProc();
     int GetFileIco(const ustring &wstrFile);
+    ustring GetSearchStr(ProcShowInfo *ptr);
     ustring GetLastSelectDir();
     void RecordLastSelect(LPCWSTR wszDir);
 
@@ -75,9 +78,10 @@ protected:
     DWORD m_dwSelectPid;
 
     HIMAGELIST m_hImageList;
-    map<ustring, int> m_PeIco;
-    vector<ProcMonInfo *> m_procShow;
-    vector<ProcMonInfo *> m_procAll;
+    map<ustring, int> m_icoIndex;
+    vector<ProcShowInfo *> m_procShow;
+    vector<ProcShowInfo *> m_procAll;
+    ustring m_searchStr;
 
     static map<ustring, HICON> ms_peIcon;
 };
