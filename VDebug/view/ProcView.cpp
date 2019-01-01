@@ -191,6 +191,7 @@ void CProcSelectView::OnProcChanged(const list<ProcMonInfo> &added, const list<D
 
     PostMessageW(m_hProcList, LVM_SETITEMCOUNT, m_procShow.size(), LVSICF_NOSCROLL | LVSICF_NOINVALIDATEALL);
     PostMessageW(m_hProcList, LVM_REDRAWITEMS, 0, m_procShow.size());
+    SetWindowTextW(m_hEditStatus, FormatW(L"进程数量:%d 符合过滤条件:%d", m_procAll.size(), m_procShow.size()).c_str());
 }
 
 void CProcSelectView::DeleteProcCache() {
@@ -201,124 +202,15 @@ void CProcSelectView::DeleteProcCache() {
     m_procAll.clear();
 }
 
-/*
-void CProcSelectView::RefushProc()
-{
-    PVOID ptr = DisableWow64Red();
-    m_vTempInfo.clear();
-    IterateProcW(ProcHandlerW, this);
-    RevertWow64Red(ptr);
-    {
-        CScopedLocker lock(this);
-        //m_vProcInfo = m_vTempInfo;
-        //增加的
-        for (vector<ProcInfo *>::const_iterator it = m_vTempInfo.begin() ; it != m_vTempInfo.end() ; it++)
-        {
-            ProcInfo *ptr = *it;
-            ustring wstr = GetProcUnique(*ptr);
-            if (IsProcInCache(wstr))
-            {
-                delete ptr;
-                continue;
-            }
-            else
-            {
-                InsertUnique(wstr);
-                vector<ProcInfo *>::iterator it2;
-                int idex = 0;
-                switch (gs_eSortBy)
-                {
-                case  em_sortby_init:
-                    {
-                        m_vProcInfo.push_back(ptr);
-                    }
-                    break;
-                case  em_sortby_name:
-                    {
-                        for (it2 = m_vProcInfo.begin(), idex = 0 ; it2 != m_vProcInfo.end() ; it2++, idex++)
-                        {
-                            if (ptr->m_wstrShowName < (*it2)->m_wstrShowName)
-                            {
-                                m_vProcInfo.insert(m_vProcInfo.begin() + idex, ptr);
-                                break;
-                            }
-                        }
-
-                        if (idex == m_vProcInfo.size())
-                        {
-                            m_vProcInfo.push_back(ptr);
-                        }
-                    }
-                    break;
-                case  em_sortby_pid:
-                    {
-                        for (it2 = m_vProcInfo.begin(), idex = 0 ; it2 != m_vProcInfo.end() ; it2++, idex++)
-                        {
-                            if (ptr->m_dwPid < (*it2)->m_dwPid)
-                            {
-                                m_vProcInfo.insert(m_vProcInfo.begin() + idex, ptr);
-                                break;
-                            }
-                        }
-
-                        if (idex == m_vProcInfo.size())
-                        {
-                            m_vProcInfo.push_back(ptr);
-                        }
-                    }
-                    break;
-                case em_sortby_starttime:
-                    {
-                        for (it2 = m_vProcInfo.begin(), idex = 0 ; it2 != m_vProcInfo.end() ; it2++, idex++)
-                        {
-                            if (ptr->m_wstrStartTime < (*it2)->m_wstrStartTime)
-                            {
-                                m_vProcInfo.insert(m_vProcInfo.begin() + idex, ptr);
-                                break;
-                            }
-                        }
-
-                        if (idex == m_vProcInfo.size())
-                        {
-                            m_vProcInfo.push_back(ptr);
-                        }
-                    }
-                    break;
-                case em_sortby_path:
-                    {
-                        for (it2 = m_vProcInfo.begin(), idex = 0 ; it2 != m_vProcInfo.end() ; it2++, idex++)
-                        {
-                            if (ptr->m_wstrProcPath < (*it2)->m_wstrProcPath)
-                            {
-                                m_vProcInfo.insert(m_vProcInfo.begin() + idex, ptr);
-                                break;
-                            }
-                        }
-
-                        if (idex == m_vProcInfo.size())
-                        {
-                            m_vProcInfo.push_back(ptr);
-                        }
-                    }
-                    break;
-                }
-            }
-        }
-        //减少的,暂不考虑
-    }
-
-    PostMessageW(m_hProcList, LVM_SETITEMCOUNT, m_vProcInfo.size(), LVSICF_NOSCROLL | LVSICF_NOINVALIDATEALL);
-    PostMessageW(m_hProcList, LVM_REDRAWITEMS, 0, m_vProcInfo.size());
-}
-*/
-
 INT_PTR CProcSelectView::OnInitDlg(HWND hwnd, WPARAM wp, LPARAM lp)
 {
     extern HINSTANCE g_hInstance;
     m_hParent = GetParent(hwnd);
     CentreWindow(m_hwnd, m_hParent);
-    m_hProcList = GetDlgItem(hwnd, IDC_LIST_PROC);
-    m_hEdit = GetDlgItem(hwnd, IDC_EDT_MSG);
+    m_hProcList = GetDlgItem(hwnd, IDC_PROC_LIST_PROC);
+    m_hEditInfo = GetDlgItem(hwnd, IDC_PROC_EDT_INFO);
+    m_hEditFlt = GetDlgItem(hwnd, IDC_PROC_EDT_FLT);
+    m_hEditStatus = GetDlgItem(hwnd, IDC_PROC_EDT_STATUS);
 
     SendMessageW(hwnd, WM_SETICON, (WPARAM)ICON_BIG, (LPARAM)LoadIconW(g_hInstance, MAKEINTRESOURCEW(IDI_MAIN)));
     SendMessageW(hwnd, WM_SETICON, (WPARAM)ICON_SMALL, (LPARAM)LoadIconW(g_hInstance, MAKEINTRESOURCEW(IDI_MAIN)));
@@ -327,12 +219,20 @@ INT_PTR CProcSelectView::OnInitDlg(HWND hwnd, WPARAM wp, LPARAM lp)
 
     CTL_PARAMS vArry[] =
     {
-        {IDC_LIST_PROC, NULL, 0, 0, 1, 1},
-        {IDC_EDT_FILTER, NULL, 0, 1, 1, 0},
-        {IDC_BTN_REFUSH, NULL, 1, 1, 0, 0},
-        {IDC_BTN_ATTACH, NULL, 1, 1, 0, 0}
+        {IDC_PROC_LIST_PROC, NULL, 0, 0, 0, 1},
+        {IDC_PROC_EDT_INFO, NULL, 0, 0, 1, 1},
+        {IDC_PROC_EDT_FLT, NULL, 0, 0, 1, 0},
+        {IDC_PROC_EDT_STATUS, NULL, 0, 1, 1, 0},
+
+        {IDC_PROC_BTN_ATTACH, NULL, 1, 0, 0, 0},
+        {IDC_PROC_BTN_OPEN, NULL, 1, 0, 0, 0}
     };
     SetCtlsCoord(hwnd, vArry, RTL_NUMBER_OF(vArry));
+
+    RECT rt = {0};
+    GetWindowRect(m_hwnd, &rt);
+    SetWindowRange(hwnd, rt.right - rt.left, rt.bottom - rt.top, 0, 0);
+    
     m_searchStr.clear();
     m_procShow.clear();
     DeleteProcCache();
@@ -383,99 +283,42 @@ VOID CProcSelectView::OnGetListCtrlDisplsy(IN OUT NMLVDISPINFOW* ptr)
 
 VOID CProcSelectView::OnListColumnClick(NMLISTVIEW* ptr)
 {
-    /*
-    int id = ptr->iSubItem;
+}
+
+void CProcSelectView::OnListItemChanged(HWND hwnd, WPARAM wp, LPARAM lp) {
+    NMLISTVIEW *ptr1 = (NMLISTVIEW *)lp;
+    int it = ptr1->iItem;
     CScopedLocker lock(this);
-    vector<ProcInfo *>::iterator it;
-    ProcInfo *ptr1 = NULL;
-    ProcInfo *ptr2 = NULL;
-    int idex = 0;
-    switch (id)
+
+    if (it >= (int)m_procShow.size() || it < 0)
     {
-    case 0:
-        {
-            gs_eSortBy = em_sortby_name;
-            for (idex = 0, it = m_vProcInfo.begin() ; it != m_vProcInfo.end() ; it++, idex++)
-            {
-                for (int i = idex + 1 ; i < (int)m_vProcInfo.size() ; i++)
-                {
-                    ptr1 = m_vProcInfo[idex];
-                    ptr2 = m_vProcInfo[i];
-                    if (ptr1->m_wstrShowName > ptr2->m_wstrShowName)
-                    {
-                        m_vProcInfo[idex] = ptr2;
-                        m_vProcInfo[i] = ptr1;
-                    }
-                }
-            }
-            PostMessageW(m_hProcList, LVM_SETITEMCOUNT, m_vProcInfo.size(), LVSICF_NOSCROLL | LVSICF_NOINVALIDATEALL);
-            PostMessageW(m_hProcList, LVM_REDRAWITEMS, 0, m_vProcInfo.size());
-        }
-        break;
-    case 1:
-        {
-            gs_eSortBy = em_sortby_pid;
-            for (idex = 0, it = m_vProcInfo.begin() ; it != m_vProcInfo.end() ; it++, idex++)
-            {
-                for (int i = idex + 1 ; i < (int)m_vProcInfo.size() ; i++)
-                {
-                    ptr1 = m_vProcInfo[idex];
-                    ptr2 = m_vProcInfo[i];
-                    if (ptr1->m_dwPid > ptr2->m_dwPid)
-                    {
-                        m_vProcInfo[idex] = ptr2;
-                        m_vProcInfo[i] = ptr1;
-                    }
-                }
-            }
-            PostMessageW(m_hProcList, LVM_SETITEMCOUNT, m_vProcInfo.size(), LVSICF_NOSCROLL | LVSICF_NOINVALIDATEALL);
-            PostMessageW(m_hProcList, LVM_REDRAWITEMS, 0, m_vProcInfo.size());
-        }
-        break;
-    case 2:
-        {
-            gs_eSortBy = em_sortby_starttime;
-            for (idex = 0, it = m_vProcInfo.begin() ; it != m_vProcInfo.end() ; it++, idex++)
-            {
-                for (int i = idex + 1 ; i < (int)m_vProcInfo.size() ; i++)
-                {
-                    ptr1 = m_vProcInfo[idex];
-                    ptr2 = m_vProcInfo[i];
-                    if (ptr1->m_wstrStartTime > ptr2->m_wstrStartTime)
-                    {
-                        m_vProcInfo[idex] = ptr2;
-                        m_vProcInfo[i] = ptr1;
-                    }
-                }
-            }
-            PostMessageW(m_hProcList, LVM_SETITEMCOUNT, m_vProcInfo.size(), LVSICF_NOSCROLL | LVSICF_NOINVALIDATEALL);
-            PostMessageW(m_hProcList, LVM_REDRAWITEMS, 0, m_vProcInfo.size());
-        }
-        break;
-    case 3:
-        {
-            gs_eSortBy = em_sortby_path;
-            for (idex = 0, it = m_vProcInfo.begin() ; it != m_vProcInfo.end() ; it++, idex++)
-            {
-                for (int i = idex + 1 ; i < (int)m_vProcInfo.size() ; i++)
-                {
-                    ptr1 = m_vProcInfo[idex];
-                    ptr2 = m_vProcInfo[i];
-                    if (ptr1->m_wstrProcPath > ptr2->m_wstrProcPath)
-                    {
-                        m_vProcInfo[idex] = ptr2;
-                        m_vProcInfo[i] = ptr1;
-                    }
-                }
-            }
-            PostMessageW(m_hProcList, LVM_SETITEMCOUNT, m_vProcInfo.size(), LVSICF_NOSCROLL | LVSICF_NOINVALIDATEALL);
-            PostMessageW(m_hProcList, LVM_REDRAWITEMS, 0, m_vProcInfo.size());
-        }
-        break;
-    default:
-        break;
+        return;
     }
-    */
+    ProcShowInfo *ptr2 = m_procShow[it];
+
+    mstring show;
+    show += "进程路径\r\n";
+    show += (WtoA(ptr2->info.procPath) + "\r\n\r\n");
+
+    show += "进程描述\r\n";
+    if (ptr2->info.procDesc.size())
+    {
+        show += (WtoA(ptr2->info.procDesc) + "\r\n\r\n");
+    } else {
+        show += "Nothing\r\n\r\n";
+    }
+
+    show += (FormatA("session %d", ptr2->info.sessionId) + "\r\n\r\n");
+
+    show += "进程User\r\n";
+    show += (WtoA(ptr2->info.procUser) + "\r\n\r\n");
+
+    show += "进程Sid\r\n";
+    show += (WtoA(ptr2->info.procUserSid) + "\r\n\r\n");
+
+    show += "进程命令行\r\n";
+    show += (WtoA(ptr2->info.procCmd) + "\r\n\r\n");
+    SetWindowTextA(m_hEditInfo, show.c_str());
 }
 
 INT_PTR CProcSelectView::OnNotify(HWND hwnd, WPARAM wp, LPARAM lp)
@@ -491,6 +334,11 @@ INT_PTR CProcSelectView::OnNotify(HWND hwnd, WPARAM wp, LPARAM lp)
             {
                 OnGetListCtrlDisplsy(ptr);
             }
+        }
+        break;
+    case  LVN_ITEMCHANGED:
+        {
+            OnListItemChanged(hwnd, wp, lp);
         }
         break;
     case LVN_COLUMNCLICK:
@@ -520,7 +368,7 @@ INT_PTR CProcSelectView::OnCommand(HWND hwnd, WPARAM wp, LPARAM lp)
         int iSelect = (int)SendMessageW(m_hProcList, LVM_GETNEXTITEM, -1, LVNI_SELECTED);
         if (-1 == iSelect)
         {
-            SetWindowTextW(m_hEdit, L"请先选择一个进程");
+            SetWindowTextW(m_hEditStatus, L"请先选择一个进程");
         }
         else
         {

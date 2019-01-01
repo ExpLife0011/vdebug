@@ -116,7 +116,7 @@ mstring PrintFormater::GetResult() {
                 }
             }
         }
-        result += "\n";
+        result += "\r\n";
     }
     return result;
 }

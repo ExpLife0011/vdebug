@@ -54,6 +54,7 @@ protected:
     VOID OnGetListCtrlDisplsy(IN OUT NMLVDISPINFOW* ptr);
     void OnListColumnClick(IN NMLISTVIEW *ptr);
 
+    void OnListItemChanged(HWND hwnd, WPARAM wp, LPARAM lp);
     INT_PTR OnNotify(HWND hwnd, WPARAM wp, LPARAM lp);
     INT_PTR OnClose(HWND hwnd, WPARAM wp, LPARAM lp);
     INT_PTR OnCommand(HWND hwnd, WPARAM wp, LPARAM lp);
@@ -72,7 +73,9 @@ protected:
 
 protected:
     HWND m_hParent;
-    HWND m_hEdit;
+    HWND m_hEditFlt;
+    HWND m_hEditInfo;
+    HWND m_hEditStatus;
     HWND m_hProcList;
     HFONT m_hFont;
     DWORD m_dwSelectPid;

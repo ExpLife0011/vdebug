@@ -1304,23 +1304,27 @@ ustring __stdcall GetProcessCommandLine(_In_ DWORD dwPid, BOOL bx64)
 {
     static char *s_buffer = new char[4096];
     static DWORD s_size = 4096;
+    UNICODE_STRING *ptr = (UNICODE_STRING *)s_buffer;
 
     HANDLE hProcess = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, dwPid);
+    HandleAutoClose abc(hProcess);
     if (!hProcess)
     {
         return L"";
     }
 
+    BOOL bStat = false;
     DWORD size = s_size;
     s_buffer[0] = 0;
     if (_IsWin81Later())
     {
-        if (dwPid == 39364)
+        bStat = _PhpQueryProcessVariableSize(hProcess, VDProcessCommandLineInformation, s_buffer, &size);
+        if (!bStat && size > 1024 * 1024 * 16)
         {
-            int ddd = 1234;
+            return L"";
         }
 
-        if (!_PhpQueryProcessVariableSize(hProcess, VDProcessCommandLineInformation, s_buffer, &size) && size > s_size)
+        if (!bStat && size > s_size)
         {
             s_size += (size + 1024);
             delete []s_buffer;
@@ -1329,7 +1333,7 @@ ustring __stdcall GetProcessCommandLine(_In_ DWORD dwPid, BOOL bx64)
             size = s_size;
             s_buffer[0] = 0;
 
-            _PhpQueryProcessVariableSize(hProcess, VDProcessCommandLineInformation, s_buffer, &size);
+            bStat = _PhpQueryProcessVariableSize(hProcess, VDProcessCommandLineInformation, s_buffer, &size);
         }
     }
     else
@@ -1341,7 +1345,14 @@ ustring __stdcall GetProcessCommandLine(_In_ DWORD dwPid, BOOL bx64)
         }
 
         size = s_size;
-        if (!_GetProcressPebString(hProcess, uFlag, s_buffer, &size) && size > s_size)
+        bStat = _GetProcressPebString(hProcess, uFlag, s_buffer, &size);
+
+        if (!bStat && size > 1024 * 1024 * 16)
+        {
+            return L"";
+        }
+
+        if (!bStat && size > s_size)
         {
             s_size += (size + 1024);
             delete []s_buffer;
@@ -1349,11 +1360,15 @@ ustring __stdcall GetProcessCommandLine(_In_ DWORD dwPid, BOOL bx64)
 
             size = s_size;
             s_buffer[0] = 0;
-            _GetProcressPebString(hProcess, uFlag, s_buffer, &size);
+            bStat = _GetProcressPebString(hProcess, uFlag, s_buffer, &size);
         }
     }
-    CloseHandle(hProcess);
-    UNICODE_STRING *ptr = (UNICODE_STRING *)s_buffer;
+
+    if (!bStat)
+    {
+        return L"";
+    }
+
     if (!ptr || !ptr->Buffer)
     {
         return L"";
