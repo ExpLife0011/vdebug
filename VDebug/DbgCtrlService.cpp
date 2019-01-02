@@ -68,7 +68,6 @@ bool DbgCtrlService::InitCtrlService() {
     m_pCtrlService->RegisterDbgEvent(DBG_EVENT_MODULE_LOAD, OnModuleLoad, this);
     m_pCtrlService->RegisterDbgEvent(DBG_EVENT_MODULE_UNLOAD, OnModuleUnLoad, this);
     m_pCtrlService->RegisterDbgEvent(DBG_EVENT_PROC_CHANGED, OnProcChanged, this);
-    StopProcMon();
     return true;
 }
 
@@ -278,6 +277,11 @@ void DbgCtrlService::OnModuleUnLoad(const ustring &event, const ustring &content
 */
 void DbgCtrlService::OnProcChanged(const ustring &event, const ustring &content, void *param) {
     CProcSelectView *pProcView = GetProcView();
+    if (!pProcView)
+    {
+        return;
+    }
+
     if (!IsWindow(pProcView->GetWndHandle()))
     {
         return;

@@ -85,6 +85,7 @@ protected:
     vector<ProcShowInfo *> m_procShow;
     vector<ProcShowInfo *> m_procAll;
     ustring m_searchStr;
+    ustring m_statusMsg;
 
     static map<ustring, HICON> ms_peIcon;
 };

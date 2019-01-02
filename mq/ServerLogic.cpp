@@ -146,7 +146,7 @@ void CServerLogic::OnServRecvComplete(SOCKET client, const string &strData) {
             map<string, SOCKET>::const_iterator ij = m_routeCache.find(strRoute);
             if (ij != m_routeCache.end())
             {
-                header.m_size = sizeof(PackageHeader) + static_cast<unsigned short>(strData.size());
+                header.m_size = sizeof(PackageHeader) + static_cast<unsigned int>(strData.size());
                 str.clear();
                 str.append((const char *)&header, sizeof(PackageHeader));
                 str += strData;

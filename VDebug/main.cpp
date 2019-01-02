@@ -13,6 +13,10 @@
 HINSTANCE g_hInstance = NULL;
 
 static void _TestProc() {
+    {
+        MemoryAlloc<int> allocer;
+        int *ptr = allocer.GetMomory(1024);
+    }
     //InitSymbolHlpr(L"SRV*F:\\mysymbol*http://msdl.microsoft.com/download/symbols/");
     //InitSymbolHlpr(L"F:\\mysymbol");
 

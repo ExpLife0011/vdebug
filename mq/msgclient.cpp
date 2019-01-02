@@ -126,7 +126,7 @@ DWORD CMsgClient::RecvThread(LPVOID pParam) {
             if (!pThis->TestConnect())
             {
                 LOGGER_ERROR(L"test connect err:%d", WSAGetLastError());
-                Sleep(5000);
+                Sleep(1000);
                 continue;
             }
         }

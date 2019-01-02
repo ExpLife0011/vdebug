@@ -15,7 +15,8 @@ enum ProcSortType
 };
 
 static ProcSortType gs_eSortBy = em_sortby_init;
-#define MSG_REFUSH      (WM_USER + 5001)
+#define MSG_REFUSH          (WM_USER + 5001)
+#define MSG_UPDATE_STATUS   (WM_USER + 5005)
 
 map<ustring, HICON> CProcSelectView::ms_peIcon;
 
@@ -191,7 +192,9 @@ void CProcSelectView::OnProcChanged(const list<ProcMonInfo> &added, const list<D
 
     PostMessageW(m_hProcList, LVM_SETITEMCOUNT, m_procShow.size(), LVSICF_NOSCROLL | LVSICF_NOINVALIDATEALL);
     PostMessageW(m_hProcList, LVM_REDRAWITEMS, 0, m_procShow.size());
-    SetWindowTextW(m_hEditStatus, FormatW(L"进程数量:%d 符合过滤条件:%d", m_procAll.size(), m_procShow.size()).c_str());
+
+    m_statusMsg = FormatW(L"进程数量:%d 符合过滤条件:%d", m_procAll.size(), m_procShow.size());
+    PostMessageW(m_hwnd, MSG_UPDATE_STATUS, 0, 0);
 }
 
 void CProcSelectView::DeleteProcCache() {
@@ -405,6 +408,11 @@ LRESULT CProcSelectView::OnWindowMsg(HWND hwnd, UINT uMsg, WPARAM wp, LPARAM lp)
         break;
     case  WM_COMMAND:
         OnCommand(hwnd, wp, lp);
+        break;
+    case MSG_UPDATE_STATUS:
+        {
+            SetWindowTextW(m_hEditStatus, m_statusMsg.c_str());
+        }
         break;
     case WM_CLOSE:
         {

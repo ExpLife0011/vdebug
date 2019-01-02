@@ -85,7 +85,7 @@ int WINAPI WinMain(HINSTANCE hT, HINSTANCE hP, LPSTR szCmdLine, int iShow)
 #endif
     InitSymbolHlpr(L"H:\\mysymbols");
 
-    _TestProc();
+    //_TestProc();
 
     size_t pos = cmd.rfind('_');
     ustring unique = cmd.substr(pos + 1, cmd.size() - pos - 1);

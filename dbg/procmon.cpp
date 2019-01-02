@@ -41,6 +41,7 @@ HProcListener ProcMonitor::RegisterListener(ProcListener *listener) {
         listener->OnProcChanged(tmp.m_index, added, list<DWORD>());
     }
 
+    dp(L"listener:%d", m_register.size());
     if (!m_hMonitorThread)
     {
         m_hMonitorThread = CreateThread(NULL, 0, MonitorThread, this, 0, NULL);
@@ -51,6 +52,7 @@ HProcListener ProcMonitor::RegisterListener(ProcListener *listener) {
 void ProcMonitor::UnRegisterListener(HProcListener index) {
     CScopedLocker lock(this);
     m_register.erase(index);
+    dp(L"listener:%d", m_register.size());
 }
 
 struct ProcEnumParam {

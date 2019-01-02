@@ -158,9 +158,9 @@ VOID __stdcall PrintDbgInternal(LPCWSTR wszTarget, LPCSTR szFile, DWORD dwLine, 
 {
     WCHAR wszFormat1[1024] = {0};
     WCHAR wszFormat2[1024] = {0};
-    lstrcpyW(wszFormat1, L"[VDebug][%hs.%d]%ls");
+    lstrcpyW(wszFormat1, L"[%ls][%hs.%d]%ls");
     StrCatW(wszFormat1, L"\n");
-    wnsprintfW(wszFormat2, RTL_NUMBER_OF(wszFormat2), wszFormat1, szFile, dwLine, wszFormat);
+    wnsprintfW(wszFormat2, RTL_NUMBER_OF(wszFormat2), wszFormat1, wszTarget, szFile, dwLine, wszFormat);
 
     WCHAR wszLogInfo[1024];
     va_list vList;
@@ -1302,10 +1302,6 @@ static BOOL _GetProcressPebString(HANDLE hProcress, ULONG eOffsetType, char *buf
 
 ustring __stdcall GetProcessCommandLine(_In_ DWORD dwPid, BOOL bx64)
 {
-    static char *s_buffer = new char[4096];
-    static DWORD s_size = 4096;
-    UNICODE_STRING *ptr = (UNICODE_STRING *)s_buffer;
-
     HANDLE hProcess = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, dwPid);
     HandleAutoClose abc(hProcess);
     if (!hProcess)
@@ -1313,67 +1309,66 @@ ustring __stdcall GetProcessCommandLine(_In_ DWORD dwPid, BOOL bx64)
         return L"";
     }
 
+    char buffer[1024];
+    DWORD size = 1024;
+    char *pBufHeader = buffer;
     BOOL bStat = false;
-    DWORD size = s_size;
-    s_buffer[0] = 0;
-    if (_IsWin81Later())
+    DWORD tmp = size;
+    MemoryAlloc<char> allocer;
+
+    do
     {
-        bStat = _PhpQueryProcessVariableSize(hProcess, VDProcessCommandLineInformation, s_buffer, &size);
-        if (!bStat && size > 1024 * 1024 * 16)
+        if (_IsWin81Later())
         {
-            return L"";
-        }
+            bStat = _PhpQueryProcessVariableSize(hProcess, VDProcessCommandLineInformation, pBufHeader, &tmp);
+            if (!bStat && tmp > 1024 * 1024 * 16)
+            {
+                break;
+            }
 
-        if (!bStat && size > s_size)
+            if (!bStat && tmp > size)
+            {
+                size += (tmp + 4);
+                pBufHeader = allocer.GetMomory(size);
+
+                tmp = size;
+                bStat = _PhpQueryProcessVariableSize(hProcess, VDProcessCommandLineInformation, pBufHeader, &tmp);
+            }
+        }
+        else
         {
-            s_size += (size + 1024);
-            delete []s_buffer;
-            s_buffer = new char[s_size];
+            ULONG uFlag = (PhpoCommandLine | PhpoWow64);
+            if (bx64)
+            {
+                uFlag = PhpoCommandLine;
+            }
 
-            size = s_size;
-            s_buffer[0] = 0;
+            tmp = size;
+            bStat = _GetProcressPebString(hProcess, uFlag, pBufHeader, &tmp);
 
-            bStat = _PhpQueryProcessVariableSize(hProcess, VDProcessCommandLineInformation, s_buffer, &size);
+            if (!bStat && tmp > 1024 * 1024 * 16)
+            {
+                break;
+            }
+
+            if (!bStat && tmp > size)
+            {
+                size += (tmp + 4);
+                pBufHeader = allocer.GetMomory(size);
+
+                tmp = size;
+                bStat = _GetProcressPebString(hProcess, uFlag, pBufHeader, &tmp);
+            }
         }
-    }
-    else
+    } while (false);
+
+    ustring result;
+    if (bStat)
     {
-        ULONG uFlag = (PhpoCommandLine | PhpoWow64);
-        if (bx64)
-        {
-            uFlag = PhpoCommandLine;
-        }
-
-        size = s_size;
-        bStat = _GetProcressPebString(hProcess, uFlag, s_buffer, &size);
-
-        if (!bStat && size > 1024 * 1024 * 16)
-        {
-            return L"";
-        }
-
-        if (!bStat && size > s_size)
-        {
-            s_size += (size + 1024);
-            delete []s_buffer;
-            s_buffer = new char[s_size];
-
-            size = s_size;
-            s_buffer[0] = 0;
-            bStat = _GetProcressPebString(hProcess, uFlag, s_buffer, &size);
-        }
+        UNICODE_STRING *ptr = (UNICODE_STRING *)(pBufHeader);
+        result = (LPCWSTR)ptr->Buffer;
     }
-
-    if (!bStat)
-    {
-        return L"";
-    }
-
-    if (!ptr || !ptr->Buffer)
-    {
-        return L"";
-    }
-    return (LPCWSTR)ptr->Buffer;
+    return result;
 }
 
 BOOL __stdcall ShlParseShortcutsW(LPCWSTR wszLnkFile, PGDS_LINKINFO info)

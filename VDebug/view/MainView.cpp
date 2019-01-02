@@ -330,7 +330,8 @@ static VOID _OnInitDialog(HWND hwnd, WPARAM wp, LPARAM lp)
     SetCmdNotify(em_dbg_status_init, L"³õÊ¼×´Ì¬");
     gs_pfnCommandProc = (PWIN_PROC)SetWindowLongPtr(gs_hCommand, GWLP_WNDPROC, (LONG_PTR)_CommandProc);
     gs_pCmdQueue = new CCmdQueue();
-    SetTimer(hwnd, TIMER_CFG_CHECK, 3000, NULL);
+
+    SetWindowPos(gs_hMainView, 0, 0, 0, 600, 160, SWP_NOMOVE | SWP_NOZORDER);
 }
 
 static VOID _OnCommand(HWND hwnd, WPARAM wp, LPARAM lp)

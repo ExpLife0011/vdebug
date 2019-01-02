@@ -61,12 +61,6 @@ HANDLE_REGISTER CClientLogic::Register(const wstring &wstrKey, PMsgNotify pfn, v
 
     cJSON_AddItemToArray(arry, cJSON_CreateString(WtoU(wstrKey).c_str()));
     cJSON_AddItemToObject(content, "channel", arry);
-    /*
-    Value content;
-    content["action"] = "register";
-    content["clientUnique"] = m_clientUnique;
-    content["channel"].append(WtoU(wstrKey));
-    */
     string result = GetMsgPackage(cJSON_PrintUnformatted(content));
     cJSON_Delete(content);
     m_msgClient.Send(result);
@@ -100,19 +94,6 @@ bool CClientLogic::Dispatch(const wstring &wstrKey, const wstring &wstrValue) {
 }
 
 bool CClientLogic::DispatchInternal(const wstring &wstrKey, const wstring &wstrValue, const wstring &wstrRoute) const {
-    /**
-    Value vContent;
-    vContent["action"] = "message";
-    vContent["channel"] = WtoU(wstrKey);
-    vContent["content"] = WtoU(wstrValue);
-
-    if (!wstrRoute.empty())
-    {
-        vContent["result"] = 1;
-        vContent["route"] = WtoU(wstrRoute);
-    }
-    string strContent = FastWriter().write(vContent);
-    */
     cJSON *content = cJSON_CreateObject();
     cJSON_AddStringToObject(content, "action", "message");
     cJSON_AddStringToObject(content, "channel", WtoU(wstrKey).c_str());
@@ -128,7 +109,7 @@ bool CClientLogic::DispatchInternal(const wstring &wstrKey, const wstring &wstrV
     cJSON_Delete(content);
 
     PackageHeader header;
-    header.m_size = sizeof(PackageHeader) + static_cast<unsigned short>(strContent.size());
+    header.m_size = sizeof(PackageHeader) + static_cast<unsigned int>(strContent.size());
 
     string strData = GetMsgPackage(strContent);
     m_msgClient.Send(strData);
@@ -206,7 +187,6 @@ bool CClientLogic::DispatchInCache(const wstring &wstrKey, const wstring &wstrVa
                             wstr = L"state success";
                         }
 
-                        PackageHeader header;
                         cJSON *json = cJSON_CreateObject();
                         cJSON_AddStringToObject(json, "action", "reply");
                         cJSON_AddStringToObject(json, "route", WtoU(mParam->wstrRoute).c_str());
@@ -240,12 +220,12 @@ DWORD CClientLogic::ConnectThread(LPVOID pParam) {
         if (!GetInstance()->m_bConnectSucc)
         {
             LOGGER_PRINT(L"尝试连接服务端...");
-            GetInstance()->m_bConnectSucc = GetInstance()->m_msgClient.InitClient("127.0.0.1", GetInstance()->m_port, GetInstance(), 3000);
+            GetInstance()->m_bConnectSucc = GetInstance()->m_msgClient.InitClient("127.0.0.1", GetInstance()->m_port, GetInstance(), 500);
         } else {
             break;
         }
 
-        Sleep(1000 * 5);
+        Sleep(1000);
     }
     return 0;
 }

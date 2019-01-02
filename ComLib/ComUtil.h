@@ -27,7 +27,7 @@ VOID __stdcall CentreWindow(HWND hSrcWnd, HWND hDstWnd = NULL);
 DWORD __stdcall GetColourFromStr(LPCSTR szColour);
 
 VOID __stdcall PrintDbgInternal(LPCWSTR wszTarget, LPCSTR wszFile, DWORD dwLine, LPCWSTR wszFormat, ...);
-#define dp(f, ...) PrintDbgInternal(L"[vdebug]", __FILE__, __LINE__, f, ##__VA_ARGS__)
+#define dp(f, ...) PrintDbgInternal(L"vdebug", __FILE__, __LINE__, f, ##__VA_ARGS__)
 
 typedef BOOL (__stdcall* pfnProcHandlerW)(PPROCESSENTRY32W, void*);
 void __stdcall IterateProcW(pfnProcHandlerW handler, void* lpParam);
@@ -105,6 +105,45 @@ public:
 
 private:
     HANDLE mHandle;
+};
+
+template <class T>
+class MemoryAlloc {
+public:
+    MemoryAlloc() {
+        mBuffer = NULL;
+        mSize = 0;
+    }
+
+    virtual ~MemoryAlloc() {
+        if (mBuffer)
+        {
+            delete []mBuffer;
+        }
+    }
+
+    T *GetMomory(int size) {
+        if (size < mSize)
+        {
+            return mBuffer;
+        } else {
+            if (mBuffer)
+            {
+                delete []mBuffer;
+            }
+            mSize = size;
+            mBuffer = new T[size];
+        }
+        return mBuffer;
+    }
+
+    int GetSize() {
+        return mSize;
+    }
+
+private:
+    T *mBuffer;
+    int mSize;
 };
 
 std::mstring __stdcall GetStrFormJson(cJSON *json, const std::mstring &name);

@@ -4,8 +4,8 @@
 
 /**
 协议头 4字节
-int16 m_verify      //2字节校验位 固定值0xfafb
-int16 m_size        //2字节数据包大小
+int32 m_verify      //4字节校验位 固定值0xfafb
+int32 m_size        //4字节数据包大小
 //本条交互数据总大小，字节为单位
 协议体 Json格式，utf8编码
 {
@@ -23,8 +23,8 @@ int16 m_size        //2字节数据包大小
 #define PACKAGE_VERIFY  0xfafb
 
 struct PackageHeader {
-    unsigned short m_verify;
-    unsigned short m_size;
+    unsigned int m_verify;
+    unsigned int m_size;
 
     PackageHeader() {
         m_verify = PACKAGE_VERIFY;
@@ -35,7 +35,7 @@ struct PackageHeader {
 static std::string GetMsgPackage(const std::string &data) {
     std::string result;
     PackageHeader header;
-    header.m_size = (unsigned short)data.size() + sizeof(header);
+    header.m_size = (unsigned int)data.size() + sizeof(header);
 
     result.append((const char *)&header, sizeof(header));
     result.append(data);
