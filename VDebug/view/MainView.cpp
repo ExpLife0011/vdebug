@@ -55,7 +55,7 @@ static HWND gs_hToolbar = NULL;
 static HFONT gs_hFont = NULL;
 static ustring gs_wstrCfgFile;
 static CProcSelectView *gs_pProcSelect = NULL;
-static CPeFileOpenView *gs_pPeOpenView = NULL;
+static PeFileOpenDlg *gs_pPeOpenView = NULL;
 static CCmdQueue *gs_pCmdQueue = NULL;
 
 struct SyntaxShowData {
@@ -294,7 +294,7 @@ static VOID _OnInitDialog(HWND hwnd, WPARAM wp, LPARAM lp)
     RECT rtClient = {0};
     GetClientRect(gs_hMainView, &rtClient);
     gs_pProcSelect = new CProcSelectView;
-    gs_pPeOpenView = new CPeFileOpenView;
+    gs_pPeOpenView = PeFileOpenDlg::GetInstance();
 
     _InitSyntaxView();
 
@@ -346,7 +346,8 @@ static VOID _OnCommand(HWND hwnd, WPARAM wp, LPARAM lp)
         break;
     case  IDC_CMD_OPEN:
         {
-            //gs_pPeOpenView->CreateDlg(IDD_PROC_OPEN, hwnd, TRUE);
+            ProcParam param; 
+            gs_pPeOpenView->ShowFileOpenDlg(hwnd, param);
         }
         break;
     case IDC_CMD_ATTACH:

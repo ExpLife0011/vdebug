@@ -1626,3 +1626,24 @@ int __stdcall GetIntFromJson(cJSON *json, const std::mstring &name) {
     }
     return 0;
 }
+
+std::ustring __stdcall GetWindowStrW(HWND hwnd) {
+    if (!IsWindow(hwnd))
+    {
+        return L"";
+    }
+
+    WCHAR buffer[256];
+    buffer[0] = 0;
+    int size = GetWindowTextLength(hwnd);
+    if (size < 256)
+    {
+        GetWindowTextW(hwnd, buffer, 256);
+        return buffer;
+    } else {
+        MemoryAlloc<WCHAR> alloc;
+        WCHAR *ptr = alloc.GetMomory(size + 4);
+        GetWindowTextW(hwnd, ptr, size + 4);
+        return ptr;
+    }
+}

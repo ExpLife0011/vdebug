@@ -7,30 +7,26 @@
 
 using namespace std;
 
-class CPeFileOpenView : public CWindowBase, public CCriticalSectionLockable
+struct ProcParam {
+    std::ustring path;
+    std::ustring command;
+    std::ustring dir;
+};
+
+class PeFileOpenDlg : public CCriticalSectionLockable
 {
+private:
+    PeFileOpenDlg();
 public:
-    CPeFileOpenView();
-    virtual ~CPeFileOpenView();
+    static PeFileOpenDlg *GetInstance();
+    virtual ~PeFileOpenDlg();
+    bool ShowFileOpenDlg(HWND parent, ProcParam &param);
 
-protected:
-    void OnInitDlg(HWND hwnd, WPARAM wp, LPARAM lp);
-    void OnCommand(HWND hwnd, WPARAM wp, LPARAM lp);
-    void OnClose(HWND hwnd, WPARAM wp, LPARAM lp);
-    void OnDropFiles(HWND hwnd, WPARAM wp, LPARAM lp);
-    virtual LRESULT CPeFileOpenView::OnWindowMsg(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
+private:
+    static UINT_PTR CALLBACK OFNHookProc(HWND hdlg, UINT msg, WPARAM wp, LPARAM lp);
 
-protected:
-    void FillFileInfo(const ustring &wstr);
-    void ClearCtrl();
-    ustring GetLastSelectDir();
-    void RecordLastSelect(LPCWSTR wszDir);
-    BOOL ChangeWndMessageFilter(UINT uMessage, BOOL bAllow);
-
-protected:
-    HWND m_hPePath;
-    HWND m_hPeCmd;
-    HWND m_hWorkDir;
-    HWND m_hStatus;
+private:
+    HWND m_hdlg;
+    HWND m_hParent;
 };
 #endif

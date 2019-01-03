@@ -3,20 +3,12 @@
 #include <ComLib/ComLib.h>
 #include "ProcView.h"
 #include "DbgCtrlService.h"
+#include "MainView.h"
 #include "../resource.h"
 
-enum ProcSortType
-{
-    em_sortby_init,
-    em_sortby_pid,
-    em_sortby_name,
-    em_sortby_starttime,
-    em_sortby_path
-};
-
-static ProcSortType gs_eSortBy = em_sortby_init;
 #define MSG_REFUSH          (WM_USER + 5001)
 #define MSG_UPDATE_STATUS   (WM_USER + 5005)
+#define MSG_FILTER_PROC     (WM_USER + 5007)
 
 map<ustring, HICON> CProcSelectView::ms_peIcon;
 
@@ -205,6 +197,19 @@ void CProcSelectView::DeleteProcCache() {
     m_procAll.clear();
 }
 
+LRESULT CProcSelectView::FilterEditProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
+{
+    if (WM_CHAR == msg)
+    {
+        if (0x0d == wp)
+        {
+            SendMessageW(GetProcView()->m_hwnd, MSG_FILTER_PROC, 0, 0);
+        }
+    }
+
+    return CallWindowProc(GetProcView()->m_pfnFilterEditProc, hwnd, msg, wp, lp);
+}
+
 INT_PTR CProcSelectView::OnInitDlg(HWND hwnd, WPARAM wp, LPARAM lp)
 {
     extern HINSTANCE g_hInstance;
@@ -240,6 +245,8 @@ INT_PTR CProcSelectView::OnInitDlg(HWND hwnd, WPARAM wp, LPARAM lp)
     m_procShow.clear();
     DeleteProcCache();
     DbgCtrlService::GetInstance()->StartProcMon();
+
+    m_pfnFilterEditProc = (PWIN_PROC)SetWindowLongPtr(m_hEditFlt, GWLP_WNDPROC, (LONG_PTR)FilterEditProc);
     return 0;
 }
 
@@ -393,6 +400,40 @@ INT_PTR CProcSelectView::OnClose(HWND hwnd, WPARAM wp, LPARAM lp)
     CScopedLocker lock(this);
     m_procShow.clear();
     DeleteProcCache();
+
+    SetWindowLongPtr(m_hEditFlt, GWLP_WNDPROC, (LONG_PTR)FilterEditProc);
+    return 0;
+}
+
+INT_PTR CProcSelectView::OnFilterProc(HWND hwnd, WPARAM wp, LPARAM lp) {
+    ustring filter = GetWindowStrW(m_hEditFlt);
+    filter.trim();
+    if (filter == m_searchStr)
+    {
+        return 0;
+    }
+
+    CScopedLocker lock(this);
+    m_searchStr = filter;
+    if (m_searchStr.empty())
+    {
+        m_procShow = m_procAll;
+    } else {
+        m_procShow.clear();
+        for (vector<ProcShowInfo *>::const_iterator it = m_procAll.begin() ; it != m_procAll.end() ; it++)
+        {
+            ProcShowInfo *ptr = *it;
+            if (ustring::npos != ptr->m_indexStr.find_in_rangei(m_searchStr))
+            {
+                m_procShow.push_back(ptr);
+            }
+        }
+    }
+
+    PostMessageW(m_hProcList, LVM_SETITEMCOUNT, m_procShow.size(), LVSICF_NOSCROLL | LVSICF_NOINVALIDATEALL);
+    PostMessageW(m_hProcList, LVM_REDRAWITEMS, 0, m_procShow.size());
+    m_statusMsg = FormatW(L"进程数量:%d 符合过滤条件:%d", m_procAll.size(), m_procShow.size());
+    PostMessageW(m_hwnd, MSG_UPDATE_STATUS, 0, 0);
     return 0;
 }
 
@@ -408,6 +449,9 @@ LRESULT CProcSelectView::OnWindowMsg(HWND hwnd, UINT uMsg, WPARAM wp, LPARAM lp)
         break;
     case  WM_COMMAND:
         OnCommand(hwnd, wp, lp);
+        break;
+    case MSG_FILTER_PROC:
+        OnFilterProc(hwnd, wp, lp);
         break;
     case MSG_UPDATE_STATUS:
         {

@@ -18,9 +18,11 @@
 #define IDC_EDIT3                       1002
 #define IDC_EDT_PEOPEN_CMD              1002
 #define IDC_PROC_EDT_STATUS             1002
+#define IDC_EDT_OPEN_CMD                1002
 #define IDC_EDIT4                       1003
 #define IDC_EDT_WORKDIR                 1003
 #define IDC_EDT_PEOPEN_WORKDIR          1003
+#define IDC_EDT_OPEN_WORKDIR            1003
 #define IDC_LIST1                       1004
 #define IDC_LIST_PROC                   1004
 #define IDC_PROC_LIST_PROC              1004
@@ -37,6 +39,11 @@
 #define IDC_BTN_PEOPEN_SELECT           1009
 #define IDC_BUTTON2                     1010
 #define IDC_BTN_PEOPEN_DEBUG            1010
+#define IDC_OPEN_TEXT1                  1012
+#define IDC_OPEN_TEXT2                  1013
+#define IDC_OPEN_TEXT3                  1014
+#define IDC_COMBO1                      1016
+#define IDC_OPEN_COM_HISTORY            1016
 #define ID_40001                        40001
 #define ID_40002                        40002
 #define ID_40003                        40003
@@ -68,7 +75,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        117
 #define _APS_NEXT_COMMAND_VALUE         40025
-#define _APS_NEXT_CONTROL_VALUE         1012
+#define _APS_NEXT_CONTROL_VALUE         1017
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

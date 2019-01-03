@@ -22,11 +22,14 @@ struct ProcShowInfo
     }
 };
 
+typedef LRESULT (CALLBACK *PWIN_PROC)(HWND, UINT, WPARAM, LPARAM);
+
 class CProcSelectView : public CWindowBase, public CCriticalSectionLockable
 {
 public:
     CProcSelectView() : m_hParent(NULL), m_hFont(NULL), m_hProcList(NULL), m_hImageList(NULL), m_dwSelectPid(0)
     {
+        m_pfnFilterEditProc = NULL;
     }
 
     virtual ~CProcSelectView()
@@ -58,6 +61,8 @@ protected:
     INT_PTR OnNotify(HWND hwnd, WPARAM wp, LPARAM lp);
     INT_PTR OnClose(HWND hwnd, WPARAM wp, LPARAM lp);
     INT_PTR OnCommand(HWND hwnd, WPARAM wp, LPARAM lp);
+    INT_PTR OnFilterProc(HWND hwnd, WPARAM wp, LPARAM lp);
+    static LRESULT WINAPI FilterEditProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp);
 
 protected:
     void InitListCtrl();
@@ -79,6 +84,7 @@ protected:
     HWND m_hProcList;
     HFONT m_hFont;
     DWORD m_dwSelectPid;
+    PWIN_PROC m_pfnFilterEditProc;
 
     HIMAGELIST m_hImageList;
     map<ustring, int> m_icoIndex;

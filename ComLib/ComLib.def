@@ -49,3 +49,4 @@ DestroyThreadPool
 
 GetStrFormJson
 GetIntFromJson
+GetWindowStrW

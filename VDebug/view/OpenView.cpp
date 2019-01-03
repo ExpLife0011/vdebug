@@ -1,181 +1,168 @@
 #include <Windows.h>
-#include "DbgCtrlService.h"
+#include <ComLib/ComLib.h>
 #include "OpenView.h"
 #include "resource.h"
-#include "MainView.h"
 
-#define REG_KEY_PROCCACHE       L"software\\vdebug\\proccache"
-#define REG_VALUE_LAST_SELECT   L"lastselect"
-
-CPeFileOpenView::CPeFileOpenView()
-{}
-
-CPeFileOpenView::~CPeFileOpenView()
-{}
-
-LRESULT CPeFileOpenView::OnWindowMsg(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
-{
-    switch (uMsg)
+PeFileOpenDlg *PeFileOpenDlg::GetInstance() {
+    static PeFileOpenDlg *s_ptr = NULL;
+    if (s_ptr == NULL)
     {
-    case  WM_INITDIALOG:
-        OnInitDlg(hwndDlg, wParam, lParam);
-        break;
-    case  WM_COMMAND:
-        OnCommand(hwndDlg, wParam, lParam);
-        break;
-    case WM_DROPFILES:
-        OnDropFiles(hwndDlg, wParam, lParam);
-        break;
-    case WM_CLOSE:
+        s_ptr = new PeFileOpenDlg();
+    }
+    return s_ptr;
+}
+
+PeFileOpenDlg::PeFileOpenDlg() {
+}
+
+PeFileOpenDlg::~PeFileOpenDlg() {
+}
+
+UINT_PTR PeFileOpenDlg::OFNHookProc(HWND hdlg, UINT msg, WPARAM wp, LPARAM lp) {
+    static const int TIMER_ACTIVITY = 1511;
+    static HWND s_hParent = NULL;
+    static HWND s_hTextPath = NULL;
+    static HWND s_hComPath = NULL;
+    static HWND s_hTextType = NULL;
+    static HWND s_hComType = NULL;
+
+    static HWND s_hBtnOk = NULL;
+    static HWND s_hBtnCancel = NULL;
+
+    static HWND s_hTextParam = NULL;
+    static HWND s_hEditParam = NULL;
+    static HWND s_hTextDir = NULL;
+    static HWND s_hEditDir = NULL;
+    static HWND s_hTextHistory = NULL;
+    static HWND s_hComHistory = NULL;
+
+    PeFileOpenDlg *ptr = GetInstance();
+    switch (msg)
+    {
+    case WM_INITDIALOG:
         {
-            OnClose(hwndDlg, wParam, lParam);
-            EndDialog(hwndDlg, 0);
+            s_hParent = GetParent(hdlg);
+            s_hTextPath = GetDlgItem(s_hParent, 0x442);
+            s_hComPath = GetDlgItem(s_hParent, 0x47c);
+            s_hTextType = GetDlgItem(s_hParent, 0x441);
+            s_hComType = GetDlgItem(s_hParent, 0x470);
+
+            s_hTextParam = GetDlgItem(hdlg, IDC_OPEN_TEXT1);
+            s_hEditParam = GetDlgItem(hdlg, IDC_EDT_OPEN_CMD);
+
+            s_hTextDir = GetDlgItem(hdlg, IDC_OPEN_TEXT2);
+            s_hEditDir = GetDlgItem(hdlg, IDC_EDT_OPEN_WORKDIR);
+
+            s_hTextHistory = GetDlgItem(hdlg, IDC_OPEN_TEXT3);
+            s_hComHistory = GetDlgItem(hdlg, IDC_OPEN_COM_HISTORY);
+
+            s_hBtnOk = GetDlgItem(s_hParent, 0x1);
+            s_hBtnCancel = GetDlgItem(s_hParent, 0x2);
+
+            RECT rtParent = {0};
+            GetWindowRect(s_hParent, &rtParent);
+
+            SetWindowTextW(s_hTextPath, L"程序路径");
+            SetWindowTextW(s_hTextType, L"文件类型");
+
+            SetTimer(hdlg, TIMER_ACTIVITY, 1, NULL);
+            CentreWindow(s_hParent, GetInstance()->m_hParent);
         }
+        break;
+    case WM_TIMER:
+        {
+            if (TIMER_ACTIVITY == wp)
+            {
+                CentreWindow(s_hParent, GetInstance()->m_hParent);
+                KillTimer(hdlg, TIMER_ACTIVITY);
+            }
+        }
+        break;
+    case WM_SIZE:
+        {
+            RECT rtDlg = {0};
+            GetWindowRect(hdlg, &rtDlg);
+
+            RECT rtParent = {0};
+            GetWindowRect(s_hParent, &rtParent);
+
+            int parentWidth = rtParent.right - rtParent.left;
+            int parentHigh = rtParent.bottom - rtParent.top;
+
+            RECT rt1, rt2, rt3, rt4;
+            GetWindowRect(s_hTextPath, &rt1);
+            GetWindowRect(s_hComPath, &rt2);
+            GetWindowRect(s_hTextType, &rt3);
+            GetWindowRect(s_hComType, &rt4);
+
+            int spaceY = rt4.top - rt1.top + 3;
+            int leftEdit = rt2.left - rtDlg.left;
+            int topEdit = rt4.top + spaceY - rtDlg.top;
+            int widthEdit = rt2.right - rt2.left;
+            int highEdit = rt2.bottom - rt2.top;
+
+            widthEdit = (parentWidth - leftEdit - 60);
+
+            int leftText = rt1.left - rtDlg.left;
+            int topText = rt3.top + spaceY;
+
+            RECT rtText = {0};
+            GetWindowRect(s_hTextParam, &rtText);
+            int widthText = rtText.right - rtText.left;
+            int highText = rtText.bottom - rtText.top;
+
+            //param, dir, history位置调整
+            SetWindowPos(s_hTextParam, 0, leftText, topEdit, widthText, highText, SWP_NOZORDER);
+            SetWindowPos(s_hEditParam, 0, leftEdit, topEdit, widthEdit, highEdit, SWP_NOZORDER);
+            SetWindowPos(s_hTextDir, 0, leftText, topEdit + spaceY, widthText, highText, SWP_NOZORDER);
+            SetWindowPos(s_hEditDir, 0, leftEdit, topEdit + spaceY, widthEdit, highEdit, SWP_NOZORDER);
+            SetWindowPos(s_hTextHistory, 0, leftText, topEdit + spaceY * 2, widthText, highText, SWP_NOZORDER);
+             SetWindowPos(s_hComHistory, 0, leftEdit, topEdit + spaceY * 2, widthEdit, highEdit, SWP_NOZORDER);
+
+            //path, type编辑框位置调整
+            SetWindowPos(s_hComPath, 0, 0, 0, widthEdit, highEdit, SWP_NOZORDER | SWP_NOMOVE);
+            SetWindowPos(s_hComType, 0, 0, 0, widthEdit, highEdit, SWP_NOZORDER | SWP_NOMOVE);
+
+            RECT btnRect1 = {0};
+            RECT btnRect2 = {0};
+            GetWindowRect(s_hBtnOk, &btnRect1);
+            GetWindowRect(s_hBtnCancel, &btnRect2);
+            int btnWidth = (btnRect1.right - btnRect1.left);
+            int btnHigh = (btnRect1.bottom - btnRect1.top);
+            int btnY = topEdit + spaceY * 3 + 5;
+            int btnXCannel = (leftEdit + widthEdit - btnWidth);
+            int btnXOk = btnXCannel - btnWidth - 10;
+            SetWindowPos(s_hBtnOk, 0, btnXOk, btnY, 0, 0, SWP_NOZORDER | SWP_NOSIZE);
+            SetWindowPos(s_hBtnCancel, 0, btnXCannel, btnY, 0, 0, SWP_NOZORDER | SWP_NOSIZE);
+            SetWindowTextW(s_hBtnOk, L"开始调试");
+            SetWindowTextW(s_hBtnCancel, L"取消操作");
+
+            InvalidateRect(s_hTextParam, NULL, TRUE);
+            InvalidateRect(s_hTextDir, NULL, TRUE);
+        }
+        break;
+    case WM_NOTIFY:
         break;
     }
     return 0;
 }
 
-BOOL CPeFileOpenView::ChangeWndMessageFilter(UINT uMessage, BOOL bAllow)
-{
-    HMODULE hUserMod = NULL;
-    BOOL bResult = FALSE;
-    typedef BOOL (WINAPI* ChangeWindowMessageFilterFn)(UINT, DWORD);
+bool PeFileOpenDlg::ShowFileOpenDlg(HWND parent, ProcParam &param) {
+    m_hParent = parent;
 
-    hUserMod = GetModuleHandleW(L"user32.dll");
-    if (hUserMod == NULL)
-    {
-        return FALSE;
-    }
-
-    ChangeWindowMessageFilterFn pfnChangeWindowMessageFilter = 
-        (ChangeWindowMessageFilterFn)GetProcAddress(hUserMod, "ChangeWindowMessageFilter");
-    if (pfnChangeWindowMessageFilter == NULL)
-    {
-        FreeLibrary(hUserMod);
-        return FALSE;
-    }
-
-    bResult = pfnChangeWindowMessageFilter(uMessage, bAllow ? MSGFLT_ADD : MSGFLT_REMOVE);
-    return bResult;
-}
-
-void CPeFileOpenView::OnInitDlg(HWND hwnd, WPARAM wp, LPARAM lp)
-{
-    CentreWindow(hwnd, GetParent(hwnd));
-    m_hPePath = GetDlgItem(hwnd, IDC_EDT_PEOPEN_PATH);
-    m_hPeCmd = GetDlgItem(hwnd, IDC_EDT_PEOPEN_CMD);
-    m_hWorkDir = GetDlgItem(hwnd, IDC_EDT_PEOPEN_WORKDIR);
-    m_hStatus = GetDlgItem(hwnd, IDC_EDT_PEOPEN_STATUS);
-
-    ChangeWndMessageFilter(WM_DROPFILES, TRUE);
-    ChangeWndMessageFilter(0x0049, TRUE);
-    DragAcceptFiles(hwnd, TRUE);
-}
-
-void CPeFileOpenView::OnCommand(HWND hwnd, WPARAM wp, LPARAM lp)
-{
-    DWORD id = LOWORD(wp);
-    if (IDC_BTN_PEOPEN_SELECT == id)
-    {
-        OPENFILENAMEW ofn = {0};
-        ZeroMemory(&ofn, sizeof(ofn));  
-        WCHAR wszFileName[MAX_PATH] = {0};
-        ofn.lpstrFile = wszFileName;
-        ofn.nMaxFile = MAX_PATH;  
-        ofn.lpstrFilter =L"可执行文件(*.exe)\0*.exe\0快捷方式(*.lnk)\0*.lnk\0All Files\0*.*\0\0";
-        ofn.lpstrDefExt = L"exe";
-        ofn.lpstrTitle = L"选择要调试的程序";
-        ofn.Flags = OFN_HIDEREADONLY | OFN_PATHMUSTEXIST;
-        ustring wstrDir = GetLastSelectDir();
-        ofn.lpstrInitialDir = wstrDir.c_str();
-        ofn.FlagsEx = OFN_EX_NOPLACESBAR;
-        ofn.lStructSize = sizeof(OPENFILENAMEA);
-        ofn.hwndOwner = hwnd;
-        if (GetOpenFileNameW(&ofn))  
-        {
-            ClearCtrl();
-            FillFileInfo(wszFileName);
-            PathAppendW(wszFileName, L"..");
-            RecordLastSelect(wszFileName);
-        }
-    }
-    else if (IDC_BTN_PEOPEN_DEBUG == id)
-    {
-        WCHAR wszBuffer[MAX_PATH] = {0};
-        GetWindowTextW(m_hPePath, wszBuffer, MAX_PATH);
-        WCHAR param[MAX_PATH] = {0};
-        GetWindowTextW(m_hPeCmd, param, MAX_PATH);
-
-        BOOL x64 = FALSE;
-        if (!IsPeFileW(wszBuffer, &x64))
-        {
-            SetWindowTextW(m_hStatus, L"不是有效的pe文件");
-            return;
-        }
-
-        if (x64)
-        {
-            DbgCtrlService::GetInstance()->SetDebuggerStat(em_dbg_proc64);
-        } else {
-            DbgCtrlService::GetInstance()->SetDebuggerStat(em_dbg_proc86);
-        }
-        DbgCtrlService::GetInstance()->ExecProc(wszBuffer, param);
-        EndDialog(m_hwnd, 0);
-    }
-}
-
-void CPeFileOpenView::ClearCtrl()
-{
-    SetWindowTextW(m_hPePath, L"");
-    SetWindowTextW(m_hPeCmd, L"");
-    SetWindowTextW(m_hWorkDir, L"");
-}
-
-void CPeFileOpenView::FillFileInfo(const ustring &wstr)
-{
-    GDS_LINKINFO info;
-    if (ShlParseShortcutsW(wstr.c_str(), &info))
-    {
-        SetWindowTextW(m_hPePath, info.wszPath);
-        SetWindowTextW(m_hPeCmd, info.wszArgs);
-        SetWindowTextW(m_hWorkDir, info.wszWorkDir);
-    }
-    else
-    {
-        SetWindowTextW(m_hPePath, wstr.c_str());
-    }
-}
-
-void CPeFileOpenView::OnDropFiles(HWND hwnd, WPARAM wp, LPARAM lp)
-{
-    ClearCtrl();
-    WCHAR wszBuffer[MAX_PATH] = {0};
-    DragQueryFileW((HDROP)wp, 0, wszBuffer, MAX_PATH);
-    if (wszBuffer[0])
-    {
-        FillFileInfo(wszBuffer);
-    }
-}
-
-void CPeFileOpenView::OnClose(HWND hwnd, WPARAM wp, LPARAM lp)
-{}
-
-ustring CPeFileOpenView::GetLastSelectDir()
-{
-    WCHAR wszValue[MAX_PATH] = {0};
-    DWORD dwSize = sizeof(wszValue);
-    SHGetValueW(HKEY_LOCAL_MACHINE, REG_KEY_PROCCACHE, REG_VALUE_LAST_SELECT, NULL, wszValue, &dwSize);
-
-    if (!wszValue[0])
-    {
-        GetModuleFileNameW(NULL, wszValue, MAX_PATH);
-        PathAppendW(wszValue, L"..");
-    }
-    return wszValue;
-}
-
-void CPeFileOpenView::RecordLastSelect(LPCWSTR wszDir)
-{
-    SHSetValueW(HKEY_LOCAL_MACHINE, REG_KEY_PROCCACHE, REG_VALUE_LAST_SELECT, REG_SZ, wszDir, lstrlenW(wszDir) * sizeof(WCHAR));
+    WCHAR buffer[512];
+    buffer[0] = 0;
+    OPENFILENAMEW ofn = {0};
+    ofn.lStructSize = sizeof(ofn);
+    ofn.hwndOwner = parent;
+    ofn.hInstance = GetModuleHandle(NULL);
+    ofn.Flags = OFN_ENABLESIZING | OFN_EXPLORER | OFN_FILEMUSTEXIST | OFN_HIDEREADONLY | OFN_ENABLEHOOK | OFN_ENABLETEMPLATE;
+    ofn.lpstrFilter = L"可执行程序\0*.exe;*.dll\0所有文件(*.*)\0*.*\0\0";
+    ofn.lpstrFile = buffer;
+    ofn.nMaxFile = MAX_PATH;
+    ofn.lpstrTitle = L"选择要执行的程序";
+    ofn.lpfnHook = OFNHookProc;
+    ofn.lpTemplateName = MAKEINTRESOURCEW(IDD_PROC_OPEN);
+    GetOpenFileNameW(&ofn);
+    return true;
 }

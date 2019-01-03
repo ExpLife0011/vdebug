@@ -7,6 +7,7 @@
 #include <ComStatic/ComStatic.h>
 #include <Shlwapi.h>
 #include "DbgCtrlService.h"
+#include "OpenView.h"
 
 #pragma comment(lib, "Ws2_32.lib")
 
@@ -156,6 +157,11 @@ int WINAPI WinMain(HINSTANCE m, HINSTANCE p, LPSTR cmd, int show)
     LoadLibraryW(L"mq32.dll");
     LoadLibraryW(L"DbgCtrl32.dll");
 
+    /*
+    ProcParam param;
+    PeFileOpenDlg::GetInstance()->ShowFileOpenDlg(NULL, param);
+    return 0;
+    */
     _StartService();
     DbgCtrlService::GetInstance()->InitCtrlService();
     _StartViewProc();

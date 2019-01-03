@@ -148,4 +148,6 @@ private:
 
 std::mstring __stdcall GetStrFormJson(cJSON *json, const std::mstring &name);
 int __stdcall GetIntFromJson(cJSON *json, const std::mstring &name);
+
+std::ustring __stdcall GetWindowStrW(HWND hwnd);
 #endif //COMUTIL_COMLIB_H_H_
