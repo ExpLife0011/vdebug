@@ -20,7 +20,7 @@ private:
 public:
     static PeFileOpenDlg *GetInstance();
     virtual ~PeFileOpenDlg();
-    bool ShowFileOpenDlg(HWND parent, ProcParam &param);
+    BOOL ShowFileOpenDlg(HWND parent, ProcParam &param);
 
 private:
     int OnInitDialog(HWND hdlg, WPARAM wp, LPARAM lp);

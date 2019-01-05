@@ -18,6 +18,39 @@ static void _TestProc() {
         MemoryAlloc<int> allocer;
         int *ptr = allocer.GetMemory(1024);
     }
+
+    SqliteOperator db;
+    char path[256];
+    GetModuleFileNameA(NULL, path, 256);
+    PathAppendA(path, "..\\test1.db");
+    bool f = db.OpenDbFile(path);
+
+    mstring createSql = "CREATE TABLE testtable1("  \
+    "id INTEGER PRIMARY KEY,"                       \
+    "name           TEXT    NOT NULL,"              \
+    "age            INT     NOT NULL,"              \
+    "address        CHAR(50),"                      \
+    "msg         TEXT)";
+    db.Exec(createSql.c_str());
+
+    mstring err = db.GetError();
+
+    mstring insertSql = "insert into testtable1(name, age, address, msg)values('test1', 11, 'address1', 'msg1')";
+    db.Insert(insertSql.c_str());
+    err = db.GetError();
+
+    mstring selectSql = "select * from testtable1";
+    SqliteResult result = db.Select(selectSql.c_str());
+    err = db.GetError();
+    int dd = 123;
+
+    int ss = 0;
+    for (SqliteIterator *it = result.begin() ; it != result.end() ; it = it->GetNext())
+    {
+        int ff = 456;
+        ss++;
+    }
+    int ee = 0;
     //InitSymbolHlpr(L"SRV*F:\\mysymbol*http://msdl.microsoft.com/download/symbols/");
     //InitSymbolHlpr(L"F:\\mysymbol");
 
@@ -157,11 +190,8 @@ int WINAPI WinMain(HINSTANCE m, HINSTANCE p, LPSTR cmd, int show)
     LoadLibraryW(L"mq32.dll");
     LoadLibraryW(L"DbgCtrl32.dll");
 
-    /*
-    ProcParam param;
-    PeFileOpenDlg::GetInstance()->ShowFileOpenDlg(NULL, param);
+    _TestProc();
     return 0;
-    */
     _StartService();
     DbgCtrlService::GetInstance()->InitCtrlService();
     _StartViewProc();

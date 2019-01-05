@@ -8,6 +8,8 @@
 #include "logger.h"
 #include "crc32.h"
 #include "winsize.h"
+#include "sqlite3.h"
+#include "SqliteOperator.h"
 
 #ifndef COMLIB_EXPORTS
     #if _WIN64 || WIN64

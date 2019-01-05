@@ -199,6 +199,14 @@
 				>
 			</File>
 			<File
+				RelativePath=".\sqlite3.c"
+				>
+			</File>
+			<File
+				RelativePath=".\SqliteOperator.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\StrSafte.cpp"
 				>
 			</File>
@@ -233,10 +241,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\crc32_imp.h"
-				>
-			</File>
-			<File
 				RelativePath=".\LockBase.h"
 				>
 			</File>
@@ -246,6 +250,14 @@
 			</File>
 			<File
 				RelativePath=".\md5.h"
+				>
+			</File>
+			<File
+				RelativePath=".\sqlite3.h"
+				>
+			</File>
+			<File
+				RelativePath=".\SqliteOperator.h"
 				>
 			</File>
 			<File

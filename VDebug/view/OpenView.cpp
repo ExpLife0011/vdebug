@@ -175,7 +175,7 @@ UINT_PTR PeFileOpenDlg::OFNHookProc(HWND hdlg, UINT msg, WPARAM wp, LPARAM lp) {
     return ret;
 }
 
-bool PeFileOpenDlg::ShowFileOpenDlg(HWND parent, ProcParam &param) {
+BOOL PeFileOpenDlg::ShowFileOpenDlg(HWND parent, ProcParam &param) {
     m_hParent = parent;
 
     WCHAR buffer[512];
