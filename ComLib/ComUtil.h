@@ -122,7 +122,7 @@ public:
         }
     }
 
-    T *GetMomory(int size) {
+    T *GetMemory(int size) {
         if (size < mSize)
         {
             return mBuffer;
@@ -134,6 +134,10 @@ public:
             mSize = size;
             mBuffer = new T[size];
         }
+        return mBuffer;
+    }
+
+    T *GetPtr() {
         return mBuffer;
     }
 

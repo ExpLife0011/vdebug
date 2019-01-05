@@ -1329,7 +1329,7 @@ ustring __stdcall GetProcessCommandLine(_In_ DWORD dwPid, BOOL bx64)
             if (!bStat && tmp > size)
             {
                 size += (tmp + 4);
-                pBufHeader = allocer.GetMomory(size);
+                pBufHeader = allocer.GetMemory(size);
 
                 tmp = size;
                 bStat = _PhpQueryProcessVariableSize(hProcess, VDProcessCommandLineInformation, pBufHeader, &tmp);
@@ -1354,7 +1354,7 @@ ustring __stdcall GetProcessCommandLine(_In_ DWORD dwPid, BOOL bx64)
             if (!bStat && tmp > size)
             {
                 size += (tmp + 4);
-                pBufHeader = allocer.GetMomory(size);
+                pBufHeader = allocer.GetMemory(size);
 
                 tmp = size;
                 bStat = _GetProcressPebString(hProcess, uFlag, pBufHeader, &tmp);
@@ -1642,7 +1642,7 @@ std::ustring __stdcall GetWindowStrW(HWND hwnd) {
         return buffer;
     } else {
         MemoryAlloc<WCHAR> alloc;
-        WCHAR *ptr = alloc.GetMomory(size + 4);
+        WCHAR *ptr = alloc.GetMemory(size + 4);
         GetWindowTextW(hwnd, ptr, size + 4);
         return ptr;
     }

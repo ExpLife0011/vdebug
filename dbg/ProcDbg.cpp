@@ -460,6 +460,7 @@ void CProcDbgger::OnException(EXCEPTION_DEBUG_INFO* ExceptionData)
         {
             DetachDebuggerEx(GetInstance()->m_vDbgProcInfo.m_dwPid);
             GetInstance()->OnDetachDbgger();
+        } else {
         }
     }
 }
