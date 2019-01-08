@@ -154,4 +154,19 @@ std::mstring __stdcall GetStrFormJson(cJSON *json, const std::mstring &name);
 int __stdcall GetIntFromJson(cJSON *json, const std::mstring &name);
 
 std::ustring __stdcall GetWindowStrW(HWND hwnd);
+
+static std::mstring __stdcall GetCurTimeStr1(const char *fmt) {
+    SYSTEMTIME time;
+    GetLocalTime(&time);
+    return FormatA(
+        fmt,
+        time.wYear,
+        time.wMonth,
+        time.wDay,
+        time.wHour,
+        time.wMinute,
+        time.wSecond,
+        time.wMilliseconds
+        );
+}
 #endif //COMUTIL_COMLIB_H_H_

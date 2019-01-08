@@ -8,13 +8,26 @@
 using namespace std;
 
 struct ProcParam {
+    BOOL succ;
     std::ustring path;
     std::ustring command;
     std::ustring dir;
+
+    ProcParam() {
+        succ = FALSE;
+    }
 };
 
 class PeFileOpenDlg : public CCriticalSectionLockable
 {
+    struct HistoryInfo {
+        unsigned long mId;
+        std::ustring mPath;
+        std::ustring mParam;
+        std::ustring mDir;
+        std::ustring mTime;
+    };
+
 private:
     PeFileOpenDlg();
 public:
@@ -23,6 +36,8 @@ public:
     BOOL ShowFileOpenDlg(HWND parent, ProcParam &param);
 
 private:
+    bool SaveHistory(HistoryInfo &history) const;
+    std::list<HistoryInfo> GetHistory(int maxSize) const;
     int OnInitDialog(HWND hdlg, WPARAM wp, LPARAM lp);
     int OnSize(HWND hdlg, WPARAM wp, LPARAM lp);
     int OnTimer(HWND hdlg, WPARAM wp, LPARAM lp);
@@ -48,5 +63,6 @@ private:
     HWND m_hEditDir;
     HWND m_hTextHistory;
     HWND m_hComHistory;
+    HWND m_hEditStatus;
 };
 #endif

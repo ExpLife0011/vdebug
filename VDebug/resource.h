@@ -26,6 +26,8 @@
 #define IDC_LIST1                       1004
 #define IDC_LIST_PROC                   1004
 #define IDC_PROC_LIST_PROC              1004
+#define IDC_EDT_OPEN_WORKDIR2           1004
+#define IDC_EDT_OPEN_STATUS             1004
 #define IDC_BTN_ATTACH                  1005
 #define IDC_PROC_BTN_ATTACH             1005
 #define IDC_BTN_OPEN                    1006
@@ -42,7 +44,6 @@
 #define IDC_OPEN_TEXT1                  1012
 #define IDC_OPEN_TEXT2                  1013
 #define IDC_OPEN_TEXT3                  1014
-#define IDC_COMBO1                      1016
 #define IDC_OPEN_COM_HISTORY            1016
 #define ID_40001                        40001
 #define ID_40002                        40002

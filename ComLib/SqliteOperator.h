@@ -9,6 +9,22 @@
 
 #pragma warning(disable:4251)
 
+class SqliteException {
+public:
+    SqliteException(const std::mstring &err) {
+        mErr = err;
+    }
+
+    virtual ~SqliteException() {}
+
+    const char *what() {
+        return mErr.c_str();
+    }
+
+private:
+    std::mstring mErr;
+};
+
 class _declspec(dllexport) SqliteIterator {
     friend class SqliteResult;
 private:
@@ -48,9 +64,11 @@ private:
 class _declspec(dllexport) SqliteOperator {
 public:
     SqliteOperator();
+    SqliteOperator(const std::mstring &filePath);
     virtual ~SqliteOperator();
 
-    bool OpenDbFile(const std::mstring &filePath);
+    bool Open(const std::mstring &filePath);
+    bool IsOpen();
     void Close();
     const SqliteResult &Select(const std::mstring &sql);
     bool Update(const std::mstring &sql);

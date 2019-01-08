@@ -1,6 +1,7 @@
 #include <Windows.h>
 #include <CommCtrl.h>
 #include <ComLib/ComLib.h>
+#include <ComLib/DbProxy.h>
 #include "OpenView.h"
 #include "resource.h"
 
@@ -37,6 +38,8 @@ int PeFileOpenDlg::OnInitDialog(HWND hdlg, WPARAM wp, LPARAM lp) {
 
     ptr->m_hTextHistory = GetDlgItem(hdlg, IDC_OPEN_TEXT3);
     ptr->m_hComHistory = GetDlgItem(hdlg, IDC_OPEN_COM_HISTORY);
+
+    ptr->m_hEditStatus = GetDlgItem(hdlg, IDC_EDT_OPEN_STATUS);
 
     ptr->m_hBtnOk = GetDlgItem(ptr->m_hParent, 0x1);
     ptr->m_hBtnCancel = GetDlgItem(ptr->m_hParent, 0x2);
@@ -111,6 +114,12 @@ int PeFileOpenDlg::OnSize(HWND hdlg, WPARAM wp, LPARAM lp) {
     SetWindowTextW(ptr->m_hBtnOk, L"开始调试");
     SetWindowTextW(ptr->m_hBtnCancel, L"取消操作");
 
+    //状态栏位置调整
+    int editStatusY = topEdit + spaceY * 3 + 5;
+    int leftStatusX = leftEdit;
+    int widthStatus = btnXOk - leftStatusX - 20;
+    SetWindowPos(ptr->m_hEditStatus, 0, leftStatusX, editStatusY, widthStatus, highEdit, SWP_NOZORDER);
+
     InvalidateRect(ptr->m_hTextParam, NULL, TRUE);
     InvalidateRect(ptr->m_hTextDir, NULL, TRUE);
     return 0;
@@ -140,8 +149,25 @@ int PeFileOpenDlg::OnNotify(HWND hdlg, WPARAM wp, LPARAM lp) {
         buf[0] = 0;
         GetWindowTextW(ptr->m_hEditDir, buf, 256);
         ptr->m_param.dir = buf;
-        //SetWindowLong(hdlg, DWL_MSGRESULT, 1);
-        return 1;
+
+        BOOL bSucc = FALSE;
+        BOOL x64 = FALSE;
+        if (!IsPeFileW(ptr->m_param.path.c_str(), &x64))
+        {
+            SetWindowTextW(ptr->m_hEditStatus, L"不是合法的可执行程序");
+        } else if (x64)
+        {
+            SetWindowTextW(ptr->m_hEditStatus, L"尚不支持64位程序");
+        } else {
+            bSucc = TRUE;
+        }
+        ptr->m_param.succ = bSucc;
+
+        if (!bSucc)
+        {
+            SetWindowLong(hdlg, DWL_MSGRESULT, 1);
+            return 1;
+        }
     }
     return 0;
 }
@@ -171,6 +197,53 @@ UINT_PTR PeFileOpenDlg::OFNHookProc(HWND hdlg, UINT msg, WPARAM wp, LPARAM lp) {
             ret = ptr->OnNotify(hdlg, wp, lp);
         }
         break;
+    case WM_CTLCOLORSTATIC:
+        {
+            if (ptr->m_hEditStatus == (HWND)lp)
+            {
+                HDC dc = (HDC)wp;
+                SetTextColor(dc, RGB(255, 0, 0));
+                SetBkColor(dc, GetSysColor(COLOR_BTNFACE));
+
+                static HBRUSH s_hbrBkgnd = GetSysColorBrush(COLOR_BTNFACE);
+                return (INT_PTR)s_hbrBkgnd;
+            }
+        }
+        break;
+    }
+    return ret;
+}
+
+bool PeFileOpenDlg::SaveHistory(HistoryInfo &history) const {
+    history.mTime = GetCurTimeStr1("%4d-%2d-%2d %02d:%02d:%02d %03d");
+    mstring str = WtoA(history.mPath);
+    history.mId = crc32(str.c_str(), str.size(), 0xffabcdef);
+
+    mstring sql = FormatA(
+        "replace into tOpenHistory(id, path, param, dir, time)values(%u, '%ls', '%ls', '%ls', '%ls')",
+        history.mId,
+        history.mPath.c_str(),
+        history.mParam.c_str(),
+        history.mDir.c_str(),
+        history.mTime.c_str()
+        );
+    return DbProxy::GetInstance()->ExecCfg(sql);
+}
+
+list<PeFileOpenDlg::HistoryInfo> PeFileOpenDlg::GetHistory(int maxSize) const {
+    mstring sql = FormatA("select * from tOpenHistory order by time limit %d", maxSize);
+    SqliteResult result = DbProxy::GetInstance()->SelectCfg(sql.c_str());
+
+    list<HistoryInfo> ret;
+    HistoryInfo tmp;
+    for (SqliteIterator *it = result.begin() ; it != result.end() ; it++)
+    {
+        tmp.mId = (unsigned long)atoi(it->GetValue("id").c_str());
+        tmp.mPath = it->GetValue("path");
+        tmp.mParam = it->GetValue("param");
+        tmp.mDir = it->GetValue("dir");
+        tmp.mTime = it->GetValue("time");
+        ret.push_back(tmp);
     }
     return ret;
 }
@@ -191,5 +264,16 @@ BOOL PeFileOpenDlg::ShowFileOpenDlg(HWND parent, ProcParam &param) {
     ofn.lpstrTitle = L"选择要执行的程序";
     ofn.lpfnHook = OFNHookProc;
     ofn.lpTemplateName = MAKEINTRESOURCEW(IDD_PROC_OPEN);
-    return GetOpenFileNameW(&ofn);
+    GetOpenFileNameW(&ofn);
+    param = m_param;
+
+    if (param.succ)
+    {
+        HistoryInfo history;
+        history.mPath = param.path;
+        history.mParam = param.command;
+        history.mDir = param.dir;
+        SaveHistory(history);
+    }
+    return param.succ;
 }

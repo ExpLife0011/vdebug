@@ -70,6 +70,14 @@ SqliteOperator::SqliteOperator() {
     mDb = NULL;
 }
 
+SqliteOperator::SqliteOperator(const std::mstring &filePath) {
+    Open(filePath);
+}
+
+bool SqliteOperator::IsOpen() {
+    return (mDb != NULL);
+}
+
 SqliteOperator::~SqliteOperator() {
     Close();
 }
@@ -86,7 +94,7 @@ int SqliteOperator::SelectCallback(void *data, int argc, char **argv, char **nam
     return 0;
 }
 
-bool SqliteOperator::OpenDbFile(const std::mstring &filePath) {
+bool SqliteOperator::Open(const std::mstring &filePath) {
     mInit = (0 == sqlite3_open(filePath.c_str(), &mDb));
     return mInit;
 }
@@ -102,7 +110,10 @@ void SqliteOperator::Close() {
 const SqliteResult &SqliteOperator::Select(const std::mstring &sql) {
     mResult.Clear();
     char *err = NULL;
-    sqlite3_exec(mDb, sql.c_str(), SelectCallback, this, &err);
+    if (SQLITE_OK != sqlite3_exec(mDb, sql.c_str(), SelectCallback, this, &err))
+    {
+        throw SqliteException(err);
+    }
     return mResult;
 }
 
@@ -123,7 +134,10 @@ bool SqliteOperator::Insert(const std::mstring &sql) {
 
 bool SqliteOperator::Exec(const std::mstring &sql) {
     char *err = NULL;
-    sqlite3_exec(mDb, sql.c_str(), NULL, NULL, &err);
+    if (SQLITE_OK != sqlite3_exec(mDb, sql.c_str(), NULL, NULL, &err))
+    {
+        throw SqliteException(err);
+    }
 
     mError = err;
     return true;

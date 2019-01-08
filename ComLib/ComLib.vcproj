@@ -191,6 +191,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\DbProxy.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\dllmain.cpp"
 				>
 			</File>
@@ -238,6 +242,10 @@
 			</File>
 			<File
 				RelativePath=".\crc32.h"
+				>
+			</File>
+			<File
+				RelativePath=".\DbProxy.h"
 				>
 			</File>
 			<File

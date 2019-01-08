@@ -1,5 +1,7 @@
 #ifndef GLOBALDEF_H_H_
 #define GLOBALDEF_H_H_
+#include <Windows.h>
+#include <Shlwapi.h>
 
 #define SFV_SERVICE_NAME           L"DbgService"
 #define SFV_SERVICE_DISPLAY_NAME   L"DbgService"
@@ -49,4 +51,24 @@ struct ProcMonInfo {
     }
 };
 
+static std::mstring GetBaseDir() {
+#if WIN64 || _WIN64
+    HMODULE m = GetModuleHandleA("ComLib64.dll");
+#else
+    HMODULE m = GetModuleHandleA("ComLib32.dll");
+#endif
+
+    char buffer[512];
+    GetModuleFileNameA(m, buffer, 512);
+    PathAppendA(buffer, "..");
+    return buffer;
+}
+
+static std::mstring GetConfigDbPath() {
+    return (GetBaseDir() + "\\db\\cfg.db");
+}
+
+static std::mstring GetSymbolDbPath() {
+    return (GetBaseDir() + "\\db\\symbol.db");
+}
 #endif //GLOBALDEF_H_H_

@@ -10,6 +10,7 @@
 #include "winsize.h"
 #include "sqlite3.h"
 #include "SqliteOperator.h"
+#include "DbProxy.h"
 
 #ifndef COMLIB_EXPORTS
     #if _WIN64 || WIN64

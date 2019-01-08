@@ -23,7 +23,7 @@ static void _TestProc() {
     char path[256];
     GetModuleFileNameA(NULL, path, 256);
     PathAppendA(path, "..\\test1.db");
-    bool f = db.OpenDbFile(path);
+    bool f = db.Open(path);
 
     mstring createSql = "CREATE TABLE testtable1("  \
     "id INTEGER PRIMARY KEY,"                       \
@@ -111,7 +111,6 @@ static BOOL _StartService() {
 
     BOOL bServ = TRUE;
     BOOL bStat = FALSE;
-    HANDLE hNotify = NULL;
     do 
     {
         if (INVALID_FILE_ATTRIBUTES == GetFileAttributesW(wszServ))
@@ -140,7 +139,8 @@ static BOOL _StartService() {
             break;
         }
 
-        hNotify = OpenEventW(EVENT_MODIFY_STATE, FALSE, SFV_NOTIFY_NAME);
+        HANDLE hNotify = OpenEventW(EVENT_MODIFY_STATE, FALSE, SFV_NOTIFY_NAME);
+        HandleAutoClose abc(hNotify);
 
         if (hNotify)
         {
@@ -172,11 +172,6 @@ static BOOL _StartService() {
             dp(L"Æô¶¯SfvServ·þÎñÊ§°Ü:%d", GetLastError());
         }
     } while (FALSE);
-
-    if (hNotify)
-    {
-        CloseHandle(hNotify);
-    }
     return bStat;
 }
 
@@ -190,8 +185,8 @@ int WINAPI WinMain(HINSTANCE m, HINSTANCE p, LPSTR cmd, int show)
     LoadLibraryW(L"mq32.dll");
     LoadLibraryW(L"DbgCtrl32.dll");
 
-    _TestProc();
-    return 0;
+    DbProxy::GetInstance()->InitDbEnv();
+
     _StartService();
     DbgCtrlService::GetInstance()->InitCtrlService();
     _StartViewProc();
