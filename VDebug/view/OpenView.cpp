@@ -52,6 +52,9 @@ int PeFileOpenDlg::OnInitDialog(HWND hdlg, WPARAM wp, LPARAM lp) {
 
     SetTimer(hdlg, TIMER_ACTIVITY, 1, NULL);
     CentreWindow(ptr->m_hParent, GetInstance()->m_hParent);
+
+    list<HistoryInfo> hisory = GetHistory(128);
+    int dd = 1;
     return 0;
 }
 
@@ -236,13 +239,13 @@ list<PeFileOpenDlg::HistoryInfo> PeFileOpenDlg::GetHistory(int maxSize) const {
 
     list<HistoryInfo> ret;
     HistoryInfo tmp;
-    for (SqliteIterator *it = result.begin() ; it != result.end() ; it++)
+    for (SqliteIterator it = result.begin() ; it != result.end() ; it++)
     {
-        tmp.mId = (unsigned long)atoi(it->GetValue("id").c_str());
-        tmp.mPath = it->GetValue("path");
-        tmp.mParam = it->GetValue("param");
-        tmp.mDir = it->GetValue("dir");
-        tmp.mTime = it->GetValue("time");
+        tmp.mId = (unsigned long)atoi(it.GetValue("id").c_str());
+        tmp.mPath = it.GetValue("path");
+        tmp.mParam = it.GetValue("param");
+        tmp.mDir = it.GetValue("dir");
+        tmp.mTime = it.GetValue("time");
         ret.push_back(tmp);
     }
     return ret;

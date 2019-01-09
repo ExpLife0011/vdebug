@@ -25,40 +25,48 @@ private:
     std::mstring mErr;
 };
 
+struct IteratorCache {
+    std::map<std::mstring, std::mstring> mCurData;
+    IteratorCache *mNext;
+};
+
 class _declspec(dllexport) SqliteIterator {
     friend class SqliteResult;
-private:
+public:
     SqliteIterator();
+    SqliteIterator(const SqliteIterator &copy);
+    SqliteIterator(const IteratorCache *it);
+    virtual ~SqliteIterator();
+    SqliteIterator &operator=(const SqliteIterator &copy);
+    SqliteIterator operator++();
+    bool operator==(const SqliteIterator &dst);
+    bool operator!=(const SqliteIterator &dst);
 
 public:
-    SqliteIterator(std::map<std::mstring, std::mstring> data);
-    virtual ~SqliteIterator();
     std::mstring GetValue(const std::mstring &name);
-    SqliteIterator *GetNext();
+    SqliteIterator GetNext();
 
 private:
-    std::map<std::mstring, std::mstring> mCurData;
-    SqliteIterator *mNextPtr;
+    const IteratorCache *mData;
 };
 
 class _declspec(dllexport) SqliteResult {
     friend class SqliteOperator;
 public:
+    SqliteResult();
+    void SetResult(const std::list<IteratorCache *> *mResultSet);
     bool IsValid();
     bool IsEmpty();
-    SqliteIterator *begin();
-    SqliteIterator *end();
+    SqliteIterator begin();
+    SqliteIterator end();
 
     int GetSize();
-    SqliteIterator *GetNode(int);
-    SqliteIterator *GetFirst();
-    SqliteIterator *GetLast();
-private:
-    bool Clear();
-    bool Push(const std::map<std::mstring, std::mstring> &data);
+    SqliteIterator GetNode(int);
+    SqliteIterator GetFirst();
+    SqliteIterator GetLast();
 
 private:
-    std::list<SqliteIterator *> mData;
+    const std::list<IteratorCache *> *mResultSet;
 };
 
 class _declspec(dllexport) SqliteOperator {
@@ -70,7 +78,7 @@ public:
     bool Open(const std::mstring &filePath);
     bool IsOpen();
     void Close();
-    const SqliteResult &Select(const std::mstring &sql);
+    SqliteResult &Select(const std::mstring &sql);
     bool Update(const std::mstring &sql);
     bool Delete(const std::mstring &sql);
     bool Insert(const std::mstring &sql);
@@ -80,6 +88,7 @@ public:
     std::mstring GetError();
 
 private:
+    void Clear();
     static int SelectCallback(void *data, int argc, char **argv, char **name);
 
 private:
@@ -88,5 +97,8 @@ private:
     std::mstring mDbPath;
     SqliteResult mResult;
     std::mstring mError;
+    //迭代器内存由Operator统一分配和管理，生命周期等同于Operator对象
+    //迭代器对象可以随意copy，其中的数据内存由Operator统一调度
+    std::list<IteratorCache *> mCacheSet;
 };
 #endif //SQLITEOPT_COMSTATIC_H_H_

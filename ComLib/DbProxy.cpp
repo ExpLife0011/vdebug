@@ -40,21 +40,29 @@ bool DbProxy::InitDbEnv() {
 }
 
 SqliteResult DbProxy::SelectCfg(const mstring &sql) {
-    SqliteOperator opt(mCfgDbPath);
-    return opt.Select(sql);
+    mCfgOpt.Open(mCfgDbPath);
+    SqliteResult res = mCfgOpt.Select(sql);
+    mCfgOpt.Close();
+    return res;
 }
 
 bool DbProxy::ExecCfg(const mstring &sql) {
-    SqliteOperator opt(mCfgDbPath);
-    return opt.Exec(sql);
+    mCfgOpt.Open(mCfgDbPath);
+    bool ret = mCfgOpt.Exec(sql);
+    mCfgOpt.Close();
+    return ret;
 }
 
 SqliteResult DbProxy::SelectSymbol(const mstring &sql) {
-    SqliteOperator opt(mSymbolDbPath);
-    return opt.Select(sql);
+    mSymbolOpt.Open(mSymbolDbPath);
+    SqliteResult res = mSymbolOpt.Select(sql);
+    mSymbolOpt.Close();
+    return res;
 }
 
 bool DbProxy::ExecSymbol(const mstring &sql) {
-    SqliteOperator opt(mSymbolDbPath);
-    return opt.Exec(sql);
+    mSymbolOpt.Open(mSymbolDbPath);
+    bool ret = mSymbolOpt.Exec(sql);
+    mSymbolOpt.Close();
+    return ret;
 }

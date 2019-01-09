@@ -45,7 +45,7 @@ static void _TestProc() {
     int dd = 123;
 
     int ss = 0;
-    for (SqliteIterator *it = result.begin() ; it != result.end() ; it = it->GetNext())
+    for (SqliteIterator it = result.begin() ; it != result.end() ; it = it.GetNext())
     {
         int ff = 456;
         ss++;

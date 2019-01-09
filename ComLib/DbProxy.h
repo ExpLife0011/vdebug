@@ -19,5 +19,7 @@ public:
 private:
     std::mstring mCfgDbPath;
     std::mstring mSymbolDbPath;
+    SqliteOperator mCfgOpt;
+    SqliteOperator mSymbolOpt;
 };
 #endif //DBPROXY_STATIC_H_H_

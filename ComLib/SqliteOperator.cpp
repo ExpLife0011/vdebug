@@ -2,67 +2,74 @@
 
 using namespace std;
 
-SqliteIterator::SqliteIterator(std::map<std::mstring, std::mstring> data) {
-    mCurData = data;
-    mNextPtr = NULL;
+SqliteIterator::SqliteIterator() {
+    mData = NULL;
+}
+
+SqliteIterator::SqliteIterator(const SqliteIterator &copy) {
+    mData = copy.mData;
+}
+
+SqliteIterator::SqliteIterator(const IteratorCache *it) {
+    mData = it;
 }
 
 SqliteIterator::~SqliteIterator() {
 }
 
+SqliteIterator &SqliteIterator::operator=(const SqliteIterator &copy) {
+    mData = copy.mData;
+    return *this;
+}
+
+SqliteIterator SqliteIterator::operator++() {
+    mData = mData->mNext;
+    return *this;
+}
+
+bool SqliteIterator::operator!=(const SqliteIterator &dst) {
+    return (mData != dst.mData);
+}
+
 mstring SqliteIterator::GetValue(const mstring &name) {
-    map<mstring, mstring>::const_iterator it = mCurData.find(name);
-    if (mCurData.end() != it)
+    map<mstring, mstring>::const_iterator it = mData->mCurData.find(name);
+    if (mData->mCurData.end() != it)
     {
         return it->second;
     }
     return "";
 }
 
-SqliteIterator *SqliteIterator::GetNext() {
-    return mNextPtr;
+SqliteIterator SqliteIterator::GetNext() {
+    return mData->mNext;
+}
+
+SqliteResult::SqliteResult() {
+}
+
+void SqliteResult::SetResult(const std::list<IteratorCache *> *resultSet) {
+    mResultSet = resultSet;
 }
 
 bool SqliteResult::IsValid() {
-    return !mData.empty();
+    return mResultSet != NULL && !mResultSet->empty();
 }
 
 bool SqliteResult::IsEmpty() {
-    return mData.empty();
+    return !IsValid();
 }
 
-SqliteIterator *SqliteResult::begin() {
-    if (mData.empty())
+SqliteIterator SqliteResult::begin() {
+    if (mResultSet == NULL || mResultSet->empty())
     {
         return NULL;
     }
 
-    return *mData.begin();
+    return *(mResultSet->begin());
 }
 
-SqliteIterator *SqliteResult::end() {
+SqliteIterator SqliteResult::end() {
     return NULL;
-}
-
-bool SqliteResult::Clear() {
-    for (list<SqliteIterator *>::iterator it = mData.begin() ; it != mData.end() ; it++)
-    {
-        delete (*it);
-    }
-    mData.clear();
-    return true;
-}
-
-bool SqliteResult::Push(const std::map<std::mstring, std::mstring> &data) {
-    SqliteIterator *ptr = new SqliteIterator(data);
-    list<SqliteIterator *>::reverse_iterator endNode = mData.rbegin();
-    if (endNode != mData.rend())
-    {
-        (*endNode)->mNextPtr = ptr;
-    }
-    mData.push_back(ptr);
-
-    return true;
 }
 
 SqliteOperator::SqliteOperator() {
@@ -80,17 +87,32 @@ bool SqliteOperator::IsOpen() {
 
 SqliteOperator::~SqliteOperator() {
     Close();
+    Clear();
+}
+
+void SqliteOperator::Clear() {
+    for (list<IteratorCache *>::iterator it = mCacheSet.begin() ; it != mCacheSet.end() ; it++)
+    {
+        delete (*it);
+    }
+    mCacheSet.clear();
 }
 
 int SqliteOperator::SelectCallback(void *data, int argc, char **argv, char **name) {
     SqliteOperator *ptr = (SqliteOperator *)data;
-    map<mstring, mstring> line;
+    IteratorCache *newData = new IteratorCache();
+    newData->mNext = NULL;
     for (int i = 0 ; i < argc ; i++)
     {
-        line.insert(make_pair(name[i], argv[i]));
+        newData->mCurData.insert(make_pair(name[i], argv[i]));
     }
 
-    ptr->mResult.Push(line);
+    if (!ptr->mCacheSet.empty())
+    {
+        IteratorCache *endNode = *(ptr->mCacheSet.rbegin());
+        endNode->mNext = newData;
+    }
+    ptr->mCacheSet.push_back(newData);
     return 0;
 }
 
@@ -107,13 +129,13 @@ void SqliteOperator::Close() {
     }
 }
 
-const SqliteResult &SqliteOperator::Select(const std::mstring &sql) {
-    mResult.Clear();
+SqliteResult &SqliteOperator::Select(const std::mstring &sql) {
     char *err = NULL;
     if (SQLITE_OK != sqlite3_exec(mDb, sql.c_str(), SelectCallback, this, &err))
     {
         throw SqliteException(err);
     }
+    mResult.SetResult(&mCacheSet);
     return mResult;
 }
 
