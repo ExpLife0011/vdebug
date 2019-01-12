@@ -109,3 +109,36 @@ ProcCreateInfo _declspec(dllexport) __stdcall DecodeProcCreate(const std::utf8_m
     info.mEntryAddr = UtoW(content["entryAddr"].asString());
     return info;
 }
+
+/*
+{
+    "cmd":"event",
+    "content":{
+        "type":"moduleload",
+        "data":{
+            "name":"kernel32.dll",
+            "baseAddr":"0x4344353",
+            "endAddr":"0x43443ff"
+        }
+    }
+}
+*/
+std::utf8_mstring _declspec(dllexport) __stdcall EncodeDllLoadInfo(const DllLoadInfo &info) {
+    Value data;
+    data["name"] = WtoU(info.mDllName);
+    data["baseAddr"] = WtoU(info.mBaseAddr);
+    data["endAddr"] = WtoU(info.mEndAddr);
+
+    return FastWriter().write(data);
+}
+
+DllLoadInfo _declspec(dllexport) __stdcall DecodeDllLoadInfo(const std::utf8_mstring &json) {
+    DllLoadInfo info;
+    Value content;
+    Reader().parse(json, content);
+
+    info.mDllName = UtoW(content["name"].asString());
+    info.mBaseAddr = UtoW(content["baseAddr"].asString());
+    info.mEndAddr = UtoW(content["endAddr"].asString());
+    return info;
+}

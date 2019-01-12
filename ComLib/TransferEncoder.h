@@ -19,4 +19,12 @@ struct ProcCreateInfo {
 };
 std::utf8_mstring _declspec(dllexport) __stdcall EncodeProcCreate(const ProcCreateInfo &info);
 ProcCreateInfo _declspec(dllexport) __stdcall DecodeProcCreate(const std::utf8_mstring &json);
+
+struct DllLoadInfo {
+    std::ustring mDllName;
+    std::ustring mBaseAddr;
+    std::ustring mEndAddr;
+};
+std::utf8_mstring _declspec(dllexport) __stdcall EncodeDllLoadInfo(const DllLoadInfo &info);
+DllLoadInfo _declspec(dllexport) __stdcall DecodeDllLoadInfo(const std::utf8_mstring &json);
 #endif //TRANSFERENCODER_H_H_

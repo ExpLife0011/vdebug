@@ -191,29 +191,12 @@ void DbgCtrlService::OnDbgMessage(const ustring &event, const ustring &content, 
 void DbgCtrlService::OnProcExit(const ustring &event, const ustring &content, void *param) {
 }
 
-/*
-{
-    "cmd":"event",
-    "content":{
-        "type":"moduleload",
-        "data":{
-            "name":"kernel32.dll",
-            "baseAddr":"0x4344353",
-            "endAddr":"0x43443ff"
-        }
-    }
-}
-*/
 void DbgCtrlService::OnModuleLoad(const ustring &event, const ustring &content, void *param) {
-    Value data;
-    Reader().parse(WtoU(content), data);
-    mstring name = UtoA(GetStrFormJson(data, "name"));
-    mstring baseAddr = UtoA(GetStrFormJson(data, "baseAddr"));
-    mstring endAddr = UtoA(GetStrFormJson(data, "endAddr"));
+    DllLoadInfo dllInfo = DecodeDllLoadInfo(WtoU(content));
 
     PrintFormater pf;
     pf.SetRule("0;16");
-    pf << "模块加载" << name << baseAddr << endAddr << line_end;
+    pf << "模块加载" << WtoA(dllInfo.mDllName) << WtoA(dllInfo.mBaseAddr) << WtoA(dllInfo.mEndAddr) << line_end;
     AppendToSyntaxView(SCI_LABEL_DEFAULT, pf.GetResult());
 }
 

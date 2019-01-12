@@ -403,25 +403,12 @@ bool CProcDbgger::LoadModuleInfo(HANDLE hFile, DWORD64 dwBaseOfModule)
     //两个结构完全一样，考虑到和dump可能有区别分别命名
     m_vModuleInfo[dwBaseOfModule] = loadInfo.m_ModuleInfo;
 
-    /*
-    {
-        "cmd":"event",
-        "content":{
-            "type":"moduleload",
-            "data":{
-                "name":"kernel32.dll",
-                "baseAddr":"0x4344353",
-                "endAddr":"0x43443ff"
-            }
-        }
-    }
-    */
-    Value data;
-    data["name"] = WtoU(loadInfo.m_ModuleInfo.m_wstrDllName);
-    data["baseAddr"] = FormatA("0x%p", loadInfo.m_ModuleInfo.m_dwBaseOfImage);
-    data["endAddr"] = FormatA("0x%p", loadInfo.m_ModuleInfo.m_dwEndAddr);
+    DllLoadInfo dllInfo;
+    dllInfo.mDllName = loadInfo.m_ModuleInfo.m_wstrDllName;
+    dllInfo.mBaseAddr = FormatW(L"0x%p", loadInfo.m_ModuleInfo.m_dwBaseOfImage);
+    dllInfo.mEndAddr = FormatW(L"0x%p", loadInfo.m_ModuleInfo.m_dwEndAddr);
 
-    utf8_mstring package = MakeDbgEvent(DBG_EVENT_MODULE_LOAD, FastWriter().write(data));
+    utf8_mstring package = MakeDbgEvent(DBG_EVENT_MODULE_LOAD, EncodeDllLoadInfo(dllInfo));
     MsgSend(MQ_CHANNEL_DBG_SERVER, UtoW(package).c_str());
     return true;
 }
