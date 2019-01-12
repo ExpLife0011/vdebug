@@ -42,13 +42,14 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories="../"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;COMLIB_EXPORTS;CJSON_EXPORT_SYMBOLS"
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;COMLIB_EXPORTS;JSON_DLL_BUILD"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
 				DebugInformationFormat="4"
+				DisableSpecificWarnings="4251"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -175,10 +176,6 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath=".\cJSON.c"
-				>
-			</File>
-			<File
 				RelativePath=".\ComLib.def"
 				>
 			</File>
@@ -219,6 +216,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\TransferEncoder.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\winsize.cpp"
 				>
 			</File>
@@ -228,10 +229,6 @@
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
-			<File
-				RelativePath=".\cJSON.h"
-				>
-			</File>
 			<File
 				RelativePath=".\ComLib.h"
 				>
@@ -277,9 +274,65 @@
 				>
 			</File>
 			<File
+				RelativePath=".\TransferEncoder.h"
+				>
+			</File>
+			<File
 				RelativePath=".\winsize.h"
 				>
 			</File>
+			<Filter
+				Name="json"
+				>
+				<File
+					RelativePath=".\json\config.h"
+					>
+				</File>
+				<File
+					RelativePath=".\json\features.h"
+					>
+				</File>
+				<File
+					RelativePath=".\json\forwards.h"
+					>
+				</File>
+				<File
+					RelativePath=".\json\json.h"
+					>
+				</File>
+				<File
+					RelativePath=".\json\json_batchallocator.h"
+					>
+				</File>
+				<File
+					RelativePath=".\json\json_reader.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\json\json_value.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\json\json_valueiterator.inl"
+					>
+				</File>
+				<File
+					RelativePath=".\json\json_writer.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\json\reader.h"
+					>
+				</File>
+				<File
+					RelativePath=".\json\value.h"
+					>
+				</File>
+				<File
+					RelativePath=".\json\writer.h"
+					>
+				</File>
+			</Filter>
 		</Filter>
 		<Filter
 			Name="资源文件"

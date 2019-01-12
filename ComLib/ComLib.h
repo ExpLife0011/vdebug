@@ -1,6 +1,6 @@
 #ifndef COMLIB_COMLIB_H_H_
 #define COMLIB_COMLIB_H_H_
-#include "cJSON.h"
+#include "json/json.h"
 #include "ComUtil.h"
 #include "tpool.h"
 #include "StrSafe.h"
@@ -11,6 +11,7 @@
 #include "sqlite3.h"
 #include "SqliteOperator.h"
 #include "DbProxy.h"
+#include "TransferEncoder.h"
 
 #ifndef COMLIB_EXPORTS
     #if _WIN64 || WIN64

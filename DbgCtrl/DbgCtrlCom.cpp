@@ -4,6 +4,7 @@
 #include "DbgCtrlCom.h"
 
 using namespace std;
+using namespace Json;
 
 /*
 {
@@ -19,27 +20,28 @@ using namespace std;
 }
 */
 std::mstring __stdcall MakeDbgEvent(const std::mstring &event, const std::mstring &data) {
-    cJSON *root = cJSON_CreateObject();
-    JsonAutoDelete abc(root);
-    cJSON_AddStringToObject(root, "cmd", "event");
-    cJSON *content = cJSON_CreateObject();
-    cJSON_AddStringToObject(content, "type", event.c_str());
-    cJSON *data1 = cJSON_Parse(data.c_str());
-    cJSON_AddItemToObject(content, "data", data1);
-    cJSON_AddItemToObject(root, "content", content);
+    Value root;
+    root["cmd"] = "event";
 
-    return cJSON_PrintUnformatted(root);
+    Value content;
+    content["type"] = event;
+    Value data1;
+    Reader().parse(data, data1);
+    content["data"] = data1;
+    root["content"] = content;
+
+    return FastWriter().write(root);
 }
 
 std::mstring __stdcall MakeDbgRequest(const std::mstring &cmd, const std::mstring &content) {
-    cJSON *root = cJSON_CreateObject();
-    JsonAutoDelete abc(root);
-    cJSON_AddStringToObject(root, "cmd", cmd.c_str());
+    Value root;
+    root["cmd"] = cmd;
 
-    cJSON *content1 = cJSON_Parse(content.c_str());
-    cJSON_AddItemToObject(root, "content", content1);
+    Value contentJson;
+    Reader().parse(content, contentJson);
+    root["content"] = contentJson;
 
-    return cJSON_PrintUnformatted(root);
+    return FastWriter().write(root);
 }
 
 /*
@@ -59,18 +61,18 @@ std::mstring __stdcall MakeDbgRequest(const std::mstring &cmd, const std::mstrin
 }
 */
 std::mstring __stdcall MakeDbgRelpy(int status, const std::mstring &reason, const std::mstring &result) {
-    cJSON *root = cJSON_CreateObject();
-    JsonAutoDelete abc(root);
-    cJSON_AddStringToObject(root, "cmd", "reply");
+    Value root;
+    root["cmd"] = "reply";
 
-    cJSON *content = cJSON_CreateObject();
-    cJSON_AddNumberToObject(content, "status", status);
-    cJSON_AddStringToObject(content, "reason", reason.c_str());
-    cJSON *res = cJSON_Parse(result.c_str());
-    cJSON_AddItemToObject(content, "result", res);
+    Value content;
+    content["status"] = status;
+    content["reason"] = reason;
 
-    cJSON_AddItemToObject(root, "content", content);
-    return cJSON_PrintUnformatted(root);
+    Value resultJson;
+    Reader().parse(result, resultJson);
+    content["result"] = resultJson;
+    root["content"] = content;
+    return FastWriter().write(root);
 }
 
 bool __stdcall IsDbgReplySucc(const std::mstring &reply, DbgReplyResult &result) {
@@ -78,9 +80,10 @@ bool __stdcall IsDbgReplySucc(const std::mstring &reply, DbgReplyResult &result)
 }
 
 bool __stdcall ParserDbgReply(const std::mstring &reply, DbgReplyResult &result) {
-    cJSON *root = cJSON_Parse(reply.c_str());
-    JsonAutoDelete abc(root);
-    cJSON *content = cJSON_GetObjectItem(root, "content");
+    Value root;
+
+    Reader().parse(reply, root);
+    Value content = root["content"];
 
     result.m_code = GetIntFromJson(content, "status");
     result.m_reason = GetStrFormJson(content, "reason");

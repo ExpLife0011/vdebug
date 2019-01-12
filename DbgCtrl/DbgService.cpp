@@ -9,6 +9,7 @@
 #include "DbgCtrlTool.h"
 
 using namespace std;
+using namespace Json;
 
 struct DbgServiceCache {
     wstring m_event;
@@ -48,7 +49,6 @@ DbgService::~DbgService() {
 }
 
 LPCWSTR DbgService::ServerNotify(LPCWSTR wszChannel, LPCWSTR wszContent, void *pParam) {
-    cJSON *root = NULL;
     wstring result;
     DbgService *pThis = (DbgService *)pParam;
 
@@ -56,16 +56,16 @@ LPCWSTR DbgService::ServerNotify(LPCWSTR wszChannel, LPCWSTR wszContent, void *p
     {
         if (0 == lstrcmpW(wszChannel, MQ_CHANNEL_DBG_SERVER))
         {
-            cJSON *root = cJSON_Parse(WtoU(wszContent).c_str());
-            JsonAutoDelete tmp(root);
+            Value root;
+            Reader().parse(WtoU(wszContent), root);
 
-            if (!root || root->type != cJSON_Object)
+            if (root.type() != objectValue)
             {
                 break;
             }
 
             utf8_mstring cmd = GetStrFormJson(root, "cmd");
-            cJSON *content = cJSON_GetObjectItem(root, "content");
+            Value content = root["content"];
 
             if (cmd == WtoU(DBG_DBG_EVENT))
             {
@@ -89,11 +89,6 @@ LPCWSTR DbgService::ServerNotify(LPCWSTR wszChannel, LPCWSTR wszContent, void *p
         } else {
         }
     } while (false);
-
-    if (root)
-    {
-        cJSON_Delete(root);
-    }
     return MsgStrCopy(result.c_str());
 }
 
@@ -144,11 +139,11 @@ ustring DbgService::DispatchCurDbgger(const ustring &cmd, const ustring &content
 ustring DbgService::DispatchSpecDbgger(DbggerType type, const ustring &cmd, const ustring &content) {
     ustring channel = GetSpecChannel(type);
 
-    cJSON *root = cJSON_CreateObject();
-    JsonAutoDelete abc(root);
-    cJSON_AddStringToObject(root, "cmd", WtoU(cmd).c_str());
-    cJSON_AddStringToObject(root, "content", WtoU(content).c_str());
-    LPCWSTR wsz = MsgSendForResult(channel.c_str(), UtoW(cJSON_PrintUnformatted(root)).c_str());
+    Value root;
+    root["cmd"] = WtoU(cmd);
+    root["content"] = WtoU(content);
+
+    LPCWSTR wsz = MsgSendForResult(channel.c_str(), UtoW(FastWriter().write(root)).c_str());
     ustring result = wsz;
     MsgStrFree(wsz);
     return result;

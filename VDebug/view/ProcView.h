@@ -48,7 +48,7 @@ public:
         return m_dwSelectPid;
     }
 
-    void OnProcChanged(const list<ProcMonInfo> &added, const list<DWORD> &killed);
+    void OnProcChanged(const ProcInfoSet &info);
     void DeleteFromSet(vector<ProcShowInfo *> &procSet, const list<DWORD> &killed, bool freeMem);
     void DeleteProcCache();
 protected:

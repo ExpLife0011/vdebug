@@ -2,7 +2,6 @@
 #include <ComLib/logger.h>
 #include "protocol.h"
 #include <ComLib/ComLib.h>
-#include <ComLib/cJSON.h>
 
 CServerLogic::CServerLogic() :m_bServInit(FALSE), m_port(0){
 }
@@ -87,33 +86,17 @@ void CServerLogic::OnServSocketClose(SOCKET socket) {
 }
 */
 void CServerLogic::OnServRecvComplete(SOCKET client, const string &strData) {
-    /*
-    Value vContent;
-    Reader().parse(strData, vContent);
-    if (vContent.type() != objectValue)
-    {
-        return;
-    }
-
-    string strAction = vContent["action"].asString();
-    string strRoute = vContent["route"].asString();
-    */
-
-    cJSON *root = cJSON_Parse(strData.c_str());
+    Value root;
+    Reader().parse(strData, root);
     do 
     {
-        if (root->type != cJSON_Object)
+        if (root.type() != objectValue)
         {
             break;
         }
 
-        string strAction = cJSON_GetObjectItem(root, "action")->valuestring;
-        string strRoute;
-        cJSON *route = cJSON_GetObjectItem(root, "route");
-        if (route != NULL && route->type == cJSON_String)
-        {
-            strRoute = route->valuestring;
-        }
+        string strAction = root["action"].asString();
+        string strRoute = root["route"].asString();
 
         PackageHeader header;
         string str;
@@ -128,7 +111,7 @@ void CServerLogic::OnServRecvComplete(SOCKET client, const string &strData) {
             }
 
             CScopedLocker lock(&m_servLock);
-            string strChannel = cJSON_GetObjectItem(root, "channel")->valuestring;
+            string strChannel = root["channel"].asString();
             string package;
             for (list<ClientRegiserCache *>::const_iterator it = m_RegisterCache.begin() ; it != m_RegisterCache.end() ; it++)
             {
@@ -164,18 +147,18 @@ void CServerLogic::OnServRecvComplete(SOCKET client, const string &strData) {
             CScopedLocker lock(&m_servLock);
             LOGGER_PRINT(L"register %hs", strData.c_str());
             //string clientUnique = vContent["clientUnique"].asString();
-            string clientUnique = cJSON_GetObjectItem(root, "clientUnique")->valuestring;
+            string clientUnique = root["clientUnique"].asString();
             //Value channels = vContent["channel"];
-            cJSON *channels = cJSON_GetObjectItem(root, "channel");
-            if (channels->type != cJSON_Array)
+            Value channels = root["channel"];
+            if (channels.type() != arrayValue)
             {
                 break;
             }
 
             set<string> tmp;
-            for (int i = 0 ; i < cJSON_GetArraySize(channels) ; i++)
+            for (int i = 0 ; i < (int)channels.size() ; i++)
             {
-                tmp.insert(cJSON_GetArrayItem(channels, i)->valuestring);
+                tmp.insert(channels[i].asString());
             }
 
             ClientRegiserCache *ptr = FindClientInCache(clientUnique);
@@ -190,11 +173,6 @@ void CServerLogic::OnServRecvComplete(SOCKET client, const string &strData) {
             LOGGER_PRINT(L"register success");
         }
     } while (false);
-
-    if (root)
-    {
-        cJSON_Delete(root);
-    }
 }
 
 ClientRegiserCache *CServerLogic::FindClientInCache(const string &clientUnique) const {

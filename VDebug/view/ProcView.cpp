@@ -155,7 +155,7 @@ void CProcSelectView::DeleteFromSet(vector<ProcShowInfo *> &procSet, const list<
     }
 }
 
-void CProcSelectView::OnProcChanged(const list<ProcMonInfo> &added, const list<DWORD> &killed) {
+void CProcSelectView::OnProcChanged(const ProcInfoSet &info) {
     CScopedLocker lock(this);
     list<ProcMonInfo>::const_iterator it;
     if (!IsWindow(m_hwnd))
@@ -163,6 +163,7 @@ void CProcSelectView::OnProcChanged(const list<ProcMonInfo> &added, const list<D
         return;
     }
 
+    const list<ProcMonInfo> &added = info.mAddSet;
     for (it = added.begin() ; it != added.end() ; it++)
     {
         ProcShowInfo *newProc = new ProcShowInfo();
@@ -179,6 +180,7 @@ void CProcSelectView::OnProcChanged(const list<ProcMonInfo> &added, const list<D
         }
     }
 
+    const list<DWORD> &killed = info.mKillSet;
     DeleteFromSet(m_procShow, killed, false);
     DeleteFromSet(m_procAll, killed, true);
 

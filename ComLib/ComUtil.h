@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <TlHelp32.h>
 #include <ComStatic/ComStatic.h>
-#include "cJSON.h"
+#include "json/json.h"
 
 #pragma comment(lib, "shlwapi.lib")
 
@@ -73,23 +73,6 @@ BOOL __stdcall RegSetDWORDValueA(HKEY hKey, LPCSTR szSubKey, LPCSTR szValue, DWO
 BOOL __stdcall RegSetDWORDValueW(HKEY hKey, LPCWSTR wszSubKey, LPCWSTR wszValue, DWORD dwData);
 BOOL __stdcall RegSetStrValueW(HKEY hKey, LPCWSTR wszSubKey, LPCWSTR wszValue, LPCWSTR wszData);
 
-class JsonAutoDelete {
-public:
-    inline JsonAutoDelete(cJSON *ptr) {
-        mPtr = ptr;
-    }
-
-    inline virtual ~JsonAutoDelete() {
-        if (mPtr)
-        {
-            cJSON_Delete(mPtr);
-        }
-    }
-
-private:
-    cJSON *mPtr;
-};
-
 class HandleAutoClose {
 public:
     inline HandleAutoClose(HANDLE h) {
@@ -150,8 +133,8 @@ private:
     int mSize;
 };
 
-std::mstring __stdcall GetStrFormJson(cJSON *json, const std::mstring &name);
-int __stdcall GetIntFromJson(cJSON *json, const std::mstring &name);
+std::mstring __stdcall GetStrFormJson(const Json::Value &json, const std::mstring &name);
+int __stdcall GetIntFromJson(const Json::Value &json, const std::mstring &name);
 
 std::ustring __stdcall GetWindowStrW(HWND hwnd);
 

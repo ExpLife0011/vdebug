@@ -30,13 +30,13 @@ SyntaxColourDesc *GetSyntaxCfg(int type)
     return NULL;
 }
 
-static SyntaxColourDesc *_GetDescFromJson(const cJSON *json)
+static SyntaxColourDesc *_GetDescFromJson(const mstring &key, const Value &json)
 {
     SyntaxColourDesc *desc = new SyntaxColourDesc();
-    desc->m_dwTextColour = GetColourFromStr(cJSON_GetObjectItem(json, "textColour")->valuestring);
-    desc->m_dwBackColour = GetColourFromStr(cJSON_GetObjectItem(json, "backColour")->valuestring);
-    desc->m_bBold = cJSON_GetObjectItem(json, "bold")->valueint;
-    desc->m_bItalic = cJSON_GetObjectItem(json, "italic")->valueint;
+    desc->m_dwTextColour = GetColourFromStr(json["textColour"].asString().c_str());
+    desc->m_dwBackColour = GetColourFromStr(json["backColour"].asString().c_str());
+    desc->m_bBold = json["bold"].asInt();
+    desc->m_bItalic = json["italic"].asInt();
 
     if (desc->m_dwTextColour == NULL_COLOUR)
     {
@@ -47,7 +47,7 @@ static SyntaxColourDesc *_GetDescFromJson(const cJSON *json)
     {
         desc->m_dwBackColour = gs_defBackColour;
     }
-    desc->m_strDesc = json->string;
+    desc->m_strDesc = key;
     return desc;
 }
 
@@ -99,7 +99,6 @@ BOOL LoadSyntaxCfg(const wstring &path)
         _InitSyntaxCfg();
     }
 
-    cJSON *root = NULL;
     PFILE_MAPPING_STRUCT pMapping = NULL;
     BOOL stat = FALSE;
 
@@ -111,16 +110,17 @@ BOOL LoadSyntaxCfg(const wstring &path)
             break;
         }
 
-        cJSON *root = cJSON_Parse((const char *)pMapping->lpView);
-        JsonAutoDelete abc(root);
-        if (!root || root->type != cJSON_Object)
+        Value root;
+        Reader().parse((const char *)pMapping->lpView, root);
+
+        if (root.type() != objectValue)
         {
             break;
         }
 
         //Global Config
-        cJSON *golbal = cJSON_GetObjectItem(root, "globalCfg");
-        cJSON *cfg = cJSON_GetObjectItem(root, "syntaxCfg");
+        Value golbal = root["globalCfg"];
+        Value cfg = root["syntaxCfg"];
 
         /*
         {
@@ -141,8 +141,8 @@ BOOL LoadSyntaxCfg(const wstring &path)
         gs_SelBackColour = GetColourFromStr(GetStrFormJson(golbal, "selBackColour").c_str());
         gs_SelAlpha = GetIntFromJson(golbal, "selAlpha");
 
-        for (cJSON *it = cfg->child ; it != NULL ; it = it->next) {
-            SyntaxColourDesc *desc = _GetDescFromJson(it);
+        for (Json::Value::iterator it = cfg.begin() ; it != cfg.end() ; it++) {
+            SyntaxColourDesc *desc = _GetDescFromJson(it.key().asString(), *it);
 
             map<mstring, int>::const_iterator ij = gs_pSyntaxMap->find(desc->m_strDesc);
             if (ij != gs_pSyntaxMap->end())

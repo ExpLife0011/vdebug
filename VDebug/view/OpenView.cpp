@@ -239,7 +239,7 @@ list<PeFileOpenDlg::HistoryInfo> PeFileOpenDlg::GetHistory(int maxSize) const {
 
     list<HistoryInfo> ret;
     HistoryInfo tmp;
-    for (SqliteIterator it = result.begin() ; it != result.end() ; it++)
+    for (SqliteIterator it = result.begin() ; it != result.end() ; ++it)
     {
         tmp.mId = (unsigned long)atoi(it.GetValue("id").c_str());
         tmp.mPath = it.GetValue("path");

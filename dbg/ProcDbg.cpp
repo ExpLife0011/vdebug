@@ -293,29 +293,15 @@ DWORD CProcDbgger::WriteDbgProcMemory(IN DWORD64 dwAddr, IN DWORD dwWriteLength,
     return 0;
 }
 
-/*
-{
-    "cmd":"event",
-    "content":{
-        "type":"proccreate",
-        "data":{
-            "pid":"0xabcd",
-            "image":"d:\\desktop\\1234.exe",
-            "baseAddr":"0x4344353",
-            "entryAddr":"0x4344389"
-        }
-    }
-}
-*/
 void CProcDbgger::OnCreateProcess(CREATE_PROCESS_DEBUG_INFO* pCreateProcessInfo)
 {
-    cJSON *content = cJSON_CreateObject();
-    JsonAutoDelete tmp(content);
-    cJSON_AddStringToObject(content, "pid", FormatA("0x%x", GetProcessId(pCreateProcessInfo->hProcess)).c_str());
-    cJSON_AddStringToObject(content, "image", WtoU(GetInstance()->m_vDbgProcInfo.m_wstrPePath).c_str());
-    cJSON_AddStringToObject(content, "baseAddr", FormatA("0x%p", pCreateProcessInfo->lpBaseOfImage).c_str());
-    cJSON_AddStringToObject(content, "entryAddr", FormatA("0x%p", pCreateProcessInfo->lpStartAddress).c_str());
-    mstring event = MakeDbgEvent(DBG_EVENT_PROC_CHANGED, cJSON_PrintUnformatted(content));
+    ProcCreateInfo info;
+    info.mPid = GetProcessId(pCreateProcessInfo->hProcess);
+    info.mImage = GetInstance()->m_vDbgProcInfo.m_wstrPePath;
+    info.mBaseAddr = FormatA("0x%p", pCreateProcessInfo->lpBaseOfImage);
+    info.mEntryAddr = FormatA("0x%p", pCreateProcessInfo->lpStartAddress);
+
+    mstring event = MakeDbgEvent(DBG_EVENT_PROC_CHANGED, EncodeProcCreate(info));
     MsgSend(MQ_CHANNEL_DBG_SERVER, UtoW(event).c_str());;
 
     CSymbolTaskHeader task;
@@ -430,12 +416,12 @@ bool CProcDbgger::LoadModuleInfo(HANDLE hFile, DWORD64 dwBaseOfModule)
         }
     }
     */
-    cJSON *data = cJSON_CreateObject();
-    JsonAutoDelete abc(data);
-    cJSON_AddStringToObject(data, "name", WtoU(loadInfo.m_ModuleInfo.m_wstrDllName).c_str());
-    cJSON_AddStringToObject(data, "baseAddr", FormatA("0x%p", loadInfo.m_ModuleInfo.m_dwBaseOfImage).c_str());
-    cJSON_AddStringToObject(data, "endAddr", FormatA("0x%p", loadInfo.m_ModuleInfo.m_dwEndAddr).c_str());
-    utf8_mstring package = MakeDbgEvent(DBG_EVENT_MODULE_LOAD, cJSON_PrintUnformatted(data));
+    Value data;
+    data["name"] = WtoU(loadInfo.m_ModuleInfo.m_wstrDllName);
+    data["baseAddr"] = FormatA("0x%p", loadInfo.m_ModuleInfo.m_dwBaseOfImage);
+    data["endAddr"] = FormatA("0x%p", loadInfo.m_ModuleInfo.m_dwEndAddr);
+
+    utf8_mstring package = MakeDbgEvent(DBG_EVENT_MODULE_LOAD, FastWriter().write(data));
     MsgSend(MQ_CHANNEL_DBG_SERVER, UtoW(package).c_str());
     return true;
 }

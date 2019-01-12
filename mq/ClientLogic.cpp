@@ -54,15 +54,15 @@ HANDLE_REGISTER CClientLogic::Register(const wstring &wstrKey, PMsgNotify pfn, v
     notify.index = m_curIndex++;
     m_notifyMap[wstrKey].push_back(notify);
 
-    cJSON *content = cJSON_CreateObject();
-    cJSON *arry = cJSON_CreateArray();
-    cJSON_AddStringToObject(content, "action", "register");
-    cJSON_AddStringToObject(content, "clientUnique", m_clientUnique.c_str());
+    Value content;
+    Value arry;
+    content["action"] = "register";
+    content["clientUnique"] = m_clientUnique;
 
-    cJSON_AddItemToArray(arry, cJSON_CreateString(WtoU(wstrKey).c_str()));
-    cJSON_AddItemToObject(content, "channel", arry);
-    string result = GetMsgPackage(cJSON_PrintUnformatted(content));
-    cJSON_Delete(content);
+    arry.append(WtoU(wstrKey));
+    content["channel"] = arry;
+
+    string result = GetMsgPackage(FastWriter().write(content));
     m_msgClient.Send(result);
     return notify.index;
 }
@@ -94,19 +94,18 @@ bool CClientLogic::Dispatch(const wstring &wstrKey, const wstring &wstrValue) {
 }
 
 bool CClientLogic::DispatchInternal(const wstring &wstrKey, const wstring &wstrValue, const wstring &wstrRoute) const {
-    cJSON *content = cJSON_CreateObject();
-    cJSON_AddStringToObject(content, "action", "message");
-    cJSON_AddStringToObject(content, "channel", WtoU(wstrKey).c_str());
-    cJSON_AddStringToObject(content, "content", WtoU(wstrValue).c_str());
+    Value content;
+    content["action"] = "message";
+    content["channel"] = WtoU(wstrKey);
+    content["content"] = WtoU(wstrValue);
 
     if (!wstrRoute.empty())
     {
-        cJSON_AddNumberToObject(content, "result", 1);
-        cJSON_AddStringToObject(content, "route", WtoU(wstrRoute).c_str());
+        content["result"] = 1;
+        content["route"] = WtoU(wstrRoute);
     }
 
-    string strContent = cJSON_PrintUnformatted(content);
-    cJSON_Delete(content);
+    string strContent = FastWriter().write(content);
 
     PackageHeader header;
     header.m_size = sizeof(PackageHeader) + static_cast<unsigned int>(strContent.size());
@@ -187,15 +186,12 @@ bool CClientLogic::DispatchInCache(const wstring &wstrKey, const wstring &wstrVa
                             wstr = L"state success";
                         }
 
-                        cJSON *json = cJSON_CreateObject();
-                        cJSON_AddStringToObject(json, "action", "reply");
-                        cJSON_AddStringToObject(json, "route", WtoU(mParam->wstrRoute).c_str());
-                        cJSON_AddStringToObject(json, "content", WtoU(wstr).c_str());
+                        Value root;
+                        root["action"] = "reply";
+                        root["route"] = WtoU(mParam->wstrRoute);
+                        root["content"] = WtoU(wstr);
 
-                        string content = cJSON_PrintUnformatted(json);
-                        cJSON_Delete(json);
-
-                        string strReply = GetMsgPackage(content);
+                        string strReply = GetMsgPackage(FastWriter().write(root));
                         CClientLogic::GetInstance()->m_msgClient.Send(strReply);
                     }
                 }
@@ -270,10 +266,10 @@ void CClientLogic::OnClientSocketErr(CMsgClient &client) {
 }
 
 void CClientLogic::OnClientRecvComplete(const string &strData) {
-    cJSON *content = cJSON_Parse(strData.c_str());
-    JsonAutoDelete tmp(content);
+    Value content;
 
-    if (cJSON_Object != content->type)
+    Reader().parse(strData, content);
+    if (content.type() != objectValue)
     {
         return;
     }
@@ -284,7 +280,7 @@ void CClientLogic::OnClientRecvComplete(const string &strData) {
 
     if (strAction == "message")
     {
-        string strChannel = cJSON_GetObjectItem(content, "channel")->valuestring;
+        string strChannel = content["channel"].asString();
         //推送给所有频道
         DispatchInCache(UtoW(strChannel.c_str()), UtoW(strContent.c_str()), UtoW(strRoute.c_str()));
     } else if (strAction == "reply")
@@ -312,19 +308,18 @@ void CClientLogic::OnClientRecvComplete(const string &strData) {
 void CClientLogic::OnClientConnect(CMsgClient &client) {
     LOGGER_PRINT(L"OnClientConnect");
     CScopedLocker lock(&m_clientLock);
-    cJSON *root = cJSON_CreateObject();
-    cJSON *arry = cJSON_CreateArray();
+    Value root;
+    Value arry;
 
-    cJSON_AddStringToObject(root, "action", "register");
-    cJSON_AddStringToObject(root, "clientUnique", m_clientUnique.c_str());
+    root["action"] = "register";
+    root["clientUnique"] = m_clientUnique;
 
     for (map<wstring, list<NotifyProcInfo>>::const_iterator it = m_notifyMap.begin() ; it != m_notifyMap.end() ; it++)
     {
-        cJSON_AddItemToArray(arry, cJSON_CreateString(WtoU(it->first).c_str()));
+        arry.append(WtoU(it->first).c_str());
     }
-    cJSON_AddItemToObject(root, "channel", arry);
+    root["channel"] = arry;
 
-    string package = GetMsgPackage(cJSON_PrintUnformatted(root));
-    cJSON_Delete(root);
+    string package = GetMsgPackage(FastWriter().write(root));
     client.Send(package);
 }

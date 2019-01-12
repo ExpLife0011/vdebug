@@ -13,6 +13,7 @@
 #pragma comment(lib, "shlwapi.lib")
 
 using namespace std;
+using namespace Json;
 
 PFILE_MAPPING_STRUCT __stdcall MappingFileW(LPCWSTR fileName, BOOL bWrite, DWORD maxViewSize)
 {
@@ -1604,25 +1605,25 @@ BOOL __stdcall IsSameFileW(LPCWSTR file1, LPCWSTR file2)
     return bRet;
 }
 
-std::mstring __stdcall GetStrFormJson(cJSON *json, const std::mstring &name) {
-    cJSON *data = cJSON_GetObjectItem(json, name.c_str());
-    if (data)
+std::mstring __stdcall GetStrFormJson(const Value &json, const std::mstring &name) {
+    Value node = json[name];
+    if (node.type() != nullValue)
     {
-        if (data->type == cJSON_String)
+        if (node.type() == stringValue)
         {
-            return data->valuestring;
+            return node.asString();
         } else {
-            return cJSON_PrintUnformatted(data);
+            return FastWriter().write(node);
         }
     }
     return "";
 }
 
-int __stdcall GetIntFromJson(cJSON *json, const std::mstring &name) {
-    cJSON *data = cJSON_GetObjectItem(json, name.c_str());
-    if (data && data->type == cJSON_Number)
+int __stdcall GetIntFromJson(const Value &json, const std::mstring &name) {
+    Value node = json[name];
+    if (node.type() == intValue)
     {
-        return data->valueint;
+        return node.asInt();
     }
     return 0;
 }

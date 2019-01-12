@@ -8,6 +8,7 @@
 #include <ComStatic/ComStatic.h>
 
 using namespace std;
+using namespace Json;
 
 struct DbgClientCache {
     wstring m_CtrlCode;
@@ -99,18 +100,20 @@ HDbgCtrl DbgClient::RegisterCtrlHandler(const wchar_t *cmd, pfnDbgClientProc pfn
 
 LPCWSTR DbgClient::ClientNotify(LPCWSTR wszChannel, LPCWSTR wszContent, void *pParam) {
     DbgClient *pThis = (DbgClient *)pParam;
-    cJSON *root = cJSON_Parse(WtoU(wszContent).c_str());
+
+    Value json;
+    Reader().parse(WtoU(wszContent), json);
     wstring result;
 
     do
     {
-        if (!root || root->type != cJSON_Object)
+        if (json.type() != objectValue)
         {
             break;
         }
 
-        ustring cmd = UtoW(cJSON_GetObjectItem(root, "cmd")->valuestring);
-        ustring content = UtoW(cJSON_GetObjectItem(root, "content")->valuestring);
+        ustring cmd = UtoW(json["cmd"].asString());
+        ustring content = UtoW(json["content"].asString());
 
         {
             CScopedLocker lock(pThis);
@@ -131,10 +134,5 @@ LPCWSTR DbgClient::ClientNotify(LPCWSTR wszChannel, LPCWSTR wszContent, void *pP
             }
         }
     } while (FALSE);
-
-    if (root)
-    {
-        cJSON_Delete(root);
-    }
     return MsgStrCopy(result.c_str());
 }

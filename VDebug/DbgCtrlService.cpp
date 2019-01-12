@@ -157,58 +157,31 @@ void DbgCtrlService::RunProcInUser(LPCWSTR image, LPCWSTR cmd, DWORD session) {
 }
 */
 bool DbgCtrlService::ExecProc(const std::ustring &path, const std::ustring &param) {
-    cJSON *content = cJSON_CreateObject();
-    cJSON_AddStringToObject(content, "path", WtoU(path).c_str());
-    cJSON_AddStringToObject(content, "param", WtoU(param).c_str());
-    m_pCtrlService->DispatchCurDbgger(DBG_CTRL_EXEC, UtoW(cJSON_PrintUnformatted(content)));
-    cJSON_Delete(content);
+    Value content;
+    content["path"] = WtoU(path);
+    content["param"] = WtoU(param);
+
+    m_pCtrlService->DispatchCurDbgger(DBG_CTRL_EXEC, UtoW(FastWriter().write(content)));
     return true;
 }
 
 bool DbgCtrlService::RunCmdInCtrlService(const std::ustring &command) {
-    cJSON *content = cJSON_CreateObject();
-    cJSON_AddStringToObject(content, "command", WtoU(command).c_str());
-    m_pCtrlService->DispatchCurDbgger(DBG_CTRL_RUNCMD, UtoW(cJSON_PrintUnformatted(content)).c_str());
-    cJSON_Delete(content);
+    Value conent;
+    conent["command"] = WtoU(command);
+
+    m_pCtrlService->DispatchCurDbgger(DBG_CTRL_RUNCMD, UtoW(FastWriter().write(conent)));
     return true;
 }
 
-/*
-{
-    "cmd":"event",
-    "content":{
-        "type":"proccreate",
-        "data":{
-            "pid":"0x1234",
-            "image":"d:\\desktop\\1234.exe",
-            "baseAddr":"0x4344353",
-            "entryAddr":"0x4344389"
-        }
-    }
-}
-*/
 void DbgCtrlService::OnProcCreate(const ustring &event, const ustring &content, void *param) {
-    cJSON *data = cJSON_Parse(WtoU(content).c_str());
-    JsonAutoDelete tmp(data);
-
-    if (!data || data->type != cJSON_Object)
-    {
-        return;
-    }
-    mstring pid = UtoA(GetStrFormJson(data, "pid"));
-    mstring image = UtoA(GetStrFormJson(data, "image"));
-    mstring baseAddr = UtoA(GetStrFormJson(data, "baseAddr"));
-    mstring entryAddr = UtoA(GetStrFormJson(data, "entryAddr"));
-
-    int processId = 0;
-    sscanf(pid.c_str(), "0x%x", &processId);
+    ProcCreateInfo info = DecodeProcCreate(content);
 
     PrintFormater pf;
     pf << "进程启动" << space                    << line_end;
-    pf << "进程Pid"  << FormatA("%d", processId) << line_end;
-    pf << "映像路径" << image                    << line_end;
-    pf << "进程基址" << baseAddr                 << line_end;
-    pf << "入口地址" << entryAddr                << line_end;
+    pf << "进程Pid"  << FormatA("%d", info.mPid) << line_end;
+    pf << "映像路径" << WtoU(info.mImage)        << line_end;
+    pf << "进程基址" << WtoU(info.mBaseAddr)     << line_end;
+    pf << "入口地址" << WtoU(info.mEntryAddr)    << line_end;
     AppendToSyntaxView(SCI_LABEL_DEFAULT, pf.GetResult());
 }
 
@@ -232,8 +205,8 @@ void DbgCtrlService::OnProcExit(const ustring &event, const ustring &content, vo
 }
 */
 void DbgCtrlService::OnModuleLoad(const ustring &event, const ustring &content, void *param) {
-    cJSON *data = cJSON_Parse(WtoU(content).c_str());
-    JsonAutoDelete abc(data);
+    Value data;
+    Reader().parse(WtoU(content), data);
     mstring name = UtoA(GetStrFormJson(data, "name"));
     mstring baseAddr = UtoA(GetStrFormJson(data, "baseAddr"));
     mstring endAddr = UtoA(GetStrFormJson(data, "endAddr"));
@@ -247,34 +220,6 @@ void DbgCtrlService::OnModuleLoad(const ustring &event, const ustring &content, 
 void DbgCtrlService::OnModuleUnLoad(const ustring &event, const ustring &content, void *param) {
 }
 
-/*
-{
-    "cmd":"event",
-    "content":{
-        "type":"proc_add",
-        "data":{
-            "add":[
-                {
-                    "unique":12345,
-                    "pid":1234,
-                    "procPath":"d:\\abcdef.exe",
-                    "procDesc":"desc",
-                    "cmd":"abcdef",
-                    "startTime":"2018-11-11 11:11:11:123",
-                    "x64":1,
-                    "session":1,
-                    "user":"DESKTOP-DCTRL5K\\Administrator",
-                    "sid":"S-1-5-21-2669793992-3689076831-3814312677-500"
-                },
-                ...
-            ],
-            "kill":[
-                1111,2222,3333
-            ]
-        }
-    }
-}
-*/
 void DbgCtrlService::OnProcChanged(const ustring &event, const ustring &content, void *param) {
     CProcSelectView *pProcView = GetProcView();
     if (!pProcView)
@@ -287,52 +232,6 @@ void DbgCtrlService::OnProcChanged(const ustring &event, const ustring &content,
         return;
     }
 
-    cJSON *data = cJSON_Parse(WtoU(content).c_str());
-    JsonAutoDelete abc(data);
-    cJSON *add = cJSON_GetObjectItem(data, "add");
-    cJSON *kill = cJSON_GetObjectItem(data, "kill");
-
-    list<ProcMonInfo> addSet;
-    list<DWORD> killSet;
-    if (add && add->type == cJSON_Array)
-    {
-        for (cJSON *it = add->child; it != NULL ; it = it->next)
-        {
-            /*
-            {
-                "unique":12345,
-                "pid":1234,
-                "procPath":"d:\\abcdef.exe",
-                "procDesc":"desc",
-                "cmd":"abcdef",
-                "startTime":"2018-11-11 11:11:11:123",
-                "x64":1,
-                "session":1,
-                "user":"DESKTOP-DCTRL5K\\Administrator",
-                "sid":"S-1-5-21-2669793992-3689076831-3814312677-500"
-            }
-            */
-            ProcMonInfo newProc;
-            newProc.procUnique = GetIntFromJson(it, "unique");
-            newProc.procPid = GetIntFromJson(it, "pid");
-            newProc.procPath = UtoW(GetStrFormJson(it, "procPath"));
-            newProc.procDesc = UtoW(GetStrFormJson(it, "procDesc"));
-            newProc.procCmd = UtoW(GetStrFormJson(it, "cmd"));
-            newProc.startTime = UtoW(GetStrFormJson(it, "startTime"));
-            newProc.x64 = GetIntFromJson(it, "x64");
-            newProc.sessionId = GetIntFromJson(it, "session");
-            newProc.procUser = UtoW(GetStrFormJson(it, "user"));
-            newProc.procUserSid = UtoW(GetStrFormJson(it, "sid"));
-            addSet.push_back(newProc);
-        }
-    }
-
-    if (kill && kill->type == cJSON_Array)
-    {
-        for (cJSON *ij = kill->child ; ij != NULL ; ij = ij->next)
-        {
-            killSet.push_back(ij->valueint);
-        }
-    }
-    pProcView->OnProcChanged(addSet, killSet);
+    ProcInfoSet info = DecodeProcMon(content);
+    pProcView->OnProcChanged(info);
 }
