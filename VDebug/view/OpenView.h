@@ -36,13 +36,16 @@ public:
     BOOL ShowFileOpenDlg(HWND parent, ProcParam &param);
 
 private:
+    void OnHistorySelect(int index) const;
     bool SaveHistory(HistoryInfo &history) const;
-    std::list<HistoryInfo> GetHistory(int maxSize) const;
+    std::vector<HistoryInfo> GetHistory(int maxSize) const;
     int OnInitDialog(HWND hdlg, WPARAM wp, LPARAM lp);
     int OnSize(HWND hdlg, WPARAM wp, LPARAM lp);
     int OnTimer(HWND hdlg, WPARAM wp, LPARAM lp);
     int OnNotify(HWND hdlg, WPARAM wp, LPARAM lp);
+    int OnCommand(HWND hdlg, WPARAM wp, LPARAM lp);
     static UINT_PTR CALLBACK OFNHookProc(HWND hdlg, UINT msg, WPARAM wp, LPARAM lp);
+    static BOOL CALLBACK EnumChildProc(HWND hwnd, LPARAM lParam);
 
 private:
     HWND m_hdlg;
@@ -50,7 +53,9 @@ private:
 
     HWND m_hParent;
     HWND m_hTextPath;
-    HWND m_hComPath;
+    HWND m_hComExPath;
+    HWND m_hEditPath;
+
     HWND m_hTextType;
     HWND m_hComType;
 
@@ -64,5 +69,7 @@ private:
     HWND m_hTextHistory;
     HWND m_hComHistory;
     HWND m_hEditStatus;
+
+    vector<HistoryInfo> mHistory;
 };
 #endif

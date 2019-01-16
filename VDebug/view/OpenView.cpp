@@ -22,13 +22,31 @@ PeFileOpenDlg::PeFileOpenDlg() {
 PeFileOpenDlg::~PeFileOpenDlg() {
 }
 
+BOOL PeFileOpenDlg::EnumChildProc(HWND hwnd, LPARAM lParam) {
+    if (IsWindow(hwnd))
+    {
+        WCHAR className[128];
+        className[0] = 0;
+        
+        GetClassNameW(hwnd, className, 128);
+        if (0 == lstrcmpiW(className, L"edit"))
+        {
+            GetInstance()->m_hEditPath = hwnd;
+            return FALSE;
+        }
+    }
+    return TRUE;
+}
+
 int PeFileOpenDlg::OnInitDialog(HWND hdlg, WPARAM wp, LPARAM lp) {
     PeFileOpenDlg *ptr = GetInstance();
     ptr->m_hParent = GetParent(hdlg);
     ptr->m_hTextPath = GetDlgItem(ptr->m_hParent, 0x442);
-    ptr->m_hComPath = GetDlgItem(ptr->m_hParent, 0x47c);
+    ptr->m_hComExPath = GetDlgItem(ptr->m_hParent, 0x47c);
     ptr->m_hTextType = GetDlgItem(ptr->m_hParent, 0x441);
     ptr->m_hComType = GetDlgItem(ptr->m_hParent, 0x470);
+
+    EnumChildWindows(ptr->m_hComExPath, EnumChildProc, NULL);
 
     ptr->m_hTextParam = GetDlgItem(hdlg, IDC_OPEN_TEXT1);
     ptr->m_hEditParam = GetDlgItem(hdlg, IDC_EDT_OPEN_CMD);
@@ -53,8 +71,14 @@ int PeFileOpenDlg::OnInitDialog(HWND hdlg, WPARAM wp, LPARAM lp) {
     SetTimer(hdlg, TIMER_ACTIVITY, 1, NULL);
     CentreWindow(ptr->m_hParent, GetInstance()->m_hParent);
 
-    list<HistoryInfo> hisory = GetHistory(128);
-    int dd = 1;
+    mHistory = GetHistory(128);
+    int index = 0;
+    for (vector<HistoryInfo>::const_iterator it = mHistory.begin() ; it != mHistory.end() ; it++)
+    {
+        SendMessageW(ptr->m_hComHistory, CB_INSERTSTRING, index++, (LPARAM)it->mPath.c_str());
+    }
+    SendMessageW(ptr->m_hComHistory, CB_SETCURSEL, 0, 0);
+    OnHistorySelect(0);
     return 0;
 }
 
@@ -71,7 +95,7 @@ int PeFileOpenDlg::OnSize(HWND hdlg, WPARAM wp, LPARAM lp) {
 
     RECT rt1, rt2, rt3, rt4;
     GetWindowRect(ptr->m_hTextPath, &rt1);
-    GetWindowRect(ptr->m_hComPath, &rt2);
+    GetWindowRect(ptr->m_hComExPath, &rt2);
     GetWindowRect(ptr->m_hTextType, &rt3);
     GetWindowRect(ptr->m_hComType, &rt4);
 
@@ -100,7 +124,7 @@ int PeFileOpenDlg::OnSize(HWND hdlg, WPARAM wp, LPARAM lp) {
     SetWindowPos(ptr->m_hComHistory, 0, leftEdit, topEdit + spaceY * 2, widthEdit, highEdit, SWP_NOZORDER);
 
     //path, type±à¼­¿òÎ»ÖÃµ÷Õû
-    SetWindowPos(ptr->m_hComPath, 0, 0, 0, widthEdit, highEdit, SWP_NOZORDER | SWP_NOMOVE);
+    SetWindowPos(ptr->m_hComExPath, 0, 0, 0, widthEdit, highEdit, SWP_NOZORDER | SWP_NOMOVE);
     SetWindowPos(ptr->m_hComType, 0, 0, 0, widthEdit, highEdit, SWP_NOZORDER | SWP_NOMOVE);
 
     RECT btnRect1 = {0};
@@ -133,6 +157,7 @@ int PeFileOpenDlg::OnTimer(HWND hdlg, WPARAM wp, LPARAM lp) {
     if (TIMER_ACTIVITY == wp)
     {
         CentreWindow(ptr->m_hParent, GetInstance()->m_hParent);
+        OnHistorySelect(0);
         KillTimer(hdlg, TIMER_ACTIVITY);
     }
     return 0;
@@ -175,6 +200,40 @@ int PeFileOpenDlg::OnNotify(HWND hdlg, WPARAM wp, LPARAM lp) {
     return 0;
 }
 
+void PeFileOpenDlg::OnHistorySelect(int index) const {
+    if (-1 == index || index >= (int)mHistory.size())
+    {
+        return;
+    }
+
+    HistoryInfo info = mHistory[index];
+    SetWindowTextW(m_hEditPath, info.mPath.c_str());
+    SendMessageW(m_hEditPath, EM_SETSEL, info.mPath.size(), info.mPath.size());
+    SetWindowTextW(m_hEditParam, info.mParam.c_str());
+    SetWindowTextW(m_hEditDir, info.mDir.c_str());
+}
+
+int PeFileOpenDlg::OnCommand(HWND hdlg, WPARAM wp, LPARAM lp) {
+    DWORD id = LOWORD(wp);
+    DWORD code = HIWORD(wp);
+
+    if (IDC_OPEN_COM_HISTORY == id)
+    {
+        if (CBN_SELCHANGE == code)
+        {
+            int sel = SendMessageW(m_hComHistory, CB_GETCURSEL, 0, 0);
+
+            if (-1 == sel || sel >= (int)mHistory.size())
+            {
+                return 0;
+            }
+
+            GetInstance()->OnHistorySelect(sel);
+        }
+    }
+    return 0;
+}
+
 UINT_PTR PeFileOpenDlg::OFNHookProc(HWND hdlg, UINT msg, WPARAM wp, LPARAM lp) {
     int ret = 0;
     PeFileOpenDlg *ptr = GetInstance();
@@ -193,6 +252,11 @@ UINT_PTR PeFileOpenDlg::OFNHookProc(HWND hdlg, UINT msg, WPARAM wp, LPARAM lp) {
     case WM_SIZE:
         {
             ptr->OnSize(hdlg, wp, lp);
+        }
+        break;
+    case WM_COMMAND:
+        {
+            ptr->OnCommand(hdlg, wp, lp);
         }
         break;
     case WM_NOTIFY:
@@ -233,11 +297,11 @@ bool PeFileOpenDlg::SaveHistory(HistoryInfo &history) const {
     return DbProxy::GetInstance()->ExecCfg(sql);
 }
 
-list<PeFileOpenDlg::HistoryInfo> PeFileOpenDlg::GetHistory(int maxSize) const {
-    mstring sql = FormatA("select * from tOpenHistory order by time limit %d", maxSize);
+vector<PeFileOpenDlg::HistoryInfo> PeFileOpenDlg::GetHistory(int maxSize) const {
+    mstring sql = FormatA("select * from tOpenHistory order by time desc limit %d", maxSize);
     SqliteResult result = DbProxy::GetInstance()->SelectCfg(sql.c_str());
 
-    list<HistoryInfo> ret;
+    vector<HistoryInfo> ret;
     HistoryInfo tmp;
     for (SqliteIterator it = result.begin() ; it != result.end() ; ++it)
     {

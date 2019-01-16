@@ -318,7 +318,6 @@ int md5_buffer(const char* buffer, int bufSize, char* outBuf, int outSize)
     for (i = 0; i < 16; i++)
     {
         sprintf(&(output1[2 * i]), "%02X", (unsigned char)digest[i]);
-        sprintf(&(output1[2 * i + 1]), "%02X", (unsigned char)(digest[i] << 4));
     }
 
     for (i = 0; i < 32; i++)
@@ -352,7 +351,6 @@ static int _md5_file(FILE* file, char* outBuf, int outSize)
     for (i = 0; i < 16; i++)
     {
         sprintf(&(output1[2 * i]), "%02X", (unsigned char)digest[i]);
-        sprintf(&(output1[2 * i + 1]), "%02X", (unsigned char)(digest[i] << 4));
     }
 
     for (i = 0; i < 32; i++)

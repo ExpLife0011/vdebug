@@ -145,4 +145,6 @@
 }
 */
 #define DBG_EVENT_PROC_CHANGED      L"ProcChanged"
+
+#define DBG_EVENT_SYSTEM_BREAKPOINT L"SyatemBreakpoint"
 #endif //DBGPROTOCOL_DBGCTRL_H_H_

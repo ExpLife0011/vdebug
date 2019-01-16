@@ -301,7 +301,7 @@ void CProcDbgger::OnCreateProcess(CREATE_PROCESS_DEBUG_INFO* pCreateProcessInfo)
     info.mBaseAddr = FormatA("0x%p", pCreateProcessInfo->lpBaseOfImage);
     info.mEntryAddr = FormatA("0x%p", pCreateProcessInfo->lpStartAddress);
 
-    mstring event = MakeDbgEvent(DBG_EVENT_PROC_CHANGED, EncodeProcCreate(info));
+    mstring event = MakeDbgEvent(DBG_EVENT_DBG_PROC_CREATE, EncodeProcCreate(info));
     MsgSend(MQ_CHANNEL_DBG_SERVER, UtoW(event).c_str());;
 
     CSymbolTaskHeader task;
@@ -379,6 +379,9 @@ void CProcDbgger::OnSystemBreakpoint(void* ExceptionData)
     {
         return;
     }
+
+    utf8_mstring package = MakeDbgEvent(DBG_EVENT_SYSTEM_BREAKPOINT, "{}");
+    MsgSend(MQ_CHANNEL_DBG_SERVER, UtoW(package).c_str());
 
     //ÍÑÀëµ÷ÊÔÆ÷
     if (GetInstance()->m_bDetachDbgger)

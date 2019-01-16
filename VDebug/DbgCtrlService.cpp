@@ -64,6 +64,7 @@ bool DbgCtrlService::InitCtrlService() {
     //Debug Event Register
     m_pCtrlService->RegisterDbgEvent(DBG_EVENT_MSG, OnDbgMessage, this);
     m_pCtrlService->RegisterDbgEvent(DBG_EVENT_DBG_PROC_CREATE, OnProcCreate, this);
+    m_pCtrlService->RegisterDbgEvent(DBG_EVENT_SYSTEM_BREAKPOINT, OnSystemBreakpoint, this);
     m_pCtrlService->RegisterDbgEvent(DBG_EVENT_DBG_PROC_END, OnProcExit, this);
     m_pCtrlService->RegisterDbgEvent(DBG_EVENT_MODULE_LOAD, OnModuleLoad, this);
     m_pCtrlService->RegisterDbgEvent(DBG_EVENT_MODULE_UNLOAD, OnModuleUnLoad, this);
@@ -173,7 +174,7 @@ bool DbgCtrlService::RunCmdInCtrlService(const std::ustring &command) {
     return true;
 }
 
-void DbgCtrlService::OnProcCreate(const ustring &event, const ustring &content, void *param) {
+void DbgCtrlService::OnProcCreate(const ustring &eventName, const ustring &content, void *param) {
     ProcCreateInfo info = DecodeProcCreate(content);
 
     PrintFormater pf;
@@ -183,6 +184,9 @@ void DbgCtrlService::OnProcCreate(const ustring &event, const ustring &content, 
     pf << "进程基址" << WtoU(info.mBaseAddr)     << line_end;
     pf << "入口地址" << WtoU(info.mEntryAddr)    << line_end;
     AppendToSyntaxView(SCI_LABEL_DEFAULT, pf.GetResult());
+}
+
+void DbgCtrlService::OnSystemBreakpoint(const ustring &eventName, const ustring &content, void *param) {
 }
 
 void DbgCtrlService::OnDbgMessage(const ustring &event, const ustring &content, void *param) {

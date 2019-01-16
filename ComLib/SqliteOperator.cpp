@@ -131,6 +131,7 @@ void SqliteOperator::Close() {
 
 SqliteResult &SqliteOperator::Select(const std::mstring &sql) {
     char *err = NULL;
+    Clear();
     if (SQLITE_OK != sqlite3_exec(mDb, sql.c_str(), SelectCallback, this, &err))
     {
         throw SqliteException(err);
