@@ -9,12 +9,14 @@ using namespace std;
 
 struct ProcParam {
     BOOL succ;
+    BOOL x64;
     std::ustring path;
     std::ustring command;
     std::ustring dir;
 
     ProcParam() {
         succ = FALSE;
+        x64 = FALSE;
     }
 };
 

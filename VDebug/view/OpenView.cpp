@@ -185,6 +185,7 @@ int PeFileOpenDlg::OnNotify(HWND hdlg, WPARAM wp, LPARAM lp) {
             SetWindowTextW(ptr->m_hEditStatus, L"不是合法的可执行程序");
         } else if (x64)
         {
+            ptr->m_param.x64 = TRUE;
             SetWindowTextW(ptr->m_hEditStatus, L"尚不支持64位程序");
         } else {
             bSucc = TRUE;

@@ -1,6 +1,7 @@
 #include <map>
 #include <list>
 #include "winsize.h"
+#include "LockBase.h"
 
 using namespace std;
 
@@ -397,4 +398,100 @@ BOOL WINAPI SetWindowRange(HWND hwnd, DWORD min_wide, DWORD min_hight, DWORD max
     BOOL ret = _AttachRange(hwnd, min_wide, min_hight, max_wide, max_hight);
     UNLOCK_WINS;
     return ret;
+}
+
+class ListCtrlAutoSetMgr {
+public:
+    static ListCtrlAutoSetMgr *GetInst() {
+        static ListCtrlAutoSetMgr *s_ptr = NULL;
+        if (NULL == s_ptr)
+        {
+            s_ptr = new ListCtrlAutoSetMgr();
+        }
+
+        return s_ptr;
+    }
+
+    static void Register(HWND hwnd) {
+        Init();
+
+        ListCtrlAutoSetMgr *newNode = new ListCtrlAutoSetMgr();
+        newNode->mListCtrl = hwnd;
+        {
+            CScopedLocker lock(sSynLock);
+            sRegisterSet->insert(make_pair(hwnd, newNode));
+        }
+        newNode->mPfnOldProc = (PWIN_PROC)SetWindowLongPtrA(hwnd, GWLP_WNDPROC, (LONG_PTR)ListCtrlProc);
+    }
+
+private:
+    static void Init() {
+        if (!sInit)
+        {
+            sInit = TRUE;
+            sSynLock = new CCriticalSectionLockable();
+            sRegisterSet = new map<HWND, ListCtrlAutoSetMgr *>();
+        }
+    }
+
+    ListCtrlAutoSetMgr() {
+        mPfnOldProc = NULL;
+        mListCtrl = NULL;
+    }
+
+    virtual ~ListCtrlAutoSetMgr(){
+    }
+
+    static LRESULT CALLBACK ListCtrlProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
+        ListCtrlAutoSetMgr *ptr = NULL;
+        {
+            map<HWND, ListCtrlAutoSetMgr *>::const_iterator it;
+            CScopedLocker lock(sSynLock);
+            it = sRegisterSet->find(hwnd);
+            if (it != sRegisterSet->end())
+            {
+                ptr = it->second;
+            }
+        }
+
+        if (!ptr)
+        {
+            return 0;
+        }
+
+        switch (msg) {
+        case WM_SIZE:
+            ptr->OnSize(wp, lp);
+            break;
+        case WM_DESTROY:
+            ptr->OnDestroy(wp, lp);
+            return 0;
+        default:
+            break;
+        }
+        return CallWindowProc(ptr->mPfnOldProc, hwnd, msg, wp, lp);
+    }
+
+    void OnSize(WPARAM wp, LPARAM lp) {
+    }
+
+    void OnDestroy(WPARAM wp, LPARAM lp){
+    }
+
+private:
+    static BOOL sInit;
+    static CCriticalSectionLockable *sSynLock;
+    static map<HWND, ListCtrlAutoSetMgr *> *sRegisterSet;
+
+    PWIN_PROC mPfnOldProc;
+    HWND mListCtrl;
+};
+
+BOOL ListCtrlAutoSetMgr::sInit = FALSE;
+CCriticalSectionLockable *ListCtrlAutoSetMgr::sSynLock = NULL;
+map<HWND, ListCtrlAutoSetMgr *> *ListCtrlAutoSetMgr::sRegisterSet = NULL;
+
+BOOL WINAPI SetListColumnAutoSet(HWND hListCtrl) {
+    ListCtrlAutoSetMgr::Register(hListCtrl);
+    return TRUE;
 }

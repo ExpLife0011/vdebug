@@ -22,7 +22,7 @@ DbgCtrlService *DbgCtrlService::GetInstance() {
     return s_ptr;
 }
 
-bool DbgCtrlService::SetDebuggerStat(DbggerType type) {
+bool DbgCtrlService::SetDebugger(DbggerType type) {
     m_pCtrlService->SetActivity(type);
     m_stat = type;;
     return true;

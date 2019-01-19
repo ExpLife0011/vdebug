@@ -13,7 +13,7 @@ public:
     virtual ~DbgCtrlService();
 
     bool InitCtrlService();
-    bool SetDebuggerStat(DbggerType type);
+    bool SetDebugger(DbggerType type);
     DbggerType GetDebuggerStat();
     bool ExecProc(const std::ustring &path, const std::ustring &param);
     bool AttachProc(DWORD pid);

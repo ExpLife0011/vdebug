@@ -347,7 +347,16 @@ static VOID _OnCommand(HWND hwnd, WPARAM wp, LPARAM lp)
     case  IDC_CMD_OPEN:
         {
             ProcParam param; 
-            gs_pPeOpenView->ShowFileOpenDlg(hwnd, param);
+            if (gs_pPeOpenView->ShowFileOpenDlg(hwnd, param))
+            {
+                if (param.x64)
+                {
+                    DbgCtrlService::GetInstance()->SetDebugger(em_dbg_proc64);
+                } else {
+                    DbgCtrlService::GetInstance()->SetDebugger(em_dbg_proc86);
+                }
+                DbgCtrlService::GetInstance()->ExecProc(param.path, param.command);
+            }
         }
         break;
     case IDC_CMD_ATTACH:

@@ -55,3 +55,5 @@ sqlite3_open
 sqlite3_open16
 sqlite3_exec
 sqlite3_close
+
+SetListColumnAutoSet
