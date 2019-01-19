@@ -18,11 +18,13 @@ mstring::mstring(const mstring &str)
     *this = str;
 }
 
+/*
 mstring::mstring(const ustring &str)
 {
     initstring();
     *this = str;
 }
+*/
 
 mstring::mstring(const char *buffer)
 {
@@ -50,6 +52,7 @@ mstring::mstring(const string &buffer)
     *this = buffer;
 }
 
+/*
 mstring::mstring(const wstring &buffer)
 {
     initstring();
@@ -75,6 +78,7 @@ mstring::mstring(const wchar_t *buffer, size_t len)
     }
     *this = ustring(buffer, len);
 }
+*/
 
 mstring::mstring(char c)
 {
@@ -82,11 +86,13 @@ mstring::mstring(char c)
     *this = c;
 }
 
+/*
 mstring::mstring(wchar_t w)
 {
     initstring();
     *this = w;
 }
+*/
 
 mstring::~mstring()
 {
@@ -120,6 +126,7 @@ mstring &mstring::operator = (const char *buffer)
     return *this;
 }
 
+/*
 mstring &mstring::operator = (const wchar_t *buffer)
 {
     if (!buffer)
@@ -129,6 +136,7 @@ mstring &mstring::operator = (const wchar_t *buffer)
     *this = ustring(buffer);
     return *this;
 }
+*/
 
 mstring &mstring::operator = (char c)
 {
@@ -137,11 +145,13 @@ mstring &mstring::operator = (char c)
     return *this;
 }
 
+/*
 mstring &mstring::operator = (wchar_t w)
 {
     *this = ustring(w);
     return *this;
 }
+*/
 
 mstring &mstring::operator = (const mstring &m)
 {
@@ -150,11 +160,13 @@ mstring &mstring::operator = (const mstring &m)
     return *this;
 }
 
+/*
 mstring &mstring::operator = (const ustring &u)
 {
     *this = ustring(u).w2a();
     return *this;
 }
+*/
 
 mstring &mstring::operator = (const string &m)
 {
@@ -163,11 +175,13 @@ mstring &mstring::operator = (const string &m)
     return *this;
 }
 
+/*
 mstring &mstring::operator = (const wstring &u)
 {
     *this = ustring(u).w2a();
     return *this;
 }
+*/
 
 mstring &mstring::operator += (const mstring &m)
 {
@@ -175,11 +189,13 @@ mstring &mstring::operator += (const mstring &m)
     return *this;
 }
 
+/*
 mstring &mstring::operator += (const ustring &u)
 {
     *this += ustring(u).w2a();
     return *this;
 }
+*/
 
 mstring &mstring::operator += (char c)
 {
@@ -187,11 +203,13 @@ mstring &mstring::operator += (char c)
     return *this;
 }
 
+/*
 mstring &mstring::operator += (wchar_t w)
 {
     *this += ustring(w);
     return *this;
 }
+*/
 
 mstring &mstring::operator += (const char *buffer)
 {
@@ -203,6 +221,7 @@ mstring &mstring::operator += (const char *buffer)
     return *this;
 }
 
+/*
 mstring &mstring::operator += (const wchar_t *buffer)
 {
     if (!buffer)
@@ -212,6 +231,7 @@ mstring &mstring::operator += (const wchar_t *buffer)
     *this += ustring(buffer).w2a();
     return *this;
 }
+*/
 
 mstring &mstring::operator += (const string &m)
 {
@@ -219,11 +239,13 @@ mstring &mstring::operator += (const string &m)
     return *this;
 }
 
+/*
 mstring &mstring::operator += (const wstring &w)
 {
     *this += ustring(w);
     return *this;
 }
+*/
 
 mstring &mstring::setbuffer(size_t len)
 {
@@ -436,7 +458,7 @@ mstring &mstring::path_append(const char *more)
 
 bool mstring::isnumber()
 {
-    return ustring(*this).isnumber();
+    return true;
 }
 
 //·¶Î§²éÕÒ
@@ -769,6 +791,7 @@ mstring &mstring::trim()
     return *this;
 }
 
+/*
 ustring mstring::a2w()
 {
     ustring uf;
@@ -785,18 +808,21 @@ ustring mstring::a2w()
     }
     return uf;
 }
+*/
 
 ustring::ustring()
 {
     initstring();
 }
 
+/*
 ustring::ustring(const mstring &str)
 {
     initstring();
     mstring m = str;
     *this = m.a2w();
 }
+*/
 
 ustring::ustring(const ustring &str)
 {
@@ -830,6 +856,7 @@ ustring::ustring(const wstring &buffer)
     this->append(buffer.c_str(), buffer.size());
 }
 
+/*
 ustring::ustring(const char *buffer)
 {
     initstring();
@@ -839,7 +866,9 @@ ustring::ustring(const char *buffer)
     }
     *this = buffer;
 }
+*/
 
+/*
 ustring::ustring(const char *buffer, size_t len)
 {
     initstring();
@@ -861,6 +890,7 @@ ustring::ustring(char c)
     initstring();
     *this = mstring(c);
 }
+*/
 
 ustring::ustring(wchar_t w)
 {
@@ -953,6 +983,7 @@ ustring &ustring::operator = (const ustring &u)
     return *this;
 }
 
+/*
 ustring &ustring::operator = (const mstring &m)
 {
     (*this) = mstring(m).a2w();
@@ -964,6 +995,7 @@ ustring &ustring::operator = (const string &m)
     *this = mstring(m).a2w();
     return *this;
 }
+*/
 
 ustring &ustring::operator = (const wstring &u)
 {
@@ -972,6 +1004,7 @@ ustring &ustring::operator = (const wstring &u)
     return *this;
 }
 
+/*
 ustring &ustring::operator = (const char *buffer)
 {
     if (!buffer)
@@ -987,6 +1020,7 @@ ustring &ustring::operator = (char c)
     *this = mstring(c);
     return *this;
 }
+*/
 
 ustring &ustring::operator += (const ustring &u)
 {
@@ -994,11 +1028,13 @@ ustring &ustring::operator += (const ustring &u)
     return *this;
 }
 
+/*
 ustring &ustring::operator += (const mstring &m)
 {
     *this += mstring(m).a2w();
     return *this;
 }
+*/
 
 ustring &ustring::operator += (const wchar_t *buffer)
 {
@@ -1016,6 +1052,7 @@ ustring &ustring::operator += (wchar_t w)
     return *this;
 }
 
+/*
 ustring &ustring::operator += (const char *buffer)
 {
     if (!buffer)
@@ -1037,6 +1074,7 @@ ustring &ustring::operator += (const string &m)
     *this += ustring(m);
     return *this;
 }
+*/
 
 ustring &ustring::operator += (const wstring &u)
 {
@@ -1228,7 +1266,7 @@ ustring &ustring::cover(const wchar_t *str, size_t offset)
     return cover(ustring(str), offset);
 }
 
-ustring &ustring::cover(const mstring &buffer, size_t offset)
+ustring &ustring::cover(const ustring &buffer, size_t offset)
 {
     size_t length = offset + buffer.size();
     if (length > size())
@@ -1453,6 +1491,7 @@ ustring &ustring::trim()
     return *this;
 }
 
+/*
 mstring ustring::w2a()
 {
     mstring ret;
@@ -1469,6 +1508,7 @@ mstring ustring::w2a()
     }
     return ret;
 }
+*/
 
 bool ustring::startwith(const wchar_t *start)
 {
@@ -1485,7 +1525,13 @@ bool ustring::endwith(const wchar_t *tail)
     {
         return false;
     }
-    return w2a().endwith(mstring(tail).c_str());
+    size_t count = lstrlenW(tail);
+    if (size() < count)
+    {
+        return false;
+    }
+    size_t offset = size() - count;
+    return (offset == find_in_range(tail, offset, count));
 }
 
 ustring &ustring::path_append(const wchar_t *more)
@@ -1494,7 +1540,62 @@ ustring &ustring::path_append(const wchar_t *more)
     {
         return *this;
     }
-    *this = mstring(*this).path_append(mstring(more).c_str());
+    ustring self(*this);
+    self.repsub(L"/", L"\\");
+    if (self[self.size() - 1] == L'\\')
+    {
+        self.erase(self.size() - 1, 1);
+    }
+    ustring add(more);
+    add.repsub(L"/", L"\\");
+    if (add[0] == L'\\')
+    {
+        add.erase(0, 1);
+    }
+    bool ret = true;
+    size_t flag = 0;
+    while (!add.empty())
+    {
+        if (0 == add.comparei(L"..\\"))
+        {
+            if (mstring::npos == (flag = self.rfind(L'\\')))
+            {
+                ret = false;
+                break;
+            }
+            self.erase(flag, self.size() - flag);
+            add.erase(0, 3);
+        }
+        else if (0 == add.comparei(L".\\"))
+        {
+            add.erase(0, 2);
+        }
+        else if (add == L"..")
+        {
+            if (mstring::npos == (flag = self.rfind(L'\\')))
+            {
+                ret = false;
+                break;
+            }
+            self.erase(flag, self.size() - flag);
+            add.erase(0, 2);
+            break;
+        }
+        else
+        {
+            break;
+        }
+    }
+    if (!ret || self.empty())
+    {
+        return *this;
+    }
+    *this = self;
+    if (!add.empty())
+    {
+        *this += L"\\";
+        *this += add;
+    }
     return *this;
 }
 

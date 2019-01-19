@@ -556,7 +556,7 @@ LuaScriptInfo GetScriptInfo(const ustring &wstrScript)
     wstr.trim().makelower();
     LuaScriptInfo info;
     info.m_wstrFilePath = wstr;
-    mstring str(wstr);
+    mstring str = WtoA(wstr);
     info.m_wstrUniqueMark.format(L"%08x", crc32(str.c_str(), (int)str.size(), 0xffffffff));
     return info;
 }
@@ -641,7 +641,7 @@ int CScriptEngine::DbgRunCmd(lua_State *pLuaStat)
         return 1;
     }
 
-    ustring wstr = lua_tostring(pLuaStat, 1);
+    ustring wstr = AtoW(lua_tostring(pLuaStat, 1));
     wstr.trim();
     wstr.makelower();
 
@@ -694,7 +694,7 @@ int CScriptEngine::DbgPrintMsg(lua_State *pLuaStat)
         return 1;
     }
 
-    ustring wstr = lua_tostring(pLuaStat, 1);
+    ustring wstr = AtoW(lua_tostring(pLuaStat, 1));
     wstr.trim();
     wstr.makelower();
 
@@ -715,7 +715,7 @@ int CScriptEngine::DbgPrintErr(lua_State *pLuaStat)
         return 1;
     }
 
-    ustring wstr = lua_tostring(pLuaStat, 1);
+    ustring wstr = AtoW(lua_tostring(pLuaStat, 1));
     wstr.trim();
     wstr.makelower();
 
@@ -740,7 +740,7 @@ int CScriptEngine::DbgReadStr(lua_State *pLuaState)
     }
 
     string str = lua_tostring(pLuaState, 1);
-    DWORD64 dwAddr = GetScriptEngine()->Compile(str);
+    DWORD64 dwAddr = GetScriptEngine()->Compile(AtoW(str));
     if (!dwAddr)
     {
         lua_pushnumber(pLuaState, SCRIPT_ERROR_PARAMERR);
@@ -767,7 +767,7 @@ int CScriptEngine::DbgReadInt32(lua_State *pLuaState)
     }
 
     string str = lua_tostring(pLuaState, 1);
-    DWORD64 dwAddr = GetScriptEngine()->Compile(str);
+    DWORD64 dwAddr = GetScriptEngine()->Compile(AtoW(str));
     if (!dwAddr)
     {
         lua_pushnumber(pLuaState, SCRIPT_ERROR_PARAMERR);

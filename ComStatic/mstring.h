@@ -34,31 +34,31 @@ namespace std
         mstring(const mstring &str);
 
         //拷贝构造
-        mstring(const ustring &str);
+        //mstring(const ustring &str);
 
         //构造，可以导入中间有/0的字符串
         mstring(const char* buffer, size_t len);
 
         //构造，自动进行类型转换，可以导入中间有0x0000的字符串
-        mstring(const wchar_t *buffer, size_t len);
+        //mstring(const wchar_t *buffer, size_t len);
 
         //拷贝构造
         mstring(const string &buffer);
 
         //拷贝构造
-        mstring(const wstring &buffer);
+        //mstring(const wstring &buffer);
 
         //构造，参数类型为const char *
         mstring(const char* buffer);
 
         //构造，自动进行类型转换
-        mstring(const wchar_t *buffer);
+        //mstring(const wchar_t *buffer);
 
         //
         mstring(char c);
 
         //
-        mstring(wchar_t w); 
+        //mstring(wchar_t w); 
 
         //析构，做了一些清理工作
         virtual ~mstring();
@@ -74,48 +74,48 @@ namespace std
         mstring &operator = (const char *buffer);
 
         //参数为unicode的赋值操作符，会自动将unicode转为gbk
-        mstring &operator = (const wchar_t *buffer);
+        //mstring &operator = (const wchar_t *buffer);
 
         //赋值操作符，参数为char类型
         mstring &operator = (char c);
 
         //赋值操作符，参数为wchar类型
-        mstring &operator = (wchar_t w);
+        //mstring &operator = (wchar_t w);
 
         //赋值操作符，参数为mstring类型
         mstring &operator = (const mstring &m);
 
         //赋值操作符，参数为ustring类型，自当进行类型转换
-        mstring &operator = (const ustring &u);
+        //mstring &operator = (const ustring &u);
 
         //赋值操作符
         mstring &operator = (const string &m);
 
         //赋值操作符
-        mstring &operator = (const wstring &u);
+        //mstring &operator = (const wstring &u);
 
         //+=操作符
         mstring &operator += (const char *buffer);
 
         //+=操作符，参数类型自动进行转换
-        mstring &operator += (const wchar_t *buffer);
+        //mstring &operator += (const wchar_t *buffer);
 
         //+=操作符
         mstring &operator += (char c);
 
         //+=操作符，参数类型wchar，自动进行类型转换
-        mstring &operator += (wchar_t w);
+        //mstring &operator += (wchar_t w);
 
         mstring &operator += (const mstring &m);
 
         //+=操作符，参数为ustring类型，自动进行转换
-        mstring &operator += (const ustring &u);
+        //mstring &operator += (const ustring &u);
 
         //+=操作符
         mstring &operator += (const string &m);
 
         //+=操作符
-        mstring &operator += (const wstring &u);
+        //mstring &operator += (const wstring &u);
 
         //范围查找
         //offset:查找的起始位置
@@ -186,13 +186,13 @@ namespace std
         //同时清理字符串的两边
         mstring &trim();
 
-        mstring &a2u();
+        //mstring &a2u();
 
-        ustring a2w();
+        //ustring a2w();
 
-        mstring &u2a();
+        //mstring &u2a();
 
-        ustring u2w();
+        //ustring u2w();
 
         bool startwith(const char *start);
         bool endwith(const char *tail);
@@ -222,31 +222,31 @@ namespace std
         ustring();
 
         //构造，自动进行类型的转换
-        ustring(const mstring &str);
+        //ustring(const mstring &str);
 
         //拷贝构造
         ustring(const ustring &str);
 
         //构造，自动进行类型转换
-        ustring(const char* buffer);
+        //ustring(const char* buffer);
 
         //构造
         ustring(const wchar_t *buffer);
 
         //构造，字符串中可以有'/0'
-        ustring(const char* buffer, size_t len);
+        //ustring(const char* buffer, size_t len);
 
         //构造，字符串中可以有0x00
         ustring(const wchar_t *buffer, size_t len);
 
         //拷贝构造，自动进行类型转换
-        ustring(const string &buffer);
+        //ustring(const string &buffer);
 
         //拷贝构造
         ustring(const wstring &buffer);
 
         //构造，参数为字符，自动进行类型的转换
-        ustring(char c);
+        //ustring(char c);
 
         //
         ustring(wchar_t w); 
@@ -262,13 +262,13 @@ namespace std
         //operator const wchar_t *();
 
         //赋值操作符，自动进行类型转换
-        ustring &operator = (const char *buffer);
+        //ustring &operator = (const char *buffer);
 
         //赋值操作符
         ustring &operator = (const wchar_t *buffer);
 
         //赋值操作符，自动进行类型转换
-        ustring &operator = (char c);
+        //ustring &operator = (char c);
 
         //赋值操作符
         ustring &operator = (wchar_t w);
@@ -277,10 +277,10 @@ namespace std
         ustring &operator = (const ustring &u);
 
         //赋值操作符，自动进行类型转换
-        ustring &operator = (const mstring &m);
+        //ustring &operator = (const mstring &m);
 
         //赋值操作符
-        ustring &operator = (const string &m);
+        //ustring &operator = (const string &m);
 
         //赋值操作符
         ustring &operator = (const wstring &u);
@@ -289,22 +289,22 @@ namespace std
         ustring &operator += (const ustring &u);
 
         //+=操作符，自动进行类型转换
-        ustring &operator += (const mstring &m);
+        //ustring &operator += (const mstring &m);
 
         //+=操作符，自动进行类型转换
-        ustring &operator += (const char *buffer);
+        //ustring &operator += (const char *buffer);
 
         //+=操作符
         ustring &operator += (const wchar_t *buffer);
 
         //+=操作符，自动进行类型转换
-        ustring &operator += (char c);
+        //ustring &operator += (char c);
 
         //+=操作符
         ustring &operator += (wchar_t w);
 
         //+=操作符，自动进行类型的转换
-        ustring &operator += (const string &m);
+        //ustring &operator += (const string &m);
 
         //+=操作符
         ustring &operator += (const wstring &u);
@@ -332,7 +332,7 @@ namespace std
 
         ustring &cover(const wchar_t *str, size_t offset = 0);
 
-        ustring &cover(const mstring &buffer, size_t offset = 0);
+        ustring &cover(const ustring &buffer, size_t offset = 0);
 
         //取左边的子串
         //count:左边起字符的个数
@@ -375,9 +375,9 @@ namespace std
         //同时清理字符串的两边
         ustring &trim();
 
-        mstring w2u();
+        //mstring w2u();
 
-        mstring w2a();
+        //mstring w2a();
 
         bool startwith(const wchar_t *start);
 

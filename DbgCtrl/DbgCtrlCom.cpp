@@ -86,7 +86,7 @@ bool __stdcall ParserDbgReply(const std::mstring &reply, DbgReplyResult &result)
     Value content = root["content"];
 
     result.m_code = GetIntFromJson(content, "status");
-    result.m_reason = GetStrFormJson(content, "reason");
-    result.m_result = GetStrFormJson(content, "result");
+    result.m_reason = UtoW(GetStrFormJson(content, "reason"));
+    result.m_result = UtoW(GetStrFormJson(content, "result"));
     return true;
 }

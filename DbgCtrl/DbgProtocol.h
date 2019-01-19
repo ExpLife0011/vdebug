@@ -44,6 +44,9 @@
 #define DBG_EVENT_DBG_PROC_CREATE       L"proccreate"
 #define DBG_EVENT_DBG_PROC_END          L"procend"
 
+#define DBG_EVENT_DBG_PROC_CREATEA       "proccreate"
+#define DBG_EVENT_DBG_PROC_ENDA          "procend"
+
 /*
 {
     "cmd":"event",
@@ -59,6 +62,8 @@
 */
 #define DBG_EVENT_MODULE_LOAD       L"moduleload"
 #define DBG_EVENT_MODULE_UNLOAD     L"moduelunload"
+#define DBG_EVENT_MODULE_LOADA       "moduleload"
+#define DBG_EVENT_MODULE_UNLOADA     "moduelunload"
 
 /*
 {
@@ -144,7 +149,9 @@
     }
 }
 */
-#define DBG_EVENT_PROC_CHANGED      L"ProcChanged"
+#define DBG_EVENT_PROC_CHANGED       L"ProcChanged"
+#define DBG_EVENT_PROC_CHANGEDA      "ProcChanged"
 
-#define DBG_EVENT_SYSTEM_BREAKPOINT L"SyatemBreakpoint"
+#define DBG_EVENT_SYSTEM_BREAKPOINT   L"SyatemBreakpoint"
+#define DBG_EVENT_SYSTEM_BREAKPOINTA  "SyatemBreakpoint"
 #endif //DBGPROTOCOL_DBGCTRL_H_H_

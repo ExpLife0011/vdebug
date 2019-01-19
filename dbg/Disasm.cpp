@@ -44,8 +44,8 @@ BOOL CDisasmParser::DisasmCallback(const cs_insn *pAsmInfo, LPVOID pParam)
     DisasmInfoInternal *pInfo = (DisasmInfoInternal *)pParam;
     DisasmInfo info;
     info.m_dwAddr = (pAsmInfo->address);
-    info.m_wstrOpt = pAsmInfo->mnemonic;
-    info.m_wstrContent = pAsmInfo->op_str;
+    info.m_wstrOpt = AtoW(pAsmInfo->mnemonic);
+    info.m_wstrContent = AtoW(pAsmInfo->op_str);
 
     if (pInfo->m_bx64)
     {

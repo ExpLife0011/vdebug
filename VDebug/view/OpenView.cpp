@@ -283,7 +283,7 @@ UINT_PTR PeFileOpenDlg::OFNHookProc(HWND hdlg, UINT msg, WPARAM wp, LPARAM lp) {
 }
 
 bool PeFileOpenDlg::SaveHistory(HistoryInfo &history) const {
-    history.mTime = GetCurTimeStr1("%4d-%2d-%2d %02d:%02d:%02d %03d");
+    history.mTime = AtoW(GetCurTimeStr1("%4d-%2d-%2d %02d:%02d:%02d %03d"));
     mstring str = WtoA(history.mPath);
     history.mId = crc32(str.c_str(), str.size(), 0xffabcdef);
 
@@ -307,10 +307,10 @@ vector<PeFileOpenDlg::HistoryInfo> PeFileOpenDlg::GetHistory(int maxSize) const 
     for (SqliteIterator it = result.begin() ; it != result.end() ; ++it)
     {
         tmp.mId = (unsigned long)atoi(it.GetValue("id").c_str());
-        tmp.mPath = it.GetValue("path");
-        tmp.mParam = it.GetValue("param");
-        tmp.mDir = it.GetValue("dir");
-        tmp.mTime = it.GetValue("time");
+        tmp.mPath = AtoW(it.GetValue("path"));
+        tmp.mParam = AtoW(it.GetValue("param"));
+        tmp.mDir = AtoW(it.GetValue("dir"));
+        tmp.mTime = AtoW(it.GetValue("time"));
         ret.push_back(tmp);
     }
     return ret;

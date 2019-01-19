@@ -106,7 +106,7 @@ ustring ProcDbgProxy::GetProcInfo(const ustring &cmd, const ustring &content, vo
         ProcMonitor::GetInstance()->UnRegisterListener(GetInstance()->m_hProcListener);
         GetInstance()->m_hProcListener = NULL;
     }
-    return MakeDbgRelpy(0, "success", "");
+    return AtoW(MakeDbgRelpy(0, "success", ""));
 }
 
 void ProcDbgProxy::OnProcChanged(HProcListener listener, const list<const ProcMonInfo *> &added, const list<DWORD> &killed) {
@@ -117,6 +117,6 @@ void ProcDbgProxy::OnProcChanged(HProcListener listener, const list<const ProcMo
     }
     procSet.mKillSet = killed;
 
-    utf8_mstring packet = MakeDbgEvent(DBG_EVENT_PROC_CHANGED, EncodeProcMon(procSet));
+    utf8_mstring packet = MakeDbgEvent(DBG_EVENT_PROC_CHANGEDA, EncodeProcMon(procSet));
     m_pDbgClient->ReportDbgEvent(packet);
 }

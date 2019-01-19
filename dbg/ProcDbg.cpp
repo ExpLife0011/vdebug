@@ -298,10 +298,10 @@ void CProcDbgger::OnCreateProcess(CREATE_PROCESS_DEBUG_INFO* pCreateProcessInfo)
     ProcCreateInfo info;
     info.mPid = GetProcessId(pCreateProcessInfo->hProcess);
     info.mImage = GetInstance()->m_vDbgProcInfo.m_wstrPePath;
-    info.mBaseAddr = FormatA("0x%p", pCreateProcessInfo->lpBaseOfImage);
-    info.mEntryAddr = FormatA("0x%p", pCreateProcessInfo->lpStartAddress);
+    info.mBaseAddr = FormatW(L"0x%p", pCreateProcessInfo->lpBaseOfImage);
+    info.mEntryAddr = FormatW(L"0x%p", pCreateProcessInfo->lpStartAddress);
 
-    mstring event = MakeDbgEvent(DBG_EVENT_DBG_PROC_CREATE, EncodeProcCreate(info));
+    mstring event = MakeDbgEvent(DBG_EVENT_DBG_PROC_CREATEA, EncodeProcCreate(info));
     MsgSend(MQ_CHANNEL_DBG_SERVER, UtoW(event).c_str());;
 
     CSymbolTaskHeader task;
@@ -380,7 +380,7 @@ void CProcDbgger::OnSystemBreakpoint(void* ExceptionData)
         return;
     }
 
-    utf8_mstring package = MakeDbgEvent(DBG_EVENT_SYSTEM_BREAKPOINT, "{}");
+    utf8_mstring package = MakeDbgEvent(DBG_EVENT_SYSTEM_BREAKPOINTA, "{}");
     MsgSend(MQ_CHANNEL_DBG_SERVER, UtoW(package).c_str());
 
     //ÍÑÀëµ÷ÊÔÆ÷
@@ -411,7 +411,7 @@ bool CProcDbgger::LoadModuleInfo(HANDLE hFile, DWORD64 dwBaseOfModule)
     dllInfo.mBaseAddr = FormatW(L"0x%p", loadInfo.m_ModuleInfo.m_dwBaseOfImage);
     dllInfo.mEndAddr = FormatW(L"0x%p", loadInfo.m_ModuleInfo.m_dwEndAddr);
 
-    utf8_mstring package = MakeDbgEvent(DBG_EVENT_MODULE_LOAD, EncodeDllLoadInfo(dllInfo));
+    utf8_mstring package = MakeDbgEvent(DBG_EVENT_MODULE_LOADA, EncodeDllLoadInfo(dllInfo));
     MsgSend(MQ_CHANNEL_DBG_SERVER, UtoW(package).c_str());
     return true;
 }
@@ -442,7 +442,9 @@ void CProcDbgger::OnException(EXCEPTION_DEBUG_INFO* ExceptionData)
 }
 
 void CProcDbgger::OnDebugEvent(DEBUG_EVENT* DebugEvent)
-{}
+{
+    int dd = 123;
+}
 
 VOID CProcDbgger::InitEngine()
 {

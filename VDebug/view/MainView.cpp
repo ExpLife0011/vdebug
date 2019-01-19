@@ -130,7 +130,7 @@ static VOID _LoadDebugFile()
     char *szBuff = new char[dwSize];
     DWORD dwRead = 0;
     ReadFile(hFile, szBuff, dwSize, &dwRead, NULL);
-    ustring wstr(szBuff, dwRead);
+    ustring wstr = AtoW(mstring(szBuff, dwRead));
     delete []szBuff;
     CloseHandle(hFile);
 }

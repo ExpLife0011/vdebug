@@ -83,7 +83,7 @@ int WINAPI WinMain(HINSTANCE hT, HINSTANCE hP, LPSTR szCmdLine, int iShow)
     PathAppendW(path, L"..\\DbgCtrl32.dll");
     LoadLibraryW(path);
 #endif
-    InitSymbolHlpr(L"H:\\mysymbols");
+    InitSymbolHlpr(L"E:\\mysymbols");
 
     //_TestProc();
 

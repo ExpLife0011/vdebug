@@ -175,7 +175,7 @@ bool DbgCtrlService::RunCmdInCtrlService(const std::ustring &command) {
 }
 
 void DbgCtrlService::OnProcCreate(const ustring &eventName, const ustring &content, void *param) {
-    ProcCreateInfo info = DecodeProcCreate(content);
+    ProcCreateInfo info = DecodeProcCreate(WtoU(content));
 
     PrintFormater pf;
     pf << "½ø³ÌÆô¶¯" << space                    << line_end;
@@ -219,6 +219,6 @@ void DbgCtrlService::OnProcChanged(const ustring &event, const ustring &content,
         return;
     }
 
-    ProcInfoSet info = DecodeProcMon(content);
+    ProcInfoSet info = DecodeProcMon(WtoU(content));
     pProcView->OnProcChanged(info);
 }
