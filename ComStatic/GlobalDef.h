@@ -22,13 +22,6 @@
 
 #define UNIQUE_DEBUG    L"debug"    //µ˜ ‘”√
 
-enum DebuggerStatus
-{
-    em_dbg_status_init,
-    em_dbg_status_busy,
-    em_dbg_status_free
-};
-
 struct ProcMonInfo {
     DWORD procUnique;
     DWORD procPid;

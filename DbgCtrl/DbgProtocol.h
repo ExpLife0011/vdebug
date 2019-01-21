@@ -89,7 +89,7 @@
 {
     "cmd":"RunCmd",
     "content":{
-        "command":"bp kernen32!CreateFileW"
+        "cmd":"bp kernen32!CreateFileW"
     }
 }
 
@@ -152,6 +152,7 @@
 #define DBG_EVENT_PROC_CHANGED       L"ProcChanged"
 #define DBG_EVENT_PROC_CHANGEDA      "ProcChanged"
 
+//{"tid":12354}
 #define DBG_EVENT_SYSTEM_BREAKPOINT   L"SyatemBreakpoint"
 #define DBG_EVENT_SYSTEM_BREAKPOINTA  "SyatemBreakpoint"
 #endif //DBGPROTOCOL_DBGCTRL_H_H_

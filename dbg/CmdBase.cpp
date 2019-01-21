@@ -58,15 +58,15 @@ bool CCmdBase::OnHight(SyntaxDesc &desc, const ustring &wstrHight) const
 }
 */
 
-DbgCmdResult CCmdBase::RunCommand(const ustring &wstrCmd, BOOL bShow, const CmdUserParam *pParam)
+ustring CCmdBase::RunCommand(const ustring &wstrCmd, const CmdUserParam *pParam)
 {
-    DbgCmdResult res;
+    ustring result;
     ustring wstr(wstrCmd);
     wstr.makelower();
     wstr.trim();
     if (wstr.empty())
     {
-        return res;
+        return result;
     }
 
     bool bFilter = false;
@@ -90,18 +90,9 @@ DbgCmdResult CCmdBase::RunCommand(const ustring &wstrCmd, BOOL bShow, const CmdU
         wstrParam = wstr.c_str() + i;
         wstrParam.trim();
     }
-    res = OnCommand(wstrStart, wstrParam, bShow, pParam);
 
-    //GetSyntaxView()->AppendText(SCI_LABEL_DEFAULT, "\n");
-    if (bFilter)
-    {
-        //OnFilter(res.m_vSyntaxDesc, wstrFilter);
-    }
-    else if (bHight)
-    {
-        //OnHight(res.m_vSyntaxDesc, wstrHight);
-    }
-    return res;
+    result = UtoW(OnCommand(wstrStart, wstrParam, pParam));
+    return result;
 }
 
 DWORD64 CCmdBase::GetFunAddr(const ustring &wstr)
@@ -357,7 +348,7 @@ DWORD64 CCmdBase::GetSizeAndParam(const ustring &wstrParam, ustring &wstrOut) co
     return dwSize;
 }
 
-DbgCmdResult CCmdBase::OnCommand(const ustring &wstrCmd, const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam)
+utf8_mstring CCmdBase::OnCommand(const ustring &wstrCmd, const ustring &wstrCmdParam, const CmdUserParam *pParam)
 {
-    return DbgCmdResult();
+    return "";
 }

@@ -49,8 +49,27 @@ bool ProcDbgProxy::InitProcDbgProxy(const wchar_t *unique) {
 ProcDbgProxy::~ProcDbgProxy() {
 }
 
-ustring ProcDbgProxy::RunCmd(const ustring &cmd, const ustring &content, void *para) {
-    return L"";
+/*
+{
+    "cmd":"RunCmd",
+        "content":{
+            "cmd":"bp kernen32!CreateFileW"
+    }
+}
+*/
+ustring ProcDbgProxy::RunCmd(const ustring &cmd, const ustring &content, void *param) {
+    Value json;
+    Reader().parse(WtoU(content), json);
+
+    ustring data = UtoW(json["cmd"].asString());
+    data.trim();
+
+    if (data.empty())
+    {
+        return UtoW(MakeDbgRelpy(REPLY_STAT_CMD_CODE_PARAM_ERR, "", ""));
+    }
+
+    return GetInstance()->m_pProcDbgger->RunCommand(data);
 }
 
 /*
@@ -62,7 +81,7 @@ ustring ProcDbgProxy::RunCmd(const ustring &cmd, const ustring &content, void *p
     }
 }
 */
-ustring ProcDbgProxy::ExecProc(const std::ustring &cmd, const std::ustring &content, void *para) {
+ustring ProcDbgProxy::ExecProc(const std::ustring &cmd, const std::ustring &content, void *param) {
     Value root;
     Reader().parse(WtoU(content), root);
 

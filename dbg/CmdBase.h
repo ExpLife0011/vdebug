@@ -89,7 +89,7 @@ class CCmdBase
 public:
     CCmdBase();
     virtual ~CCmdBase();
-    DbgCmdResult RunCommand(const ustring &wstrCmd, BOOL bShow = TRUE, const CmdUserParam *pParam = NULL);
+    ustring RunCommand(const ustring &wstrCmd, const CmdUserParam *pParam = NULL);
     BOOL InsertFunMsg(const ustring &wstrIndex, const DbgFunInfo &vProcInfo);
     //eg: kernel32!createfilew+0x1234
     DWORD64 GetFunAddr(const ustring &wstr);
@@ -109,6 +109,6 @@ protected:
     DWORD64 GetSizeAndParam(const ustring &wstrParam, ustring &wstrOut) const;
 
 protected:
-    virtual DbgCmdResult OnCommand(const ustring &wstrCmd, const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
+    virtual utf8_mstring OnCommand(const ustring &wstrCmd, const ustring &wstrCmdParam, const CmdUserParam *pParam);
 };
 #endif

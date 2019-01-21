@@ -4,8 +4,9 @@
 #include <DbgHelp.h>
 #include <map>
 #include <list>
-#include "TitanEngine/TitanEngine.h"
 #include <ComStatic/ComStatic.h>
+#include <DbgCtrl/DbgCtrl.h>
+#include "TitanEngine/TitanEngine.h"
 
 using namespace std;
 
@@ -75,12 +76,12 @@ public:
         return m_bConnected;
     }
 
-    DebuggerStatus GetStatus()
+    DbggerStatus GetStatus()
     {
         return m_eStatus;
     }
 
-    void SetStatus(DebuggerStatus eStatus)
+    void SetStatus(DbggerStatus eStatus)
     {
         m_eStatus = eStatus;
     }
@@ -154,6 +155,6 @@ protected:
 protected:
     BOOL m_bX64;
     BOOL m_bConnected;
-    DebuggerStatus m_eStatus;
+    DbggerStatus m_eStatus;
 };
 #endif

@@ -25,7 +25,9 @@ public:
     void StopProcMon();
 
 private:
+    void SetCtrlStatus(DbggerStatus stat);
     void OnCmdReply(const std::ustring &content);
+
     //Debug Event
     static void WINAPI OnProcCreate(const std::ustring &eventName, const std::ustring &content, void *param);
     static void WINAPI OnSystemBreakpoint(const ustring &eventName, const ustring &content, void *param);
@@ -33,6 +35,8 @@ private:
     static void WINAPI OnProcExit(const std::ustring &eventName, const std::ustring &content, void *param);
     static void WINAPI OnModuleLoad(const std::ustring &eventName, const std::ustring &content, void *param);
     static void WINAPI OnModuleUnLoad(const std::ustring &eventName, const std::ustring &content, void *param);
+
+    //Proc changed
     static void WINAPI OnProcChanged(const std::ustring &eventName, const std::ustring &content, void *param);
 
 private:

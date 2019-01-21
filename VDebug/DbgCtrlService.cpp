@@ -148,6 +148,10 @@ void DbgCtrlService::RunProcInUser(LPCWSTR image, LPCWSTR cmd, DWORD session) {
     return;
 }
 
+void DbgCtrlService::SetCtrlStatus(DbggerStatus stat) {
+    SetCmdNotify(stat, L"abcdef");
+}
+
 /*
 {
     "cmd":"exec",
@@ -168,7 +172,7 @@ bool DbgCtrlService::ExecProc(const std::ustring &path, const std::ustring &para
 
 bool DbgCtrlService::RunCmdInCtrlService(const std::ustring &command) {
     Value conent;
-    conent["command"] = WtoU(command);
+    conent["cmd"] = WtoU(command);
 
     m_pCtrlService->DispatchCurDbgger(DBG_CTRL_RUNCMD, UtoW(FastWriter().write(conent)));
     return true;
@@ -187,6 +191,15 @@ void DbgCtrlService::OnProcCreate(const ustring &eventName, const ustring &conte
 }
 
 void DbgCtrlService::OnSystemBreakpoint(const ustring &eventName, const ustring &content, void *param) {
+    PrintFormater pf;
+    pf << "系统断点触发调试器中断" << line_end;
+    AppendToSyntaxView(SCI_LABEL_DEFAULT, pf.GetResult());
+
+    Value json;
+    Reader().parse(WtoU(content), json);
+    int tid = json["tid"].asInt();
+
+    SetCmdNotify(em_dbg_status_free, FormatW(L"线程 %d >>", tid));
 }
 
 void DbgCtrlService::OnDbgMessage(const ustring &event, const ustring &content, void *param) {

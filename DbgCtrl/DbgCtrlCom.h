@@ -17,6 +17,8 @@ typedef long HDbgCtrl;
     #define DbgCtrlApi _declspec(dllexport)
 #endif
 
+#define REPLY_STAT_CMD_CODE_PARAM_ERR       1011
+
 struct DbgReplyResult {
     int m_code;
     std::ustring m_reason;

@@ -380,7 +380,7 @@ void CProcDbgger::OnSystemBreakpoint(void* ExceptionData)
         return;
     }
 
-    utf8_mstring package = MakeDbgEvent(DBG_EVENT_SYSTEM_BREAKPOINTA, "{}");
+    utf8_mstring package = MakeDbgEvent(DBG_EVENT_SYSTEM_BREAKPOINTA, FormatA("{\"tid\":%d}", dwId));
     MsgSend(MQ_CHANNEL_DBG_SERVER, UtoW(package).c_str());
 
     //ÍÑÀëµ÷ÊÔÆ÷

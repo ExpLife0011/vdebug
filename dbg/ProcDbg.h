@@ -161,7 +161,7 @@ protected:
     DWORD m_dwCurDebugProc;
     DbgProcInfo m_vDbgProcInfo;
     DWORD m_dwCurrentThreadId;
-    DebuggerStatus m_eDbggerStat;
+    DbggerStatus m_eDbggerStat;
     HANDLE m_hRunNotify;
     static const DWORD ms_dwDefDisasmSize = 128;
     BOOL m_bDetachDbgger;

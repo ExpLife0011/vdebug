@@ -3,6 +3,7 @@
 #include <Windows.h>
 #include <list>
 #include <ComStatic/ComStatic.h>
+#include <dbg/TitanEngine/TitanEngine.h>
 
 struct ProcInfoSet {
     std::list<ProcMonInfo> mAddSet;
@@ -27,4 +28,11 @@ struct DllLoadInfo {
 };
 std::utf8_mstring _declspec(dllexport) __stdcall EncodeDllLoadInfo(const DllLoadInfo &info);
 DllLoadInfo _declspec(dllexport) __stdcall DecodeDllLoadInfo(const std::utf8_mstring &json);
+
+struct RegisterContent {
+    TITAN_ENGINE_CONTEXT_t mContext;
+    std::ustring mCipStr;
+};
+std::utf8_mstring _declspec(dllexport) __stdcall EncodeCmdRegister(const RegisterContent &context);
+RegisterContent _declspec(dllexport) __stdcall DecodeCmdRegister(const std::utf8_mstring &json);
 #endif //TRANSFERENCODER_H_H_

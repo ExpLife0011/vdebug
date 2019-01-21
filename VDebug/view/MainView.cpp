@@ -535,7 +535,7 @@ static void _EnableCtrls()
     SendMessageW(gs_hToolbar, TB_ENABLEBUTTON, IDT_OPEN_DUMP, TRUE);
 }
 
-VOID SetCmdNotify(DebuggerStatus status, const ustring &wstrShowMsg)
+VOID SetCmdNotify(DbggerStatus status, const ustring &wstrShowMsg)
 {
     SetWindowTextW(gs_hStatEdit, wstrShowMsg.c_str());
     if (em_dbg_status_init == status)
