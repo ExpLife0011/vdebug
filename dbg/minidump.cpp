@@ -147,14 +147,14 @@ CMiniDumpHlpr::CMiniDumpHlpr()
 CMiniDumpHlpr::~CMiniDumpHlpr()
 {}
 
-bool CMiniDumpHlpr::WriteDump(const ustring &wstrFilePath) const
+bool CMiniDumpHlpr::WriteDump(const mstring &strFilePath) const
 {
     return true;
 }
 
-bool CMiniDumpHlpr::LodeDump(const ustring &wstrFilePath)
+bool CMiniDumpHlpr::LodeDump(const mstring &strFilePath)
 {
-    m_pDumpFile = MappingFileW(wstrFilePath.c_str(), FALSE, 0);
+    m_pDumpFile = MappingFileA(strFilePath.c_str(), FALSE, 0);
     return (m_pDumpFile && m_pDumpFile->lpView);
 }
 
@@ -176,9 +176,10 @@ bool CMiniDumpHlpr::GetModuleSet(list<DumpModuleInfo> &vModules)
         info.m_dwBaseAddr = pModule->BaseOfImage;
         info.m_dwModuleSize = pModule->SizeOfImage;
         PMINIDUMP_STRING pStr= (PMINIDUMP_STRING)((const char *)m_pDumpFile->lpView + pModule->ModuleNameRva);
-        info.m_wstrModulePath.append(pStr->Buffer, pStr->Length / sizeof(WCHAR));
+
+        info.m_strModulePath.append(WtoA(ustring(pStr->Buffer, pStr->Length / sizeof(WCHAR))));
         info.m_dwTimeStamp = pModule->TimeDateStamp;
-        info.m_wstrModuleName = PathFindFileNameW(info.m_wstrModulePath.c_str());
+        info.m_strModuleName = PathFindFileNameA(info.m_strModulePath.c_str());
 
         //在本地获取dump中的文件路径，可能会从微软服务器上下载
         CTaskFindFileForDump task;
@@ -188,12 +189,12 @@ bool CMiniDumpHlpr::GetModuleSet(list<DumpModuleInfo> &vModules)
 
         task.m_SizeofImage = (PVOID)pModule->SizeOfImage;
         task.m_TimeStamp = (PVOID)pModule->TimeDateStamp;
-        task.m_wstrModuleName = info.m_wstrModuleName;
+        task.m_strModuleName = info.m_strModuleName;
         header.m_pParam = &task;
 
         if (GetSymbolHlpr()->SendTask(&header))
         {
-            info.m_wstrModulePath = task.m_wstrFullPath;
+            info.m_strModulePath = task.m_strFullPath;
         }
     }
     return true;
@@ -247,7 +248,7 @@ bool CMiniDumpHlpr::GetSystemInfo(DumpSystemInfo &vSystem) const
 
     DumpSystemInfo system;
     PMINIDUMP_STRING pWstr = (PMINIDUMP_STRING)((const char *)m_pDumpFile->lpView + pSysStream->CSDVersionRva);
-    system.m_wstrSpStr.append(pWstr->Buffer, pWstr->Length / sizeof(WCHAR));
+    system.m_strSpStr.append(WtoA(ustring(pWstr->Buffer, pWstr->Length / sizeof(WCHAR))));
     return true;
 }
 

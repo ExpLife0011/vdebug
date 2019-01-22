@@ -200,6 +200,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\servhlpr.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\sqlite3.c"
 				>
 			</File>
@@ -255,6 +259,10 @@
 			</File>
 			<File
 				RelativePath=".\md5.h"
+				>
+			</File>
+			<File
+				RelativePath=".\servhlpr.h"
 				>
 			</File>
 			<File

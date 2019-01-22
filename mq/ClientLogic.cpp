@@ -46,20 +46,20 @@ bool CClientLogic::InitClient(unsigned short port) {
     return m_bConnectSucc;
 }
 
-HANDLE_REGISTER CClientLogic::Register(const wstring &wstrKey, PMsgNotify pfn, void *pParam) {
+HANDLE_REGISTER CClientLogic::Register(const string &strKey, PMsgNotify pfn, void *pParam) {
     CScopedLocker lock(&m_clientLock);
     NotifyProcInfo notify;
     notify.pNotifyProc = pfn;
     notify.pParam = pParam;
     notify.index = m_curIndex++;
-    m_notifyMap[wstrKey].push_back(notify);
+    m_notifyMap[strKey].push_back(notify);
 
     Value content;
     Value arry;
     content["action"] = "register";
     content["clientUnique"] = m_clientUnique;
 
-    arry.append(WtoU(wstrKey));
+    arry.append(strKey);
     content["channel"] = arry;
 
     string result = GetMsgPackage(FastWriter().write(content));
@@ -69,7 +69,7 @@ HANDLE_REGISTER CClientLogic::Register(const wstring &wstrKey, PMsgNotify pfn, v
 
 bool CClientLogic::UnRegister(HANDLE_REGISTER index) {
     CScopedLocker lock(&m_clientLock);
-    map<wstring, list<NotifyProcInfo>>::iterator it;
+    map<string, list<NotifyProcInfo>>::iterator it;
     list<NotifyProcInfo>::const_iterator ij;
 
     for (it = m_notifyMap.begin() ; it != m_notifyMap.end() ; it++) {
@@ -88,21 +88,21 @@ bool CClientLogic::UnRegister(HANDLE_REGISTER index) {
     return false;
 }
 
-bool CClientLogic::Dispatch(const wstring &wstrKey, const wstring &wstrValue) {
-    DispatchInternal(wstrKey, wstrValue, L"");
+bool CClientLogic::Dispatch(const string &strKey, const string &strValue) {
+    DispatchInternal(strKey, strValue, "");
     return true;
 }
 
-bool CClientLogic::DispatchInternal(const wstring &wstrKey, const wstring &wstrValue, const wstring &wstrRoute) const {
+bool CClientLogic::DispatchInternal(const string &strKey, const string &strValue, const string &strRoute) const {
     Value content;
     content["action"] = "message";
-    content["channel"] = WtoU(wstrKey);
-    content["content"] = WtoU(wstrValue);
+    content["channel"] = strKey;
+    content["content"] = strValue;
 
-    if (!wstrRoute.empty())
+    if (!strRoute.empty())
     {
         content["result"] = 1;
-        content["route"] = WtoU(wstrRoute);
+        content["route"] = strRoute;
     }
 
     string strContent = FastWriter().write(content);
@@ -115,45 +115,45 @@ bool CClientLogic::DispatchInternal(const wstring &wstrKey, const wstring &wstrV
     return true;
 }
 
-bool CClientLogic::DispatchForResult(const wstring &wstrKey, const wstring &wstrValue, wstring &wstrResult, int iTimeOut) {
+bool CClientLogic::DispatchForResult(const string &strKey, const string &strValue, string &strResult, int iTimeOut) {
     MsgRecvCache cache;
     cache.m_hNotify = CreateEventW(NULL, FALSE, FALSE, NULL);
 
     static unsigned int s_serial = 0;
     srand(GetTickCount() + s_serial++);
-    cache.m_wstrRoute = FormatW(L"%04x%04x", rand() % 0xffff, rand() % 0xffff);
+    cache.m_strRoute = FormatA("%04x%04x", rand() % 0xffff, rand() % 0xffff);
 
     {
         CScopedLocker lock(&m_clientLock);
-        m_recvCache[cache.m_wstrRoute] = &cache;
+        m_recvCache[cache.m_strRoute] = &cache;
     }
-    DispatchInternal(wstrKey, wstrValue, cache.m_wstrRoute);
+    DispatchInternal(strKey, strValue, cache.m_strRoute);
     WaitForSingleObject(cache.m_hNotify, iTimeOut);
     {
         CScopedLocker lock(&m_clientLock);
-        map<wstring, MsgRecvCache *>::const_iterator it = m_recvCache.find(cache.m_wstrRoute);
+        map<string, MsgRecvCache *>::const_iterator it = m_recvCache.find(cache.m_strRoute);
         if (it != m_recvCache.end())
         {
             m_recvCache.erase(it);
         }
     }
     CloseHandle(cache.m_hNotify);
-    wstrResult = cache.m_wstrResult;
+    strResult = cache.m_strResult;
     return true;
 }
 
 struct ClientTaskInfo {
-    wstring wstrKey;
-    wstring wstrValue;
-    wstring wstrRoute;
+    string strKey;
+    string strValue;
+    string strRoute;
     NotifyProcInfo info;
 };
 
-bool CClientLogic::DispatchInCache(const wstring &wstrKey, const wstring &wstrValue, const wstring &wstrRoute) const {
+bool CClientLogic::DispatchInCache(const string &strKey, const string &strValue, const string &strRoute) const {
     CScopedLocker lock(&m_clientLock);
-    map<wstring, list<NotifyProcInfo>>::const_iterator it;
+    map<string, list<NotifyProcInfo>>::const_iterator it;
     list<NotifyProcInfo>::const_iterator ij;
-    it = m_notifyMap.find(wstrKey);
+    it = m_notifyMap.find(strKey);
     if (it != m_notifyMap.end())
     {
         for (ij = it->second.begin() ; ij != it->second.end() ; ij++)
@@ -170,26 +170,26 @@ bool CClientLogic::DispatchInCache(const wstring &wstrKey, const wstring &wstrVa
 
             public:
                 void run() {
-                    LPCWSTR wsz = (mParam->info.pNotifyProc)(mParam->wstrKey.c_str(), mParam->wstrValue.c_str(), mParam->info.pParam);
-                    wstring wstr;
-                    if (wsz)
+                    LPCSTR sz = (mParam->info.pNotifyProc)(mParam->strKey.c_str(), mParam->strValue.c_str(), mParam->info.pParam);
+                    string str;
+                    if (sz)
                     {
-                        wstr = wsz;
-                        MsgStrFree(wsz);
+                        str = sz;
+                        MsgStrFree(sz);
                     }
 
-                    if (!mParam->wstrRoute.empty())
+                    if (!mParam->strRoute.empty())
                     {
                         //向对端发送回执
-                        if (wstr.empty())
+                        if (str.empty())
                         {
-                            wstr = L"state success";
+                            str = "state success";
                         }
 
                         Value root;
                         root["action"] = "reply";
-                        root["route"] = WtoU(mParam->wstrRoute);
-                        root["content"] = WtoU(wstr);
+                        root["route"] = mParam->strRoute;
+                        root["content"] = str;
 
                         string strReply = GetMsgPackage(FastWriter().write(root));
                         CClientLogic::GetInstance()->m_msgClient.Send(strReply);
@@ -202,9 +202,9 @@ bool CClientLogic::DispatchInCache(const wstring &wstrKey, const wstring &wstrVa
 
             ClientTaskInfo *ptr = new ClientTaskInfo();
             ptr->info = *ij;
-            ptr->wstrKey = wstrKey;
-            ptr->wstrValue = wstrValue;
-            ptr->wstrRoute = wstrRoute;
+            ptr->strKey = strKey;
+            ptr->strValue = strValue;
+            ptr->strRoute = strRoute;
             m_tpool->exec(new TaskRunable(ptr));
         }
     }
@@ -282,20 +282,21 @@ void CClientLogic::OnClientRecvComplete(const string &strData) {
     {
         string strChannel = content["channel"].asString();
         //推送给所有频道
-        DispatchInCache(UtoW(strChannel.c_str()), UtoW(strContent.c_str()), UtoW(strRoute.c_str()));
+        DispatchInCache(strChannel, strContent.c_str(), strRoute.c_str());
     } else if (strAction == "reply")
     {
         if (strRoute.empty())
         {
             return;
         }
+
         CScopedLocker lock(&m_clientLock);
-        wstring wstr = UtoW(strRoute.c_str());
-        map<wstring, MsgRecvCache *>::const_iterator it = m_recvCache.find(wstr);
+        string str = strRoute.c_str();
+        map<string, MsgRecvCache *>::const_iterator it = m_recvCache.find(str);
         if (it != m_recvCache.end())
         {
             MsgRecvCache *ptr = it->second;
-            ptr->m_wstrResult = UtoW(strContent.c_str());
+            ptr->m_strResult = strContent;
             if (ptr->m_hNotify != NULL)
             {
                 SetEvent(ptr->m_hNotify);
@@ -314,9 +315,9 @@ void CClientLogic::OnClientConnect(CMsgClient &client) {
     root["action"] = "register";
     root["clientUnique"] = m_clientUnique;
 
-    for (map<wstring, list<NotifyProcInfo>>::const_iterator it = m_notifyMap.begin() ; it != m_notifyMap.end() ; it++)
+    for (map<string, list<NotifyProcInfo>>::const_iterator it = m_notifyMap.begin() ; it != m_notifyMap.end() ; it++)
     {
-        arry.append(WtoU(it->first).c_str());
+        arry.append(it->first);
     }
     root["channel"] = arry;
 

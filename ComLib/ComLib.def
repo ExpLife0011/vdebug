@@ -6,23 +6,25 @@ DestroyThreadPool
 SafeStrCopyA
 SafeStrCopyW
 
-MappingFileW
+MappingFileA
 CloseFileMapping
 
 crc32
 ErrMessage
 PrintDbgInternal
 GetPeVersionW
-GetPeDescStr
+GetPeDescStrA
 CentreWindow
 ShlParseShortcutsW
-IsPeFileW
+IsPeFileA
+IsSameFileA
 IsSameFileW
 RevertWow64Red
 IterateProcW
 DisableWow64Red
 GetColourFromStr
-GetProcessCommandLine
+GetProcessCommandLineA
+GetProcessCommandLineW
 RundllFun
 
 SetCtlsCoord
@@ -36,12 +38,18 @@ RegSetStrValueW
 CreateLowsdEvent
 RunInSession
 
+InstallLocalServiceW
+InstallLocalServiceA
 ServStartW
+ServStartA
 ServStopW
-InstallLocalService
-StartLocalService
-StopLocalService
-RemoveLocalService
+ServStopA
+StartLocalServiceW
+StartLocalServiceA
+StopLocalServiceW
+StopLocalServiceA
+RemoveLocalServiceW
+RemoveLocalServiceA
 ReportLocalServStatus
 
 GetThreadPool
@@ -50,6 +58,7 @@ DestroyThreadPool
 GetStrFormJson
 GetIntFromJson
 GetWindowStrW
+GetWindowStrA
 
 sqlite3_open
 sqlite3_open16

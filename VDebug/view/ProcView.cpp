@@ -10,7 +10,7 @@
 #define MSG_UPDATE_STATUS   (WM_USER + 5005)
 #define MSG_FILTER_PROC     (WM_USER + 5007)
 
-map<ustring, HICON> CProcSelectView::ms_peIcon;
+map<mstring, HICON> CProcSelectView::ms_peIcon;
 
 BOOL CProcSelectView::SetFont(HFONT hFont)
 {
@@ -60,7 +60,7 @@ void CProcSelectView::InitListCtrl()
         1
         );
 
-    SendMessageW(
+    SendMessageA(
         m_hProcList,
         LVM_SETIMAGELIST,
         LVSIL_SMALL,
@@ -68,37 +68,36 @@ void CProcSelectView::InitListCtrl()
         );
 
     ListView_SetExtendedListViewStyle(m_hProcList, LVS_EX_DOUBLEBUFFER | LVS_EX_FULLROWSELECT | LVS_EX_LABELTIP);
-    LVCOLUMNW col;
+    LVCOLUMNA col;
     memset(&col, 0x00, sizeof(col));
     col.mask = LVCF_TEXT | LVCF_WIDTH;
 
     col.cx = 150;
-    col.pszText = L"进程";
-    SendMessageW(m_hProcList, LVM_INSERTCOLUMNW, 0, (LPARAM)&col);
+    col.pszText = "进程";
+    SendMessageA(m_hProcList, LVM_INSERTCOLUMNA, 0, (LPARAM)&col);
 
     col.cx = 60;
-    col.pszText = L"Pid";
-    SendMessageW(m_hProcList, LVM_INSERTCOLUMNW, 1, (LPARAM)&col);
-
+    col.pszText = "Pid";
+    SendMessageA(m_hProcList, LVM_INSERTCOLUMNA, 1, (LPARAM)&col);
 
     col.cx = 90;
-    col.pszText = L"启动时间";
-    SendMessageW(m_hProcList, LVM_INSERTCOLUMNW, 3, (LPARAM)&col);
+    col.pszText = "启动时间";
+    SendMessageA(m_hProcList, LVM_INSERTCOLUMNA, 3, (LPARAM)&col);
 }
 
-ustring CProcSelectView::GetSearchStr(ProcShowInfo *ptr) {
-    ptr->m_indexStr = FormatW(L"%ls_%d", ptr->info.procPath.c_str(), ptr->info.procPid);
+mstring CProcSelectView::GetSearchStr(ProcShowInfo *ptr) {
+    ptr->m_indexStr = FormatA("%hs_%d", ptr->info.procPath.c_str(), ptr->info.procPid);
     return ptr->m_indexStr;
 }
 
-int CProcSelectView::GetFileIco(const ustring &wstrFile)
+int CProcSelectView::GetFileIco(const mstring &strFile)
 {
-    if (m_icoIndex.end() != m_icoIndex.find(wstrFile))
+    if (m_icoIndex.end() != m_icoIndex.find(strFile))
     {
-        return m_icoIndex[wstrFile];
+        return m_icoIndex[strFile];
     }
 
-    map<ustring, HICON> ::const_iterator it = ms_peIcon.find(wstrFile);
+    map<mstring, HICON> ::const_iterator it = ms_peIcon.find(strFile);
     HICON icon = NULL;
     if (it != ms_peIcon.end())
     {
@@ -106,8 +105,8 @@ int CProcSelectView::GetFileIco(const ustring &wstrFile)
     } else {
         CoInitialize(NULL);
         PVOID p = DisableWow64Red();
-        SHFILEINFOW info = {0};
-        SHGetFileInfoW(wstrFile.c_str(), 0, &info, sizeof(info), SHGFI_ICON);
+        SHFILEINFOA info = {0};
+        SHGetFileInfoA(strFile.c_str(), 0, &info, sizeof(info), SHGFI_ICON);
         RevertWow64Red(p);
         CoUninitialize();
 
@@ -116,11 +115,11 @@ int CProcSelectView::GetFileIco(const ustring &wstrFile)
             return -1;
         }
         icon = info.hIcon;
-        ms_peIcon[wstrFile] = icon;
+        ms_peIcon[strFile] = icon;
     }
 
     int iIdex = ImageList_AddIcon(m_hImageList, icon);
-    m_icoIndex[wstrFile] = iIdex;
+    m_icoIndex[strFile] = iIdex;
     return iIdex;
 }
 
@@ -169,7 +168,7 @@ void CProcSelectView::OnProcChanged(const ProcInfoSet &info) {
         ProcShowInfo *newProc = new ProcShowInfo();
         newProc->info = *it;
         newProc->m_dwIcoIdex = GetFileIco(it->procPath);
-        newProc->m_procShow = PathFindFileNameW(newProc->info.procPath.c_str());
+        newProc->m_procShow = PathFindFileNameA(newProc->info.procPath.c_str());
         GetSearchStr(newProc);
 
         m_procAll.push_back(newProc);
@@ -184,11 +183,11 @@ void CProcSelectView::OnProcChanged(const ProcInfoSet &info) {
     DeleteFromSet(m_procShow, killed, false);
     DeleteFromSet(m_procAll, killed, true);
 
-    PostMessageW(m_hProcList, LVM_SETITEMCOUNT, m_procShow.size(), LVSICF_NOSCROLL | LVSICF_NOINVALIDATEALL);
-    PostMessageW(m_hProcList, LVM_REDRAWITEMS, 0, m_procShow.size());
+    PostMessageA(m_hProcList, LVM_SETITEMCOUNT, m_procShow.size(), LVSICF_NOSCROLL | LVSICF_NOINVALIDATEALL);
+    PostMessageA(m_hProcList, LVM_REDRAWITEMS, 0, m_procShow.size());
 
-    m_statusMsg = FormatW(L"进程数量:%d 符合过滤条件:%d", m_procAll.size(), m_procShow.size());
-    PostMessageW(m_hwnd, MSG_UPDATE_STATUS, 0, 0);
+    m_statusMsg = FormatA("进程数量:%d 符合过滤条件:%d", m_procAll.size(), m_procShow.size());
+    PostMessageA(m_hwnd, MSG_UPDATE_STATUS, 0, 0);
 }
 
 void CProcSelectView::DeleteProcCache() {
@@ -205,7 +204,7 @@ LRESULT CProcSelectView::FilterEditProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM l
     {
         if (0x0d == wp)
         {
-            SendMessageW(GetProcView()->m_hwnd, MSG_FILTER_PROC, 0, 0);
+            SendMessageA(GetProcView()->m_hwnd, MSG_FILTER_PROC, 0, 0);
         }
     }
 
@@ -222,8 +221,8 @@ INT_PTR CProcSelectView::OnInitDlg(HWND hwnd, WPARAM wp, LPARAM lp)
     m_hEditFlt = GetDlgItem(hwnd, IDC_PROC_EDT_FLT);
     m_hEditStatus = GetDlgItem(hwnd, IDC_PROC_EDT_STATUS);
 
-    SendMessageW(hwnd, WM_SETICON, (WPARAM)ICON_BIG, (LPARAM)LoadIconW(g_hInstance, MAKEINTRESOURCEW(IDI_MAIN)));
-    SendMessageW(hwnd, WM_SETICON, (WPARAM)ICON_SMALL, (LPARAM)LoadIconW(g_hInstance, MAKEINTRESOURCEW(IDI_MAIN)));
+    SendMessageA(hwnd, WM_SETICON, (WPARAM)ICON_BIG, (LPARAM)LoadIconA(g_hInstance, MAKEINTRESOURCEA(IDI_MAIN)));
+    SendMessageA(hwnd, WM_SETICON, (WPARAM)ICON_SMALL, (LPARAM)LoadIconA(g_hInstance, MAKEINTRESOURCEA(IDI_MAIN)));
 
     InitListCtrl();
 
@@ -252,7 +251,7 @@ INT_PTR CProcSelectView::OnInitDlg(HWND hwnd, WPARAM wp, LPARAM lp)
     return 0;
 }
 
-VOID CProcSelectView::OnGetListCtrlDisplsy(IN OUT NMLVDISPINFOW* ptr)
+VOID CProcSelectView::OnGetListCtrlDisplsy(IN OUT NMLVDISPINFOA* ptr)
 {
     int iItm = ptr->item.iItem;
     int iSub = ptr->item.iSubItem;
@@ -275,21 +274,21 @@ VOID CProcSelectView::OnGetListCtrlDisplsy(IN OUT NMLVDISPINFOW* ptr)
             ptr->item.iImage = pInfo->m_dwIcoIdex;
         }
 
-        static ustring s_wstrBuf;
+        static mstring s_strBuf;
         switch (iSub)
         {
         case  0:
-            s_wstrBuf = pInfo->m_procShow;
+            s_strBuf = pInfo->m_procShow;
             break;
         case 1:
-            s_wstrBuf.format(L"%d", pInfo->info.procPid);
+            s_strBuf.format("%d", pInfo->info.procPid);
             break;
         case 2:
-            s_wstrBuf = pInfo->info.startTime;
+            s_strBuf = pInfo->info.startTime;
             break;
         }
 
-        ptr->item.pszText = (LPWSTR)s_wstrBuf.c_str();
+        ptr->item.pszText = (LPSTR)s_strBuf.c_str();
     } while (FALSE);
 }
 
@@ -310,12 +309,12 @@ void CProcSelectView::OnListItemChanged(HWND hwnd, WPARAM wp, LPARAM lp) {
 
     mstring show;
     show += "进程路径\r\n";
-    show += (WtoA(ptr2->info.procPath) + "\r\n\r\n");
+    show += (ptr2->info.procPath + "\r\n\r\n");
 
     show += "进程描述\r\n";
     if (ptr2->info.procDesc.size())
     {
-        show += (WtoA(ptr2->info.procDesc) + "\r\n\r\n");
+        show += (ptr2->info.procDesc + "\r\n\r\n");
     } else {
         show += "Nothing\r\n\r\n";
     }
@@ -323,13 +322,13 @@ void CProcSelectView::OnListItemChanged(HWND hwnd, WPARAM wp, LPARAM lp) {
     show += (FormatA("session %d", ptr2->info.sessionId) + "\r\n\r\n");
 
     show += "进程User\r\n";
-    show += (WtoA(ptr2->info.procUser) + "\r\n\r\n");
+    show += (ptr2->info.procUser + "\r\n\r\n");
 
     show += "进程Sid\r\n";
-    show += (WtoA(ptr2->info.procUserSid) + "\r\n\r\n");
+    show += (ptr2->info.procUserSid + "\r\n\r\n");
 
     show += "进程命令行\r\n";
-    show += (WtoA(ptr2->info.procCmd) + "\r\n\r\n");
+    show += (ptr2->info.procCmd + "\r\n\r\n");
     SetWindowTextA(m_hEditInfo, show.c_str());
 }
 
@@ -339,8 +338,7 @@ INT_PTR CProcSelectView::OnNotify(HWND hwnd, WPARAM wp, LPARAM lp)
     {
     case LVN_GETDISPINFO:
         {
-            NMLVDISPINFO* ptr = NULL;
-            ptr = (NMLVDISPINFOW *)lp;
+            NMLVDISPINFOA *ptr = (NMLVDISPINFOA *)lp;
 
             if (ptr->hdr.hwndFrom == m_hProcList)
             {
@@ -380,7 +378,7 @@ INT_PTR CProcSelectView::OnCommand(HWND hwnd, WPARAM wp, LPARAM lp)
         int iSelect = (int)SendMessageW(m_hProcList, LVM_GETNEXTITEM, -1, LVNI_SELECTED);
         if (-1 == iSelect)
         {
-            SetWindowTextW(m_hEditStatus, L"请先选择一个进程");
+            SetWindowTextA(m_hEditStatus, "请先选择一个进程");
         }
         else
         {
@@ -408,7 +406,7 @@ INT_PTR CProcSelectView::OnClose(HWND hwnd, WPARAM wp, LPARAM lp)
 }
 
 INT_PTR CProcSelectView::OnFilterProc(HWND hwnd, WPARAM wp, LPARAM lp) {
-    ustring filter = GetWindowStrW(m_hEditFlt);
+    mstring filter = GetWindowStrA(m_hEditFlt);
     filter.trim();
     if (filter == m_searchStr)
     {
@@ -432,9 +430,9 @@ INT_PTR CProcSelectView::OnFilterProc(HWND hwnd, WPARAM wp, LPARAM lp) {
         }
     }
 
-    PostMessageW(m_hProcList, LVM_SETITEMCOUNT, m_procShow.size(), LVSICF_NOSCROLL | LVSICF_NOINVALIDATEALL);
-    PostMessageW(m_hProcList, LVM_REDRAWITEMS, 0, m_procShow.size());
-    m_statusMsg = FormatW(L"进程数量:%d 符合过滤条件:%d", m_procAll.size(), m_procShow.size());
+    PostMessageA(m_hProcList, LVM_SETITEMCOUNT, m_procShow.size(), LVSICF_NOSCROLL | LVSICF_NOINVALIDATEALL);
+    PostMessageA(m_hProcList, LVM_REDRAWITEMS, 0, m_procShow.size());
+    m_statusMsg = FormatA("进程数量:%d 符合过滤条件:%d", m_procAll.size(), m_procShow.size());
     PostMessageW(m_hwnd, MSG_UPDATE_STATUS, 0, 0);
     return 0;
 }
@@ -457,7 +455,7 @@ LRESULT CProcSelectView::OnWindowMsg(HWND hwnd, UINT uMsg, WPARAM wp, LPARAM lp)
         break;
     case MSG_UPDATE_STATUS:
         {
-            SetWindowTextW(m_hEditStatus, m_statusMsg.c_str());
+            SetWindowTextA(m_hEditStatus, m_statusMsg.c_str());
         }
         break;
     case WM_CLOSE:

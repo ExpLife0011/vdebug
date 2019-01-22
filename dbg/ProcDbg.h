@@ -28,17 +28,17 @@ typedef void (__cdecl *pfnDebuggerStart1)();
 
 struct DbgProcUserContext
 {
-    ustring m_wstrPePath;
-    ustring m_wstrCmd;
-    ustring m_wstrCurrentDir;
+    mstring m_strPePath;
+    mstring m_strCmd;
+    mstring m_strCurrentDir;
 };
 
 struct DbgProcInfo
 {
     DbgProcType m_eType;
-    ustring m_wstrPePath;
-    ustring m_wstrCmd;
-    ustring m_wstrCurrentDir;
+    mstring m_strPePath;
+    mstring m_strCmd;
+    mstring m_strCurrentDir;
     DWORD m_dwPid;
     HANDLE m_hProcess;
     BOOL m_bIsx64Proc;
@@ -70,7 +70,7 @@ struct DbgProcThreadInfo
     DWORD m_dwThreadId;
     DWORD64 m_dwStartAddr;
     DWORD64 m_dwLocalBase;
-    ustring m_wstrName;
+    mstring m_strName;
 
     DbgProcThreadInfo()
     {
@@ -94,8 +94,8 @@ struct ProcDbgBreakPoint
 {
     DWORD m_dwSerial;
     DWORD64 m_dwBpAddr;
-    ustring m_wstrAddr;
-    ustring m_wstrSymbol;
+    mstring m_strAddr;
+    mstring m_strSymbol;
     ProcDbgBreakPointStat m_eStat;
 };
 
@@ -107,7 +107,7 @@ public:
     static CProcDbgger *GetInstance();
     virtual ~CProcDbgger();
 
-    virtual BOOL Connect(LPCWSTR wszTarget, LPVOID pParam);
+    virtual BOOL Connect(LPCSTR target, LPVOID pParam);
     virtual BOOL Connect(DWORD dwPid);
     virtual BOOL DisConnect();
     virtual BOOL IsConnect();
@@ -116,7 +116,7 @@ public:
     VOID Wait();
     void Run();
     DbgModuleInfo GetModuleFromAddr(DWORD64 dwAddr) const;
-    ustring GetSymFromAddr(DWORD64 dwAddr) const;
+    mstring GetSymFromAddr(DWORD64 dwAddr) const;
     HANDLE GetDbgProc() const;
     DWORD GetCurDbgProcId() const;
     HANDLE GetCurrentThread();
@@ -153,7 +153,7 @@ protected:
     bool LoadModuleInfo(HANDLE hFile, DWORD64 dwBaseOfModule);
     void ResetCache();
     void OnDetachDbgger();
-    virtual list<STACKFRAME64> GetStackFrame(const ustring &wstrParam);
+    virtual list<STACKFRAME64> GetStackFrame(const mstring &wstrParam);
 
 protected:
     list<DbgProcThreadInfo> m_vThreadMap;
@@ -172,34 +172,34 @@ protected:
 
     //调试器对应的命令
 protected:
-    ustring GetStatusStr(ThreadStat eStat, ThreadWaitReason eWaitReason) const;
+    mstring GetStatusStr(ThreadStat eStat, ThreadWaitReason eWaitReason) const;
     void ClearBreakPoint(DWORD dwSerial = -1);
     bool IsBreakpointSet(DWORD64 dwAddr) const;
     bool DisassWithSize(DWORD64 dwAddr, DWORD64 dwSize, mstring &data) const;
     bool DisassWithAddr(DWORD64 dwStartAddr, DWORD64 dwEndAddr, mstring &data) const;
     bool DisassUntilRet(DWORD64 dwStartAddr, mstring &data) const;
-    void GetDisassContentDesc(const ustring &wstrContent, mstring &data) const; //汇编指令着色
+    void GetDisassContentDesc(const mstring &wstrContent, mstring &data) const; //汇编指令着色
 
-    virtual DbgCmdResult OnCommand(const ustring &wstrCmd, const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
-    DbgCmdResult OnCmdBp(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
-    DbgCmdResult OnCmdBl(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
-    DbgCmdResult OnCmdBc(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
-    DbgCmdResult OnCmdBu(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
-    DbgCmdResult OnCmdClear(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
-    DbgCmdResult OnCmdDisass(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
-    DbgCmdResult OnCmdUb(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
-    DbgCmdResult OnCmdUf(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
-    DbgCmdResult OnCmdGo(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
-    DbgCmdResult OnCmdGu(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
-    DbgCmdResult OnCmdKv(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
-    DbgCmdResult OnCmdDb(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
-    DbgCmdResult OnCmdDd(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
-    DbgCmdResult OnCmdDu(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
-    DbgCmdResult OnCmdReg(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
-    DbgCmdResult OnCmdScript(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
-    DbgCmdResult OnCmdTs(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
-    DbgCmdResult OnCmdTc(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
-    DbgCmdResult OnCmdLm(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
+    virtual DbgCmdResult OnCommand(const mstring &wstrCmd, const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
+    DbgCmdResult OnCmdBp(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
+    DbgCmdResult OnCmdBl(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
+    DbgCmdResult OnCmdBc(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
+    DbgCmdResult OnCmdBu(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
+    DbgCmdResult OnCmdClear(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
+    DbgCmdResult OnCmdDisass(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
+    DbgCmdResult OnCmdUb(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
+    DbgCmdResult OnCmdUf(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
+    DbgCmdResult OnCmdGo(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
+    DbgCmdResult OnCmdGu(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
+    DbgCmdResult OnCmdKv(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
+    DbgCmdResult OnCmdDb(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
+    DbgCmdResult OnCmdDd(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
+    DbgCmdResult OnCmdDu(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
+    DbgCmdResult OnCmdReg(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
+    DbgCmdResult OnCmdScript(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
+    DbgCmdResult OnCmdTs(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
+    DbgCmdResult OnCmdTc(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
+    DbgCmdResult OnCmdLm(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
 
     static void __cdecl GuCmdCallback();
 };

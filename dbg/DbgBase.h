@@ -30,8 +30,8 @@ struct DbgProcModuleProcInfo
 
 struct DbgModuleInfo
 {
-    ustring m_wstrDllPath;      //dll路径
-    ustring m_wstrDllName;      //dll名称
+    mstring m_strDllPath;      //dll路径
+    mstring m_strDllName;      //dll名称
     DWORD64 m_dwBaseOfImage;    //dll基址
     DWORD64 m_dwEndAddr;        //模块结束地址
     DWORD64 m_dwModuleSize;     //模块大小

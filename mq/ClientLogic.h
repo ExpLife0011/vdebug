@@ -19,9 +19,9 @@ struct NotifyProcInfo {
 };
 
 struct MsgRecvCache {
-    wstring m_wstrRoute;      //消息路由标识
+    string m_strRoute;        //消息路由标识
     HANDLE m_hNotify;         //消息通知事件
-    wstring m_wstrResult;     //消息处理端
+    string m_strResult;       //消息处理端
 };
 
 class CClientLogic : public ClientEvent {
@@ -31,16 +31,16 @@ public:
     static CClientLogic *GetInstance();
     bool InitClient(unsigned short port);
 
-    HANDLE_REGISTER Register(const wstring &wstrKey, PMsgNotify pfn, void *pParam);
+    HANDLE_REGISTER Register(const string &wstrKey, PMsgNotify pfn, void *pParam);
     bool UnRegister(HANDLE_REGISTER hRegister);
-    bool Dispatch(const wstring &wstrKey, const wstring &wstrValue);
-    bool DispatchForResult(const wstring &wstrKey, const wstring &wstrValue, wstring &wstrResult, int iTimeOut);
+    bool Dispatch(const string &wstrKey, const string &wstrValue);
+    bool DispatchForResult(const string &wstrKey, const string &wstrValue, string &wstrResult, int iTimeOut);
 
 private:
     static DWORD WINAPI ConnectThread(LPVOID pParam);
     list<string> ParsePackage(string &strPackage) const;
-    bool DispatchInternal(const wstring &wstrKey, const wstring &wstrValue, const wstring &wstrRoute) const;
-    bool DispatchInCache(const wstring &wstrKey, const wstring &wstrValue, const wstring &wstrRoute) const;
+    bool DispatchInternal(const string &wstrKey, const string &wstrValue, const string &wstrRoute) const;
+    bool DispatchInCache(const string &wstrKey, const string &wstrValue, const string &wstrRoute) const;
 
 private:
     /**
@@ -61,8 +61,8 @@ private:
     CMsgClient m_msgClient;
     CCriticalSectionLockable m_clientLock;      //消息接收端端读写锁
     string m_clientCache;                       //消息接收端封包缓存
-    map<wstring, list<NotifyProcInfo>> m_notifyMap;//频道数据接收缓存
-    map<wstring, MsgRecvCache *> m_recvCache;   //数据回执缓存
+    map<string, list<NotifyProcInfo>> m_notifyMap;//频道数据接收缓存
+    map<string, MsgRecvCache *> m_recvCache;   //数据回执缓存
     HANDLE_REGISTER m_curIndex;                 //当前分配的最大索引
     ThreadPoolBase *m_tpool;                    //任务处理线程池
     string m_clientUnique;                      //客户端标识

@@ -75,9 +75,9 @@ int PeFileOpenDlg::OnInitDialog(HWND hdlg, WPARAM wp, LPARAM lp) {
     int index = 0;
     for (vector<HistoryInfo>::const_iterator it = mHistory.begin() ; it != mHistory.end() ; it++)
     {
-        SendMessageW(ptr->m_hComHistory, CB_INSERTSTRING, index++, (LPARAM)it->mPath.c_str());
+        SendMessageA(ptr->m_hComHistory, CB_INSERTSTRING, index++, (LPARAM)it->mPath.c_str());
     }
-    SendMessageW(ptr->m_hComHistory, CB_SETCURSEL, 0, 0);
+    SendMessageA(ptr->m_hComHistory, CB_SETCURSEL, 0, 0);
     OnHistorySelect(0);
     return 0;
 }
@@ -165,28 +165,28 @@ int PeFileOpenDlg::OnTimer(HWND hdlg, WPARAM wp, LPARAM lp) {
 
 int PeFileOpenDlg::OnNotify(HWND hdlg, WPARAM wp, LPARAM lp) {
     PeFileOpenDlg *ptr = GetInstance();
-    LPOFNOTIFY data = (LPOFNOTIFY)lp;
+    LPOFNOTIFYA data = (LPOFNOTIFYA)lp;
 
     if(data->hdr.code == CDN_FILEOK) {
         ptr->m_param.path = data->lpOFN->lpstrFile;
 
-        WCHAR buf[256];
+        char buf[256];
         buf[0] = 0;
-        GetWindowTextW(ptr->m_hEditParam, buf, 256);
+        GetWindowTextA(ptr->m_hEditParam, buf, 256);
         ptr->m_param.command = buf;
         buf[0] = 0;
-        GetWindowTextW(ptr->m_hEditDir, buf, 256);
+        GetWindowTextA(ptr->m_hEditDir, buf, 256);
         ptr->m_param.dir = buf;
 
         BOOL bSucc = FALSE;
         BOOL x64 = FALSE;
-        if (!IsPeFileW(ptr->m_param.path.c_str(), &x64))
+        if (!IsPeFileA(ptr->m_param.path.c_str(), &x64))
         {
-            SetWindowTextW(ptr->m_hEditStatus, L"不是合法的可执行程序");
+            SetWindowTextA(ptr->m_hEditStatus, "不是合法的可执行程序");
         } else if (x64)
         {
             ptr->m_param.x64 = TRUE;
-            SetWindowTextW(ptr->m_hEditStatus, L"尚不支持64位程序");
+            SetWindowTextA(ptr->m_hEditStatus, "尚不支持64位程序");
         } else {
             bSucc = TRUE;
         }
@@ -208,10 +208,10 @@ void PeFileOpenDlg::OnHistorySelect(int index) const {
     }
 
     HistoryInfo info = mHistory[index];
-    SetWindowTextW(m_hEditPath, info.mPath.c_str());
-    SendMessageW(m_hEditPath, EM_SETSEL, info.mPath.size(), info.mPath.size());
-    SetWindowTextW(m_hEditParam, info.mParam.c_str());
-    SetWindowTextW(m_hEditDir, info.mDir.c_str());
+    SetWindowTextA(m_hEditPath, info.mPath.c_str());
+    SendMessageA(m_hEditPath, EM_SETSEL, info.mPath.size(), info.mPath.size());
+    SetWindowTextA(m_hEditParam, info.mParam.c_str());
+    SetWindowTextA(m_hEditDir, info.mDir.c_str());
 }
 
 int PeFileOpenDlg::OnCommand(HWND hdlg, WPARAM wp, LPARAM lp) {
@@ -222,7 +222,7 @@ int PeFileOpenDlg::OnCommand(HWND hdlg, WPARAM wp, LPARAM lp) {
     {
         if (CBN_SELCHANGE == code)
         {
-            int sel = SendMessageW(m_hComHistory, CB_GETCURSEL, 0, 0);
+            int sel = SendMessageA(m_hComHistory, CB_GETCURSEL, 0, 0);
 
             if (-1 == sel || sel >= (int)mHistory.size())
             {
@@ -283,12 +283,12 @@ UINT_PTR PeFileOpenDlg::OFNHookProc(HWND hdlg, UINT msg, WPARAM wp, LPARAM lp) {
 }
 
 bool PeFileOpenDlg::SaveHistory(HistoryInfo &history) const {
-    history.mTime = AtoW(GetCurTimeStr1("%4d-%2d-%2d %02d:%02d:%02d %03d"));
-    mstring str = WtoA(history.mPath);
+    history.mTime = GetCurTimeStr1("%4d-%2d-%2d %02d:%02d:%02d %03d");
+    mstring str = history.mPath;
     history.mId = crc32(str.c_str(), str.size(), 0xffabcdef);
 
     mstring sql = FormatA(
-        "replace into tOpenHistory(id, path, param, dir, time)values(%u, '%ls', '%ls', '%ls', '%ls')",
+        "replace into tOpenHistory(id, path, param, dir, time)values(%u, '%hs', '%hs', '%hs', '%hs')",
         history.mId,
         history.mPath.c_str(),
         history.mParam.c_str(),
@@ -307,10 +307,10 @@ vector<PeFileOpenDlg::HistoryInfo> PeFileOpenDlg::GetHistory(int maxSize) const 
     for (SqliteIterator it = result.begin() ; it != result.end() ; ++it)
     {
         tmp.mId = (unsigned long)atoi(it.GetValue("id").c_str());
-        tmp.mPath = AtoW(it.GetValue("path"));
-        tmp.mParam = AtoW(it.GetValue("param"));
-        tmp.mDir = AtoW(it.GetValue("dir"));
-        tmp.mTime = AtoW(it.GetValue("time"));
+        tmp.mPath = it.GetValue("path");
+        tmp.mParam = it.GetValue("param");
+        tmp.mDir = it.GetValue("dir");
+        tmp.mTime = it.GetValue("time");
         ret.push_back(tmp);
     }
     return ret;
@@ -319,20 +319,20 @@ vector<PeFileOpenDlg::HistoryInfo> PeFileOpenDlg::GetHistory(int maxSize) const 
 BOOL PeFileOpenDlg::ShowFileOpenDlg(HWND parent, ProcParam &param) {
     m_hParent = parent;
 
-    WCHAR buffer[512];
+    char buffer[512];
     buffer[0] = 0;
-    OPENFILENAMEW ofn = {0};
+    OPENFILENAMEA ofn = {0};
     ofn.lStructSize = sizeof(ofn);
     ofn.hwndOwner = parent;
-    ofn.hInstance = GetModuleHandle(NULL);
+    ofn.hInstance = GetModuleHandleA(NULL);
     ofn.Flags = OFN_ENABLESIZING | OFN_EXPLORER | OFN_FILEMUSTEXIST | OFN_HIDEREADONLY | OFN_ENABLEHOOK | OFN_ENABLETEMPLATE;
-    ofn.lpstrFilter = L"可执行程序\0*.exe;*.dll\0所有文件(*.*)\0*.*\0\0";
+    ofn.lpstrFilter = "可执行程序\0*.exe;*.dll\0所有文件(*.*)\0*.*\0\0";
     ofn.lpstrFile = buffer;
     ofn.nMaxFile = MAX_PATH;
-    ofn.lpstrTitle = L"选择要执行的程序";
+    ofn.lpstrTitle = "选择要执行的程序";
     ofn.lpfnHook = OFNHookProc;
-    ofn.lpTemplateName = MAKEINTRESOURCEW(IDD_PROC_OPEN);
-    GetOpenFileNameW(&ofn);
+    ofn.lpTemplateName = MAKEINTRESOURCEA(IDD_PROC_OPEN);
+    GetOpenFileNameA(&ofn);
     param = m_param;
 
     if (param.succ)

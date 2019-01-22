@@ -20,7 +20,7 @@ typedef struct _FILE_MAPPING_STRUCT
     DWORD mappedSize;
 } FILE_MAPPING_STRUCT, *PFILE_MAPPING_STRUCT;
 
-PFILE_MAPPING_STRUCT __stdcall MappingFileW(LPCWSTR fileName, BOOL bWrite = FALSE, DWORD maxViewSize = 1024 * 1024 * 64);
+PFILE_MAPPING_STRUCT __stdcall MappingFileA(LPCSTR fileName, BOOL bWrite = FALSE, DWORD maxViewSize = 1024 * 1024 * 64);
 void __stdcall CloseFileMapping(PFILE_MAPPING_STRUCT pfms);
 
 VOID __stdcall CentreWindow(HWND hSrcWnd, HWND hDstWnd = NULL);
@@ -32,9 +32,10 @@ VOID __stdcall PrintDbgInternal(LPCWSTR wszTarget, LPCSTR wszFile, DWORD dwLine,
 typedef BOOL (__stdcall* pfnProcHandlerW)(PPROCESSENTRY32W, void*);
 void __stdcall IterateProcW(pfnProcHandlerW handler, void* lpParam);
 
-BOOL  __stdcall IsPeFileW(LPCWSTR fileName, BOOL* b64);
+BOOL  __stdcall IsPeFileA(LPCSTR fileName, BOOL* b64);
 
 BOOL __stdcall IsSameFileW(LPCWSTR file1, LPCWSTR file2);
+BOOL __stdcall IsSameFileA(LPCSTR file1, LPCSTR file2);
 
 BOOL __stdcall GetPeVersionW(LPCWSTR lpszFileName, LPWSTR outBuf, UINT size);
 
@@ -46,14 +47,15 @@ typedef BOOL (__stdcall* pfnModuleHandlerW)(PMODULEENTRY32W, void*);
 void __stdcall IterateModulesW(DWORD procId, pfnModuleHandlerW handler, void* lpParam);
 
 void __stdcall ErrMessage(const wchar_t *format, ...);
-std::ustring __stdcall GetProcessCommandLine(_In_ DWORD dwPid, BOOL bx64);
+std::ustring __stdcall GetProcessCommandLineW(_In_ DWORD dwPid, BOOL bx64);
+std::mstring __stdcall GetProcessCommandLineA(_In_ DWORD dwPid, BOOL bx64);
 
 //获取pe文件属性
 //Comments InternalName ProductName 
 //CompanyName LegalCopyright ProductVersion 
 //FileDescription LegalTrademarks PrivateBuild 
 //FileVersion OriginalFilename SpecialBuild 
-std::ustring __stdcall GetPeDescStr(const std::ustring &path, const std::ustring &attr);
+std::mstring __stdcall GetPeDescStrA(const std::mstring &path, const std::mstring &attr);
 
 typedef struct _GDS_LINKINFO
 {
@@ -137,6 +139,7 @@ std::mstring __stdcall GetStrFormJson(const Json::Value &json, const std::mstrin
 int __stdcall GetIntFromJson(const Json::Value &json, const std::mstring &name);
 
 std::ustring __stdcall GetWindowStrW(HWND hwnd);
+std::mstring __stdcall GetWindowStrA(HWND hwnd);
 
 static std::mstring __stdcall GetCurTimeStr1(const char *fmt) {
     SYSTEMTIME time;

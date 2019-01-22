@@ -4,7 +4,6 @@
 #include <list>
 #include <ComStatic/mstring.h>
 #include <ComStatic/StrUtil.h>
-#include <ComStatic/servhlpr.h>
 #include <ComStatic/GlobalDef.h>
 #include <ComStatic/PrintFormater.h>
 
@@ -24,11 +23,11 @@
     #endif //_WIN64
 #endif //COMLIB_EXPORTS
 
-std::ustring __stdcall DosPathToNtPath(LPCWSTR wszSrc);
-std::ustring __stdcall GetProcPathByPid(IN DWORD dwPid);
-std::ustring __stdcall GetFilePathFromHandle(HANDLE hFile);
+std::mstring __stdcall DosPathToNtPath(LPCSTR wszSrc);
+std::mstring __stdcall GetProcPathByPid(IN DWORD dwPid);
+std::mstring __stdcall GetFilePathFromHandle(HANDLE hFile);
 
-std::ustring __stdcall GetStdErrorStr(DWORD dwErr = GetLastError());
+std::mstring __stdcall GetStdErrorStr(DWORD dwErr = GetLastError());
 std::wstring __stdcall RegGetStrValueExW(HKEY hKey, LPCWSTR wszSubKey, LPCWSTR wszValue);
 
 enum ThreadStat
@@ -94,7 +93,7 @@ struct ThreadInformation
 
 BOOL __stdcall GetThreadInformation(DWORD dwProcressId, std::list<ThreadInformation> &vThreads);
 
-HANDLE WINAPI CreateLowsdEvent(BOOL bReset, BOOL bInitStat, LPCWSTR wszName);
+HANDLE WINAPI CreateLowsdEvent(BOOL bReset, BOOL bInitStat, LPCSTR szName);
 
-BOOL WINAPI RunInSession(LPCWSTR wszImage, LPCWSTR wszCmd, DWORD dwSessionId, DWORD dwShell);
+BOOL WINAPI RunInSession(LPCSTR szImage, LPCSTR szCmd, DWORD dwSessionId, DWORD dwShell);
 #endif

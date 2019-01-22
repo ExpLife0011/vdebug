@@ -14,8 +14,8 @@ struct ProcShowInfo
 {
     ProcMonInfo info;       //proc info
     DWORD m_dwIcoIdex;      //ico index
-    std::ustring m_indexStr;//index str
-    std::ustring m_procShow;//proc show
+    std::mstring m_indexStr;//index str
+    std::mstring m_procShow;//proc show
 
     ProcShowInfo() {
         m_dwIcoIdex = -1;
@@ -54,7 +54,7 @@ public:
 protected:
     INT_PTR OnInitDlg(HWND hwnd, WPARAM wp, LPARAM lp);
 
-    VOID OnGetListCtrlDisplsy(IN OUT NMLVDISPINFOW* ptr);
+    VOID OnGetListCtrlDisplsy(IN OUT NMLVDISPINFOA* ptr);
     void OnListColumnClick(IN NMLISTVIEW *ptr);
 
     void OnListItemChanged(HWND hwnd, WPARAM wp, LPARAM lp);
@@ -68,9 +68,9 @@ protected:
     void InitListCtrl();
     VOID CalWidthByColumns() const;
     void RefushProc();
-    int GetFileIco(const ustring &wstrFile);
-    ustring GetSearchStr(ProcShowInfo *ptr);
-    ustring GetLastSelectDir();
+    int GetFileIco(const mstring &wstrFile);
+    mstring GetSearchStr(ProcShowInfo *ptr);
+    mstring GetLastSelectDir();
     void RecordLastSelect(LPCWSTR wszDir);
 
 protected:
@@ -87,12 +87,12 @@ protected:
     PWIN_PROC m_pfnFilterEditProc;
 
     HIMAGELIST m_hImageList;
-    map<ustring, int> m_icoIndex;
+    map<mstring, int> m_icoIndex;
     vector<ProcShowInfo *> m_procShow;
     vector<ProcShowInfo *> m_procAll;
-    ustring m_searchStr;
-    ustring m_statusMsg;
+    mstring m_searchStr;
+    mstring m_statusMsg;
 
-    static map<ustring, HICON> ms_peIcon;
+    static map<mstring, HICON> ms_peIcon;
 };
 #endif

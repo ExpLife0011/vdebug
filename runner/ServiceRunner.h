@@ -12,10 +12,10 @@ public:
 
 private:
     void OnServWork();
-    void RunProcess(LPCWSTR wszKey);
+    void RunProcess(LPCSTR szKey);
     static DWORD WINAPI ServiveMain(LPVOID param);
     static DWORD WINAPI ServiceHandlerEx(DWORD dwControl, DWORD dwEvent, LPVOID pEventData, LPVOID pContext);
-    static VOID WINAPI ServiceMainProc(DWORD dwArgc, LPWSTR *wszArgv);
+    static VOID WINAPI ServiceMainProc(DWORD dwArgc, LPSTR *wszArgv);
 private:
     //service»º´æ
     SERVICE_STATUS_HANDLE m_ServStatus;

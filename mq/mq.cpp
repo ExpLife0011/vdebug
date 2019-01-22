@@ -27,8 +27,8 @@ BOOL WINAPI MsgInitClient(unsigned short port) {
 /**
 注册关心的频道，该频道有消息会调用传入的回调函数
 */
-HANDLE_REGISTER WINAPI MsgRegister(LPCWSTR wszChannel, PMsgNotify pfnProc, void *pParam) {
-    return CClientLogic::GetInstance()->Register(wszChannel, pfnProc, pParam);
+HANDLE_REGISTER WINAPI MsgRegister(LPCSTR szChannel, PMsgNotify pfnProc, void *pParam) {
+    return CClientLogic::GetInstance()->Register(szChannel, pfnProc, pParam);
 }
 
 /**
@@ -43,35 +43,35 @@ BOOL WINAPI MsgUnRegister(HANDLE_REGISTER index) {
 wszChannel：频道名称
 wszContent：分发的内容
 */
-BOOL WINAPI MsgSend(LPCWSTR wszChannel, LPCWSTR wszContent) {
-    return CClientLogic::GetInstance()->Dispatch(wszChannel, wszContent);
+BOOL WINAPI MsgSend(LPCSTR szChannel, LPCSTR szContent) {
+    return CClientLogic::GetInstance()->Dispatch(szChannel, szContent);
 }
 
 /**
 字符串分配接口
 */
-LPWSTR WINAPI MsgStrAlloc(int iSize) {
-    return new WCHAR[iSize];
+LPSTR WINAPI MsgStrAlloc(int iSize) {
+    return new CHAR[iSize];
 }
 
 /**
 字符串复制接口
 */
-LPCWSTR WINAPI MsgStrCopy(LPCWSTR wsz) {
-    if (!wsz)
+LPCSTR WINAPI MsgStrCopy(LPCSTR sz) {
+    if (!sz)
     {
         return NULL;
     }
 
-    LPWSTR ptr = new WCHAR[lstrlenW(wsz) + 1];
-    lstrcpyW(ptr, wsz);
+    LPSTR ptr = new CHAR[lstrlenA(sz) + 1];
+    lstrcpyA(ptr, sz);
     return ptr;
 }
 
 /**
 字符串释放接口
 */
-VOID WINAPI MsgStrFree(LPCWSTR buffer) {
+VOID WINAPI MsgStrFree(LPCSTR buffer) {
     delete []buffer;
 }
 
@@ -81,8 +81,8 @@ wszChannel：频道名称
 wszContent：分发的内容
 返回：接收到的消息订阅者的回执
 */
-LPCWSTR WINAPI MsgSendForResult(LPCTSTR wszChannel, LPCWSTR wszContent) {
-    wstring result;
-    CClientLogic::GetInstance()->DispatchForResult(wszChannel, wszContent, result, 3000);
+LPCSTR WINAPI MsgSendForResult(LPCSTR szChannel, LPCSTR szContent) {
+    string result;
+    CClientLogic::GetInstance()->DispatchForResult(szChannel, szContent, result, 3000);
     return MsgStrCopy(result.c_str());
 }

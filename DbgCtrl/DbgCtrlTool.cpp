@@ -50,14 +50,14 @@ static unsigned short _GetMinUnUsedPort() {
     return minPort;
 }
 
-unsigned short CalPortFormUnique(const wstring &unique) {
-    DWORD port = RegGetDWORDFromRegW(HKEY_LOCAL_MACHINE, REG_VDEBUG_CACHE, unique.c_str(), 0);
+unsigned short CalPortFormUnique(const string &unique) {
+    DWORD port = RegGetDWORDFromRegA(HKEY_LOCAL_MACHINE, REG_VDEBUG_CACHE, unique.c_str(), 0);
     if (port)
     {
         return (unsigned short)port;
     }
 
     port = _GetMinUnUsedPort();
-    RegSetDWORDValueW(HKEY_LOCAL_MACHINE, REG_VDEBUG_CACHE, unique.c_str(), port);
+    RegSetDWORDValueA(HKEY_LOCAL_MACHINE, REG_VDEBUG_CACHE, unique.c_str(), port);
     return (unsigned short)port;
 }

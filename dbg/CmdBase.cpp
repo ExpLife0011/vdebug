@@ -13,7 +13,7 @@ CCmdBase::~CCmdBase()
 {}
 
 /*
-bool CCmdBase::OnFilter(SyntaxDesc &desc, const ustring &wstrFilter) const
+bool CCmdBase::OnFilter(SyntaxDesc &desc, const mstring &wstrFilter) const
 {
     vector<mstring>::const_iterator it = desc.m_vShowInfo.begin();
     vector<vector<SyntaxColourNode>> ::const_iterator itDesc;
@@ -21,9 +21,9 @@ bool CCmdBase::OnFilter(SyntaxDesc &desc, const ustring &wstrFilter) const
     int index = 0;
     while (it != desc.m_vShowInfo.end())
     {
-        ustring strLow(*it);
+        mstring strLow(*it);
         strLow.makelower();
-        if (ustring::npos == strLow.find(wstrFilter))
+        if (mstring::npos == strLow.find(wstrFilter))
         {
             it = desc.m_vShowInfo.erase(it);
             desc.m_vSyntaxDesc.erase(desc.m_vSyntaxDesc.begin() + index);
@@ -37,16 +37,16 @@ bool CCmdBase::OnFilter(SyntaxDesc &desc, const ustring &wstrFilter) const
     return true;
 }
 
-bool CCmdBase::OnHight(SyntaxDesc &desc, const ustring &wstrHight) const
+bool CCmdBase::OnHight(SyntaxDesc &desc, const mstring &wstrHight) const
 {
     vector<vector<SyntaxColourNode>> ::iterator itDesc = desc.m_vSyntaxDesc.begin();
     vector<SyntaxColourNode>::iterator itNode;
     int iSerial = 0;
     for (vector<mstring>::const_iterator it = desc.m_vShowInfo.begin() ; it != desc.m_vShowInfo.end() ; it++, iSerial++, itDesc++)
     {
-        ustring wstrLow(*it);
+        mstring wstrLow(*it);
         wstrLow.makelower();
-        if (ustring::npos != wstrLow.find(wstrHight))
+        if (mstring::npos != wstrLow.find(wstrHight))
         {
             for (itNode = itDesc->begin() ; itNode != itDesc->end() ; itNode++)
             {
@@ -58,70 +58,70 @@ bool CCmdBase::OnHight(SyntaxDesc &desc, const ustring &wstrHight) const
 }
 */
 
-ustring CCmdBase::RunCommand(const ustring &wstrCmd, const CmdUserParam *pParam)
+mstring CCmdBase::RunCommand(const mstring &wstrCmd, const CmdUserParam *pParam)
 {
-    ustring result;
-    ustring wstr(wstrCmd);
-    wstr.makelower();
-    wstr.trim();
-    if (wstr.empty())
+    mstring result;
+    mstring str(wstrCmd);
+    str.makelower();
+    str.trim();
+    if (str.empty())
     {
         return result;
     }
 
     bool bFilter = false;
-    ustring wstrFilter;
+    mstring wstrFilter;
     bool bHight = false;
-    ustring wstrHight;
-    bFilter = IsFilterStr(wstr, wstrFilter);
-    bHight = IsHightStr(wstr, wstrHight);
-    wstr.trim();
+    mstring wstrHight;
+    bFilter = IsFilterStr(str, wstrFilter);
+    bHight = IsHightStr(str, wstrHight);
+    str.trim();
 
-    ustring wstrStart;
-    ustring wstrParam;
-    size_t i = wstr.find(L" ");
-    if (ustring::npos == i)
+    mstring strStart;
+    mstring strParam;
+    size_t i = str.find(" ");
+    if (mstring::npos == i)
     {
-        wstrStart = wstr;
+        strStart = str;
     }
     else
     {
-        wstrStart = wstr.substr(0, i);
-        wstrParam = wstr.c_str() + i;
-        wstrParam.trim();
+        strStart = str.substr(0, i);
+        strParam = str.c_str() + i;
+        strParam.trim();
     }
 
-    result = UtoW(OnCommand(wstrStart, wstrParam, pParam));
+    result = OnCommand(strStart, strParam, pParam);
     return result;
 }
 
-DWORD64 CCmdBase::GetFunAddr(const ustring &wstr)
+DWORD64 CCmdBase::GetFunAddr(const mstring &wstr)
 {
-    ustring wstrContent(wstr);
-    wstrContent.makelower();
-    wstrContent.trim();
-    ustring wstrFun;
-    ustring wstrOffset;
+    mstring strContent(wstr);
+    strContent.makelower();
+    strContent.trim();
+    mstring strFun;
+    mstring strOffset;
     size_t pos = 0;
-    if (ustring::npos != (pos = wstrContent.find(L"+")))
+    if (mstring::npos != (pos = strContent.find("+")))
     {
-        wstrFun = wstrContent.substr(0, pos);
-        wstrOffset = (wstrContent.c_str() + pos + 1);
+        strFun = strContent.substr(0, pos);
+        strOffset = (strContent.c_str() + pos + 1);
     }
     else
     {
-        wstrFun = wstrContent;
+        strFun = strContent;
     }
 
     DWORD64 dwOffset = 0;
-    GetNumFromStr(wstrOffset, dwOffset);
+    GetNumFromStr(strOffset, dwOffset);
 
     CSymbolTaskHeader header;
     CTaskGetAddrFromStr param;
     header.m_dwSize = sizeof(header) + sizeof(param);
     header.m_pParam = &param;
     header.m_eTaskType = em_task_addrfromstr;
-    param.m_wstrStr = wstrContent;
+    param.m_strStr = strContent;
     GetSymbolHlpr()->SendTask(&header);
     return (param.m_dwAddr + dwOffset);
 }
@@ -129,40 +129,40 @@ DWORD64 CCmdBase::GetFunAddr(const ustring &wstr)
 //0x12abcd
 //0n115446
 //323ffabc
-bool CCmdBase::IsNumber(const ustring &wstr) const
+bool CCmdBase::IsNumber(const mstring &str) const
 {
-    if (wstr.empty())
+    if (str.empty())
     {
         return false;
     }
 
-    ustring wstrLower(wstr);
-    wstrLower.makelower();
+    mstring strLower(str);
+    strLower.makelower();
     bool b16 = true;
     size_t i = 0;
-    if (wstrLower.startwith(L"0n"))
+    if (strLower.startwith("0n"))
     {
         b16 = false;
     }
 
-    if (wstrLower.startwith(L"0n") || wstrLower.startwith(L"0x"))
+    if (strLower.startwith("0n") || strLower.startwith("0x"))
     {
         i += 2;
     }
 
     bool bResult = false;
-    for (; i < wstrLower.size() ; i++)
+    for (; i < strLower.size() ; i++)
     {
         if (b16)
         {
-            if (!((wstrLower[i] >= '0' && wstrLower[i] <= '9') || (wstrLower[i] >= 'a' && wstrLower[i] <= 'f')))
+            if (!((strLower[i] >= '0' && strLower[i] <= '9') || (strLower[i] >= 'a' && strLower[i] <= 'f')))
             {
                 return false;
             }
         }
         else
         {
-            if (!(wstrLower[i] >= '0' && wstrLower[i] <= '9'))
+            if (!(strLower[i] >= '0' && strLower[i] <= '9'))
             {
                 return false;
             }
@@ -172,47 +172,47 @@ bool CCmdBase::IsNumber(const ustring &wstr) const
     return bResult;
 }
 
-bool CCmdBase::IsKeyword(const ustring &wstr) const
+bool CCmdBase::IsKeyword(const mstring &wstr) const
 {
-    static set<ustring> *s_ptr = NULL;
+    static set<mstring> *s_ptr = NULL;
     if (!s_ptr)
     {
-        s_ptr = new set<ustring>();
-        s_ptr->insert(L"ptr");
-        s_ptr->insert(L"word"), s_ptr->insert(L"byte");
-        s_ptr->insert(L"dword"), s_ptr->insert(L"qword");
+        s_ptr = new set<mstring>();
+        s_ptr->insert("ptr");
+        s_ptr->insert("word"), s_ptr->insert("byte");
+        s_ptr->insert("dword"), s_ptr->insert("qword");
     }
-    ustring wstrLow(wstr);
+    mstring wstrLow(wstr);
     wstrLow.makelower();
     return (s_ptr->end() != s_ptr->find(wstrLow));
 }
 
-vector<WordNode> CCmdBase::GetWordSet(const ustring &wstrStr) const
+vector<WordNode> CCmdBase::GetWordSet(const mstring &strStr) const
 {
-    static set<ustring> *s_ptr = NULL;
+    static set<mstring> *s_ptr = NULL;
     if (!s_ptr)
     {
-        s_ptr = new set<ustring>();
-        s_ptr->insert(L" "), s_ptr->insert(L",");
-        s_ptr->insert(L"("), s_ptr->insert(L")");
-        s_ptr->insert(L"["), s_ptr->insert(L"]");
-        s_ptr->insert(L"{"), s_ptr->insert(L"}");
-        s_ptr->insert(L"*"), s_ptr->insert(L"+");
-        s_ptr->insert(L"-");
+        s_ptr = new set<mstring>();
+        s_ptr->insert(" "), s_ptr->insert(",");
+        s_ptr->insert("("), s_ptr->insert(")");
+        s_ptr->insert("["), s_ptr->insert("]");
+        s_ptr->insert("{"), s_ptr->insert("}");
+        s_ptr->insert("*"), s_ptr->insert("+");
+        s_ptr->insert("-");
     }
 
     vector<WordNode> vResult;
     size_t iLastPos = 0;
     WordNode node;
-    for (size_t i = 0 ; i < wstrStr.size() ;)
+    for (size_t i = 0 ; i < strStr.size() ;)
     {
-        while (i < wstrStr.size() && (s_ptr->end() != s_ptr->find(wstrStr[i])))
+        while (i < strStr.size() && (s_ptr->end() != s_ptr->find(strStr[i])))
         {
             i++;
             continue;
         }
 
-        if (i == wstrStr.size())
+        if (i == strStr.size())
         {
             break;
         }
@@ -221,29 +221,29 @@ vector<WordNode> CCmdBase::GetWordSet(const ustring &wstrStr) const
         {
             node.m_iStartPos = iLastPos;
             node.m_iLength = (i - iLastPos);
-            node.m_wstrContent = wstrStr.substr(iLastPos, i - iLastPos);
+            node.m_strContent = strStr.substr(iLastPos, i - iLastPos);
             vResult.push_back(node);
         }
 
         iLastPos = i;
         size_t j = i + 1;
-        while (j < wstrStr.size() && (s_ptr->end() == s_ptr->find(wstrStr[j])))
+        while (j < strStr.size() && (s_ptr->end() == s_ptr->find(strStr[j])))
         {
             j++;
         }
         node.m_iStartPos = iLastPos;
         node.m_iLength = (j - iLastPos);
-        node.m_wstrContent = wstrStr.substr(iLastPos, j - iLastPos);
+        node.m_strContent = strStr.substr(iLastPos, j - iLastPos);
         vResult.push_back(node);
         i = j;
         iLastPos = j;
     }
 
-    if (wstrStr.size() > iLastPos)
+    if (strStr.size() > iLastPos)
     {
         node.m_iStartPos = iLastPos;
-        node.m_iLength = wstrStr.size() - iLastPos;
-        node.m_wstrContent = wstrStr.substr(iLastPos, node.m_iLength);
+        node.m_iLength = strStr.size() - iLastPos;
+        node.m_strContent = strStr.substr(iLastPos, node.m_iLength);
         vResult.push_back(node);
     }
     return vResult;
@@ -252,103 +252,103 @@ vector<WordNode> CCmdBase::GetWordSet(const ustring &wstrStr) const
 //0x43fdad12
 //0n12232433
 //5454546455
-BOOL CCmdBase::GetNumFromStr(const ustring &wstrNumber, DWORD64 &dwResult) const
+BOOL CCmdBase::GetNumFromStr(const mstring &strNumber, DWORD64 &dwResult) const
 {
-    ustring wstr(wstrNumber);
-    wstr.makelower();
-    if (wstr.startwith(L"0n"))
+    mstring str(strNumber);
+    str.makelower();
+    if (str.startwith("0n"))
     {
-        return StrToInt64ExW(wstrNumber.c_str() + 2, STIF_DEFAULT, (LONGLONG *)&dwResult);
+        return StrToInt64ExA(strNumber.c_str() + 2, STIF_DEFAULT, (LONGLONG *)&dwResult);
     }
     else
     {
-        if (!wstr.startwith(L"0x"))
+        if (!str.startwith("0x"))
         {
-            wstr.insert(0, L"0x");
+            str.insert(0, "0x");
         }
-        return StrToInt64ExW(wstr.c_str(), STIF_SUPPORT_HEX, (LONGLONG *)&dwResult);
+        return StrToInt64ExA(str.c_str(), STIF_SUPPORT_HEX, (LONGLONG *)&dwResult);
     }
 }
 
-bool CCmdBase::IsFilterStr(ustring &wstrData, ustring &wstrFilter) const
+bool CCmdBase::IsFilterStr(mstring &strData, mstring &strFilter) const
 {
-    ustring wstr(wstrData);
-    wstr.makelower();
+    mstring str(strData);
+    str.makelower();
     size_t pos = 0;
-    if (ustring::npos == (pos = wstr.rfind(L">> ")))
+    if (mstring::npos == (pos = str.rfind(">> ")))
     {
         return false;
     }
 
-    ustring wstrCmd = wstrData.substr(0, pos);
-    ustring wstrSub = wstr.substr(pos);
-    pos = wstrSub.find(L"ft ");
-    if (ustring::npos == pos)
+    mstring strCmd = strData.substr(0, pos);
+    mstring strSub = str.substr(pos);
+    pos = strSub.find("ft ");
+    if (mstring::npos == pos)
     {
         return false;
     }
-    wstrSub.erase(0, pos + 3);
-    wstrSub.trim();
-    if (wstrSub.empty())
+    strSub.erase(0, pos + 3);
+    strSub.trim();
+    if (strSub.empty())
     {
         return false;
     }
-    wstrFilter = wstrSub;
-    wstrData = wstrCmd;
+    strFilter = strSub;
+    strData = strCmd;
     return true;
 }
 
-bool CCmdBase::IsHightStr(ustring &wstrData, ustring &wstrHight) const
+bool CCmdBase::IsHightStr(mstring &strData, mstring &strHight) const
 {
-    ustring wstr(wstrData);
-    wstr.makelower();
+    mstring str(strData);
+    str.makelower();
     size_t pos = 0;
-    if (ustring::npos == (pos = wstr.rfind(L">> ")))
+    if (mstring::npos == (pos = str.rfind(">> ")))
     {
         return false;
     }
 
-    ustring wstrCmd = wstrData.substr(0, pos);
-    ustring wstrSub = wstr.substr(pos);
-    pos = wstrSub.find(L"ht ");
-    if (ustring::npos == pos)
+    mstring strCmd = strData.substr(0, pos);
+    mstring strSub = str.substr(pos);
+    pos = strSub.find("ht ");
+    if (mstring::npos == pos)
     {
         return false;
     }
-    wstrSub.erase(0, pos + 3);
-    wstrSub.trim();
-    if (wstrSub.empty())
+    strSub.erase(0, pos + 3);
+    strSub.trim();
+    if (strSub.empty())
     {
         return false;
     }
-    wstrHight = wstrSub;
-    wstrData = wstrCmd;
+    strHight = strSub;
+    strData = strCmd;
     return true;
 }
 
-DWORD64 CCmdBase::GetSizeAndParam(const ustring &wstrParam, ustring &wstrOut) const
+DWORD64 CCmdBase::GetSizeAndParam(const mstring &strParam, mstring &strOut) const
 {
-    ustring wstr(wstrParam);
-    wstr.makelower();
-    wstr.trim();
-    wstrOut = wstr;
+    mstring str(strParam);
+    str.makelower();
+    str.trim();
+    strOut = str;
 
     DWORD64 dwSize = -1;
-    if (wstr.startwith(L"l"))
+    if (str.startwith("l"))
     {
-        size_t iEndPos = wstr.find(L" ");
-        if (ustring::npos == iEndPos)
+        size_t iEndPos = str.find(" ");
+        if (mstring::npos == iEndPos)
         {
             return 0;
         }
-        GetNumFromStr(wstr.substr(1, iEndPos - 1), dwSize);
-        wstrOut = wstr.c_str() + iEndPos;
-        wstrOut.trim();
+        GetNumFromStr(str.substr(1, iEndPos - 1), dwSize);
+        strOut = str.c_str() + iEndPos;
+        strOut.trim();
     }
     return dwSize;
 }
 
-utf8_mstring CCmdBase::OnCommand(const ustring &wstrCmd, const ustring &wstrCmdParam, const CmdUserParam *pParam)
+mstring CCmdBase::OnCommand(const mstring &wstrCmd, const mstring &wstrCmdParam, const CmdUserParam *pParam)
 {
     return "";
 }

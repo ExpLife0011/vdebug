@@ -12,6 +12,7 @@
 #include "SqliteOperator.h"
 #include "DbProxy.h"
 #include "TransferEncoder.h"
+#include "servhlpr.h"
 
 #ifndef COMLIB_EXPORTS
     #if _WIN64 || WIN64

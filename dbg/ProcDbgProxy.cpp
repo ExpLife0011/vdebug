@@ -24,7 +24,7 @@ ProcDbgProxy::ProcDbgProxy() {
     m_hProcListener = NULL;
 }
 
-bool ProcDbgProxy::InitProcDbgProxy(const wchar_t *unique) {
+bool ProcDbgProxy::InitProcDbgProxy(const char *unique) {
     if (m_init)
     {
         return true;
@@ -57,16 +57,16 @@ ProcDbgProxy::~ProcDbgProxy() {
     }
 }
 */
-ustring ProcDbgProxy::RunCmd(const ustring &cmd, const ustring &content, void *param) {
+mstring ProcDbgProxy::RunCmd(const mstring &cmd, const mstring &content, void *param) {
     Value json;
-    Reader().parse(WtoU(content), json);
+    Reader().parse(content, json);
 
-    ustring data = UtoW(json["cmd"].asString());
+    mstring data = json["cmd"].asString();
     data.trim();
 
     if (data.empty())
     {
-        return UtoW(MakeDbgRelpy(REPLY_STAT_CMD_CODE_PARAM_ERR, "", ""));
+        return MakeDbgRelpy(REPLY_STAT_CMD_CODE_PARAM_ERR, "", "");
     }
 
     return GetInstance()->m_pProcDbgger->RunCommand(data);
@@ -81,35 +81,35 @@ ustring ProcDbgProxy::RunCmd(const ustring &cmd, const ustring &content, void *p
     }
 }
 */
-ustring ProcDbgProxy::ExecProc(const std::ustring &cmd, const std::ustring &content, void *param) {
+mstring ProcDbgProxy::ExecProc(const std::mstring &cmd, const std::mstring &content, void *param) {
     Value root;
-    Reader().parse(WtoU(content), root);
+    Reader().parse(content, root);
 
-    wstring path = UtoW(root["path"].asString());
-    wstring exeParam = UtoW(root["param"].asString());
+    mstring path = root["path"].asString();
+    mstring exeParam = root["param"].asString();
 
     DbgProcUserContext context;
-    context.m_wstrCmd = exeParam;
-    context.m_wstrPePath = path;
+    context.m_strCmd = exeParam;
+    context.m_strPePath = path;
     BOOL ret = GetInstance()->m_pProcDbgger->Connect(path.c_str(), &context);
 
-    string res;
+    mstring res;
     if (ret)
     {
         res = MakeDbgRelpy(0, "exec success", "");
     } else {
         res = MakeDbgRelpy(GetLastError(), "exec error", "");
     }
-    return UtoW(res);
+    return res;
 }
 
-ustring ProcDbgProxy::AttachProc(const std::ustring &cmd, const std::ustring &content, void *para) {
-    return L"";
+mstring ProcDbgProxy::AttachProc(const std::mstring &cmd, const std::mstring &content, void *para) {
+    return "";
 }
 
-ustring ProcDbgProxy::GetProcInfo(const ustring &cmd, const ustring &content, void *param) {
+mstring ProcDbgProxy::GetProcInfo(const mstring &cmd, const mstring &content, void *param) {
     Value root;
-    Reader().parse(WtoU(content), root);
+    Reader().parse(content, root);
 
     int start = GetIntFromJson(root, "start");
     if (1 == start)
@@ -125,7 +125,7 @@ ustring ProcDbgProxy::GetProcInfo(const ustring &cmd, const ustring &content, vo
         ProcMonitor::GetInstance()->UnRegisterListener(GetInstance()->m_hProcListener);
         GetInstance()->m_hProcListener = NULL;
     }
-    return AtoW(MakeDbgRelpy(0, "success", ""));
+    return MakeDbgRelpy(0, "success", "");
 }
 
 void ProcDbgProxy::OnProcChanged(HProcListener listener, const list<const ProcMonInfo *> &added, const list<DWORD> &killed) {
@@ -136,6 +136,6 @@ void ProcDbgProxy::OnProcChanged(HProcListener listener, const list<const ProcMo
     }
     procSet.mKillSet = killed;
 
-    utf8_mstring packet = MakeDbgEvent(DBG_EVENT_PROC_CHANGEDA, EncodeProcMon(procSet));
+    mstring packet = MakeDbgEvent(DBG_EVENT_PROC_CHANGEDA, EncodeProcMon(procSet));
     m_pDbgClient->ReportDbgEvent(packet);
 }

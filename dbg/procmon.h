@@ -35,7 +35,7 @@ public:
 
 private:
     void RefushProc();
-    static bool GetProcSidAndUser(HANDLE process, std::ustring &sid, std::ustring &user);
+    static bool GetProcSidAndUser(HANDLE process, std::mstring &sid, std::mstring &user);
     static BOOL WINAPI ProcHandlerW(PPROCESSENTRY32W pe, void *pParam);
     static DWORD WINAPI MonitorThread(LPVOID pParam);
     void DispatchProcChanged();

@@ -11,11 +11,11 @@ BOOL CWindowBase::CreateDlg(DWORD dwId, HWND hParent, BOOL bDoModule)
 {
     if (bDoModule)
     {
-        DialogBoxParamW(NULL, MAKEINTRESOURCEW(dwId), hParent, DlgProc, (LPARAM)this);
+        DialogBoxParamA(NULL, MAKEINTRESOURCEA(dwId), hParent, DlgProc, (LPARAM)this);
     }
     else
     {
-        m_hwnd = ::CreateDialogParamW(NULL, MAKEINTRESOURCEW(dwId), hParent, DlgProc, (LPARAM)this);
+        m_hwnd = ::CreateDialogParamA(NULL, MAKEINTRESOURCEA(dwId), hParent, DlgProc, (LPARAM)this);
     }
     return IsWindow(m_hwnd);
 }

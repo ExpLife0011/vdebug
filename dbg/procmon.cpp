@@ -82,7 +82,7 @@ BOOL ProcMonitor::ProcHandlerW(PPROCESSENTRY32W pe, void *pParam)
     ProcMonInfo *newProc = new ProcMonInfo();
     newProc->procUnique = unique;
     newProc->procPath = GetProcPathByPid(pe->th32ProcessID);
-    newProc->procDesc = GetPeDescStr(newProc->procPath, L"FileDescription");
+    newProc->procDesc = GetPeDescStrA(newProc->procPath, "FileDescription");
 
     if (newProc->procDesc.size())
     {
@@ -97,9 +97,9 @@ BOOL ProcMonitor::ProcHandlerW(PPROCESSENTRY32W pe, void *pParam)
 
     newProc->procPid = pe->th32ProcessID;
     newProc->parentPid = pe->th32ParentProcessID;
-    IsPeFileW(newProc->procPath.c_str(), &newProc->x64);
+    IsPeFileA(newProc->procPath.c_str(), &newProc->x64);
 
-    newProc->procCmd = GetProcessCommandLine(newProc->procPid, newProc->x64);
+    newProc->procCmd = GetProcessCommandLineA(newProc->procPid, newProc->x64);
     HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION , FALSE, pe->th32ProcessID);
     HandleAutoClose abc(hProcess);
 
@@ -118,7 +118,7 @@ BOOL ProcMonitor::ProcHandlerW(PPROCESSENTRY32W pe, void *pParam)
         SYSTEMTIME systime = {0};
         FileTimeToSystemTime(&local, &systime);
         newProc->startTime.format(
-            L"%02d:%02d:%02d %03d",
+            "%02d:%02d:%02d %03d",
             systime.wHour,
             systime.wMinute,
             systime.wSecond,
@@ -127,13 +127,13 @@ BOOL ProcMonitor::ProcHandlerW(PPROCESSENTRY32W pe, void *pParam)
     }
     else
     {
-        newProc->startTime = L"UnKnown";
+        newProc->startTime = "UnKnown";
     }
     ptr->addedProc[unique] = newProc;
     return TRUE;
 }
 
-bool ProcMonitor::GetProcSidAndUser(HANDLE process, ustring &sid, ustring &user) {
+bool ProcMonitor::GetProcSidAndUser(HANDLE process, mstring &sid, mstring &user) {
     HANDLE token = NULL;
     if(!OpenProcessToken(process, TOKEN_QUERY, &token)){
         return false;
@@ -179,8 +179,8 @@ bool ProcMonitor::GetProcSidAndUser(HANDLE process, ustring &sid, ustring &user)
     SID_NAME_USE type;
     LookupAccountSidA(NULL, tokenInfo->User.Sid, buf1, &size1, buf2, &size2, &type);
 
-    sid = AtoW(sidStr);
-    user = FormatW(L"%hs\\%hs", buf2, buf1);
+    sid = sidStr;
+    user = FormatA("%hs\\%hs", buf2, buf1);
     if (sidStr)
     {
         LocalFree((HLOCAL)sidStr);

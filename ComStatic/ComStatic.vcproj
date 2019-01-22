@@ -163,10 +163,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\servhlpr.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\StrUtil.cpp"
 				>
 			</File>
@@ -190,10 +186,6 @@
 			</File>
 			<File
 				RelativePath=".\PrintFormater.h"
-				>
-			</File>
-			<File
-				RelativePath=".\servhlpr.h"
 				>
 			</File>
 			<File

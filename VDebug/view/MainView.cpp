@@ -53,7 +53,7 @@ static HWND gs_hCommand = NULL;
 static HWND gs_hStatBar = NULL;
 static HWND gs_hToolbar = NULL;
 static HFONT gs_hFont = NULL;
-static ustring gs_wstrCfgFile;
+static mstring gs_strCfgFile;
 static CProcSelectView *gs_pProcSelect = NULL;
 static PeFileOpenDlg *gs_pPeOpenView = NULL;
 static CCmdQueue *gs_pCmdQueue = NULL;
@@ -301,10 +301,10 @@ static VOID _OnInitDialog(HWND hwnd, WPARAM wp, LPARAM lp)
     _LoadDefaultFont();
     _MoveMainWndCtrl();
 
-    GetModuleFileNameW(NULL, gs_wstrCfgFile.alloc(MAX_PATH), MAX_PATH);
-    gs_wstrCfgFile.setbuffer();
-    gs_wstrCfgFile.path_append(L"..\\SyntaxCfg.json");
-    LoadSyntaxCfg(gs_wstrCfgFile.c_str());
+    GetModuleFileNameA(NULL, gs_strCfgFile.alloc(MAX_PATH), MAX_PATH);
+    gs_strCfgFile.setbuffer();
+    gs_strCfgFile.path_append("..\\SyntaxCfg.json");
+    LoadSyntaxCfg(gs_strCfgFile.c_str());
     UpdateSyntaxView(gs_pSyntaxView);
 
     CTL_PARAMS vCtrls[] =
@@ -327,7 +327,7 @@ static VOID _OnInitDialog(HWND hwnd, WPARAM wp, LPARAM lp)
 
     AppendToSyntaxView(SCI_LABEL_DEFAULT, FormatA("VDebugµ÷ÊÔÆ÷£¬°æ±¾£º%ls\n", wstrVersion.c_str()));
 
-    SetCmdNotify(em_dbg_status_init, L"³õÊ¼×´Ì¬");
+    SetCmdNotify(em_dbg_status_init, "³õÊ¼×´Ì¬");
     gs_pfnCommandProc = (PWIN_PROC)SetWindowLongPtr(gs_hCommand, GWLP_WNDPROC, (LONG_PTR)_CommandProc);
     gs_pCmdQueue = new CCmdQueue();
 
@@ -373,8 +373,8 @@ static VOID _OnTimer(HWND hwnd, WPARAM wp, LPARAM lp)
     {
         static FILETIME s_timeLastWrite = {0};
         FILETIME time = {0};
-        HANDLE hFile = CreateFileW(
-            gs_wstrCfgFile.c_str(),
+        HANDLE hFile = CreateFileA(
+            gs_strCfgFile.c_str(),
             GENERIC_READ,
             FILE_SHARE_READ | FILE_SHARE_WRITE,
             NULL,
@@ -535,25 +535,25 @@ static void _EnableCtrls()
     SendMessageW(gs_hToolbar, TB_ENABLEBUTTON, IDT_OPEN_DUMP, TRUE);
 }
 
-VOID SetCmdNotify(DbggerStatus status, const ustring &wstrShowMsg)
+VOID SetCmdNotify(DbggerStatus status, const mstring &strShowMsg)
 {
-    SetWindowTextW(gs_hStatEdit, wstrShowMsg.c_str());
+    SetWindowTextA(gs_hStatEdit, strShowMsg.c_str());
     if (em_dbg_status_init == status)
     {
-        SetWindowTextW(gs_hCommand, L"");
-        SendMessageW(gs_hCommand, EM_SETREADONLY, 1, 0);
+        SetWindowTextA(gs_hCommand, "");
+        SendMessageA(gs_hCommand, EM_SETREADONLY, 1, 0);
         _EnableCtrls();
     }
     else if (em_dbg_status_free == status)
     {
-        SendMessageW(gs_hCommand, EM_SETREADONLY, 0, 0);
+        SendMessageA(gs_hCommand, EM_SETREADONLY, 0, 0);
         SetFocus(gs_hCommand);
         _DisableCtrls();
     }
     else if (em_dbg_status_busy == status)
     {
-        SetWindowTextW(gs_hCommand, L"");
-        SendMessageW(gs_hCommand, EM_SETREADONLY, 1, 0);
+        SetWindowTextA(gs_hCommand, "");
+        SendMessageA(gs_hCommand, EM_SETREADONLY, 1, 0);
         _DisableCtrls();
     }
 }

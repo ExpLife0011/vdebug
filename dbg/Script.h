@@ -54,35 +54,35 @@ public:
     //[esp + 4]
     //0xffabcd + 0x1234
     //0x123 + [esp + 4] + eax * (4 + 0x1122)
-    DWORD64 Compile(const ustring &wstrScript) const;
-    void InsertProc(LPCWSTR wszModule, LPCWSTR wszProc, DWORD64 dwAddr);
+    DWORD64 Compile(const mstring &script) const;
+    void InsertProc(LPCSTR wszModule, LPCSTR wszProc, DWORD64 dwAddr);
     //lua script
-    BOOL RunScript(const ustring &wstrScript) const;
+    BOOL RunScript(const mstring &strScript) const;
 protected:
     BOOL IsOperator(WCHAR cLetter) const;
 
-    BOOL IsRegisterStr(const ustring &wstr, DWORD64 &dwData) const;
+    BOOL IsRegisterStr(const mstring &wstr, DWORD64 &dwData) const;
 
-    ustring GetSimpleResult2(const ustring &wstrScript) const;
+    mstring GetSimpleResult2(const mstring &strScript) const;
 
-    ustring GetSimpleResult1(const ustring &wstrScript) const;
+    mstring GetSimpleResult1(const mstring &strScript) const;
 
-    ustring GetPointerData(const ustring &wstrPointer) const;
+    mstring GetPointerData(const mstring &strPointer) const;
 
-    BOOL GetNumFromStr(const ustring &wstrNumber, DWORD64 &dwResult) const;
+    BOOL GetNumFromStr(const mstring &strNumber, DWORD64 &dwResult) const;
 
-    ustring GetTwoNumCalResult(const ustring &wstr1, const ustring &wstr2, ScriptOperator eOperator) const;
+    mstring GetTwoNumCalResult(const mstring &str1, const mstring &str2, ScriptOperator eOperator) const;
 
-    ScriptOperator CScriptEngine::GetOperator(WCHAR cOperator) const;
+    ScriptOperator CScriptEngine::GetOperator(char cOperator) const;
 
     //计算并删除指定的操作符
-    ustring DeleteOperator(const ustring &wstrScript, const ustring &wstrOpt) const;
+    mstring DeleteOperator(const mstring &strScript, const mstring &strOpt) const;
 
-    bool IsHexChar(WCHAR cLetter) const;
+    bool IsHexChar(CHAR cLetter) const;
 
-    DWORD64 GetAddrForStr(const ustring &wstr);
+    DWORD64 GetAddrForStr(const mstring &wstr);
 
-    ustring GetScriptPath(LPCWSTR wszScript) const;
+    mstring GetScriptPath(LPCSTR script) const;
 
     /*lua脚本*/
 static void CmdNotifyCallback(LPVOID pUserParam, LPVOID pContext);
@@ -106,7 +106,7 @@ protected:
     pfnReadMemoryProc m_pfnReadProc;
     pfnWriteMemoryProc m_pfnWriteProc;
     TITAN_ENGINE_CONTEXT_t m_vContex;
-    map<ustring, ScriptStrInfo> m_vStrMap;
+    map<mstring, ScriptStrInfo> m_vStrMap;
 };
 
 CScriptEngine *GetScriptEngine();

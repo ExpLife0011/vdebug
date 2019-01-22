@@ -55,7 +55,7 @@ struct DbgCmdResult
         m_eStatus = eStatus;
     }
 
-    DbgCmdResult(DbgCmdStatus eStatus, const ustring &wstrMsg)
+    DbgCmdResult(DbgCmdStatus eStatus, const mstring &wstrMsg)
     {
         m_eStatus = eStatus;
         //CSyntaxDescHlpr hlpr;
@@ -70,8 +70,8 @@ struct DbgCmdResult
 
 struct DbgFunInfo
 {
-    wstring m_wstrModule;
-    wstring m_wstrFunName;
+    mstring m_strModule;
+    mstring m_strFunName;
     DWORD64 m_dwModuleBase;
     DWORD64 m_dwProcOffset;
     DWORD64 m_dwProcAddr;
@@ -81,7 +81,7 @@ struct WordNode
 {
     size_t m_iStartPos;
     size_t m_iLength;
-    ustring m_wstrContent;
+    mstring m_strContent;
 };
 
 class CCmdBase
@@ -89,26 +89,26 @@ class CCmdBase
 public:
     CCmdBase();
     virtual ~CCmdBase();
-    ustring RunCommand(const ustring &wstrCmd, const CmdUserParam *pParam = NULL);
-    BOOL InsertFunMsg(const ustring &wstrIndex, const DbgFunInfo &vProcInfo);
+    mstring RunCommand(const mstring &strCmd, const CmdUserParam *pParam = NULL);
+    BOOL InsertFunMsg(const mstring &strIndex, const DbgFunInfo &vProcInfo);
     //eg: kernel32!createfilew+0x1234
-    DWORD64 GetFunAddr(const ustring &wstr);
+    DWORD64 GetFunAddr(const mstring &wstr);
 
     //Tools
 public:
-    bool IsNumber(const ustring &wstr) const;
-    bool IsKeyword(const ustring &wstr) const;
-    vector<WordNode> GetWordSet(const ustring &wstrStr) const;
-    BOOL GetNumFromStr(const ustring &wstrNumber, DWORD64 &dwNumber) const;
+    bool IsNumber(const mstring &str) const;
+    bool IsKeyword(const mstring &str) const;
+    vector<WordNode> GetWordSet(const mstring &strStr) const;
+    BOOL GetNumFromStr(const mstring &strNumber, DWORD64 &dwNumber) const;
 
 protected:
-    bool IsFilterStr(ustring &strData, ustring &strFilter) const;
-    //bool OnFilter(SyntaxDesc &desc, const ustring &strFilter) const;
-    bool IsHightStr(ustring &wstrData, ustring &wstrHight) const;
-    //bool OnHight(SyntaxDesc &desc, const ustring &strHight) const;
-    DWORD64 GetSizeAndParam(const ustring &wstrParam, ustring &wstrOut) const;
+    bool IsFilterStr(mstring &strData, mstring &strFilter) const;
+    //bool OnFilter(SyntaxDesc &desc, const mstring &strFilter) const;
+    bool IsHightStr(mstring &strData, mstring &strHight) const;
+    //bool OnHight(SyntaxDesc &desc, const mstring &strHight) const;
+    DWORD64 GetSizeAndParam(const mstring &strParam, mstring &strOut) const;
 
 protected:
-    virtual utf8_mstring OnCommand(const ustring &wstrCmd, const ustring &wstrCmdParam, const CmdUserParam *pParam);
+    virtual mstring OnCommand(const mstring &strCmd, const mstring &strCmdParam, const CmdUserParam *pParam);
 };
 #endif

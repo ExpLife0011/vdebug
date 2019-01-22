@@ -37,8 +37,8 @@ bool DbgCtrlService::InitCtrlService() {
     m_unique = UNIQUE_DEBUG;
 #else
     srand(GetTickCount());
-    m_unique = FormatW(
-        L"%04x-%04x%04x-%04x",
+    m_unique = FormatA(
+        "%04x-%04x%04x-%04x",
         rand() % 0xffff,
         rand() % 0xffff,
         rand() % 0xffff,
@@ -48,7 +48,7 @@ bool DbgCtrlService::InitCtrlService() {
 
     m_pCtrlService = DbgServiceBase::GetInstance();
     m_pCtrlService->InitDbgService(m_unique.c_str());
-    CreateEventW(NULL, FALSE, FALSE, FormatW(SERVICE_EVENT, m_unique.c_str()).c_str());
+    CreateEventA(NULL, FALSE, FALSE, FormatA(SERVICE_EVENT, m_unique.c_str()).c_str());
 
 #ifdef _DEBUG
 #else
@@ -74,72 +74,72 @@ bool DbgCtrlService::InitCtrlService() {
 
 bool DbgCtrlService::StartProcMon() {
     m_procMon = true;
-    m_pCtrlService->DispatchSpecDbgger(em_dbg_proc86, DBG_TASK_GET_PROC, L"{\"start\":1}");
+    m_pCtrlService->DispatchSpecDbgger(em_dbg_proc86, DBG_TASK_GET_PROC, "{\"start\":1}");
     return true;
 }
 
 void DbgCtrlService::StopProcMon() {
     m_procMon = false;
-    m_pCtrlService->DispatchSpecDbgger(em_dbg_proc86, DBG_TASK_GET_PROC, L"{\"start\":0}");
+    m_pCtrlService->DispatchSpecDbgger(em_dbg_proc86, DBG_TASK_GET_PROC, "{\"start\":0}");
     return;
 }
 
-void DbgCtrlService::RunProcInUser(LPCWSTR image, LPCWSTR cmd, DWORD session) {
+void DbgCtrlService::RunProcInUser(LPCSTR image, LPCSTR cmd, DWORD session) {
     if (!image || !*image)
     {
         return;
     }
 
-    if (INVALID_FILE_ATTRIBUTES == GetFileAttributesW(image))
+    if (INVALID_FILE_ATTRIBUTES == GetFileAttributesA(image))
     {
         return;
     }
 
     static DWORD s_dwSerial = 0xffff;
     srand(GetTickCount());
-    WCHAR wszSub[1024] = {0};
-    WCHAR wszMagic[32] = {0};
-    wnsprintfW(wszMagic, 32, L"%04X%04X%08X", rand(), rand(), s_dwSerial++);
-    wnsprintfW(wszSub, 1024, L"%ls\\%ls", PATH_SERVICE_CACHE, wszMagic);
-    SHSetValueW(
+    char szSub[1024] = {0};
+    char szMagic[32] = {0};
+    wnsprintfA(szMagic, 32, "%04X%04X%08X", rand(), rand(), s_dwSerial++);
+    wnsprintfA(szSub, 1024, "%ls\\%ls", PATH_SERVICE_CACHE, szMagic);
+    SHSetValueA(
         HKEY_LOCAL_MACHINE,
-        wszSub,
-        L"image",
+        szSub,
+        "image",
         REG_SZ,
         image,
-        (lstrlenW(image) + 1) * sizeof(WCHAR)
+        (lstrlenA(image) + 1) * sizeof(CHAR)
         );
     if (cmd)
     {
-        SHSetValueW(
+        SHSetValueA(
             HKEY_LOCAL_MACHINE,
-            wszSub,
-            L"cmd",
+            szSub,
+            "cmd",
             REG_SZ,
             cmd,
-            (lstrlenW(cmd) + 1) * sizeof(WCHAR)
+            (lstrlenA(cmd) + 1) * sizeof(CHAR)
             );
     }
 
-    SHSetValueW(
+    SHSetValueA(
         HKEY_LOCAL_MACHINE,
-        wszSub,
-        L"sessionId",
+        szSub,
+        "sessionId",
         REG_DWORD,
         &session,
         sizeof(session)
         );
 
     DWORD dwShell = 0;
-    HWND hShell = FindWindowW(L"Shell_TrayWnd", NULL);
+    HWND hShell = FindWindowA("Shell_TrayWnd", NULL);
     GetWindowThreadProcessId(hShell, &dwShell);
 
     if (dwShell)
     {
-        SHSetValueW(HKEY_LOCAL_MACHINE, wszSub, L"shell", REG_DWORD, &dwShell, sizeof(dwShell));
+        SHSetValueA(HKEY_LOCAL_MACHINE, szSub, "shell", REG_DWORD, &dwShell, sizeof(dwShell));
     }
 
-    HANDLE hNotify = OpenEventW(EVENT_MODIFY_STATE, FALSE, SFV_NOTIFY_NAME);
+    HANDLE hNotify = OpenEventA(EVENT_MODIFY_STATE, FALSE, SFV_NOTIFY_NAME);
     if (hNotify)
     {
         SetEvent(hNotify);
@@ -149,7 +149,7 @@ void DbgCtrlService::RunProcInUser(LPCWSTR image, LPCWSTR cmd, DWORD session) {
 }
 
 void DbgCtrlService::SetCtrlStatus(DbggerStatus stat) {
-    SetCmdNotify(stat, L"abcdef");
+    SetCmdNotify(stat, "abcdef");
 }
 
 /*
@@ -161,66 +161,66 @@ void DbgCtrlService::SetCtrlStatus(DbggerStatus stat) {
     }
 }
 */
-bool DbgCtrlService::ExecProc(const std::ustring &path, const std::ustring &param) {
+bool DbgCtrlService::ExecProc(const std::mstring &path, const std::mstring &param) {
     Value content;
-    content["path"] = WtoU(path);
-    content["param"] = WtoU(param);
+    content["path"] = path;
+    content["param"] = param;
 
-    m_pCtrlService->DispatchCurDbgger(DBG_CTRL_EXEC, UtoW(FastWriter().write(content)));
+    m_pCtrlService->DispatchCurDbgger(DBG_CTRL_EXEC, FastWriter().write(content));
     return true;
 }
 
-bool DbgCtrlService::RunCmdInCtrlService(const std::ustring &command) {
+bool DbgCtrlService::RunCmdInCtrlService(const std::mstring &command) {
     Value conent;
-    conent["cmd"] = WtoU(command);
+    conent["cmd"] = command;
 
-    m_pCtrlService->DispatchCurDbgger(DBG_CTRL_RUNCMD, UtoW(FastWriter().write(conent)));
+    m_pCtrlService->DispatchCurDbgger(DBG_CTRL_RUNCMD, FastWriter().write(conent));
     return true;
 }
 
-void DbgCtrlService::OnProcCreate(const ustring &eventName, const ustring &content, void *param) {
-    ProcCreateInfo info = DecodeProcCreate(WtoU(content));
+void DbgCtrlService::OnProcCreate(const mstring &eventName, const mstring &content, void *param) {
+    ProcCreateInfo info = DecodeProcCreate(content);
 
     PrintFormater pf;
     pf << "进程启动" << space                    << line_end;
     pf << "进程Pid"  << FormatA("%d", info.mPid) << line_end;
-    pf << "映像路径" << WtoU(info.mImage)        << line_end;
-    pf << "进程基址" << WtoU(info.mBaseAddr)     << line_end;
-    pf << "入口地址" << WtoU(info.mEntryAddr)    << line_end;
+    pf << "映像路径" << info.mImage              << line_end;
+    pf << "进程基址" << info.mBaseAddr           << line_end;
+    pf << "入口地址" << info.mEntryAddr          << line_end;
     AppendToSyntaxView(SCI_LABEL_DEFAULT, pf.GetResult());
 }
 
-void DbgCtrlService::OnSystemBreakpoint(const ustring &eventName, const ustring &content, void *param) {
+void DbgCtrlService::OnSystemBreakpoint(const mstring &eventName, const mstring &content, void *param) {
     PrintFormater pf;
     pf << "系统断点触发调试器中断" << line_end;
     AppendToSyntaxView(SCI_LABEL_DEFAULT, pf.GetResult());
 
     Value json;
-    Reader().parse(WtoU(content), json);
+    Reader().parse(content, json);
     int tid = json["tid"].asInt();
 
-    SetCmdNotify(em_dbg_status_free, FormatW(L"线程 %d >>", tid));
+    SetCmdNotify(em_dbg_status_free, FormatA("线程 %d >>", tid));
 }
 
-void DbgCtrlService::OnDbgMessage(const ustring &event, const ustring &content, void *param) {
+void DbgCtrlService::OnDbgMessage(const mstring &event, const mstring &content, void *param) {
 }
 
-void DbgCtrlService::OnProcExit(const ustring &event, const ustring &content, void *param) {
+void DbgCtrlService::OnProcExit(const mstring &event, const mstring &content, void *param) {
 }
 
-void DbgCtrlService::OnModuleLoad(const ustring &event, const ustring &content, void *param) {
-    DllLoadInfo dllInfo = DecodeDllLoadInfo(WtoU(content));
+void DbgCtrlService::OnModuleLoad(const mstring &eventName, const mstring &content, void *param) {
+    DllLoadInfo dllInfo = DecodeDllLoadInfo(content);
 
     PrintFormater pf;
     pf.SetRule("0;16");
-    pf << "模块加载" << WtoA(dllInfo.mDllName) << WtoA(dllInfo.mBaseAddr) << WtoA(dllInfo.mEndAddr) << line_end;
+    pf << "模块加载" << dllInfo.mDllName << dllInfo.mBaseAddr << dllInfo.mEndAddr << line_end;
     AppendToSyntaxView(SCI_LABEL_DEFAULT, pf.GetResult());
 }
 
-void DbgCtrlService::OnModuleUnLoad(const ustring &event, const ustring &content, void *param) {
+void DbgCtrlService::OnModuleUnLoad(const mstring &event, const mstring &content, void *param) {
 }
 
-void DbgCtrlService::OnProcChanged(const ustring &event, const ustring &content, void *param) {
+void DbgCtrlService::OnProcChanged(const mstring &event, const mstring &content, void *param) {
     CProcSelectView *pProcView = GetProcView();
     if (!pProcView)
     {
@@ -232,6 +232,6 @@ void DbgCtrlService::OnProcChanged(const ustring &event, const ustring &content,
         return;
     }
 
-    ProcInfoSet info = DecodeProcMon(WtoU(content));
+    ProcInfoSet info = DecodeProcMon(content);
     pProcView->OnProcChanged(info);
 }

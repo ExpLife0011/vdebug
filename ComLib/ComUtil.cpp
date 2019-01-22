@@ -15,7 +15,7 @@
 using namespace std;
 using namespace Json;
 
-PFILE_MAPPING_STRUCT __stdcall MappingFileW(LPCWSTR fileName, BOOL bWrite, DWORD maxViewSize)
+PFILE_MAPPING_STRUCT __stdcall MappingFileA(LPCSTR fileName, BOOL bWrite, DWORD maxViewSize)
 {
     PFILE_MAPPING_STRUCT pfms = NULL;
 
@@ -33,7 +33,7 @@ PFILE_MAPPING_STRUCT __stdcall MappingFileW(LPCWSTR fileName, BOOL bWrite, DWORD
         }
         RtlZeroMemory(pfms, sizeof(FILE_MAPPING_STRUCT));
 
-        pfms->hFile = CreateFileW(
+        pfms->hFile = CreateFileA(
             fileName,
             GENERIC_READ | (bWrite ? GENERIC_WRITE : 0),
             FILE_SHARE_READ,
@@ -281,9 +281,9 @@ static BOOL WINAPI _PeCheckPeMapping(PFILE_MAPPING_STRUCT pfms, BOOL* b64)
     return TRUE;
 }
 
-static PFILE_MAPPING_STRUCT WINAPI _PeMappingFile(LPCWSTR fileName, BOOL bWrite, BOOL* b64)
+static PFILE_MAPPING_STRUCT WINAPI _PeMappingFile(LPCSTR fileName, BOOL bWrite, BOOL* b64)
 {
-    PFILE_MAPPING_STRUCT pfms = MappingFileW(fileName, bWrite, _PE_MAX_MAP_SIZE);
+    PFILE_MAPPING_STRUCT pfms = MappingFileA(fileName, bWrite, _PE_MAX_MAP_SIZE);
     if (!_PeCheckPeMapping(pfms, b64))
     {
         CloseFileMapping(pfms);
@@ -293,7 +293,7 @@ static PFILE_MAPPING_STRUCT WINAPI _PeMappingFile(LPCWSTR fileName, BOOL bWrite,
     return pfms;
 }
 
-BOOL __stdcall IsPeFileW(LPCWSTR fileName, BOOL* b64)
+BOOL __stdcall IsPeFileA(LPCSTR fileName, BOOL* b64)
 {
     PFILE_MAPPING_STRUCT pfms = NULL;
     if (!fileName)
@@ -320,7 +320,7 @@ BOOL __stdcall IsPeFileW(LPCWSTR fileName, BOOL* b64)
 }
 
 //获取pe文件属性
-ustring __stdcall GetPeDescStr(const ustring &path, const ustring &attr)
+mstring __stdcall GetPeDescStrA(const mstring &path, const mstring &attr)
 {
     struct LanguagePage
     {
@@ -330,7 +330,7 @@ ustring __stdcall GetPeDescStr(const ustring &path, const ustring &attr)
 
     if (path.empty() || attr.empty())
     {
-        return L"";
+        return "";
     }
 
     char buffer[2096];
@@ -339,10 +339,10 @@ ustring __stdcall GetPeDescStr(const ustring &path, const ustring &attr)
     DWORD size = 0;
     DWORD ret = 0;
     //获取版本信息大小
-    size = GetFileVersionInfoSizeA(WtoA(path).c_str(), NULL);
+    size = GetFileVersionInfoSizeA(path.c_str(), NULL);
     if (size == 0) 
     { 
-        return L"";
+        return "";
     }
 
     if (size > sizeof(buffer))
@@ -352,11 +352,11 @@ ustring __stdcall GetPeDescStr(const ustring &path, const ustring &attr)
     ptr[0] = 0;
 
     //获取版本信息
-    ret = GetFileVersionInfoA(WtoA(path).c_str(), NULL, size, ptr);
+    ret = GetFileVersionInfoA(path.c_str(), NULL, size, ptr);
 
     LPVOID pInfo = NULL;
     BOOL res = FALSE;
-    ustring result;
+    mstring result;
     UINT len = 0;
     do 
     {
@@ -378,12 +378,12 @@ ustring __stdcall GetPeDescStr(const ustring &path, const ustring &attr)
             const char *data = NULL;
             UINT count = 0;
             mstring vv;
-            vv.format("\\StringFileInfo\\%04x%04x\\%hs", uu->m_language, uu->m_page, WtoA(attr).c_str());
+            vv.format("\\StringFileInfo\\%04x%04x\\%hs", uu->m_language, uu->m_page, attr.c_str());
             if (0 != VerQueryValueA(ptr, vv.c_str(), (LPVOID *)(&data), &count))
             {
                 if (count > 0)
                 {
-                    result = AtoW(data);
+                    result = data;
                     res = TRUE;
                     break;
                 }
@@ -1301,7 +1301,7 @@ static BOOL _GetProcressPebString(HANDLE hProcress, ULONG eOffsetType, char *buf
     return TRUE;
 }
 
-ustring __stdcall GetProcessCommandLine(_In_ DWORD dwPid, BOOL bx64)
+ustring __stdcall GetProcessCommandLineW(_In_ DWORD dwPid, BOOL bx64)
 {
     HANDLE hProcess = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, dwPid);
     HandleAutoClose abc(hProcess);
@@ -1370,6 +1370,10 @@ ustring __stdcall GetProcessCommandLine(_In_ DWORD dwPid, BOOL bx64)
         result = (LPCWSTR)ptr->Buffer;
     }
     return result;
+}
+
+mstring __stdcall GetProcessCommandLineA(_In_ DWORD dwPid, BOOL bx64) {
+    return WtoA(GetProcessCommandLineW(dwPid, bx64));
 }
 
 BOOL __stdcall ShlParseShortcutsW(LPCWSTR wszLnkFile, PGDS_LINKINFO info)
@@ -1605,6 +1609,10 @@ BOOL __stdcall IsSameFileW(LPCWSTR file1, LPCWSTR file2)
     return bRet;
 }
 
+BOOL __stdcall IsSameFileA(LPCSTR file1, LPCSTR file2) {
+    return IsSameFileW(AtoW(file1).c_str(), AtoW(file2).c_str());
+}
+
 std::mstring __stdcall GetStrFormJson(const Value &json, const std::mstring &name) {
     Value node = json[name];
     if (node.type() != nullValue)
@@ -1647,4 +1655,8 @@ std::ustring __stdcall GetWindowStrW(HWND hwnd) {
         GetWindowTextW(hwnd, ptr, size + 4);
         return ptr;
     }
+}
+
+std::mstring __stdcall GetWindowStrA(HWND hwnd) {
+    return WtoA(GetWindowStrW(hwnd));
 }

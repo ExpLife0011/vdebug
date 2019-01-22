@@ -11,7 +11,7 @@ using namespace std;
 using namespace Json;
 
 struct DbgClientCache {
-    wstring m_CtrlCode;
+    string m_CtrlCode;
     void *m_param;
     pfnDbgClientProc m_proc;
     int m_idex;
@@ -21,20 +21,20 @@ class DbgClient : public DbgClientBase, public CCriticalSectionLockable {
 public:
     DbgClient();
     virtual ~DbgClient();
-    virtual bool InitClient(DbggerType type, const wchar_t *unique);
-    virtual HDbgCtrl RegisterCtrlHandler(const wchar_t *cmd, pfnDbgClientProc pfn, void *param);
+    virtual bool InitClient(DbggerType type, const char *unique);
+    virtual HDbgCtrl RegisterCtrlHandler(const char *cmd, pfnDbgClientProc pfn, void *param);
     virtual bool ReportDbgEvent(const std::utf8_mstring &content);
 
 private:
-    static LPCWSTR WINAPI ClientNotify(LPCWSTR wszChannel, LPCWSTR wszContent, void *pParam);
+    static LPCSTR WINAPI ClientNotify(LPCSTR szChannel, LPCSTR szContent, void *pParam);
 
 private:
     bool m_init;
     DbggerType m_type;
-    wstring m_unique;
+    mstring m_unique;
     unsigned short m_ServPort;
     long m_curIndex;
-    map<wstring, list<DbgClientCache *>> m_RegisterSet;
+    map<mstring, list<DbgClientCache *>> m_RegisterSet;
 };
 
 DbgClientBase *DbgClientBase::newInstance() {
@@ -51,7 +51,7 @@ m_curIndex(0xffab){
 DbgClient ::~DbgClient() {
 }
 
-bool DbgClient::InitClient(DbggerType type, const wchar_t *unique) {
+bool DbgClient::InitClient(DbggerType type, const char *unique) {
     if (m_init)
     {
         return true;
@@ -61,7 +61,7 @@ bool DbgClient::InitClient(DbggerType type, const wchar_t *unique) {
     m_ServPort = CalPortFormUnique(unique);
     m_type = type;
 
-    wstring channel;
+    mstring channel;
     switch (type) {
         case em_dbg_proc86:
             channel = MQ_CHANNEL_DBG_CLIENT32;
@@ -82,12 +82,12 @@ bool DbgClient::InitClient(DbggerType type, const wchar_t *unique) {
     return true;
 }
 
-bool DbgClient::ReportDbgEvent(const std::utf8_mstring &content) {
-    MsgSend(MQ_CHANNEL_DBG_SERVER, UtoW(content).c_str());
+bool DbgClient::ReportDbgEvent(const std::mstring &content) {
+    MsgSend(MQ_CHANNEL_DBG_SERVER, content.c_str());
     return true;
 }
 
-HDbgCtrl DbgClient::RegisterCtrlHandler(const wchar_t *cmd, pfnDbgClientProc pfn, void *param) {
+HDbgCtrl DbgClient::RegisterCtrlHandler(const char *cmd, pfnDbgClientProc pfn, void *param) {
     CScopedLocker lock(this);
     DbgClientCache *cache = new DbgClientCache();
     cache->m_CtrlCode = cmd;
@@ -98,12 +98,12 @@ HDbgCtrl DbgClient::RegisterCtrlHandler(const wchar_t *cmd, pfnDbgClientProc pfn
     return cache->m_idex ;
 }
 
-LPCWSTR DbgClient::ClientNotify(LPCWSTR wszChannel, LPCWSTR wszContent, void *pParam) {
+LPCSTR DbgClient::ClientNotify(LPCSTR szChannel, LPCSTR szContent, void *pParam) {
     DbgClient *pThis = (DbgClient *)pParam;
 
     Value json;
-    Reader().parse(WtoU(wszContent), json);
-    wstring result;
+    Reader().parse(szContent, json);
+    string result;
 
     do
     {
@@ -112,12 +112,12 @@ LPCWSTR DbgClient::ClientNotify(LPCWSTR wszChannel, LPCWSTR wszContent, void *pP
             break;
         }
 
-        ustring cmd = UtoW(json["cmd"].asString());
-        ustring content = UtoW(json["content"].asString());
+        mstring cmd = json["cmd"].asString();
+        mstring content = json["content"].asString();
 
         {
             CScopedLocker lock(pThis);
-            map<wstring, list<DbgClientCache *>>::const_iterator it;
+            map<mstring, list<DbgClientCache *>>::const_iterator it;
             it = pThis->m_RegisterSet.find(cmd);
 
             if (it == pThis->m_RegisterSet.end())
@@ -129,7 +129,7 @@ LPCWSTR DbgClient::ClientNotify(LPCWSTR wszChannel, LPCWSTR wszContent, void *pP
             for (list<DbgClientCache *>::const_iterator ij = tmp.begin() ; ij != tmp.end() ; ij++)
             {
                 DbgClientCache *ptr = *ij;
-                ustring p = ptr->m_proc(cmd, content, ptr->m_param);
+                mstring p = ptr->m_proc(cmd, content, ptr->m_param);
                 result = p;
             }
         }

@@ -12,7 +12,7 @@ using namespace std;
 using namespace Json;
 
 struct DbgServiceCache {
-    wstring m_event;
+    string m_event;
     void *m_param;
     pfnDbgEventProc m_proc;
     int m_idex;
@@ -22,23 +22,23 @@ class DbgService : public DbgServiceBase, CCriticalSectionLockable {
 public:
     DbgService();
     virtual ~DbgService();
-    virtual bool InitDbgService(const wchar_t *unique);
-    virtual std::ustring DispatchCurDbgger(const std::ustring &cmd, const std::ustring &content);
-    virtual std::ustring DispatchSpecDbgger(DbggerType type, const std::ustring &cmd, const std::ustring &content);
-    virtual HDbgCtrl RegisterDbgEvent(const wchar_t *event, pfnDbgEventProc pfn, void *param);
+    virtual bool InitDbgService(const char *unique);
+    virtual std::mstring DispatchCurDbgger(const std::mstring &cmd, const std::mstring &content);
+    virtual std::mstring DispatchSpecDbgger(DbggerType type, const std::mstring &cmd, const std::mstring &content);
+    virtual HDbgCtrl RegisterDbgEvent(const char *event, pfnDbgEventProc pfn, void *param);
     virtual bool SetActivity(DbggerType type);
 
 private:
-    std::ustring GetSpecChannel(DbggerType type) const;
-    bool DispatchEventToRegister(const utf8_mstring &cmd, const utf8_mstring &content) const;
-    static LPCWSTR WINAPI ServerNotify(LPCWSTR wszChannel, LPCWSTR wszContent, void *pParam);
+    std::mstring GetSpecChannel(DbggerType type) const;
+    bool DispatchEventToRegister(const mstring &cmd, const mstring &content) const;
+    static LPCSTR WINAPI ServerNotify(LPCSTR wszChannel, LPCSTR wszContent, void *pParam);
 
 private:
-    map<wstring, list<DbgServiceCache *>> m_RegisterSet;
-    wstring m_unique;
+    map<string, list<DbgServiceCache *>> m_RegisterSet;
+    string m_unique;
     unsigned short m_port;
     long m_curIndex;
-    wstring m_curChannel;
+    string m_curChannel;
     DbggerType m_DbgClient;
 };
 
@@ -48,26 +48,26 @@ DbgService::DbgService() :m_port(0), m_curIndex(0xffea){
 DbgService::~DbgService() {
 }
 
-LPCWSTR DbgService::ServerNotify(LPCWSTR wszChannel, LPCWSTR wszContent, void *pParam) {
-    wstring result;
+LPCSTR DbgService::ServerNotify(LPCSTR szChannel, LPCSTR szContent, void *pParam) {
+    string result;
     DbgService *pThis = (DbgService *)pParam;
 
     do 
     {
-        if (0 == lstrcmpW(wszChannel, MQ_CHANNEL_DBG_SERVER))
+        if (0 == lstrcmpA(szChannel, MQ_CHANNEL_DBG_SERVER))
         {
             Value root;
-            Reader().parse(WtoU(wszContent), root);
+            Reader().parse(szContent, root);
 
             if (root.type() != objectValue)
             {
                 break;
             }
 
-            utf8_mstring cmd = GetStrFormJson(root, "cmd");
+            mstring cmd = GetStrFormJson(root, "cmd");
             Value content = root["content"];
 
-            if (cmd == WtoU(DBG_DBG_EVENT))
+            if (cmd == DBG_DBG_EVENT)
             {
                 /*
                 {
@@ -82,8 +82,8 @@ LPCWSTR DbgService::ServerNotify(LPCWSTR wszChannel, LPCWSTR wszContent, void *p
                         }
                     }
                 }*/
-                utf8_mstring event = GetStrFormJson(content, "type");
-                utf8_mstring data = GetStrFormJson(content, "data");
+                mstring event = GetStrFormJson(content, "type");
+                mstring data = GetStrFormJson(content, "data");
                 pThis->DispatchEventToRegister(event, data);
             }
         } else {
@@ -106,8 +106,8 @@ LPCWSTR DbgService::ServerNotify(LPCWSTR wszChannel, LPCWSTR wszContent, void *p
     }
 }
 */
-bool DbgService::DispatchEventToRegister(const utf8_mstring &cmd, const utf8_mstring &content) const {
-    map<wstring, list<DbgServiceCache *>>::const_iterator it = m_RegisterSet.find(UtoW(cmd));
+bool DbgService::DispatchEventToRegister(const mstring &cmd, const mstring &content) const {
+    map<string, list<DbgServiceCache *>>::const_iterator it = m_RegisterSet.find(cmd);
 
     if (it == m_RegisterSet.end())
     {
@@ -117,12 +117,12 @@ bool DbgService::DispatchEventToRegister(const utf8_mstring &cmd, const utf8_mst
     for (list<DbgServiceCache *>::const_iterator ij = it->second.begin() ; ij != it->second.end() ; ij++)
     {
         DbgServiceCache *ptr = *ij;
-        ptr->m_proc(UtoW(cmd), UtoW(content), ptr->m_param);
+        ptr->m_proc(cmd, content, ptr->m_param);
     }
     return true;
 }
 
-bool DbgService::InitDbgService(const wchar_t *unique) {
+bool DbgService::InitDbgService(const char *unique) {
     m_unique = unique;
     m_port = CalPortFormUnique(unique);
 
@@ -132,25 +132,25 @@ bool DbgService::InitDbgService(const wchar_t *unique) {
     return true;
 }
 
-ustring DbgService::DispatchCurDbgger(const ustring &cmd, const ustring &content) {
+mstring DbgService::DispatchCurDbgger(const mstring &cmd, const mstring &content) {
     return DispatchSpecDbgger(m_DbgClient, cmd, content);
 }
 
-ustring DbgService::DispatchSpecDbgger(DbggerType type, const ustring &cmd, const ustring &content) {
-    ustring channel = GetSpecChannel(type);
+mstring DbgService::DispatchSpecDbgger(DbggerType type, const mstring &cmd, const mstring &content) {
+    mstring channel = GetSpecChannel(type);
 
     Value root;
-    root["cmd"] = WtoU(cmd);
-    root["content"] = WtoU(content);
+    root["cmd"] = cmd;
+    root["content"] = content;
 
-    LPCWSTR wsz = MsgSendForResult(channel.c_str(), UtoW(FastWriter().write(root)).c_str());
-    ustring result = wsz;
-    MsgStrFree(wsz);
+    LPCSTR sz = MsgSendForResult(channel.c_str(), FastWriter().write(root).c_str());
+    mstring result = sz;
+    MsgStrFree(sz);
     return result;
 }
 
-ustring DbgService::GetSpecChannel(DbggerType type) const {
-    ustring channel;
+mstring DbgService::GetSpecChannel(DbggerType type) const {
+    mstring channel;
     switch (type) {
         case em_dbg_proc86:
             channel = MQ_CHANNEL_DBG_CLIENT32;
@@ -174,7 +174,7 @@ bool DbgService::SetActivity(DbggerType type) {
     return true;
 }
 
-HDbgCtrl DbgService::RegisterDbgEvent(const wchar_t *event, pfnDbgEventProc pfn, void *param) {
+HDbgCtrl DbgService::RegisterDbgEvent(const char *event, pfnDbgEventProc pfn, void *param) {
     CScopedLocker lock(this);
     DbgServiceCache *cache = new DbgServiceCache();
     cache->m_idex = m_curIndex++;

@@ -1,9 +1,12 @@
-#include "ServiceRunner.h"
-#include "runner.h"
-#include <ComStatic/ComStatic.h>
+#include <Windows.h>
 #include <Shlwapi.h>
 #include <list>
 #include <string>
+
+#include <ComLib/ComLib.h>
+#include <ComStatic/ComStatic.h>
+#include "ServiceRunner.h"
+#include "runner.h"
 
 using namespace std;
 
@@ -30,58 +33,58 @@ ServiceRunner::~ServiceRunner() {
 }
 
 bool ServiceRunner::InitServiceRunner() {
-    SERVICE_TABLE_ENTRYW ste[] = {
+    SERVICE_TABLE_ENTRYA ste[] = {
         {SFV_SERVICE_NAME, ServiceMainProc},
         {NULL, NULL},
     };
-    StartServiceCtrlDispatcherW(ste);
+    StartServiceCtrlDispatcherA(ste);
     return true;
 }
 
-void ServiceRunner::RunProcess(LPCWSTR wszKey)
+void ServiceRunner::RunProcess(LPCSTR szKey)
 {
-    WCHAR wszImage[1024] = {0};
-    WCHAR wszCmd[1024] = {0};
-    WCHAR wszSub[MAX_PATH] = {0};
-    DWORD dwSize = sizeof(wszImage);
+    CHAR szImage[1024] = {0};
+    CHAR szCmd[1024] = {0};
+    CHAR szSub[MAX_PATH] = {0};
+    DWORD dwSize = sizeof(szImage);
     DWORD dwSessionId = 1;
-    wnsprintfW(
-        wszSub,
-        sizeof(wszSub) / sizeof(WCHAR),
-        L"%ls\\%ls",
+    wnsprintfA(
+        szSub,
+        sizeof(szSub) / sizeof(char),
+        "%hs\\%hs",
         PATH_SERVICE_CACHE,
-        wszKey
+        szKey
         );
-    if (!wszSub[0])
+    if (!szSub[0])
     {
         return;
     }
-    SHGetValueW(
+    SHGetValueA(
         HKEY_LOCAL_MACHINE,
-        wszSub,
-        L"image",
+        szSub,
+        "image",
         NULL,
-        wszImage,
+        szImage,
         &dwSize
         );
-    if (!wszImage[0])
+    if (!szImage[0])
     {
         return;
     }
-    dwSize = sizeof(wszCmd);
-    SHGetValueW(
+    dwSize = sizeof(szCmd);
+    SHGetValueA(
         HKEY_LOCAL_MACHINE,
-        wszSub,
-        L"cmd",
+        szSub,
+        "cmd",
         NULL,
-        wszCmd,
+        szCmd,
         &dwSize
         );
     dwSize = sizeof(dwSessionId);
-    SHGetValueW(
+    SHGetValueA(
         HKEY_LOCAL_MACHINE,
-        wszSub,
-        L"sessionId",
+        szSub,
+        "sessionId",
         NULL,
         &dwSessionId,
         &dwSize
@@ -91,45 +94,45 @@ void ServiceRunner::RunProcess(LPCWSTR wszKey)
 
     dwSize = sizeof(dwShell);
 
-    SHGetValueW(HKEY_LOCAL_MACHINE, wszSub, L"shell", NULL, &dwShell, &dwSize);
+    SHGetValueA(HKEY_LOCAL_MACHINE, szSub, "shell", NULL, &dwShell, &dwSize);
     //dp(L"image:%ls, cmd:%ls, session:%d, shell:%d", wszImage, wszCmd, dwSessionId, dwShell);
-    RunInSession(wszImage, wszCmd, dwSessionId, dwShell);
+    RunInSession(szImage, szCmd, dwSessionId, dwShell);
 }
 
 void ServiceRunner::OnServWork()
 {
     HKEY hKey = NULL;
-    if (ERROR_SUCCESS != RegOpenKeyW(HKEY_LOCAL_MACHINE, PATH_SERVICE_CACHE, &hKey))
+    if (ERROR_SUCCESS != RegOpenKeyA(HKEY_LOCAL_MACHINE, PATH_SERVICE_CACHE, &hKey))
     {
         return;
     }
     DWORD dwIdex = 0;
-    WCHAR wszName[MAX_PATH] = {0x00};
+    char szName[MAX_PATH] = {0x00};
     DWORD dwNameLen = MAX_PATH;
     DWORD dwStatus = 0;
-    list<wstring> lst;
+    list<string> lst;
     while (TRUE)
     {
         dwNameLen = MAX_PATH;
-        wszName[0] = 0;
-        dwStatus = SHEnumKeyExW(hKey, dwIdex++, wszName, &dwNameLen);
-        if (wszName[0])
+        szName[0] = 0;
+        dwStatus = SHEnumKeyExA(hKey, dwIdex++, szName, &dwNameLen);
+        if (szName[0])
         {
-            lst.push_back(wszName);
+            lst.push_back(szName);
         }
         if (ERROR_SUCCESS != dwStatus)
         {
             break;
         }
-        if (16 == lstrlenW(wszName))
+        if (16 == lstrlenA(szName))
         {
-            RunProcess(wszName);
+            RunProcess(szName);
         }
     }
-    list<wstring>::iterator itm;
+    list<string>::iterator itm;
     for (itm = lst.begin() ; itm != lst.end() ; itm++)
     {
-        SHDeleteKeyW(hKey, itm->c_str());
+        SHDeleteKeyA(hKey, itm->c_str());
     }
     RegCloseKey(hKey);
 }
@@ -209,13 +212,13 @@ DWORD ServiceRunner::ServiceHandlerEx(DWORD dwControl, DWORD dwEvent, LPVOID pEv
     return ERROR_SUCCESS;
 }
 
-VOID ServiceRunner::ServiceMainProc(DWORD dwArgc, LPWSTR *wszArgv) {
+VOID ServiceRunner::ServiceMainProc(DWORD dwArgc, LPSTR *szArgv) {
     OutputDebugStringA("runner:aaaa");
     ServiceRunner *pThis = ServiceRunner::GetInstance();
     pThis->m_ServiceNotify = CreateLowsdEvent(FALSE, FALSE, SFV_NOTIFY_NAME);
     pThis->m_ServiceLeave = CreateEventW(NULL, FALSE, FALSE, NULL);
     OutputDebugStringA("runner:bbb");
-    pThis->m_ServStatus = RegisterServiceCtrlHandlerExW(SFV_SERVICE_NAME, ServiceHandlerEx, NULL);
+    pThis->m_ServStatus = RegisterServiceCtrlHandlerExA(SFV_SERVICE_NAME, ServiceHandlerEx, NULL);
     ReportLocalServStatus(pThis->m_ServStatus, SERVICE_START_PENDING, ERROR_SUCCESS);
     if (!pThis->m_ServiceThread)
     {

@@ -17,8 +17,8 @@ struct DumpContext
 
 struct DumpModuleInfo
 {
-    ustring m_wstrModuleName;
-    ustring m_wstrModulePath;
+    mstring m_strModuleName;
+    mstring m_strModulePath;
     DWORD64 m_dwModuleSize;
     DWORD64 m_dwBaseAddr;
     DWORD64 m_dwTimeStamp;
@@ -54,7 +54,7 @@ struct DumpSystemInfo
     DWORD m_dwMajVer;
     DWORD m_dwMinVer;
     DWORD m_dwBuildNum;
-    ustring m_wstrSpStr;
+    mstring m_strSpStr;
 };
 
 class CMiniDumpHlpr
@@ -64,9 +64,9 @@ public:
 
     virtual ~CMiniDumpHlpr();
 
-    bool WriteDump(const ustring &wstrFilePath) const;
+    bool WriteDump(const mstring &strFilePath) const;
 
-    bool LodeDump(const ustring &wstrFilePath);
+    bool LodeDump(const mstring &strFilePath);
 
     bool GetModuleSet(list<DumpModuleInfo> &vModules);
 

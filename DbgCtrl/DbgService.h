@@ -3,15 +3,15 @@
 #include <ComStatic/ComStatic.h>
 #include "DbgCtrlCom.h"
 
-typedef void (__stdcall *pfnDbgEventProc)(const std::ustring &event, const std::ustring &content, void *param);
+typedef void (__stdcall *pfnDbgEventProc)(const std::mstring &event, const std::mstring &content, void *param);
 
 class DbgCtrlApi DbgServiceBase {
 public:
     virtual ~DbgServiceBase() {};
-    virtual bool InitDbgService(const wchar_t *unique) = 0;
-    virtual std::ustring DispatchCurDbgger(const std::ustring &cmd, const std::ustring &content) = 0;
-    virtual std::ustring DispatchSpecDbgger(DbggerType type, const std::ustring &cmd, const std::ustring &content) = 0;
-    virtual HDbgCtrl RegisterDbgEvent(const wchar_t *event, pfnDbgEventProc pfn, void *param) = 0;
+    virtual bool InitDbgService(const char *unique) = 0;
+    virtual std::mstring DispatchCurDbgger(const std::mstring &cmd, const std::mstring &content) = 0;
+    virtual std::mstring DispatchSpecDbgger(DbggerType type, const std::mstring &cmd, const std::mstring &content) = 0;
+    virtual HDbgCtrl RegisterDbgEvent(const char *event, pfnDbgEventProc pfn, void *param) = 0;
     virtual bool SetActivity(DbggerType type) = 0;
 
     static DbgServiceBase *_stdcall GetInstance();

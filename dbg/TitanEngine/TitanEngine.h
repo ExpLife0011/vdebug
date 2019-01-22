@@ -820,7 +820,7 @@ __declspec(dllexport) void* TITCALL Disassemble(LPVOID DisassmAddress);
 __declspec(dllexport) long TITCALL StaticLengthDisassemble(LPVOID DisassmAddress);
 __declspec(dllexport) long TITCALL LengthDisassembleEx(HANDLE hProcess, LPVOID DisassmAddress);
 __declspec(dllexport) long TITCALL LengthDisassemble(LPVOID DisassmAddress);
-__declspec(dllexport) void* TITCALL InitDebug(char* szFileName, char* szCommandLine, char* szCurrentFolder);
+__declspec(dllexport) void* TITCALL InitDebug(const char* szFileName, const char* szCommandLine, const char* szCurrentFolder);
 __declspec(dllexport) void* TITCALL InitDebugW(const wchar_t* szFileName, const wchar_t* szCommandLine, const wchar_t* szCurrentFolder);
 __declspec(dllexport) void* TITCALL InitDebugEx(const char* szFileName, const char* szCommandLine, const char* szCurrentFolder, LPVOID EntryCallBack);
 __declspec(dllexport) void* TITCALL InitDebugExW(const wchar_t* szFileName, const wchar_t* szCommandLine, const wchar_t* szCurrentFolder, LPVOID EntryCallBack);

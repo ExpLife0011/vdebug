@@ -12,7 +12,7 @@
     }
 }
 */
-#define DBG_DBG_EVENT               L"event"
+#define DBG_DBG_EVENT                   "event"
 
 //Debug Event
 /*
@@ -26,7 +26,7 @@
     }
 }
 */
-#define DBG_EVENT_MSG               L"dbgmsg"
+#define DBG_EVENT_MSG                    "dbgmsg"
 /*
 {
     "cmd":"event",
@@ -41,8 +41,8 @@
     }
 }
 */
-#define DBG_EVENT_DBG_PROC_CREATE       L"proccreate"
-#define DBG_EVENT_DBG_PROC_END          L"procend"
+#define DBG_EVENT_DBG_PROC_CREATE        "proccreate"
+#define DBG_EVENT_DBG_PROC_END           "procend"
 
 #define DBG_EVENT_DBG_PROC_CREATEA       "proccreate"
 #define DBG_EVENT_DBG_PROC_ENDA          "procend"
@@ -60,8 +60,8 @@
     }
 }
 */
-#define DBG_EVENT_MODULE_LOAD       L"moduleload"
-#define DBG_EVENT_MODULE_UNLOAD     L"moduelunload"
+#define DBG_EVENT_MODULE_LOAD        "moduleload"
+#define DBG_EVENT_MODULE_UNLOAD      "moduelunload"
 #define DBG_EVENT_MODULE_LOADA       "moduleload"
 #define DBG_EVENT_MODULE_UNLOADA     "moduelunload"
 
@@ -73,7 +73,7 @@
     }
 }
 */
-#define DBG_CTRL_ATTACH             L"attach"
+#define DBG_CTRL_ATTACH              "attach"
 
 /*
 {
@@ -84,7 +84,7 @@
     }
 }
 */
-#define DBG_CTRL_EXEC               L"exec"
+#define DBG_CTRL_EXEC                "exec"
 /*
 {
     "cmd":"RunCmd",
@@ -108,7 +108,7 @@
     }
 }
 */
-#define DBG_CTRL_RUNCMD              L"RunCmd"
+#define DBG_CTRL_RUNCMD               "RunCmd"
 
 /*
 {
@@ -118,7 +118,7 @@
     }
 }
 */
-#define DBG_TASK_GET_PROC           L"GetProcInfo"
+#define DBG_TASK_GET_PROC            "GetProcInfo"
 
 
 /*
@@ -149,10 +149,10 @@
     }
 }
 */
-#define DBG_EVENT_PROC_CHANGED       L"ProcChanged"
+#define DBG_EVENT_PROC_CHANGED       "ProcChanged"
 #define DBG_EVENT_PROC_CHANGEDA      "ProcChanged"
 
 //{"tid":12354}
-#define DBG_EVENT_SYSTEM_BREAKPOINT   L"SyatemBreakpoint"
+#define DBG_EVENT_SYSTEM_BREAKPOINT   "SyatemBreakpoint"
 #define DBG_EVENT_SYSTEM_BREAKPOINTA  "SyatemBreakpoint"
 #endif //DBGPROTOCOL_DBGCTRL_H_H_

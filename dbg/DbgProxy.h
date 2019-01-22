@@ -12,7 +12,7 @@ protected:
 protected:
 
 public:
-    DbgCmdResult OnCmdHelp(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
+    DbgCmdResult OnCmdHelp(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
     static void InitHelpEngine(); //初始化调试引擎
 };
 #endif

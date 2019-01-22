@@ -90,7 +90,7 @@ BOOL UpdateSyntaxView(SyntaxView *pSyntaxView) {
     return TRUE;
 }
 
-BOOL LoadSyntaxCfg(const wstring &path)
+BOOL LoadSyntaxCfg(const string &path)
 {
     if (!gs_bInit)
     {
@@ -104,7 +104,7 @@ BOOL LoadSyntaxCfg(const wstring &path)
 
     do
     {
-        pMapping = MappingFileW(path.c_str());
+        pMapping = MappingFileA(path.c_str());
         if (pMapping == NULL || pMapping->hFile == INVALID_HANDLE_VALUE)
         {
             break;

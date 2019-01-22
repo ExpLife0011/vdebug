@@ -58,7 +58,7 @@ struct SyntaxColourDesc
 
 BOOL UpdateSyntaxView(SyntaxView *pSyntaxView);
 
-BOOL LoadSyntaxCfg(const std::wstring &path);
+BOOL LoadSyntaxCfg(const std::string &path);
 
 BOOL ReloadSyntaxCfg();
 

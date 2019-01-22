@@ -12,13 +12,13 @@ MsgSend£ºÏûÏ¢·¢²¼½Ó¿Ú£¬µÚÒ»¸ö²ÎÊýÊÇÏûÏ¢Òª·¢²¼µ½µÄÆµµÀ£¬µÚ¶þ¸ö²ÎÊýÊÇÒª·¢²¼ÏûÏ¢µÄÄ
 #include <Windows.h>
 
 //×¢²áµÄÏà¹Ø¹¦ÄÜÆµµÀ
-#define MQ_CHANNEL_DBG_SERVER      L"mq_event_dbg_server"
-#define MQ_CHANNEL_DBG_CLIENT32    L"mq_event_dbg_client_proc32"
-#define MQ_CHANNEL_DBG_CLIENT64    L"mq_event_dbg_client_proc64"
-#define MQ_CHANNEL_DBG_DUMP32      L"mq_event_dbg_client_dump32"
-#define MQ_CHANNEL_DBG_DUMP64      L"mq_event_dbg_client_dump64"
-#define MQ_CHANNEL_TASK32          L"mq_event_task32"
-#define MQ_CHANNEL_TASK64          L"mq_event_task64"
+#define MQ_CHANNEL_DBG_SERVER      "mq_event_dbg_server"
+#define MQ_CHANNEL_DBG_CLIENT32    "mq_event_dbg_client_proc32"
+#define MQ_CHANNEL_DBG_CLIENT64    "mq_event_dbg_client_proc64"
+#define MQ_CHANNEL_DBG_DUMP32      "mq_event_dbg_client_dump32"
+#define MQ_CHANNEL_DBG_DUMP64      "mq_event_dbg_client_dump64"
+#define MQ_CHANNEL_TASK32          "mq_event_task32"
+#define MQ_CHANNEL_TASK64          "mq_event_task64"
 
 #ifndef MQ_EXPORTS
     #if _WIN64 || WIN64
@@ -46,7 +46,7 @@ wszChannel:×¢²áÊ±¹Ø×¢µÄÆµµÀÃû
 wszContent:¾ßÌå´«µÝµÄÊý¾ÝÄÚÈÝ
 ·µ»Ø£ºÐèÒªµÄ»ØÖ´£¬±ØÐëÍ¨¹ýMsgStrAllocÀ´·ÖÅäÄÚ´æ£¬²»ÐèÒªÊÖ¶¯ÊÍ·Å£¬ÓÉ¿ò¼Ü×Ô¶¯ÊÍ·Å
 */
-typedef LPCWSTR (WINAPI *PMsgNotify)(LPCWSTR wszChannel, LPCWSTR wszContent, void *pParam);
+typedef LPCSTR (WINAPI *PMsgNotify)(LPCSTR wszChannel, LPCSTR wszContent, void *pParam);
 
 #define INVALID_REGISTER_HANDLE     0xffffffff      //ÎÞÐ§µÄË÷Òý¾ä±ú
 typedef long HANDLE_REGISTER;                       //Ë÷Òý¾ä±ú£¬ÓÃÓÚÉ¾³ý×¢²á
@@ -64,22 +64,22 @@ BOOL WINAPI MsgInitClient(unsigned short servPort);
 /**
 ×Ö·û´®·ÖÅä½Ó¿Ú
 */
-LPWSTR WINAPI MsgStrAlloc(int iSize);
+LPSTR WINAPI MsgStrAlloc(int iSize);
 
 /**
 ×Ö·û´®ÊÍ·Å½Ó¿Ú
 */
-VOID WINAPI MsgStrFree(LPCWSTR buffer);
+VOID WINAPI MsgStrFree(LPCSTR buffer);
 
 /**
 ×Ö·û´®¸´ÖÆ½Ó¿Ú
 */
-LPCWSTR WINAPI MsgStrCopy(LPCWSTR wsz);
+LPCSTR WINAPI MsgStrCopy(LPCSTR wsz);
 
 /**
 ×¢²á¹ØÐÄµÄÆµµÀ£¬¸ÃÆµµÀÓÐÏûÏ¢»áµ÷ÓÃ´«ÈëµÄ»Øµ÷º¯Êý
 */
-HANDLE_REGISTER WINAPI MsgRegister(LPCWSTR wszChannel, PMsgNotify pfnProc, void *pParam);
+HANDLE_REGISTER WINAPI MsgRegister(LPCSTR szChannel, PMsgNotify pfnProc, void *pParam);
 
 /**
 ·´×¢²áÆµµÀ£¬²»ÔÙÏò¸Ã¶Ë¿Ú·Ö·¢ÏûÏ¢
@@ -91,12 +91,12 @@ BOOL WINAPI MsgUnRegister(HANDLE_REGISTER hRegister);
 wszChannel£ºÆµµÀÃû³Æ
 wszContent£º·Ö·¢µÄÄÚÈÝ
 */
-BOOL WINAPI MsgSend(LPCWSTR wszChannel, LPCWSTR wszContent);
+BOOL WINAPI MsgSend(LPCSTR szChannel, LPCSTR szContent);
 
 /**
 ¸ù¾ÝÆµµÀ·¢ËÍÏûÏ¢²¢½ÓÊÕ»ØÖ´,·µ»ØÖµÐèÒªÊ¹ÓÃMsgStrFree½Ó¿Ú½øÐÐÊÍ·Å¡£
 */
-LPCWSTR WINAPI MsgSendForResult(LPCWSTR wszChannel, LPCWSTR wszContent);
+LPCSTR WINAPI MsgSendForResult(LPCSTR szChannel, LPCSTR szContent);
 #ifdef __cplusplus
 }
 #endif  //__cplusplus

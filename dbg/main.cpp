@@ -18,9 +18,9 @@ using namespace std;
 #pragma comment(lib, "capstone/capstone_x86.lib")
 #endif
 
-static void _KeepAlive(const ustring &unique) {
+static void _KeepAlive(const mstring &unique) {
     while (TRUE) {
-        HANDLE service = OpenEventW(EVENT_ALL_ACCESS, FALSE, FormatW(SERVICE_EVENT, unique.c_str()).c_str());
+        HANDLE service = OpenEventA(EVENT_ALL_ACCESS, FALSE, FormatA(SERVICE_EVENT, unique.c_str()).c_str());
 
         if (!service)
         {
@@ -32,7 +32,7 @@ static void _KeepAlive(const ustring &unique) {
     }
 
     //clean cache
-    SHDeleteValueW(HKEY_LOCAL_MACHINE, REG_VDEBUG_CACHE, unique.c_str());
+    SHDeleteValueA(HKEY_LOCAL_MACHINE, REG_VDEBUG_CACHE, unique.c_str());
 }
 
 static void _TestProc() {
@@ -56,9 +56,9 @@ int WINAPI WinMain(HINSTANCE hT, HINSTANCE hP, LPSTR szCmdLine, int iShow)
         return 0;
     }
 
-    ustring cmd = args[1];
+    mstring cmd = WtoA(args[1]);
     LocalFree(args);
-    if (!cmd.startwith(L"dbg"))
+    if (!cmd.startwith("dbg"))
     {
         return 0;
     }
@@ -66,29 +66,26 @@ int WINAPI WinMain(HINSTANCE hT, HINSTANCE hP, LPSTR szCmdLine, int iShow)
     WSADATA wsaData;
     WSAStartup(MAKEWORD(2, 2), &wsaData);
 
-    WCHAR path[256];
-    GetModuleFileNameW(NULL, path, 256);
+    char path[256];
+    GetModuleFileNameA(NULL, path, 256);
 #if WIN64 || _WIN64
-    PathAppendW(path, L"..\\..\\ComLib64.dll");
-    LoadLibraryW(path);
-    PathAppendW(path, L"..\\mq64.dll");
-    LoadLibraryW(path);
-    PathAppendW(path, L"..\\DbgCtrl64.dll");
-    LoadLibraryW(path);
+    PathAppendA(path, "..\\..\\ComLib64.dll");
+    LoadLibraryA(path);
+    PathAppendA(path, "..\\mq64.dll");
+    LoadLibraryA(path);
+    PathAppendA(path, "..\\DbgCtrl64.dll");
+    LoadLibraryA(path);
 #else
-    PathAppendW(path, L"..\\..\\ComLib32.dll");
-    LoadLibraryW(path);
-    PathAppendW(path, L"..\\mq32.dll");
-    LoadLibraryW(path);
-    PathAppendW(path, L"..\\DbgCtrl32.dll");
-    LoadLibraryW(path);
+    PathAppendA(path, "..\\..\\ComLib32.dll");
+    LoadLibraryA(path);
+    PathAppendA(path, "..\\mq32.dll");
+    LoadLibraryA(path);
+    PathAppendA(path, "..\\DbgCtrl32.dll");
+    LoadLibraryA(path);
 #endif
-    InitSymbolHlpr(L"E:\\mysymbols");
-
-    //_TestProc();
-
+    InitSymbolHlpr("E:\\mysymbols");
     size_t pos = cmd.rfind('_');
-    ustring unique = cmd.substr(pos + 1, cmd.size() - pos - 1);
+    mstring unique = cmd.substr(pos + 1, cmd.size() - pos - 1);
 
     ProcDbgProxy::GetInstance()->InitProcDbgProxy(unique.c_str());
 #ifdef _DEBUG

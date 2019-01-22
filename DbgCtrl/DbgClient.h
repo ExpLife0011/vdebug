@@ -3,14 +3,14 @@
 #include <ComStatic/ComStatic.h>
 #include "DbgCtrlCom.h"
 
-typedef std::ustring (__stdcall *pfnDbgClientProc)(const std::ustring &cmd, const std::ustring &content, void *param);
+typedef std::mstring (__stdcall *pfnDbgClientProc)(const std::mstring &cmd, const std::mstring &content, void *param);
 
 class DbgCtrlApi DbgClientBase {
 public:
     virtual ~DbgClientBase() {};
-    virtual bool InitClient(DbggerType type, const wchar_t *unique) = 0;
-    virtual HDbgCtrl RegisterCtrlHandler(const wchar_t *cmd, pfnDbgClientProc pfn, void *param) = 0;
-    virtual bool ReportDbgEvent(const std::utf8_mstring &content) = 0;
+    virtual bool InitClient(DbggerType type, const char *unique) = 0;
+    virtual HDbgCtrl RegisterCtrlHandler(const char *cmd, pfnDbgClientProc pfn, void *param) = 0;
+    virtual bool ReportDbgEvent(const std::mstring &content) = 0;
     static DbgClientBase *__stdcall newInstance();
 }; 
 #endif //DBGCLIENT_DBGCTRL_H_H_

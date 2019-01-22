@@ -4,9 +4,9 @@ void CDbggerProxy::OnCmdHlprRegister()
 {
 }
 
-DbgCmdResult CDbggerProxy::OnCmdHelp(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam)
+DbgCmdResult CDbggerProxy::OnCmdHelp(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam)
 {
-    ustring wstrParam(wstrCmdParam);
+    mstring wstrParam(wstrCmdParam);
     wstrParam.makelower();
     wstrParam.trim();
 

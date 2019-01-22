@@ -37,7 +37,7 @@ enum SymbolTask
 struct CTaskSymbolInit  //初始化符号
 {
     HANDLE m_hDstProc;  //目标进程
-    ustring m_wstrSearchPath;
+    mstring m_wstrSearchPath;
 
     CTaskSymbolInit()
     {
@@ -47,8 +47,8 @@ struct CTaskSymbolInit  //初始化符号
 
 struct SymbolLoadInfo   //已加载模块的符号信息
 {
-    ustring m_wstrModulePath;
-    ustring m_wstrMuduleName;
+    mstring m_strModulePath;
+    mstring m_strMuduleName;
     DWORD64 m_dwBaseOfModule;
 };
 
@@ -65,12 +65,12 @@ struct CTaskSymbolFromAddr
 {
     DbgModuleInfo m_ModuleInfo; //IN
     DWORD64 m_dwAddr;           //IN
-    ustring m_wstrSymbol;       //OUT
+    mstring m_strSymbol;       //OUT
 };
 
 struct CTaskSetSymbolPath
 {
-    ustring m_wstrSymbolPath;   //IN
+    mstring m_wstrSymbolPath;   //IN
 };
 
 struct CTaskStackWalkInfo
@@ -105,11 +105,11 @@ struct CTaskFindFileForDump
         m_SizeofImage = NULL;
     }
 
-    ustring m_wstrModuleName;   //IN 模块名称
+    mstring m_strModuleName;   //IN 模块名称
     PVOID m_TimeStamp;          //IN 时间戳
     PVOID m_SizeofImage;        //IN 文件大小
 
-    ustring m_wstrFullPath;     //OUT 本地模块路径
+    mstring m_strFullPath;     //OUT 本地模块路径
 };
 
 struct CTaskUnloadSymbol
@@ -119,7 +119,7 @@ struct CTaskUnloadSymbol
 
 struct CTaskGetAddrFromStr
 {
-    ustring m_wstrStr;          //获取地址的字符串 eg:createfilew kernelbase!createfilew
+    mstring m_strStr;          //获取地址的字符串 eg:createfilew kernelbase!createfilew
     DWORD64 m_dwBaseOfModule;   //模块基址
 
     DWORD64 m_dwAddr;           //OUT 具体的符号所在地址
@@ -147,10 +147,10 @@ struct CSymbolTaskHeader
 class CSymbolHlpr : public CCriticalSectionLockable
 {
 public:
-    CSymbolHlpr(const ustring &wstrSymboPath);
+    CSymbolHlpr(const mstring &wstrSymboPath);
     virtual ~CSymbolHlpr();
 
-    bool SetSymbolPath(const ustring &wstrSymbolPath);
+    bool SetSymbolPath(const mstring &wstrSymbolPath);
     bool SendTask(CSymbolTaskHeader *pTask, BOOL bAtOnce = TRUE);
     bool PostTask(CSymbolTaskHeader *pTask, BOOL bAtOnce = TRUE);
     bool DeleteTask(CSymbolTaskHeader *pTask);
@@ -170,15 +170,15 @@ protected:
 
 protected:
     //符号是否已经被加载
-    bool IsSymbolLoaded(const ustring &wstrDll, DWORD64 dwBaseOfModule);
+    bool IsSymbolLoaded(const mstring &strDll, DWORD64 dwBaseOfModule);
     //重新加载指定模块
-    bool ReloadModule(const ustring &wstrDll, DWORD64 dwBaseOfModule);
+    bool ReloadModule(const mstring &wstrDll, DWORD64 dwBaseOfModule);
     //卸载指定模块符号
-    bool UnLoadModuleByName(const ustring &wstrDllName);
+    bool UnLoadModuleByName(const mstring &strDllName);
     //卸载指定模块符号
     bool UnLoadModuleByAddr(DWORD64 dwAddr);
     //加载符号
-    bool LoadModule(HANDLE hFile, const ustring &wstrDllPath, DWORD64 dwBaseOfModule);
+    bool LoadModule(HANDLE hFile, const mstring &strDllPath, DWORD64 dwBaseOfModule);
     //卸载当前所有的模块
     bool UnloadAllModules();
 
@@ -188,10 +188,10 @@ protected:
     HANDLE m_hNotifyEvent;
     HANDLE m_hInitEvent;
     HANDLE m_hDbgProc;
-    ustring m_wstrSymbolPath;
+    mstring m_strSymbolPath;
 };
 
-bool InitSymbolHlpr(const ustring &wtrSymbolPath);
+bool InitSymbolHlpr(const mstring &strSymbolPath);
 
 CSymbolHlpr *GetSymbolHlpr();
 #endif

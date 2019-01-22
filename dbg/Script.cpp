@@ -90,17 +90,17 @@ void CScriptEngine::SetContext(TITAN_ENGINE_CONTEXT_t &vContext, pfnReadMemoryPr
     info.m_eType = em_scriptstr_register;
 
     info.m_dwAddr = m_vContex.cax;
-    m_vStrMap[L"cax"] = info;
+    m_vStrMap["cax"] = info;
     info.m_dwAddr = m_vContex.cbx;
-    m_vStrMap[L"cbx"] = info;
+    m_vStrMap["cbx"] = info;
     info.m_dwAddr = m_vContex.ccx;
-    m_vStrMap[L"ccx"] = info;
+    m_vStrMap["ccx"] = info;
     info.m_dwAddr = m_vContex.cdx;
-    m_vStrMap[L"cdx"] = info;
+    m_vStrMap["cdx"] = info;
     info.m_dwAddr = m_vContex.csp;
-    m_vStrMap[L"csp"] = info;
+    m_vStrMap["csp"] = info;
     info.m_dwAddr = m_vContex.cbp;
-    m_vStrMap[L"cbp"] = info;
+    m_vStrMap["cbp"] = info;
     m_pfnReadProc = pfnRead;
     m_pfnWriteProc = pfnWrite;
 }
@@ -108,19 +108,19 @@ void CScriptEngine::SetContext(TITAN_ENGINE_CONTEXT_t &vContext, pfnReadMemoryPr
 CScriptEngine::~CScriptEngine()
 {}
 
-BOOL CScriptEngine::GetNumFromStr(const ustring &wstrNumber, DWORD64 &dwResult) const
+BOOL CScriptEngine::GetNumFromStr(const mstring &strNumber, DWORD64 &dwResult) const
 {
-    if (IsRegisterStr(wstrNumber, dwResult))
+    if (IsRegisterStr(strNumber, dwResult))
     {
         return TRUE;
     }
 
-    ustring wstr(wstrNumber);
-    if (0 != wstr.comparei(L"0x") && 0 != wstr.comparei(L"0n"))
+    mstring str(strNumber);
+    if (0 != str.comparei("0x") && 0 != str.comparei("0n"))
     {
-        wstr.insert(0, L"0x");
+        str.insert(0, "0x");
     }
-    return StrToInt64ExW(wstr.c_str(), STIF_SUPPORT_HEX, (LONGLONG *)&dwResult);
+    return StrToInt64ExA(str.c_str(), STIF_SUPPORT_HEX, (LONGLONG *)&dwResult);
 }
 
 BOOL CScriptEngine::IsOperator(WCHAR cLetter) const
@@ -136,7 +136,7 @@ BOOL CScriptEngine::IsOperator(WCHAR cLetter) const
     return FALSE;
 }
 
-BOOL CScriptEngine::IsRegisterStr(const ustring &wstr, DWORD64 &dwData) const
+BOOL CScriptEngine::IsRegisterStr(const mstring &wstr, DWORD64 &dwData) const
 {
     BOOL bResult = FALSE;
     /*
@@ -214,18 +214,18 @@ BOOL CScriptEngine::IsRegisterStr(const ustring &wstr, DWORD64 &dwData) const
     return bResult;
 }
 
-ustring CScriptEngine::GetPointerData(const ustring &wstrPointer) const
+mstring CScriptEngine::GetPointerData(const mstring &strPointer) const
 {
     DWORD64 dwData = 0;
     DWORD64 dwAddr = 0;
     DWORD dwRead = 0;
     DWORD dwSize = 4;
 
-    if (!IsRegisterStr(wstrPointer, dwData))
+    if (!IsRegisterStr(strPointer, dwData))
     {
-        if (!GetNumFromStr(wstrPointer, dwAddr))
+        if (!GetNumFromStr(strPointer, dwAddr))
         {
-            return L"";
+            return "";
         }
     }
 
@@ -237,21 +237,21 @@ ustring CScriptEngine::GetPointerData(const ustring &wstrPointer) const
     */
     m_pfnReadProc(dwAddr, dwSize, (char *)&dwData);
 
-    WCHAR wszBuf[128] = {0};
-    ustring wstrResult = L"0x";
-    _ui64tow_s(dwData, wszBuf, 128, 16);
-    wstrResult += wszBuf;
-    return wstrResult;
+    char szBuf[128] = {0};
+    mstring strResult = "0x";
+    _ui64toa_s(dwData, szBuf, 128, 16);
+    strResult += szBuf;
+    return strResult;
 }
 
-ustring CScriptEngine::GetTwoNumCalResult(const ustring &wstrFirst, const ustring &wstrSecond, ScriptOperator eOperator) const
+mstring CScriptEngine::GetTwoNumCalResult(const mstring &strFirst, const mstring &strSecond, ScriptOperator eOperator) const
 {
     DWORD64 dw1 = 0;
     DWORD64 dw2 = 0;
 
-    if (!GetNumFromStr(wstrFirst, dw1) || !GetNumFromStr(wstrSecond, dw2))
+    if (!GetNumFromStr(strFirst, dw1) || !GetNumFromStr(strSecond, dw2))
     {
-        return L"";
+        return "";
     }
 
     DWORD64 dwResult = 0;
@@ -273,129 +273,129 @@ ustring CScriptEngine::GetTwoNumCalResult(const ustring &wstrFirst, const ustrin
         break;
     }
 
-    WCHAR wszBuf[128] = {0};
-    ustring wstrResult = L"0x";
-    _ui64tow_s(dwResult, wszBuf, 128, 16);
-    wstrResult += wszBuf;
-    return wstrResult;
+    char szBuf[128] = {0};
+    mstring strResult = "0x";
+    _ui64toa_s(dwResult, szBuf, 128, 16);
+    strResult += szBuf;
+    return strResult;
 }
 
-bool CScriptEngine::IsHexChar(WCHAR cLetter) const
+bool CScriptEngine::IsHexChar(char cLetter) const
 {
-    if (cLetter >= L'a' && cLetter <= 'f')
+    if (cLetter >= 'a' && cLetter <= 'f')
     {
         return true;
     }
 
-    if (cLetter >= L'0' && cLetter <= '9')
+    if (cLetter >= '0' && cLetter <= '9')
     {
         return true;
     }
 
-    return (cLetter == L'x');
+    return (cLetter == 'x');
 }
 
-ScriptOperator CScriptEngine::GetOperator(WCHAR cOperator) const
+ScriptOperator CScriptEngine::GetOperator(char cOperator) const
 {
     switch (cOperator)
     {
-    case  L'+':
+    case  '+':
         return em_operator_add;
         break;
-    case  L'-':
+    case  '-':
         return em_operator_sub;
         break;
-    case L'*':
+    case  '*':
         return em_operator_mult;
         break;
-    case  L'/':
+    case  '/':
         return em_operator_dev;
         break;
     }
     return em_operator_unknow;
 }
 
-ustring CScriptEngine::DeleteOperator(const ustring &wstrScript, const ustring &wstrOpt) const
+mstring CScriptEngine::DeleteOperator(const mstring &strScriptStr, const mstring &wstrOpt) const
 {
-    ustring wstrResult(wstrScript);
-    for (int i = 0 ; i < (int)wstrResult.size() ;)
+    mstring strScript(strScriptStr);
+    for (int i = 0 ; i < (int)strScript.size() ;)
     {
         //先计算乘除运算符
-        if (ustring::npos != wstrOpt.find(wstrResult[i]))
+        if (mstring::npos != wstrOpt.find(strScript[i]))
         {
-            ustring wstr1;
-            ustring wstr2;
+            mstring str1;
+            mstring str2;
             int iStartPos = 0;
             int iEndPos = 0;
 
             if (i == 0)
             {
                 throw CScriptException(EXCEPTION_CODE_SYSEXCEPTION);
-                return L"";
+                return "";
             }
 
             int j = 0;
             for (j = i - 1 ; j != 0 ; j--)
             {
-                if (IsOperator(wstrResult[j]))
+                if (IsOperator(strScript[j]))
                 {
                     j += 1;
                     break;
                 }
             }
             iStartPos = j;
-            wstr1 = wstrResult.substr(j, i - j);
-            for (j = i + 1 ; j < (int)wstrResult.size() ; j++)
+            str1 = strScript.substr(j, i - j);
+            for (j = i + 1 ; j < (int)strScript.size() ; j++)
             {
-                if (IsOperator(wstrResult[j]))
+                if (IsOperator(strScript[j]))
                 {
                     break;
                 }
             }
-            wstr2 = wstrResult.substr(i + 1, j - i - 1);
+            str2 = strScript.substr(i + 1, j - i - 1);
             iEndPos = j;
 
-            ustring wstrOptResult = GetTwoNumCalResult(wstr1, wstr2, GetOperator(wstrResult[i]));
-            wstrResult.replace(iStartPos, iEndPos - iStartPos, wstrOptResult);
-            i = (int)(iStartPos + wstrOptResult.size() + 1);
+            mstring strOptResult = GetTwoNumCalResult(str1, str2, GetOperator(strScript[i]));
+            strScript.replace(iStartPos, iEndPos - iStartPos, strOptResult);
+            i = (int)(iStartPos + strOptResult.size() + 1);
         }
         else
         {
             i++;
         }
     }
-    return wstrResult;
+    return strScript;
 }
 
 //无方括号表达式计算 先乘除 后加减
 //eg: 0x12434 * 4 + 1234
-ustring CScriptEngine::GetSimpleResult2(const ustring &wstrScript) const
+mstring CScriptEngine::GetSimpleResult2(const mstring &wstrScript) const
 {
-    ustring wstrResult = DeleteOperator(wstrScript, L"*/");
-    return DeleteOperator(wstrResult, L"+-");
+    mstring wstrResult = DeleteOperator(wstrScript, "*/");
+    return DeleteOperator(wstrResult, "+-");
 }
 
 //无圆括号表达式计算
-ustring CScriptEngine::GetSimpleResult1(const ustring &wstrScript) const
+mstring CScriptEngine::GetSimpleResult1(const mstring &script) const
 {
-    ustring wstr(wstrScript);
-    for (int i = 0 ; i < (int)wstr.size() ;)
+    mstring str(script);
+    for (int i = 0 ; i < (int)str.size() ;)
     {
-        if (wstr[i] == L']')
+        if (str[i] == L']')
         {
             int j = 0;
             for (j = i ; j >= 0 ; j--)
             {
-                if (wstr[j] == L'[')
+                if (str[j] == '[')
                 {
                     int iStartPos = j + 1;
                     int iEndPos = i;
-                    ustring wstrSub = wstr.substr(iStartPos, iEndPos - iStartPos);
+                    mstring sub = str.substr(iStartPos, iEndPos - iStartPos);
 
-                    ustring wstResult = GetSimpleResult2(wstrSub);
-                    wstResult = GetPointerData(wstResult);
-                    wstr.replace(j, i - j + 1, wstResult);
-                    i = (int)(i - 1 + wstrSub.size());
+                    mstring result = GetSimpleResult2(sub);
+                    result = GetPointerData(result);
+                    str.replace(j, i - j + 1, result);
+                    i = (int)(i - 1 + sub.size());
                     break;
                 }
             }
@@ -403,7 +403,7 @@ ustring CScriptEngine::GetSimpleResult1(const ustring &wstrScript) const
             if (j < 0)
             {
                 throw CScriptException(EXCEPTION_CODE_SYSEXCEPTION);
-                return L"";
+                return "";
             }
         }
         else
@@ -412,39 +412,39 @@ ustring CScriptEngine::GetSimpleResult1(const ustring &wstrScript) const
         }
     }
 
-    return wstr;
+    return str;
 }
 
 //[esp + 4]
 //0xffabcd + 0x1234
 //0x123 + [esp + 4] + eax * (4 + 0x1122)
-DWORD64 CScriptEngine::Compile(const ustring &wstrScript) const
+DWORD64 CScriptEngine::Compile(const mstring &script) const
 {
     try
     {
-        ustring wstr = wstrScript;
-        wstr.makelower();
-        wstr.trim();
-        wstr.delchar(' ');
+        mstring str = script;
+        str.makelower();
+        str.trim();
+        str.delchar(' ');
 
         //先消掉()
-        for (int i = 0 ; i < (int)wstr.size() ;)
+        for (int i = 0 ; i < (int)str.size() ;)
         {
-            if (wstr[i] == L')')
+            if (str[i] == ')')
             {
                 int j = 0;
                 for (j = i ; j >= 0 ; j--)
                 {
-                    if (wstr[j] == L'(')
+                    if (str[j] == L'(')
                     {
                         int iStartPos = j + 1;
                         int iEndPos = i;
-                        ustring wstrSub = wstr.substr(iStartPos, iEndPos - iStartPos);
+                        mstring sub = str.substr(iStartPos, iEndPos - iStartPos);
 
-                        ustring wstrResult = GetSimpleResult1(wstrSub);
-                        wstrResult = GetSimpleResult2(wstrResult);
-                        wstr.replace(j, i - j + 1, wstrResult);
-                        i = (iStartPos - 1 + (int)wstrResult.size());
+                        mstring result = GetSimpleResult1(sub);
+                        result = GetSimpleResult2(result);
+                        str.replace(j, i - j + 1, result);
+                        i = (iStartPos - 1 + (int)result.size());
                         break;
                     }
                 }
@@ -461,9 +461,9 @@ DWORD64 CScriptEngine::Compile(const ustring &wstrScript) const
         }
 
         DWORD64 dwResult = 0;
-        wstr = GetSimpleResult1(wstr);
-        wstr = GetSimpleResult2(wstr);
-        GetNumFromStr(wstr, dwResult);
+        str = GetSimpleResult1(str);
+        str = GetSimpleResult2(str);
+        GetNumFromStr(str, dwResult);
         return dwResult;
     }
     catch (CScriptException &e)
@@ -473,29 +473,29 @@ DWORD64 CScriptEngine::Compile(const ustring &wstrScript) const
     }
 }
 
-void CScriptEngine::InsertProc(LPCWSTR wszModule, LPCWSTR wszProc, DWORD64 dwAddr)
+void CScriptEngine::InsertProc(LPCSTR szModule, LPCSTR szProc, DWORD64 dwAddr)
 {
-    ustring wstr = wszModule;
-    wstr += L"!";
-    wstr += wszProc;
+    mstring str = szModule;
+    str += "!";
+    str += szProc;
     ScriptStrInfo info;
     info.m_dwAddr = dwAddr;
     info.m_eType = em_scriptstr_proc;
-    wstr.makelower();
+    str.makelower();
 
-    m_vStrMap[wstr] = info;
+    m_vStrMap[str] = info;
 }
 
-DWORD64 CScriptEngine::GetAddrForStr(const ustring &wstr)
+DWORD64 CScriptEngine::GetAddrForStr(const mstring &str)
 {
-    ustring wstrLower(wstr);
-    wstrLower.makelower();
-    map<ustring, ScriptStrInfo>::const_iterator it = m_vStrMap.find(wstrLower);
+    mstring lower(str);
+    lower.makelower();
+    map<mstring, ScriptStrInfo>::const_iterator it = m_vStrMap.find(lower);
 
     DWORD64 dwAddr = INVALID_SCRIPT_ADDR;
     if (m_vStrMap.end() == it)
     {
-        if (!GetNumFromStr(wstrLower, dwAddr))
+        if (!GetNumFromStr(lower, dwAddr))
         {
             return INVALID_SCRIPT_ADDR;
         }
@@ -517,8 +517,8 @@ enum LuaScriptStat
 
 struct LuaScriptInfo
 {
-    ustring m_wstrUniqueMark;
-    ustring m_wstrFilePath;
+    mstring m_strUniqueMark;
+    mstring m_strFilePath;
     HANDLE m_hNotifyEvent;
     HANDLE m_hLeaveEvent;
     DWORD m_dwThreadId;
@@ -529,7 +529,7 @@ struct LuaScriptInfo
 
     bool IsValid()
     {
-        return (!m_wstrFilePath.empty());
+        return (!m_strFilePath.empty());
     }
 
     LuaScriptInfo()
@@ -543,61 +543,60 @@ struct LuaScriptInfo
     }
 };
 
-static map<ustring, LuaScriptInfo> gs_vScriptSet;
+static map<mstring, LuaScriptInfo> gs_vScriptSet;
 
-LuaScriptInfo GetScriptInfo(const ustring &wstrScript)
+LuaScriptInfo GetScriptInfo(const mstring &strScript)
 {
-    if (wstrScript.empty() || INVALID_FILE_ATTRIBUTES == GetFileAttributesW(wstrScript.c_str()))
+    if (strScript.empty() || INVALID_FILE_ATTRIBUTES == GetFileAttributesA(strScript.c_str()))
     {
         return LuaScriptInfo();
     }
 
-    ustring wstr(wstrScript);
-    wstr.trim().makelower();
+    mstring str(strScript);
+    str.trim().makelower();
     LuaScriptInfo info;
-    info.m_wstrFilePath = wstr;
-    mstring str = WtoA(wstr);
-    info.m_wstrUniqueMark.format(L"%08x", crc32(str.c_str(), (int)str.size(), 0xffffffff));
+    info.m_strFilePath = str;
+    info.m_strUniqueMark.format("%08x", crc32(str.c_str(), (int)str.size(), 0xffffffff));
     return info;
 }
 
-ustring CScriptEngine::GetScriptPath(LPCWSTR wszScript) const
+mstring CScriptEngine::GetScriptPath(LPCSTR szScript) const
 {
-    if (!wszScript || !wszScript[0])
+    if (!szScript || !szScript[0])
     {
-        return L"";
+        return "";
     }
 
-    ustring wstr(wszScript);
-    wstr.trim();
-    size_t pos = wstr.rfind(L'.');
+    mstring str(szScript);
+    str.trim();
+    size_t pos = str.rfind('.');
     if (ustring::npos == pos)
     {
-        wstr += L".lua";
+        str += ".lua";
     }
 
-    WCHAR wszPath[MAX_PATH] = {0};
-    GetModuleFileNameW(NULL, wszPath, MAX_PATH);
-    PathAppendW(wszPath, L"..\\script");
-    PathAppendW(wszPath, wstr.c_str());
+    char szPath[MAX_PATH] = {0};
+    GetModuleFileNameA(NULL, szPath, MAX_PATH);
+    PathAppendA(szPath, "..\\script");
+    PathAppendA(szPath, str.c_str());
 
-    if (INVALID_FILE_ATTRIBUTES != GetFileAttributesW(wszPath))
+    if (INVALID_FILE_ATTRIBUTES != GetFileAttributesA(szPath))
     {
-        return wszPath;
+        return szPath;
     }
-    return L"";
+    return "";
 }
 
-BOOL CScriptEngine::RunScript(const ustring &wstrScript) const
+BOOL CScriptEngine::RunScript(const mstring &strScript) const
 {
-    ustring wstr = GetScriptPath(wstrScript.c_str());
+    mstring str = GetScriptPath(strScript.c_str());
 
-    if (wstr.empty())
+    if (str.empty())
     {
         return FALSE;
     }
 
-    LuaScriptInfo info = GetScriptInfo(wstr);
+    LuaScriptInfo info = GetScriptInfo(str);
     if (!info.IsValid())
     {
         return FALSE;
@@ -605,7 +604,7 @@ BOOL CScriptEngine::RunScript(const ustring &wstrScript) const
 
     {
         CScopedLocker lock(this);
-        map<ustring, LuaScriptInfo>::iterator it = gs_vScriptSet.find(info.m_wstrUniqueMark);
+        map<mstring, LuaScriptInfo>::iterator it = gs_vScriptSet.find(info.m_strUniqueMark);
         if (it != gs_vScriptSet.end())
         {
             SetEvent(it->second.m_hLeaveEvent);
@@ -621,8 +620,8 @@ BOOL CScriptEngine::RunScript(const ustring &wstrScript) const
         {
             info.m_hNotifyEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
             info.m_hLeaveEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
-            gs_vScriptSet[info.m_wstrUniqueMark] = info;
-            it = gs_vScriptSet.find(info.m_wstrUniqueMark);
+            gs_vScriptSet[info.m_strUniqueMark] = info;
+            it = gs_vScriptSet.find(info.m_strUniqueMark);
         }
         it->second.m_hThread =  CreateThread(NULL, 0, ScriptExecThread, &(it->second), 0, NULL);
     }
@@ -740,7 +739,7 @@ int CScriptEngine::DbgReadStr(lua_State *pLuaState)
     }
 
     string str = lua_tostring(pLuaState, 1);
-    DWORD64 dwAddr = GetScriptEngine()->Compile(AtoW(str));
+    DWORD64 dwAddr = GetScriptEngine()->Compile(str);
     if (!dwAddr)
     {
         lua_pushnumber(pLuaState, SCRIPT_ERROR_PARAMERR);
@@ -767,7 +766,7 @@ int CScriptEngine::DbgReadInt32(lua_State *pLuaState)
     }
 
     string str = lua_tostring(pLuaState, 1);
-    DWORD64 dwAddr = GetScriptEngine()->Compile(AtoW(str));
+    DWORD64 dwAddr = GetScriptEngine()->Compile(str);
     if (!dwAddr)
     {
         lua_pushnumber(pLuaState, SCRIPT_ERROR_PARAMERR);
@@ -825,7 +824,7 @@ DWORD CScriptEngine::ScriptExecThread(LPVOID pParam)
     pLuaInfo->m_eScriptStat = em_script_stat_wait;
     try
     {
-        if (0 != luaL_dofile(pLuaStat, WtoA(pLuaInfo->m_wstrFilePath).c_str()))
+        if (0 != luaL_dofile(pLuaStat, pLuaInfo->m_strFilePath.c_str()))
         {
             dp(L"执行脚本失败，Err:%hs", lua_tostring(pLuaStat, -1));
             pLuaInfo->m_eScriptStat = em_script_stat_faild;

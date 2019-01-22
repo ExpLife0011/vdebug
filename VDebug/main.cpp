@@ -101,45 +101,45 @@ static BOOL _StartViewProc() {
 }
 
 static BOOL _StartService() {
-    WCHAR wszRunner[MAX_PATH] = {0};
-    WCHAR wszServ[MAX_PATH] = {0};
-    GetModuleFileNameW(NULL, wszRunner, MAX_PATH);
-    PathAppendW(wszRunner, L"../runner.exe");
+    CHAR szRunner[MAX_PATH] = {0};
+    CHAR szServ[MAX_PATH] = {0};
+    GetModuleFileNameA(NULL, szRunner, MAX_PATH);
+    PathAppendA(szRunner, "../runner.exe");
 
-    GetWindowsDirectoryW(wszServ, MAX_PATH);
-    PathAppendW(wszServ, L"DbgService.exe");
+    GetWindowsDirectoryA(szServ, MAX_PATH);
+    PathAppendA(szServ, "DbgService.exe");
 
     BOOL bServ = TRUE;
     BOOL bStat = FALSE;
     do 
     {
-        if (INVALID_FILE_ATTRIBUTES == GetFileAttributesW(wszServ))
+        if (INVALID_FILE_ATTRIBUTES == GetFileAttributesA(szServ))
         {
-            CopyFileW(wszRunner, wszServ, FALSE);
+            CopyFileA(szRunner, szServ, FALSE);
         }
         else
         {
-            if (!IsSameFileW(wszRunner, wszServ))
+            if (!IsSameFileA(szRunner, szServ))
             {
-                ustring wstrTemp(wszServ);
-                ustring wstrName;
-                wstrName.format(L"..\\DbgService%08x.tmp", GetTickCount());
-                wstrTemp.path_append(wstrName.c_str());
+                mstring strTemp(szServ);
+                mstring strName;
+                strName.format("..\\DbgService%08x.tmp", GetTickCount());
+                strTemp.path_append(strName.c_str());
 
-                MoveFileExW(wszServ, wstrTemp.c_str(), MOVEFILE_REPLACE_EXISTING);
-                MoveFileExW(wstrTemp.c_str(), NULL, MOVEFILE_DELAY_UNTIL_REBOOT);
-                CopyFileW(wszRunner, wszServ, FALSE);
-                ServStopW(SFV_SERVICE_NAME);
-                ServStartW(SFV_SERVICE_NAME);
+                MoveFileExA(szServ, strTemp.c_str(), MOVEFILE_REPLACE_EXISTING);
+                MoveFileExA(strTemp.c_str(), NULL, MOVEFILE_DELAY_UNTIL_REBOOT);
+                CopyFileA(szRunner, szServ, FALSE);
+                ServStopA(SFV_SERVICE_NAME);
+                ServStartA(SFV_SERVICE_NAME);
             }
         }
 
-        if (INVALID_FILE_ATTRIBUTES == GetFileAttributesW(wszServ))
+        if (INVALID_FILE_ATTRIBUTES == GetFileAttributesA(szServ))
         {
             break;
         }
 
-        HANDLE hNotify = OpenEventW(EVENT_MODIFY_STATE, FALSE, SFV_NOTIFY_NAME);
+        HANDLE hNotify = OpenEventA(EVENT_MODIFY_STATE, FALSE, SFV_NOTIFY_NAME);
         HandleAutoClose abc(hNotify);
 
         if (hNotify)
@@ -149,17 +149,17 @@ static BOOL _StartService() {
             break;
         }
 
-        PathQuoteSpacesW(wszServ);
-        ustring cmd = FormatW(L"%ls -service", wszServ);
-        
-        bServ = (InstallLocalService(cmd.c_str(), SFV_SERVICE_NAME, SFV_SERVICE_DISPLAY_NAME, SFV_SERVICE_DESCRIPTION) && StartLocalService(SFV_SERVICE_NAME));
+        PathQuoteSpacesA(szServ);
+        mstring cmd = FormatA("%hs -service", szServ);
+
+        bServ = (InstallLocalServiceA(cmd.c_str(), SFV_SERVICE_NAME, SFV_SERVICE_DISPLAY_NAME, SFV_SERVICE_DESCRIPTION) && StartLocalServiceA(SFV_SERVICE_NAME));
         if (bServ)
         {
-            hNotify = OpenEventW(EVENT_MODIFY_STATE, FALSE, SFV_NOTIFY_NAME);
+            hNotify = OpenEventA(EVENT_MODIFY_STATE, FALSE, SFV_NOTIFY_NAME);
             DWORD dwTimeCount = GetTickCount();
             while (GetTickCount() - dwTimeCount < 5000)
             {
-                if (hNotify = OpenEventW(EVENT_MODIFY_STATE, FALSE, SFV_NOTIFY_NAME))
+                if (hNotify = OpenEventA(EVENT_MODIFY_STATE, FALSE, SFV_NOTIFY_NAME))
                 {
                     bStat = TRUE;
                     break;

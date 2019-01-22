@@ -10,9 +10,9 @@ using namespace std;
 struct ProcParam {
     BOOL succ;
     BOOL x64;
-    std::ustring path;
-    std::ustring command;
-    std::ustring dir;
+    std::mstring path;
+    std::mstring command;
+    std::mstring dir;
 
     ProcParam() {
         succ = FALSE;
@@ -24,10 +24,10 @@ class PeFileOpenDlg : public CCriticalSectionLockable
 {
     struct HistoryInfo {
         unsigned long mId;
-        std::ustring mPath;
-        std::ustring mParam;
-        std::ustring mDir;
-        std::ustring mTime;
+        std::mstring mPath;
+        std::mstring mParam;
+        std::mstring mDir;
+        std::mstring mTime;
     };
 
 private:

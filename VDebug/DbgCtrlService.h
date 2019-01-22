@@ -15,10 +15,10 @@ public:
     bool InitCtrlService();
     bool SetDebugger(DbggerType type);
     DbggerType GetDebuggerStat();
-    bool ExecProc(const std::ustring &path, const std::ustring &param);
+    bool ExecProc(const std::mstring &path, const std::mstring &param);
     bool AttachProc(DWORD pid);
     bool DetachProc();
-    bool RunCmdInCtrlService(const std::ustring &command);
+    bool RunCmdInCtrlService(const std::mstring &command);
 
     //proc monitor
     bool StartProcMon();
@@ -26,25 +26,25 @@ public:
 
 private:
     void SetCtrlStatus(DbggerStatus stat);
-    void OnCmdReply(const std::ustring &content);
+    void OnCmdReply(const std::mstring &content);
 
     //Debug Event
-    static void WINAPI OnProcCreate(const std::ustring &eventName, const std::ustring &content, void *param);
-    static void WINAPI OnSystemBreakpoint(const ustring &eventName, const ustring &content, void *param);
-    static void WINAPI OnDbgMessage(const std::ustring &eventName, const std::ustring &content, void *param);
-    static void WINAPI OnProcExit(const std::ustring &eventName, const std::ustring &content, void *param);
-    static void WINAPI OnModuleLoad(const std::ustring &eventName, const std::ustring &content, void *param);
-    static void WINAPI OnModuleUnLoad(const std::ustring &eventName, const std::ustring &content, void *param);
+    static void WINAPI OnProcCreate(const std::mstring &eventName, const std::mstring &content, void *param);
+    static void WINAPI OnSystemBreakpoint(const mstring &eventName, const mstring &content, void *param);
+    static void WINAPI OnDbgMessage(const std::mstring &eventName, const std::mstring &content, void *param);
+    static void WINAPI OnProcExit(const std::mstring &eventName, const std::mstring &content, void *param);
+    static void WINAPI OnModuleLoad(const std::mstring &eventName, const std::mstring &content, void *param);
+    static void WINAPI OnModuleUnLoad(const std::mstring &eventName, const std::mstring &content, void *param);
 
     //Proc changed
-    static void WINAPI OnProcChanged(const std::ustring &eventName, const std::ustring &content, void *param);
+    static void WINAPI OnProcChanged(const std::mstring &eventName, const std::mstring &content, void *param);
 
 private:
-    void RunProcInUser(LPCWSTR image, LPCWSTR cmd, DWORD session);
+    void RunProcInUser(LPCSTR image, LPCSTR cmd, DWORD session);
 private:
     DbggerType m_stat;
-    std::ustring m_DbgChannel;
-    std::ustring m_unique;
+    std::mstring m_DbgChannel;
+    std::mstring m_unique;
     DbgServiceBase *m_pCtrlService;
     bool m_procMon;
 };

@@ -39,14 +39,14 @@ utf8_mstring __stdcall EncodeProcMon(const ProcInfoSet &procSet) {
         Value node;
         node["unique"] = (UINT)it->procUnique;
         node["pid"] = (UINT)it->procPid;
-        node["procPath"] = WtoU(it->procPath);
-        node["procDesc"] = WtoU(it->procDesc);
-        node["cmd"] = WtoU(it->procCmd);
-        node["startTime"] = WtoU(it->startTime);
+        node["procPath"] = it->procPath;
+        node["procDesc"] = it->procDesc;
+        node["cmd"] = it->procCmd;
+        node["startTime"] = it->startTime;
         node["x64"] = int(it->x64);
         node["session"] = (UINT)it->sessionId;
-        node["user"] = WtoU(it->procUser);
-        node["sid"] = WtoU(it->procUserSid);
+        node["user"] = it->procUser;
+        node["sid"] = it->procUserSid;
         added.append(node);
     }
     root["added"] = added;
@@ -71,14 +71,14 @@ ProcInfoSet __stdcall DecodeProcMon(const utf8_mstring &json) {
         ProcMonInfo info;
         info.procUnique = node["unique"].asUInt();
         info.procPid = node["pid"].asUInt();
-        info.procPath = UtoW(node["procPath"].asString());
-        info.procDesc = UtoW(node["procDesc"].asString());
-        info.procCmd = UtoW(node["cmd"].asString());
-        info.startTime = UtoW(node["startTime"].asString());
+        info.procPath = node["procPath"].asString();
+        info.procDesc = node["procDesc"].asString();
+        info.procCmd = node["cmd"].asString();
+        info.startTime = node["startTime"].asString();
         info.x64 = node["x64"].asInt();
         info.sessionId = node["session"].asInt();
-        info.procUser = UtoW(node["user"].asString());
-        info.procUserSid = UtoW(node["sid"].asString());
+        info.procUser = node["user"].asString();
+        info.procUserSid = node["sid"].asString();
         result.mAddSet.push_back(info);
     }
 
@@ -92,9 +92,9 @@ ProcInfoSet __stdcall DecodeProcMon(const utf8_mstring &json) {
 std::utf8_mstring _declspec(dllexport) __stdcall EncodeProcCreate(const ProcCreateInfo &info) {
     Value content;
     content["pid"] = (UINT)info.mPid;
-    content["image"] = WtoU(info.mImage);
-    content["baseAddr"] = WtoU(info.mBaseAddr);
-    content["entryAddr"] = WtoU(info.mEntryAddr);
+    content["image"] = info.mImage;
+    content["baseAddr"] = info.mBaseAddr;
+    content["entryAddr"] = info.mEntryAddr;
     return FastWriter().write(content);
 }
 
@@ -104,9 +104,9 @@ ProcCreateInfo _declspec(dllexport) __stdcall DecodeProcCreate(const std::utf8_m
     Reader().parse(json, content);
 
     info.mPid = content["pid"].asUInt();
-    info.mImage = UtoW(content["image"].asString());
-    info.mBaseAddr = UtoW(content["baseAddr"].asString());
-    info.mEntryAddr = UtoW(content["entryAddr"].asString());
+    info.mImage = content["image"].asString();
+    info.mBaseAddr = content["baseAddr"].asString();
+    info.mEntryAddr = content["entryAddr"].asString();
     return info;
 }
 
@@ -123,22 +123,22 @@ ProcCreateInfo _declspec(dllexport) __stdcall DecodeProcCreate(const std::utf8_m
     }
 }
 */
-std::utf8_mstring _declspec(dllexport) __stdcall EncodeDllLoadInfo(const DllLoadInfo &info) {
+std::mstring _declspec(dllexport) __stdcall EncodeDllLoadInfo(const DllLoadInfo &info) {
     Value data;
-    data["name"] = WtoU(info.mDllName);
-    data["baseAddr"] = WtoU(info.mBaseAddr);
-    data["endAddr"] = WtoU(info.mEndAddr);
+    data["name"] = info.mDllName;
+    data["baseAddr"] = info.mBaseAddr;
+    data["endAddr"] = info.mEndAddr;
 
     return FastWriter().write(data);
 }
 
-DllLoadInfo _declspec(dllexport) __stdcall DecodeDllLoadInfo(const std::utf8_mstring &json) {
+DllLoadInfo _declspec(dllexport) __stdcall DecodeDllLoadInfo(const std::mstring &json) {
     DllLoadInfo info;
     Value content;
     Reader().parse(json, content);
 
-    info.mDllName = UtoW(content["name"].asString());
-    info.mBaseAddr = UtoW(content["baseAddr"].asString());
-    info.mEndAddr = UtoW(content["endAddr"].asString());
+    info.mDllName = content["name"].asString();
+    info.mBaseAddr = content["baseAddr"].asString();
+    info.mEndAddr = content["endAddr"].asString();
     return info;
 }

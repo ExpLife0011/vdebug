@@ -41,9 +41,9 @@ VOID CProcDbgger::Wait()
 {
     DWORD dwId = ((DEBUG_EVENT*)GetDebugData())->dwThreadId;
     m_eDbggerStat = em_dbg_status_free;
-    //SetCmdNotify(em_dbg_status_free, ustring().format(L"线程 %04x >>", dwId).c_str());
+    //SetCmdNotify(em_dbg_status_free, mstring().format(L"线程 %04x >>", dwId).c_str());
     WaitForSingleObject(m_hRunNotify, INFINITE);
-    //SetCmdNotify(em_dbg_status_busy, ustring().format(L"线程 %04x >>", dwId).c_str());
+    //SetCmdNotify(em_dbg_status_busy, mstring().format(L"线程 %04x >>", dwId).c_str());
 }
 
 void CProcDbgger::Run()
@@ -52,24 +52,24 @@ void CProcDbgger::Run()
     SetEvent(m_hRunNotify);
 }
 
-BOOL CProcDbgger::Connect(LPCWSTR wszTarget, LPVOID pParam)
+BOOL CProcDbgger::Connect(LPCSTR target, LPVOID pParam)
 {
     InitEngine();
 
     DbgProcUserContext *ptr = (DbgProcUserContext *)pParam;
     m_vDbgProcInfo.m_eType = em_dbgproc_open;
     m_vDbgProcInfo.m_dwPid = 0;
-    m_vDbgProcInfo.m_wstrPePath = wszTarget;
+    m_vDbgProcInfo.m_strPePath = target;
 
     if (ptr)
     {
-        m_vDbgProcInfo.m_wstrCmd = ptr->m_wstrCmd;
-        m_vDbgProcInfo.m_wstrCurrentDir = ptr->m_wstrCurrentDir;
+        m_vDbgProcInfo.m_strCmd = ptr->m_strCmd;
+        m_vDbgProcInfo.m_strCurrentDir = ptr->m_strCurrentDir;
     }
     else
     {
-        m_vDbgProcInfo.m_wstrCmd.clear();
-        m_vDbgProcInfo.m_wstrCurrentDir.clear();
+        m_vDbgProcInfo.m_strCmd.clear();
+        m_vDbgProcInfo.m_strCurrentDir.clear();
     }
     m_vDbgProcInfo.m_pfn = CustomBreakPoint;
     CloseHandle(CreateThread(NULL, 0, DebugThread, NULL, 0, NULL));
@@ -127,15 +127,15 @@ DWORD CProcDbgger::DebugThread(LPVOID pParam)
     }
     else if (em_dbgproc_open == GetInstance()->m_vDbgProcInfo.m_eType)
     {
-        LPCWSTR wszDir = NULL;
-        if (!GetInstance()->m_vDbgProcInfo.m_wstrCurrentDir.empty())
+        LPCSTR szDir = NULL;
+        if (!GetInstance()->m_vDbgProcInfo.m_strCurrentDir.empty())
         {
-            wszDir = GetInstance()->m_vDbgProcInfo.m_wstrCurrentDir.c_str();
+            szDir = GetInstance()->m_vDbgProcInfo.m_strCurrentDir.c_str();
         }
 
-        PROCESS_INFORMATION *process = (PROCESS_INFORMATION *)InitDebugW(
-            GetInstance()->m_vDbgProcInfo.m_wstrPePath.c_str(),
-            GetInstance()->m_vDbgProcInfo.m_wstrCmd.c_str(),
+        PROCESS_INFORMATION *process = (PROCESS_INFORMATION *)InitDebug(
+            GetInstance()->m_vDbgProcInfo.m_strPePath.c_str(),
+            GetInstance()->m_vDbgProcInfo.m_strCmd.c_str(),
             NULL
             );
 
@@ -242,7 +242,7 @@ void CProcDbgger::DeleteThreadById(DWORD dwId)
     }
 }
 
-ustring CProcDbgger::GetSymFromAddr(DWORD64 dwAddr) const
+mstring CProcDbgger::GetSymFromAddr(DWORD64 dwAddr) const
 {
     CTaskSymbolFromAddr task;
     task.m_dwAddr = dwAddr;
@@ -251,21 +251,21 @@ ustring CProcDbgger::GetSymFromAddr(DWORD64 dwAddr) const
     header.m_eTaskType = em_task_strfromaddr;
 
     DbgModuleInfo module = GetModuleFromAddr(dwAddr);
-    if (module.m_wstrDllName.empty())
+    if (module.m_strDllName.empty())
     {
-        return L"";
+        return "";
     }
     task.m_ModuleInfo = module;
     header.m_pParam = &task;
     GetSymbolHlpr()->SendTask(&header);
 
-    ustring wstr = module.m_wstrDllName;
-    size_t pos = wstr.rfind(L'.');
-    if (ustring::npos != pos)
+    mstring str = module.m_strDllName;
+    size_t pos = str.rfind('.');
+    if (mstring::npos != pos)
     {
-        wstr.erase(pos, wstr.size() - pos);
+        str.erase(pos, str.size() - pos);
     }
-    return FormatW(L"%ls!%ls", wstr.c_str(), task.m_wstrSymbol.c_str());
+    return FormatA("%hs!%hs", str.c_str(), task.m_strSymbol.c_str());
 }
 
 DWORD CProcDbgger::GetCurDbgProcId() const
@@ -297,12 +297,12 @@ void CProcDbgger::OnCreateProcess(CREATE_PROCESS_DEBUG_INFO* pCreateProcessInfo)
 {
     ProcCreateInfo info;
     info.mPid = GetProcessId(pCreateProcessInfo->hProcess);
-    info.mImage = GetInstance()->m_vDbgProcInfo.m_wstrPePath;
-    info.mBaseAddr = FormatW(L"0x%p", pCreateProcessInfo->lpBaseOfImage);
-    info.mEntryAddr = FormatW(L"0x%p", pCreateProcessInfo->lpStartAddress);
+    info.mImage = GetInstance()->m_vDbgProcInfo.m_strPePath;
+    info.mBaseAddr = FormatA("0x%p", pCreateProcessInfo->lpBaseOfImage);
+    info.mEntryAddr = FormatA("0x%p", pCreateProcessInfo->lpStartAddress);
 
     mstring event = MakeDbgEvent(DBG_EVENT_DBG_PROC_CREATEA, EncodeProcCreate(info));
-    MsgSend(MQ_CHANNEL_DBG_SERVER, UtoW(event).c_str());;
+    MsgSend(MQ_CHANNEL_DBG_SERVER, event.c_str());;
 
     CSymbolTaskHeader task;
     CTaskSymbolInit param;
@@ -319,7 +319,7 @@ void CProcDbgger::OnCreateProcess(CREATE_PROCESS_DEBUG_INFO* pCreateProcessInfo)
     tp.m_hThread = pCreateProcessInfo->hThread;
     tp.m_dwLocalBase = (DWORD64)pCreateProcessInfo->lpThreadLocalBase;
     tp.m_dwStartAddr = (DWORD64)pCreateProcessInfo->lpStartAddress;
-    tp.m_wstrName = L"主线程";
+    tp.m_strName = "主线程";
 
     (GetInstance()->m_vThreadMap).push_back(tp);
     GetInstance()->m_dwCurDebugProc = GetProcessId(pCreateProcessInfo->hProcess);
@@ -381,14 +381,14 @@ void CProcDbgger::OnSystemBreakpoint(void* ExceptionData)
     }
 
     utf8_mstring package = MakeDbgEvent(DBG_EVENT_SYSTEM_BREAKPOINTA, FormatA("{\"tid\":%d}", dwId));
-    MsgSend(MQ_CHANNEL_DBG_SERVER, UtoW(package).c_str());
+    MsgSend(MQ_CHANNEL_DBG_SERVER, package.c_str());
 
     //脱离调试器
     if (GetInstance()->m_bDetachDbgger)
     {
         return;
     }
-    GetInstance()->RunCommand(L"r");
+    GetInstance()->RunCommand("r");
     GetInstance()->Wait();
 }
 
@@ -407,12 +407,12 @@ bool CProcDbgger::LoadModuleInfo(HANDLE hFile, DWORD64 dwBaseOfModule)
     m_vModuleInfo[dwBaseOfModule] = loadInfo.m_ModuleInfo;
 
     DllLoadInfo dllInfo;
-    dllInfo.mDllName = loadInfo.m_ModuleInfo.m_wstrDllName;
-    dllInfo.mBaseAddr = FormatW(L"0x%p", loadInfo.m_ModuleInfo.m_dwBaseOfImage);
-    dllInfo.mEndAddr = FormatW(L"0x%p", loadInfo.m_ModuleInfo.m_dwEndAddr);
+    dllInfo.mDllName = loadInfo.m_ModuleInfo.m_strDllName;
+    dllInfo.mBaseAddr = FormatA("0x%p", loadInfo.m_ModuleInfo.m_dwBaseOfImage);
+    dllInfo.mEndAddr = FormatA("0x%p", loadInfo.m_ModuleInfo.m_dwEndAddr);
 
     utf8_mstring package = MakeDbgEvent(DBG_EVENT_MODULE_LOADA, EncodeDllLoadInfo(dllInfo));
-    MsgSend(MQ_CHANNEL_DBG_SERVER, UtoW(package).c_str());
+    MsgSend(MQ_CHANNEL_DBG_SERVER, package.c_str());
     return true;
 }
 
@@ -460,92 +460,92 @@ VOID CProcDbgger::InitEngine()
     SetCustomHandler(UE_CH_DEBUGEVENT, (void*)OnDebugEvent);
 }
 
-DbgCmdResult CProcDbgger::OnCommand(const ustring &wstrCmd, const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam)
+DbgCmdResult CProcDbgger::OnCommand(const mstring &cmd, const mstring &cmdParam, BOOL bShow, const CmdUserParam *pParam)
 {
     DbgCmdResult res;
-    if (wstrCmd == L"bp")
+    if (cmd == "bp")
     {
-        return OnCmdBp(wstrCmdParam, bShow, pParam);
+        return OnCmdBp(cmdParam, bShow, pParam);
     }
-    else if (wstrCmd == L"bl")
+    else if (cmd == "b")
     {
-        return OnCmdBl(wstrCmdParam, bShow, pParam);
+        return OnCmdBl(cmdParam, bShow, pParam);
     }
-    else if (wstrCmd == L"bk")
+    else if (cmd == "bk")
     {
         DebugBreakProcess(GetInstance()->GetDbgProc());
     }
-    else if (wstrCmd == L"bc")
+    else if (cmd == "bc")
     {
-        return OnCmdBc(wstrCmdParam, bShow, pParam);
+        return OnCmdBc(cmdParam, bShow, pParam);
     }
     //切换到指定线程
-    else if (wstrCmd == L"tc")
+    else if (cmd == "tc")
     {
-        return OnCmdTc(wstrCmdParam, bShow, pParam);
+        return OnCmdTc(cmdParam, bShow, pParam);
     }
     //展示指定线程
-    else if (wstrCmd == L"ts")
+    else if (cmd == "ts")
     {
-        return OnCmdTs(wstrCmdParam, bShow, pParam);
+        return OnCmdTs(cmdParam, bShow, pParam);
     }
     //展示模块信息
-    else if (wstrCmd == L"lm")
+    else if (cmd == "lm")
     {
-        return OnCmdLm(wstrCmdParam, bShow, pParam);
+        return OnCmdLm(cmdParam, bShow, pParam);
     }
-    else if (wstrCmd == L"cls")
+    else if (cmd == "cls")
     {
-        return OnCmdClear(wstrCmdParam, bShow, pParam);
+        return OnCmdClear(cmdParam, bShow, pParam);
     }
-    else if (wstrCmd == L"u")
+    else if (cmd == "u")
     {
-        return OnCmdDisass(wstrCmdParam, bShow, pParam);
+        return OnCmdDisass(cmdParam, bShow, pParam);
     }
-    else if (wstrCmd == L"ub")
+    else if (cmd == "ub")
     {
-        return OnCmdUb(wstrCmdParam, bShow, pParam);
+        return OnCmdUb(cmdParam, bShow, pParam);
     }
-    else if (wstrCmd == L"uf")
+    else if (cmd == "uf")
     {
-        return OnCmdUf(wstrCmdParam, bShow, pParam);
+        return OnCmdUf(cmdParam, bShow, pParam);
     }
-    else if (wstrCmd == L"g")
+    else if (cmd == "g")
     {
-        return OnCmdGo(wstrCmdParam, bShow, pParam);
+        return OnCmdGo(cmdParam, bShow, pParam);
     }
     //执行到调用返回
-    else if (wstrCmd == L"gu")
+    else if (cmd == "gu")
     {
-        return OnCmdGu(wstrCmdParam, bShow, pParam);
+        return OnCmdGu(cmdParam, bShow, pParam);
     }
-    else if (wstrCmd == L"kv")
+    else if (cmd == "kv")
     {
-        return OnCmdKv(wstrCmdParam, bShow, pParam);
+        return OnCmdKv(cmdParam, bShow, pParam);
     }
-    else if (wstrCmd == L"db")
+    else if (cmd == "db")
     {
-        return OnCmdDb(wstrCmdParam, bShow, pParam);
+        return OnCmdDb(cmdParam, bShow, pParam);
     }
-    else if (wstrCmd == L"dd")
+    else if (cmd == "dd")
     {
-        return OnCmdDd(wstrCmdParam, bShow, pParam);
+        return OnCmdDd(cmdParam, bShow, pParam);
     }
-    else if (wstrCmd == L"du")
+    else if (cmd == "du")
     {
-        return OnCmdDu(wstrCmdParam, bShow, pParam);
+        return OnCmdDu(cmdParam, bShow, pParam);
     }
-    else if (wstrCmd == L"r")
+    else if (cmd == "r")
     {
-        return OnCmdReg(wstrCmdParam, bShow, pParam);
+        return OnCmdReg(cmdParam, bShow, pParam);
     }
-    else if (wstrCmd == L"sc")
+    else if (cmd == "sc")
     {
-        return OnCmdScript(wstrCmdParam, bShow, pParam);
+        return OnCmdScript(cmdParam, bShow, pParam);
     }
-    else if (wstrCmd == L"help" || wstrCmd == L"h")
+    else if (cmd == "help" || cmd == "h")
     {
-        return OnCmdHelp(wstrCmdParam, bShow, pParam);
+        return OnCmdHelp(cmdParam, bShow, pParam);
     }
     return res;
 }
@@ -562,12 +562,12 @@ bool CProcDbgger::IsBreakpointSet(DWORD64 dwAddr) const
     return false;
 }
 
-DbgCmdResult CProcDbgger::OnCmdBp(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam)
+DbgCmdResult CProcDbgger::OnCmdBp(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam)
 {
     /*
     DbgCmdResult result;
     //CSyntaxDescHlpr hlpr;
-    ustring wstr(wstrCmdParam);
+    mstring wstr(wstrCmdParam);
     wstr.trim();
 
     if (wstr.empty())
@@ -608,12 +608,12 @@ DbgCmdResult CProcDbgger::OnCmdBp(const ustring &wstrCmdParam, BOOL bShow, const
     return DbgCmdResult();
 }
 
-DbgCmdResult CProcDbgger::OnCmdBl(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam)
+DbgCmdResult CProcDbgger::OnCmdBl(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam)
 {
     //CSyntaxDescHlpr hlpr;
     if (m_vBreakPoint.empty())
     {
-        return DbgCmdResult(em_dbgstat_succ, L"尚未设置任何断点");
+        return DbgCmdResult(em_dbgstat_succ, "尚未设置任何断点");
     }
 
     //BOOL bx64 = GetCurrentDbgger()->IsDbgProcx64();
@@ -680,39 +680,39 @@ void CProcDbgger::ClearBreakPoint(DWORD dwSerial)
     }
 }
 
-DbgCmdResult CProcDbgger::OnCmdBc(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam)
+DbgCmdResult CProcDbgger::OnCmdBc(const mstring &cmdParam, BOOL bShow, const CmdUserParam *pParam)
 {
-    ustring wstr(wstrCmdParam);
-    wstr.makelower();
-    if (wstr == L"*")
+    mstring str(cmdParam);
+    str.makelower();
+    if (str == "*")
     {
         ClearBreakPoint(-1);
-        return DbgCmdResult(em_dbgstat_succ, L"已清空所有断点");
+        return DbgCmdResult(em_dbgstat_succ, "已清空所有断点");
     }
 
-    if (!IsNumber(wstr))
+    if (!IsNumber(str))
     {
-        return DbgCmdResult(em_dbgstat_syntaxerr, L"bc 语法错误");
+        return DbgCmdResult(em_dbgstat_syntaxerr, "bc 语法错误");
     }
 
     DWORD64 dwSerial = 0;
-    GetNumFromStr(wstr, dwSerial);
+    GetNumFromStr(str, dwSerial);
     ClearBreakPoint((DWORD)dwSerial);
-    return DbgCmdResult(em_dbgstat_succ, FormatW(L"已清除%02x号断点", dwSerial));
+    return DbgCmdResult(em_dbgstat_succ, FormatA("已清除%02x号断点", dwSerial));
 }
 
-ustring CProcDbgger::GetStatusStr(ThreadStat eStat, ThreadWaitReason eWaitReason) const
+mstring CProcDbgger::GetStatusStr(ThreadStat eStat, ThreadWaitReason eWaitReason) const
 {
-    return L"正常运行";
+    return "正常运行";
 }
 
-DbgCmdResult CProcDbgger::OnCmdTc(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam)
+DbgCmdResult CProcDbgger::OnCmdTc(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam)
 {
-    ustring wstr(wstrCmdParam);
+    mstring wstr(wstrCmdParam);
     wstr.trim();
     if (wstr.empty())
     {
-        return DbgCmdResult(em_dbgstat_faild, L"tc语法错误");
+        return DbgCmdResult(em_dbgstat_faild, "tc语法错误");
     }
     DWORD64 dwSerial = 0;
     GetNumFromStr(wstr, dwSerial);
@@ -723,13 +723,13 @@ DbgCmdResult CProcDbgger::OnCmdTc(const ustring &wstrCmdParam, BOOL bShow, const
         if (dwSerial == dw || dwSerial == it->m_dwThreadId)
         {
             m_dwCurrentThreadId = it->m_dwThreadId;
-            return DbgCmdResult(em_dbgstat_succ, FormatW(L"切换至%d号线程成功，当前线程%x", dw, it->m_dwThreadId));
+            return DbgCmdResult(em_dbgstat_succ, FormatA("切换至%d号线程成功，当前线程%x", dw, it->m_dwThreadId));
         }
     }
-    return DbgCmdResult(em_dbgstat_faild, L"未找到需要切换的线程");
+    return DbgCmdResult(em_dbgstat_faild, "未找到需要切换的线程");
 }
 
-DbgCmdResult CProcDbgger::OnCmdLm(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam)
+DbgCmdResult CProcDbgger::OnCmdLm(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam)
 {
     /*
     //CSyntaxDescHlpr hlpr;
@@ -761,7 +761,7 @@ DbgCmdResult CProcDbgger::OnCmdLm(const ustring &wstrCmdParam, BOOL bShow, const
     return DbgCmdResult();
 }
 
-DbgCmdResult CProcDbgger::OnCmdTs(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam)
+DbgCmdResult CProcDbgger::OnCmdTs(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam)
 {
     DbgCmdResult res;
     /*
@@ -811,21 +811,21 @@ DbgCmdResult CProcDbgger::OnCmdTs(const ustring &wstrCmdParam, BOOL bShow, const
     return res;
 }
 
-DbgCmdResult CProcDbgger::OnCmdBu(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam)
+DbgCmdResult CProcDbgger::OnCmdBu(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam)
 {
     return DbgCmdResult(em_dbgstat_succ);
 }
 
-void CProcDbgger::GetDisassContentDesc(const ustring &wstrContent, mstring &data) const
+void CProcDbgger::GetDisassContentDesc(const mstring &wstrContent, mstring &data) const
 {
     /*
-    ustring wstr(wstrContent);
+    mstring wstr(wstrContent);
     wstr.trim();
-    while (ustring::npos != wstr.find(L" + "))
+    while (mstring::npos != wstr.find(L" + "))
     {
         wstr.repsub(L" + ", L"+");
     }
-    while (ustring::npos != wstr.find(L" - "))
+    while (mstring::npos != wstr.find(L" - "))
     {
         wstr.repsub(L" - ", L"-");
     }
@@ -858,7 +858,7 @@ bool CProcDbgger::DisassWithSize(DWORD64 dwAddr, DWORD64 dwSize, mstring &data) 
     /*
     CDisasmParser Disasm(GetDbgProc());
     vector<DisasmInfo> vDisasmSet;
-    ustring wstr = GetSymFromAddr(dwAddr);
+    mstring wstr = GetSymFromAddr(dwAddr);
     wstr += L":";
     hlpr.NextLine();
     hlpr.FormatDesc(wstr, COLOUR_PROC);
@@ -900,7 +900,7 @@ bool CProcDbgger::DisassWithAddr(DWORD64 dwStartAddr, DWORD64 dwEndAddr, mstring
     DWORD64 dwSize = (dwEndAddr - dwStartAddr + 16);
     CDisasmParser Disasm(GetDbgProc());
     vector<DisasmInfo> vDisasmSet;
-    ustring wstr = GetSymFromAddr(dwStartAddr);
+    mstring wstr = GetSymFromAddr(dwStartAddr);
     wstr += L":";
     hlpr.NextLine();
     hlpr.FormatDesc(wstr, COLOUR_PROC);
@@ -940,7 +940,7 @@ bool CProcDbgger::DisassUntilRet(DWORD64 dwStartAddr, mstring &data) const
     /*
     CDisasmParser Disasm(GetDbgProc());
     vector<DisasmInfo> vDisasmSet;
-    ustring wstr = GetSymFromAddr(dwStartAddr);
+    mstring wstr = GetSymFromAddr(dwStartAddr);
     wstr += L":";
     hlpr.FormatDesc(wstr, COLOUR_PROC);
     hlpr.NextLine();
@@ -970,16 +970,16 @@ bool CProcDbgger::DisassUntilRet(DWORD64 dwStartAddr, mstring &data) const
     return true;
 }
 
-DbgCmdResult CProcDbgger::OnCmdDisass(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam)
+DbgCmdResult CProcDbgger::OnCmdDisass(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam)
 {
-    ustring wstr(wstrCmdParam);
+    mstring wstr(wstrCmdParam);
     wstr.makelower();
     wstr.trim();
 
     DWORD64 dwDisasmSize = 0;
-    ustring wstrAddr;
+    mstring strAddr;
 
-    dwDisasmSize = GetSizeAndParam(wstr, wstrAddr);
+    dwDisasmSize = GetSizeAndParam(wstr, strAddr);
     if (!dwDisasmSize)
     {
         return DbgCmdResult(em_dbgstat_syntaxerr);
@@ -991,17 +991,17 @@ DbgCmdResult CProcDbgger::OnCmdDisass(const ustring &wstrCmdParam, BOOL bShow, c
     }
 
     DWORD64 dwAddr = 0;
-    if (GetNumFromStr(wstrAddr, dwAddr))
+    if (GetNumFromStr(strAddr, dwAddr))
     {
     }
     else
     {
-        dwAddr = GetFunAddr(wstrAddr);
+        dwAddr = GetFunAddr(strAddr);
     }
 
     if (!dwAddr)
     {
-        return DbgCmdResult(em_dbgstat_faild, FormatW(L"获取%ls地址失败", wstrAddr.c_str()));
+        return DbgCmdResult(em_dbgstat_faild, FormatA("获取%hs地址失败", strAddr.c_str()));
     }
     /*
     //CSyntaxDescHlpr hlpr;
@@ -1011,25 +1011,25 @@ DbgCmdResult CProcDbgger::OnCmdDisass(const ustring &wstrCmdParam, BOOL bShow, c
     return DbgCmdResult();
 }
 
-DbgCmdResult CProcDbgger::OnCmdClear(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam)
+DbgCmdResult CProcDbgger::OnCmdClear(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam)
 {
     //GetSyntaxView()->ClearView();
-    return DbgCmdResult(em_dbgstat_succ, L"");
+    return DbgCmdResult(em_dbgstat_succ, "");
 }
 
-DbgCmdResult CProcDbgger::OnCmdUb(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam)
+DbgCmdResult CProcDbgger::OnCmdUb(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam)
 {
-    ustring wstr(wstrCmdParam);
+    mstring wstr(wstrCmdParam);
     wstr.makelower();
     wstr.trim();
 
     DWORD64 dwDisasmSize = ms_dwDefDisasmSize;
-    ustring wstrAddr;
+    mstring wstrAddr;
 
     dwDisasmSize = GetSizeAndParam(wstr, wstrAddr);
     if (!dwDisasmSize)
     {
-        return DbgCmdResult(em_dbgstat_faild, L"获取反汇编地址长度失败");
+        return DbgCmdResult(em_dbgstat_faild, "获取反汇编地址长度失败");
     }
 
     if (-1 == dwDisasmSize)
@@ -1045,7 +1045,7 @@ DbgCmdResult CProcDbgger::OnCmdUb(const ustring &wstrCmdParam, BOOL bShow, const
 
     if (!dwAddr)
     {
-        return DbgCmdResult(em_dbgstat_syntaxerr, L"ub语法错误");
+        return DbgCmdResult(em_dbgstat_syntaxerr, "ub语法错误");
     }
 
     DWORD64 dwEndAddr = dwAddr;
@@ -1058,19 +1058,19 @@ DbgCmdResult CProcDbgger::OnCmdUb(const ustring &wstrCmdParam, BOOL bShow, const
     return DbgCmdResult();
 }
 
-DbgCmdResult CProcDbgger::OnCmdUf(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam)
+DbgCmdResult CProcDbgger::OnCmdUf(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam)
 {
-    ustring wstr(wstrCmdParam);
+    mstring wstr(wstrCmdParam);
     wstr.makelower();
     wstr.trim();
 
     DWORD64 dwDisasmSize = ms_dwDefDisasmSize;
-    ustring wstrAddr;
+    mstring wstrAddr;
 
     dwDisasmSize = GetSizeAndParam(wstr, wstrAddr);
     if (!dwDisasmSize)
     {
-        return DbgCmdResult(em_dbgstat_faild, L"");
+        return DbgCmdResult(em_dbgstat_faild, "");
     }
 
     if (-1 == dwDisasmSize)
@@ -1097,28 +1097,28 @@ DbgCmdResult CProcDbgger::OnCmdUf(const ustring &wstrCmdParam, BOOL bShow, const
     return DbgCmdResult();
 }
 
-DbgCmdResult CProcDbgger::OnCmdGo(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam)
+DbgCmdResult CProcDbgger::OnCmdGo(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam)
 {
     Run();
-    return DbgCmdResult(em_dbgstat_succ, L"");
+    return DbgCmdResult(em_dbgstat_succ, "");
 }
 
 void CProcDbgger::GuCmdCallback()
 {
     HANDLE hThread = GetInstance()->GetCurrentThread();
     TITAN_ENGINE_CONTEXT_t context = GetInstance()->GetThreadContext(hThread);
-    ustring wstrSymbol = GetInstance()->GetSymFromAddr(context.cip);
+    mstring strSymbol = GetInstance()->GetSymFromAddr(context.cip);
     //CSyntaxDescHlpr hlpr;
     //hlpr.FormatDesc(FormatW(L"进程中断于%ls", wstrSymbol.c_str()));
     //GetSyntaxView()->AppendSyntaxDesc(hlpr.GetResult());
     GetInstance()->Wait();
 }
 
-DbgCmdResult CProcDbgger::OnCmdGu(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam)
+DbgCmdResult CProcDbgger::OnCmdGu(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam)
 {
     StepOut(GuCmdCallback, true);
     Run();
-    return DbgCmdResult(em_dbgstat_succ, L"执行gu成功");
+    return DbgCmdResult(em_dbgstat_succ, "执行gu成功");
 }
 
 static BOOL CALLBACK StackReadProcessMemoryProc64(HANDLE hProcess, DWORD64 lpBaseAddress, PVOID lpBuffer, DWORD nSize, LPDWORD lpNumberOfBytesRead)
@@ -1127,7 +1127,7 @@ static BOOL CALLBACK StackReadProcessMemoryProc64(HANDLE hProcess, DWORD64 lpBas
     return memory.MemoryReadSafe(lpBaseAddress, (char *)lpBuffer, nSize, lpNumberOfBytesRead);
 }
 
-list<STACKFRAME64> CProcDbgger::GetStackFrame(const ustring &wstrParam)
+list<STACKFRAME64> CProcDbgger::GetStackFrame(const mstring &wstrParam)
 {
     const int iMaxWalks = 1024;
     HANDLE hCurrentThread = GetInstance()->GetCurrentThread();
@@ -1171,7 +1171,7 @@ list<STACKFRAME64> CProcDbgger::GetStackFrame(const ustring &wstrParam)
     return info.m_FrameSet;
 }
 
-DbgCmdResult CProcDbgger::OnCmdKv(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam)
+DbgCmdResult CProcDbgger::OnCmdKv(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam)
 {
     /*
     list<STACKFRAME64> vStack = GetCurrentDbgger()->GetStackFrame(wstrCmdParam);
@@ -1203,30 +1203,30 @@ DbgCmdResult CProcDbgger::OnCmdKv(const ustring &wstrCmdParam, BOOL bShow, const
     return DbgCmdResult();
 }
 
-DbgCmdResult CProcDbgger::OnCmdDb(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam)
+DbgCmdResult CProcDbgger::OnCmdDb(const mstring &strCmdParam, BOOL bShow, const CmdUserParam *pParam)
 {
     DWORD64 dwDataSize = 64;
     DWORD64 dwAddr = 0;
-    ustring wstr(wstrCmdParam);
-    wstr.makelower();
-    wstr.trim();
-    ustring wstrAddr;
-    if (wstr.startwith(L"l"))
+    mstring str(strCmdParam);
+    str.makelower();
+    str.trim();
+    mstring strAddr;
+    if (str.startwith("l"))
     {
-        size_t pos = wstr.find(L" ");
-        ustring wstrSize = wstr.substr(1, pos - 1);
+        size_t pos = str.find(" ");
+        mstring wstrSize = str.substr(1, pos - 1);
         GetNumFromStr(wstrSize.c_str(), dwDataSize);
-        wstrAddr = wstr.c_str() + pos;
+        strAddr = str.c_str() + pos;
     }
     else
     {
-        wstrAddr = wstrCmdParam;
+        strAddr = strCmdParam;
     }
-    wstrAddr.trim();
+    strAddr.trim();
 
     CScriptEngine script;
     script.SetContext(GetInstance()->GetCurrentContext(), ReadDbgProcMemory, WriteDbgProcMemory);
-    dwAddr = script.Compile(wstrAddr);
+    dwAddr = script.Compile(strAddr);
 
     /**
     //CSyntaxDescHlpr desc;
@@ -1280,7 +1280,7 @@ DbgCmdResult CProcDbgger::OnCmdDb(const ustring &wstrCmdParam, BOOL bShow, const
     return DbgCmdResult();
 }
 
-DbgCmdResult CProcDbgger::OnCmdDd(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam)
+DbgCmdResult CProcDbgger::OnCmdDd(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam)
 {
     CScriptEngine script;
     script.SetContext(GetInstance()->GetCurrentContext(), ReadDbgProcMemory, WriteDbgProcMemory);
@@ -1320,7 +1320,7 @@ DbgCmdResult CProcDbgger::OnCmdDd(const ustring &wstrCmdParam, BOOL bShow, const
     return DbgCmdResult();
 }
 
-DbgCmdResult CProcDbgger::OnCmdDu(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam)
+DbgCmdResult CProcDbgger::OnCmdDu(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam)
 {
     CScriptEngine script;
     script.SetContext(GetInstance()->GetCurrentContext(), ReadDbgProcMemory, WriteDbgProcMemory);
@@ -1332,7 +1332,7 @@ DbgCmdResult CProcDbgger::OnCmdDu(const ustring &wstrCmdParam, BOOL bShow, const
     }
 
     CMemoryOperator mhlpr(GetInstance()->GetDbgProc());
-    ustring wstrData = mhlpr.MemoryReadStrUnicode(dwAddr, MAX_PATH);
+    ustring strData = mhlpr.MemoryReadStrUnicode(dwAddr, MAX_PATH);
 
     /*
     //CSyntaxDescHlpr desc;
@@ -1342,7 +1342,7 @@ DbgCmdResult CProcDbgger::OnCmdDu(const ustring &wstrCmdParam, BOOL bShow, const
     return DbgCmdResult();
 }
 
-DbgCmdResult CProcDbgger::OnCmdReg(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam)
+DbgCmdResult CProcDbgger::OnCmdReg(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam)
 {
     //TITAN_ENGINE_CONTEXT_t context = GetCurrentDbgger()->GetCurrentContext();
     /*
@@ -1403,14 +1403,14 @@ DbgCmdResult CProcDbgger::OnCmdReg(const ustring &wstrCmdParam, BOOL bShow, cons
     vDescHlpr.FormatDesc(FormatW(L"fs=0x%04x  ", context.fs), COLOUR_MSG);
     vDescHlpr.FormatDesc(FormatW(L"gs=0x%04x  ", context.gs), COLOUR_MSG);
     vDescHlpr.NextLine();
-    ustring wstrAddr = GetSymFromAddr(context.cip);
+    mstring wstrAddr = GetSymFromAddr(context.cip);
     vDescHlpr.FormatDesc(wstrAddr, COLOUR_PROC);
     return DbgCmdResult(em_dbgstat_succ, vDescHlpr.GetResult());
     */
     return DbgCmdResult();
 }
 
-DbgCmdResult CProcDbgger::OnCmdScript(const ustring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam)
+DbgCmdResult CProcDbgger::OnCmdScript(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam)
 {
     DbgCmdResult res;
     return res;

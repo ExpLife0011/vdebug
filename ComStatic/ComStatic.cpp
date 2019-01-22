@@ -16,71 +16,71 @@
 using namespace std;
 
 //Dos文件路径转为Nt路径
-ustring __stdcall DosPathToNtPath(LPCWSTR wszSrc)
+mstring __stdcall DosPathToNtPath(LPCSTR szSrc)
 {
     DWORD dwDrivers = GetLogicalDrives();
     int iIdex = 0;
-    WCHAR wszNT[] = L"X:";
-    WCHAR wszDos[MAX_PATH] = {0x00};
-    ustring wstrHeader;
-    ustring wstrNtPath;
-    ustring wstrDos(wszSrc);
+    char szNT[] = "X:";
+    char szDos[MAX_PATH] = {0x00};
+    mstring strHeader;
+    mstring strNtPath;
+    mstring strDos(szSrc);
     for (iIdex = 0 ; iIdex < 26 ; iIdex++)
     {
         if ((1 << iIdex) & dwDrivers)
         {
-            wszNT[0] = 'A' + iIdex;
-            if (QueryDosDeviceW(wszNT, wszDos, MAX_PATH))
+            szNT[0] = 'A' + iIdex;
+            if (QueryDosDeviceA(szNT, szDos, MAX_PATH))
             {
-                if (0 == wstrDos.comparei(wszDos))
+                if (0 == strDos.comparei(szDos))
                 {
-                    wstrNtPath += wszNT;
-                    wstrNtPath += (wstrDos.c_str() + lstrlenW(wszDos));
-                    return wstrNtPath;
+                    strNtPath += szNT;
+                    strNtPath += (strDos.c_str() + lstrlenA(szDos));
+                    return strNtPath;
                 }
             }
         }
     }
-    return L"";
+    return "";
 }
 
-ustring __stdcall GetProcPathByPid(IN DWORD dwPid)
+mstring __stdcall GetProcPathByPid(IN DWORD dwPid)
 {
     if (4 == dwPid || 0 == dwPid)
     {
-        return L"";
+        return "";
     }
 
-    ustring wstrPath;
+    mstring strPath;
     HANDLE process = OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, dwPid);
 
-    WCHAR wszImage[MAX_PATH] = {0x00};
+    char image[MAX_PATH] = {0x00};
     if (process)
     {
-        GetProcessImageFileNameW(process, wszImage, MAX_PATH);
-        if (wszImage[4] != 0x00)
+        GetProcessImageFileNameA(process, image, MAX_PATH);
+        if (image[4] != 0x00)
         {
-            wstrPath = DosPathToNtPath(wszImage);
+            strPath = DosPathToNtPath(image);
         }
     }
     else
     {
-        return L"";
+        return "";
     }
 
     if (process && INVALID_HANDLE_VALUE != process)
     {
         CloseHandle(process);
     }
-    return wstrPath;
+    return strPath;
 }
 
-ustring __stdcall GetFilePathFromHandle(HANDLE hFile)
+mstring __stdcall GetFilePathFromHandle(HANDLE hFile)
 {
     DWORD dwFileSizeLow = GetFileSize(hFile, NULL); 
     HANDLE hFileMap = NULL;
     void* pMem = NULL;
-    ustring wstrPath;
+    mstring strPath;
 
     do 
     {
@@ -106,19 +106,20 @@ ustring __stdcall GetFilePathFromHandle(HANDLE hFile)
         {
             break;
         }
-        WCHAR wszFileName[MAX_PATH] = {0};
-        GetMappedFileNameW(
+
+        CHAR szFileName[MAX_PATH] = {0};
+        GetMappedFileNameA(
             GetCurrentProcess(), 
             pMem, 
-            wszFileName,
+            szFileName,
             MAX_PATH
             );
-        if (!wszFileName[0])
+        if (!szFileName[0])
         {
             break;
         }
 
-        wstrPath = DosPathToNtPath(wszFileName);
+        strPath = DosPathToNtPath(szFileName);
     } while (FALSE);
 
     if (hFileMap)
@@ -130,29 +131,29 @@ ustring __stdcall GetFilePathFromHandle(HANDLE hFile)
     {
         UnmapViewOfFile(pMem);
     }
-    return wstrPath;
+    return strPath;
 }
 
-ustring __stdcall GetStdErrorStr(DWORD dwErr)
+mstring __stdcall GetStdErrorStr(DWORD dwErr)
 {
     LPVOID lpMsgBuf = NULL;
-    FormatMessageW(  
+    FormatMessageA(
         FORMAT_MESSAGE_ALLOCATE_BUFFER |  
         FORMAT_MESSAGE_FROM_SYSTEM |  
         FORMAT_MESSAGE_IGNORE_INSERTS, 
         NULL,
         dwErr,
         MAKELANGID(LANG_NEUTRAL,SUBLANG_DEFAULT), //Default language  
-        (LPWSTR)&lpMsgBuf,  
+        (LPSTR)&lpMsgBuf,  
         0,  
         NULL  
         ); 
-    ustring wstrMsg((LPWSTR)lpMsgBuf);
+    mstring strMsg((LPCSTR)lpMsgBuf);
     if (lpMsgBuf)
     {
         LocalFlags(lpMsgBuf);
     }
-    return wstrMsg;
+    return strMsg;
 }
 
 std::wstring __stdcall RegGetStrValueExW(HKEY hKey, LPCWSTR wszSubKey, LPCWSTR wszValue)
@@ -544,7 +545,7 @@ static BOOL WINAPI _SecGenerateLowSD(SECURITY_DESCRIPTOR* pSecDesc, PACL* pDacl)
     return bRet;
 }
 
-HANDLE WINAPI CreateLowsdEvent(BOOL bReset, BOOL bInitStat, LPCWSTR wszName)
+HANDLE WINAPI CreateLowsdEvent(BOOL bReset, BOOL bInitStat, LPCSTR szName)
 {
     SECURITY_DESCRIPTOR secDesc;
     PACL pDacl = NULL;
@@ -561,7 +562,7 @@ HANDLE WINAPI CreateLowsdEvent(BOOL bReset, BOOL bInitStat, LPCWSTR wszName)
         return FALSE;
     }
 
-    HANDLE hEvent = CreateEventW(&secAttr, bReset, bInitStat, wszName);
+    HANDLE hEvent = CreateEventA(&secAttr, bReset, bInitStat, szName);
     if (pDacl)
     {
         LocalFree(pDacl);
@@ -641,14 +642,14 @@ static HANDLE _GetProcessToken(DWORD dwPid)
     return hDup;
 }
 
-BOOL WINAPI RunInSession(LPCWSTR wszImage, LPCWSTR wszCmd, DWORD dwSessionId, DWORD dwShell)
+BOOL WINAPI RunInSession(LPCSTR szImage, LPCSTR szCmd, DWORD dwSessionId, DWORD dwShell)
 {
-    if (!wszImage || !*wszImage)
+    if (!szImage || !*szImage)
     {
         return FALSE;
     }
 
-    if (INVALID_FILE_ATTRIBUTES == GetFileAttributesW(wszImage))
+    if (INVALID_FILE_ATTRIBUTES == GetFileAttributesA(szImage))
     {
         return FALSE;
     }
@@ -695,25 +696,25 @@ BOOL WINAPI RunInSession(LPCWSTR wszImage, LPCWSTR wszCmd, DWORD dwSessionId, DW
             CreateEnvironmentBlock(&pEnv, hDup, FALSE);
         }
 
-        WCHAR wszParam[1024] = {0};
-        if (wszCmd && wszCmd[0])
+        CHAR szParam[1024] = {0};
+        if (szCmd && szCmd[0])
         {
-            wnsprintfW(wszParam, 1024, L"\"%ls\" \"%ls\"", wszImage, wszCmd);
+            wnsprintfA(szParam, 1024, "\"%hs\" \"%hs\"", szImage, szCmd);
         }
         else
         {
-            wnsprintfW(wszParam, 1024, L"\"%ls\"", wszImage);
+            wnsprintfA(szParam, 1024, "\"%hs\"", szImage);
         }
-        STARTUPINFOW si = {sizeof(si)};
+        STARTUPINFOA si = {sizeof(si)};
         PROCESS_INFORMATION pi = {0};
         si.cb = sizeof(STARTUPINFO);
-        si.lpDesktop = L"WinSta0\\Default";
+        si.lpDesktop = "WinSta0\\Default";
         si.dwFlags = STARTF_USESHOWWINDOW;
         si.wShowWindow = TRUE;
-        bStat = CreateProcessAsUserW(
+        bStat = CreateProcessAsUserA(
             hDup,
             NULL,
-            wszParam,
+            szParam,
             NULL,
             NULL,
             FALSE,

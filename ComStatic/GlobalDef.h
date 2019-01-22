@@ -3,37 +3,37 @@
 #include <Windows.h>
 #include <Shlwapi.h>
 
-#define SFV_SERVICE_NAME           L"DbgService"
-#define SFV_SERVICE_DISPLAY_NAME   L"DbgService"
-#define SFV_SERVICE_DESCRIPTION    L"DbgService服务"
+#define SFV_SERVICE_NAME           "DbgService"
+#define SFV_SERVICE_DISPLAY_NAME   "DbgService"
+#define SFV_SERVICE_DESCRIPTION    "DbgService服务"
 
-#define SFV_NOTIFY_NAME L"Global\\{784BC5BC-25D1-4861-8FED-38CFF9428877}"
+#define SFV_NOTIFY_NAME "Global\\{784BC5BC-25D1-4861-8FED-38CFF9428877}"
 
-#define PATH_SERVICE_CACHE L"software\\vdebug\\runner"
-#define RUNNER_EVENT32  (L"dbg32_%ls")
-#define RUNNER_EVENT64  (L"dbg64_%ls")
-#define SERVICE_EVENT   (L"service_%ls")
+#define PATH_SERVICE_CACHE "software\\vdebug\\runner"
+#define RUNNER_EVENT32  ("dbg32_%hs")
+#define RUNNER_EVENT64  ("dbg64_%hs")
+#define SERVICE_EVENT   ("service_%hs")
 
 #if WIN64 || _WIN64
-#define REG_VDEBUG_CACHE    L"SoftWare\WOW6432Node\\vdebug\\config\\dbgport"
+#define REG_VDEBUG_CACHE    "SoftWare\WOW6432Node\\vdebug\\config\\dbgport"
 #else
-#define REG_VDEBUG_CACHE    L"SoftWare\\vdebug\\config\\dbgport"
+#define REG_VDEBUG_CACHE    "SoftWare\\vdebug\\config\\dbgport"
 #endif
 
-#define UNIQUE_DEBUG    L"debug"    //调试用
+#define UNIQUE_DEBUG    "debug"    //调试用
 
 struct ProcMonInfo {
     DWORD procUnique;
     DWORD procPid;
-    std::ustring procPath;
-    std::ustring procCmd;
+    std::mstring procPath;
+    std::mstring procCmd;
     BOOL x64;
-    std::ustring startTime;
+    std::mstring startTime;
     DWORD sessionId;
     DWORD parentPid;
-    std::ustring procDesc;
-    std::ustring procUser;
-    std::ustring procUserSid;
+    std::mstring procDesc;
+    std::mstring procUser;
+    std::mstring procUserSid;
 
     ProcMonInfo() {
         procUnique = 0;
