@@ -111,7 +111,7 @@ void CProcDbgger::ResetCache()
     m_vDbgProcInfo.Clear();
     m_vModuleInfo.clear();
     m_dwCurrentThreadId = 0;
-    //m_eDbggerStat = em_dbg_status_init;
+    m_eDbggerStat = em_dbg_status_init;
     m_vBreakPoint.clear();
     m_dwLastBpSerial = 0;
     m_bDetachDbgger = FALSE;
@@ -150,6 +150,8 @@ DWORD CProcDbgger::DebugThread(LPVOID pParam)
         GetInstance()->m_bX64 = (!bWowProc);
         GetInstance()->m_vDbgProcInfo.m_dwPid = process->dwProcessId;
         GetInstance()->m_vDbgProcInfo.m_hProcess = process->hProcess;
+
+        GetInstance()->m_eStatus = em_dbg_status_busy;
         DebugLoop();
     }
     return 0;
@@ -216,6 +218,10 @@ HANDLE CProcDbgger::GetThreadById(DWORD dwId) const
         }
     }
     return NULL;
+}
+
+DbggerStatus CProcDbgger::GetDbggerStatus() {
+    return m_eDbggerStat;
 }
 
 DbgModuleInfo CProcDbgger::GetModuleFromAddr(DWORD64 dwAddr) const
@@ -301,6 +307,8 @@ void CProcDbgger::OnCreateProcess(CREATE_PROCESS_DEBUG_INFO* pCreateProcessInfo)
     info.mBaseAddr = FormatA("0x%p", pCreateProcessInfo->lpBaseOfImage);
     info.mEntryAddr = FormatA("0x%p", pCreateProcessInfo->lpStartAddress);
 
+   GetInstance()->m_eStatus = em_dbg_status_busy;
+
     mstring event = MakeDbgEvent(DBG_EVENT_DBG_PROC_CREATEA, EncodeProcCreate(info));
     MsgSend(MQ_CHANNEL_DBG_SERVER, event.c_str());;
 
@@ -341,6 +349,7 @@ void CProcDbgger::OnDetachDbgger()
     ////CSyntaxDescHlpr hlpr;
     //hlpr.FormatDesc(L"ÒÑÍÑÀëµ÷ÊÔÆ÷", COLOUR_MSG);
     //GetSyntaxView()->AppendSyntaxDesc(hlpr.GetResult());
+    m_eDbggerStat = em_dbg_status_init;
 }
 
 void CProcDbgger::OnExitProcess(EXIT_PROCESS_DEBUG_INFO* ExitProcess)
@@ -380,12 +389,14 @@ void CProcDbgger::OnSystemBreakpoint(void* ExceptionData)
         return;
     }
 
-    utf8_mstring package = MakeDbgEvent(DBG_EVENT_SYSTEM_BREAKPOINTA, FormatA("{\"tid\":%d}", dwId));
+    mstring package = MakeDbgEvent(DBG_EVENT_SYSTEM_BREAKPOINTA, FormatA("{\"tid\":%d}", dwId));
     MsgSend(MQ_CHANNEL_DBG_SERVER, package.c_str());
 
     //ÍÑÀëµ÷ÊÔÆ÷
     if (GetInstance()->m_bDetachDbgger)
     {
+        DetachDebuggerEx(GetInstance()->m_vDbgProcInfo.m_dwPid);
+        GetInstance()->OnDetachDbgger();
         return;
     }
     GetInstance()->RunCommand("r");

@@ -269,7 +269,6 @@ static void _InitSyntaxView() {
     gs_pSyntaxView = new SyntaxView();
 
     gs_pSyntaxView->CreateView(gs_hMainView, 0, 0, 100, 100);
-    gs_pSyntaxView->ShowScrollBar(false);
     gs_pSyntaxView->ShowMargin(false);
     gs_pSyntaxView->SetCaretColour(RGB(255, 255, 255));
 
@@ -278,6 +277,8 @@ static void _InitSyntaxView() {
     gs_pSyntaxView->SetCaretSize(1);
 
     gs_pSyntaxView->SendMsg(SCI_STYLESETSIZE, STYLE_DEFAULT, 10);
+    gs_pSyntaxView->ShowVsScrollBar(true);
+    gs_pSyntaxView->ShowHsScrollBar(false);
 }
 
 static VOID _OnInitDialog(HWND hwnd, WPARAM wp, LPARAM lp)
@@ -319,6 +320,12 @@ static VOID _OnInitDialog(HWND hwnd, WPARAM wp, LPARAM lp)
     SetCtlsCoord(hwnd, vCtrls, RTL_NUMBER_OF(vCtrls));
     SetTimer(hwnd, TIMER_CFG_CHECK, 500, NULL);
 
+    SetCmdNotify(em_dbg_status_init, "³õÊ¼×´Ì¬");
+    gs_pfnCommandProc = (PWIN_PROC)SetWindowLongPtr(gs_hCommand, GWLP_WNDPROC, (LONG_PTR)_CommandProc);
+    gs_pCmdQueue = new CCmdQueue();
+
+    SetWindowPos(gs_hMainView, 0, 0, 0, 600, 160, SWP_NOMOVE | SWP_NOZORDER);
+
     ustring wstrVersion;
     WCHAR wszBuf[MAX_PATH] = {0};
     GetModuleFileNameW(NULL, wszBuf, MAX_PATH);
@@ -326,12 +333,6 @@ static VOID _OnInitDialog(HWND hwnd, WPARAM wp, LPARAM lp)
     wstrVersion.setbuffer();
 
     AppendToSyntaxView(SCI_LABEL_DEFAULT, FormatA("VDebugµ÷ÊÔÆ÷£¬°æ±¾£º%ls\n", wstrVersion.c_str()));
-
-    SetCmdNotify(em_dbg_status_init, "³õÊ¼×´Ì¬");
-    gs_pfnCommandProc = (PWIN_PROC)SetWindowLongPtr(gs_hCommand, GWLP_WNDPROC, (LONG_PTR)_CommandProc);
-    gs_pCmdQueue = new CCmdQueue();
-
-    SetWindowPos(gs_hMainView, 0, 0, 0, 600, 160, SWP_NOMOVE | SWP_NOZORDER);
 }
 
 static VOID _OnCommand(HWND hwnd, WPARAM wp, LPARAM lp)
@@ -341,7 +342,7 @@ static VOID _OnCommand(HWND hwnd, WPARAM wp, LPARAM lp)
     {
     case IDT_EXIT_DEBUG:
         {
-            //gs_pCurDbgger->DisConnect();
+            DbgCtrlService::GetInstance()->DetachProc();
         }
         break;
     case  IDC_CMD_OPEN:
@@ -465,6 +466,7 @@ static void _OnAppendMsg() {
         gs_pSyntaxView->AppendText(p->m_label, p->m_data);
         delete p;
     }
+    gs_pSyntaxView->SetScrollEndLine();
 }
 
 static INT_PTR CALLBACK _MainViewProc(HWND hdlg, UINT msg, WPARAM wp, LPARAM lp)

@@ -19,7 +19,8 @@ private:
     static std::mstring __stdcall GetProcInfo(const std::mstring &cmd, const std::mstring &content, void *param);
     static std::mstring __stdcall ExecProc(const std::mstring &cmd, const std::mstring &content, void *param);
     static std::mstring __stdcall AttachProc(const std::mstring &cmd, const std::mstring &content, void *param);
-    static std::mstring _stdcall RunCmd(const std::mstring &cmd, const std::mstring &content, void *param);
+    static std::mstring __stdcall RunCmd(const std::mstring &cmd, const std::mstring &content, void *param);
+    static std::mstring __stdcall DetachProc(const std::mstring &cmd, const std::mstring &content, void *param);
 
 private:
     //proc event

@@ -42,6 +42,7 @@ bool ProcDbgProxy::InitProcDbgProxy(const char *unique) {
     m_pDbgClient->RegisterCtrlHandler(DBG_CTRL_ATTACH, AttachProc, this);
     m_pDbgClient->RegisterCtrlHandler(DBG_CTRL_RUNCMD, RunCmd, this);
     m_pDbgClient->RegisterCtrlHandler(DBG_TASK_GET_PROC, GetProcInfo, this);
+    m_pDbgClient->RegisterCtrlHandler(DBG_CTRL_DETACH, DetachProc, this);
     m_pProcDbgger = CProcDbgger::GetInstance();
     return true;
 }
@@ -103,8 +104,17 @@ mstring ProcDbgProxy::ExecProc(const std::mstring &cmd, const std::mstring &cont
     return res;
 }
 
-mstring ProcDbgProxy::AttachProc(const std::mstring &cmd, const std::mstring &content, void *para) {
-    return "";
+mstring ProcDbgProxy::AttachProc(const std::mstring &cmd, const std::mstring &content, void *param) {
+    return MakeDbgRelpy(0, "success", "");
+}
+
+mstring ProcDbgProxy::DetachProc(const std::mstring &cmd, const std::mstring &content, void *param) {
+    if (GetInstance()->m_pProcDbgger->GetDbggerStatus() != em_dbg_status_init)
+    {
+        GetInstance()->m_pProcDbgger->DisConnect();
+    }
+
+    return MakeDbgRelpy(0, "success", "");
 }
 
 mstring ProcDbgProxy::GetProcInfo(const mstring &cmd, const mstring &content, void *param) {

@@ -121,6 +121,7 @@ public:
     DWORD GetCurDbgProcId() const;
     HANDLE GetCurrentThread();
     HANDLE GetThreadById(DWORD dwId) const;
+    DbggerStatus GetDbggerStatus();
 
 protected:
     //读写调试进程内存

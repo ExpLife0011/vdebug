@@ -80,8 +80,11 @@ void SyntaxView::SetDefStyle(unsigned int textColour, unsigned int backColour) {
     SendMsg(SCI_STYLESETBACK, STYLE_DEFAULT, backColour);
 }
 
-void SyntaxView::ShowScrollBar(bool show) {
-    SendMsg(SCI_SETVSCROLLBAR, show, 0);
+void SyntaxView::ShowVsScrollBar(bool show) {
+    SendMsg(SCI_SETHSCROLLBAR, show, 0);
+}
+
+void SyntaxView::ShowHsScrollBar(bool show) {
     SendMsg(SCI_SETHSCROLLBAR, show, 0);
 }
 
@@ -114,6 +117,10 @@ int SyntaxView::GetFontWeight() {
 
 unsigned int SyntaxView::GetCaretColour() {
     return 0;
+}
+
+int SyntaxView::SetScrollEndLine() {
+    return SendMsg(SCI_SCROLLTOEND, 0, 0);
 }
 
 void SyntaxView::AppendText(const std::mstring &label, const std::mstring &text) const {

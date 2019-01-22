@@ -170,6 +170,12 @@ bool DbgCtrlService::ExecProc(const std::mstring &path, const std::mstring &para
     return true;
 }
 
+bool DbgCtrlService::DetachProc() {
+    m_pCtrlService->DispatchCurDbgger(DBG_CTRL_DETACH, "{}");
+    SetCmdNotify(em_dbg_status_init, "初始状态");
+    return true;
+}
+
 bool DbgCtrlService::RunCmdInCtrlService(const std::mstring &command) {
     Value conent;
     conent["cmd"] = command;
@@ -211,9 +217,8 @@ void DbgCtrlService::OnProcExit(const mstring &event, const mstring &content, vo
 void DbgCtrlService::OnModuleLoad(const mstring &eventName, const mstring &content, void *param) {
     DllLoadInfo dllInfo = DecodeDllLoadInfo(content);
 
-    PrintFormater pf;
-    pf.SetRule("0;16");
-    pf << "模块加载" << dllInfo.mDllName << dllInfo.mBaseAddr << dllInfo.mEndAddr << line_end;
+    PrintFormater pf;;
+    pf << "模块加载" << dllInfo.mBaseAddr << dllInfo.mEndAddr << dllInfo.mDllName << line_end;
     AppendToSyntaxView(SCI_LABEL_DEFAULT, pf.GetResult());
 }
 

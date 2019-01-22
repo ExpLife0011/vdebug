@@ -85,6 +85,13 @@
 }
 */
 #define DBG_CTRL_EXEC                "exec"
+
+//{}
+#define DBG_CTRL_DETACH              "ctrlDetach"
+
+//{}
+#define DBG_EVENT_DETACH             "eventDetach"
+
 /*
 {
     "cmd":"RunCmd",

@@ -27,7 +27,8 @@ public:
     void ShowCaretLine(bool show, unsigned int colour);
     void ShowMargin(bool bShow);
     void SetDefStyle(unsigned int textColour, unsigned int backColour);
-    void ShowScrollBar(bool show);
+    void ShowVsScrollBar(bool show);
+    void ShowHsScrollBar(bool show);
     void LoadSyntaxCfgFile(const std::mstring path);
     std::string GetFont();
     void SetFont(const std::string &fontName);
@@ -36,6 +37,7 @@ public:
     void SetFontWeight(int weight);
     int GetFontWeight();
     unsigned int GetCaretColour();
+    int SetScrollEndLine();
 
 private:
     std::string m_path;
