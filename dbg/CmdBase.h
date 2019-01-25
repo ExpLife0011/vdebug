@@ -33,41 +33,6 @@ enum DbgCmdStatus
     em_dbgstat_faild
 };
 
-struct DbgCmdResult
-{
-    //SyntaxDesc m_vSyntaxDesc;   //命令返回的高亮语法结果
-    DbgCmdStatus m_eStatus;     //命令执行结果
-
-    DbgCmdResult()
-    {
-        m_eStatus = em_dbgstat_cmdnotfound;
-    }
-
-    /*
-    DbgCmdResult(DbgCmdStatus eStatus, const SyntaxDesc &vSyntaxDesc)
-    {
-        m_eStatus = eStatus;
-    }
-    */
-
-    DbgCmdResult(DbgCmdStatus eStatus)
-    {
-        m_eStatus = eStatus;
-    }
-
-    DbgCmdResult(DbgCmdStatus eStatus, const mstring &wstrMsg)
-    {
-        m_eStatus = eStatus;
-        //CSyntaxDescHlpr hlpr;
-        //m_vSyntaxDesc = hlpr.FormatDesc(wstrMsg).GetResult();
-    }
-
-    void SetResult(/*const SyntaxDesc &vSyntaxDesc*/)
-    {
-       // m_vSyntaxDesc = vSyntaxDesc;
-    }
-};
-
 struct DbgFunInfo
 {
     mstring m_strModule;

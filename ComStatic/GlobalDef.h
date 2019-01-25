@@ -14,6 +14,14 @@
 #define RUNNER_EVENT64  ("dbg64_%hs")
 #define SERVICE_EVENT   ("service_%hs")
 
+#define DBG_CTRL_ERROR_SUCCESS          (0)
+#define DBG_CTRL_ERROR_CMD_NOTFIND      (6001)
+#define DBG_CTRL_ERROR_CMD_SYNTAX_ERR   (6002)
+
+#define DBG_CMD_SYNTAX_ERR              (9050)
+#define DBG_CMD_READMEM_ERR             (9051)
+#define DBG_CMD_UNKNOW_ERR              (9999)
+
 #if WIN64 || _WIN64
 #define REG_VDEBUG_CACHE    "SoftWare\WOW6432Node\\vdebug\\config\\dbgport"
 #else

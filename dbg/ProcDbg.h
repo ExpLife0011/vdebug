@@ -181,26 +181,26 @@ protected:
     bool DisassUntilRet(DWORD64 dwStartAddr, mstring &data) const;
     void GetDisassContentDesc(const mstring &wstrContent, mstring &data) const; //»ã±àÖ¸Áî×ÅÉ«
 
-    virtual DbgCmdResult OnCommand(const mstring &wstrCmd, const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
-    DbgCmdResult OnCmdBp(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
-    DbgCmdResult OnCmdBl(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
-    DbgCmdResult OnCmdBc(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
-    DbgCmdResult OnCmdBu(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
-    DbgCmdResult OnCmdClear(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
-    DbgCmdResult OnCmdDisass(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
-    DbgCmdResult OnCmdUb(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
-    DbgCmdResult OnCmdUf(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
-    DbgCmdResult OnCmdGo(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
-    DbgCmdResult OnCmdGu(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
-    DbgCmdResult OnCmdKv(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
-    DbgCmdResult OnCmdDb(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
-    DbgCmdResult OnCmdDd(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
-    DbgCmdResult OnCmdDu(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
-    DbgCmdResult OnCmdReg(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
-    DbgCmdResult OnCmdScript(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
-    DbgCmdResult OnCmdTs(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
-    DbgCmdResult OnCmdTc(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
-    DbgCmdResult OnCmdLm(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
+    virtual std::mstring OnCommand(const mstring &wstrCmd, const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
+    std::mstring OnCmdBp(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
+    std::mstring OnCmdBl(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
+    std::mstring OnCmdBc(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
+    std::mstring OnCmdBu(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
+    std::mstring OnCmdClear(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
+    std::mstring OnCmdDisass(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
+    std::mstring OnCmdUb(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
+    std::mstring OnCmdUf(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
+    std::mstring OnCmdGo(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
+    std::mstring OnCmdGu(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
+    std::mstring OnCmdKv(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
+    std::mstring OnCmdDb(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
+    std::mstring OnCmdDd(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
+    std::mstring OnCmdDu(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
+    std::mstring OnCmdReg(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
+    std::mstring OnCmdScript(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
+    std::mstring OnCmdTs(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
+    std::mstring OnCmdTc(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
+    std::mstring OnCmdLm(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
 
     static void __cdecl GuCmdCallback();
 };

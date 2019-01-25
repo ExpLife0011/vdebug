@@ -65,9 +65,12 @@ mstring ProcDbgProxy::RunCmd(const mstring &cmd, const mstring &content, void *p
     mstring data = json["cmd"].asString();
     data.trim();
 
+    CmdReplyResult reply;
     if (data.empty())
     {
-        return MakeDbgRelpy(REPLY_STAT_CMD_CODE_PARAM_ERR, "", "");
+        reply.mCmdCode = DBG_CMD_SYNTAX_ERR;
+        reply.mCmdShow = "ÃüÁîÓï·¨´íÎó";
+        return MakeCmdReply(reply);
     }
 
     return GetInstance()->m_pProcDbgger->RunCommand(data);
@@ -97,15 +100,15 @@ mstring ProcDbgProxy::ExecProc(const std::mstring &cmd, const std::mstring &cont
     mstring res;
     if (ret)
     {
-        res = MakeDbgRelpy(0, "exec success", "");
+        res = MakeDbgRelpy(DbgReplyResult(0, "exec success", ""));
     } else {
-        res = MakeDbgRelpy(GetLastError(), "exec error", "");
+        res = MakeDbgRelpy(DbgReplyResult(GetLastError(), "exec error", ""));
     }
     return res;
 }
 
 mstring ProcDbgProxy::AttachProc(const std::mstring &cmd, const std::mstring &content, void *param) {
-    return MakeDbgRelpy(0, "success", "");
+    return MakeDbgRelpy(DbgReplyResult(0, "success", ""));
 }
 
 mstring ProcDbgProxy::DetachProc(const std::mstring &cmd, const std::mstring &content, void *param) {
@@ -114,7 +117,7 @@ mstring ProcDbgProxy::DetachProc(const std::mstring &cmd, const std::mstring &co
         GetInstance()->m_pProcDbgger->DisConnect();
     }
 
-    return MakeDbgRelpy(0, "success", "");
+    return MakeDbgRelpy(DbgReplyResult(0, "success", ""));
 }
 
 mstring ProcDbgProxy::GetProcInfo(const mstring &cmd, const mstring &content, void *param) {
@@ -135,7 +138,7 @@ mstring ProcDbgProxy::GetProcInfo(const mstring &cmd, const mstring &content, vo
         ProcMonitor::GetInstance()->UnRegisterListener(GetInstance()->m_hProcListener);
         GetInstance()->m_hProcListener = NULL;
     }
-    return MakeDbgRelpy(0, "success", "");
+    return MakeDbgRelpy(DbgReplyResult(0, "success", ""));
 }
 
 void ProcDbgProxy::OnProcChanged(HProcListener listener, const list<const ProcMonInfo *> &added, const list<DWORD> &killed) {

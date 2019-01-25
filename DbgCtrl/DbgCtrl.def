@@ -4,3 +4,6 @@ MakeDbgRequest
 MakeDbgRelpy
 IsDbgReplySucc
 ParserDbgReply
+
+MakeCmdReply
+ParserCmdReply

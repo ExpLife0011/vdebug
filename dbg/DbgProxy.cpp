@@ -4,11 +4,11 @@ void CDbggerProxy::OnCmdHlprRegister()
 {
 }
 
-DbgCmdResult CDbggerProxy::OnCmdHelp(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam)
+mstring CDbggerProxy::OnCmdHelp(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam)
 {
-    mstring wstrParam(wstrCmdParam);
-    wstrParam.makelower();
-    wstrParam.trim();
+    mstring strParam(wstrCmdParam);
+    strParam.makelower();
+    strParam.trim();
 
     /*
     SyntaxDesc desc;
@@ -144,7 +144,7 @@ DbgCmdResult CDbggerProxy::OnCmdHelp(const mstring &wstrCmdParam, BOOL bShow, co
     }
     */
     //return DbgCmdResult(em_dbgstat_succ, desc);
-    return DbgCmdResult();
+    return mstring();
 }
 
 void CDbggerProxy::InitHelpEngine()

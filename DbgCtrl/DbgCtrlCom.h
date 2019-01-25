@@ -20,14 +20,41 @@ typedef long HDbgCtrl;
 #define REPLY_STAT_CMD_CODE_PARAM_ERR       1011
 
 struct DbgReplyResult {
-    int m_code;
-    std::ustring m_reason;
-    std::ustring m_result;
+    int mCode;
+    std::mstring mReason;
+    std::mstring mResult;
+
+    DbgReplyResult(int a, const std::mstring &b, const std::mstring &c) {
+        mCode = a;
+        mReason = b;
+        mResult = c;
+    }
 };
 
-std::mstring __stdcall MakeDbgEvent(const std::mstring &event, const std::mstring &data);
+std::mstring __stdcall MakeDbgEvent(const std::mstring &eventName, const std::mstring &data);
 std::mstring __stdcall MakeDbgRequest(const std::mstring &cmd, const std::mstring &content);
-std::mstring __stdcall MakeDbgRelpy(int status, const std::mstring &reason, const std::mstring &result);
+std::mstring __stdcall MakeDbgRelpy(const DbgReplyResult &result);
 bool __stdcall IsDbgReplySucc(const std::mstring &reply, DbgReplyResult &result);
 bool __stdcall ParserDbgReply(const std::mstring &reply, DbgReplyResult &result);
+
+/*
+调试命令回执解析，Cmd回执是在DbgProtocol之上的又一层封装
+*/
+struct CmdReplyResult {
+    int mCmdCode;
+    std::mstring mCmdShow;
+    std::mstring mCmdResult;
+
+    CmdReplyResult() {
+        mCmdCode = 0;
+    }
+
+    CmdReplyResult(int code, const std::mstring &show, const std::mstring &result) {
+        mCmdCode = 0;
+        mCmdShow = show;
+        mCmdResult = result;
+    }
+};
+std::mstring __stdcall MakeCmdReply(const CmdReplyResult &cmdResult);
+bool __stdcall ParserCmdReply(const std::mstring &reply, CmdReplyResult &cmdResult);
 #endif //COMMON_DBGCTRL_H_H_

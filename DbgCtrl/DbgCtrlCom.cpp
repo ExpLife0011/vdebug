@@ -56,27 +56,27 @@ std::mstring __stdcall MakeDbgRequest(const std::mstring &cmd, const std::mstrin
                 "param0": "0xabcd1234",
                 "param1": "0xabcd1234",
                 "param2": "0xabcd1233"
-        }]
-    }
+            }]
+        }
 }
 */
-std::mstring __stdcall MakeDbgRelpy(int status, const std::mstring &reason, const std::mstring &result) {
+std::mstring __stdcall MakeDbgRelpy(const DbgReplyResult &result) {
     Value root;
     root["cmd"] = "reply";
 
     Value content;
-    content["status"] = status;
-    content["reason"] = reason;
+    content["status"] = result.mCode;
+    content["reason"] = result.mReason;
 
     Value resultJson;
-    Reader().parse(result, resultJson);
+    Reader().parse(result.mResult, resultJson);
     content["result"] = resultJson;
     root["content"] = content;
     return FastWriter().write(root);
 }
 
 bool __stdcall IsDbgReplySucc(const std::mstring &reply, DbgReplyResult &result) {
-    return ParserDbgReply(reply, result) && (0 == result.m_code);
+    return ParserDbgReply(reply, result) && (0 == result.mCode);
 }
 
 bool __stdcall ParserDbgReply(const std::mstring &reply, DbgReplyResult &result) {
@@ -85,8 +85,61 @@ bool __stdcall ParserDbgReply(const std::mstring &reply, DbgReplyResult &result)
     Reader().parse(reply, root);
     Value content = root["content"];
 
-    result.m_code = GetIntFromJson(content, "status");
-    result.m_reason = UtoW(GetStrFormJson(content, "reason"));
-    result.m_result = UtoW(GetStrFormJson(content, "result"));
+    result.mCode = GetIntFromJson(content, "status");
+    result.mReason = GetStrFormJson(content, "reason");
+    result.mResult = GetStrFormJson(content, "result");
+    return true;
+}
+
+/*
+{
+    "cmd": "reply",
+    "content": {
+        "status": 0,
+        "reason": "abcdef",
+        "result":{
+            "cmdCode":0,
+            "cmdResult": [{
+                "retaddr": "0x0xabcd12ff",
+                "param0": "0xabcd1234",
+                "param1": "0xabcd1234",
+                "param2": "0xabcd1233"
+            }]
+        } 
+    }
+}
+*/
+mstring __stdcall MakeCmdReply(const CmdReplyResult &cmdResult) {
+    Value root;
+    root["cmd"] = "reply";
+
+    Value content;
+    content["status"] = 0;
+    content["reason"] = "";
+
+    Value result;
+    result["cmdCode"] = cmdResult.mCmdCode;
+
+    Value tmp;
+    Reader().parse(cmdResult.mCmdResult, tmp);
+    result["cmdResult"] = tmp;
+    content["result"] = result;
+
+    root["content"] = content;
+    return FastWriter().write(root);
+}
+
+bool __stdcall ParserCmdReply(const std::mstring &reply, CmdReplyResult &cmdResult) {
+    Value root;
+
+    Reader().parse(reply, root);
+    if (root.type() != objectValue)
+    {
+        return false;
+    }
+
+    Value result = root["result"];
+    cmdResult.mCmdCode = result["cmdCode"].asInt();
+    cmdResult.mCmdResult = FastWriter().write(result["cmdResult"]);
     return true;
 }
