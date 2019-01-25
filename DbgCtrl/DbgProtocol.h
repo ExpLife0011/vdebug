@@ -109,10 +109,12 @@
             "cmdCode":0,
             "cmdShow":"abcd1234",
             "cmdResult": [{
-                "retaddr": "0x0xabcd12ff",
+                "addr": "0x0xabcd12ff",
+                "function":"kernel32!CreateFileW",
                 "param0": "0xabcd1234",
                 "param1": "0xabcd1234",
-                "param2": "0xabcd1233"
+                "param2": "0xabcd1233",
+                "param3": "0xabcd1233"
             }]
         } 
     }

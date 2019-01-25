@@ -38,10 +38,11 @@ RegisterContent _declspec(dllexport) __stdcall DecodeCmdRegister(const std::mstr
 
 struct CallStackSingle {
     std::mstring mReturn;
+    std::mstring mParam0;
     std::mstring mParam1;
     std::mstring mParam2;
     std::mstring mParam3;
-    std::mstring mParam4;
+    std::mstring mAddr;
     std::mstring mFunction;
 };
 
@@ -49,5 +50,5 @@ struct CallStackData {
     std::list<CallStackSingle> mCallStack;
 };
 std::mstring _declspec(dllexport) __stdcall EncodeCmdCallStack(const CallStackData &callStack);
-CallStackData __stdcall DecodeCmdCallStack(const std::mstring &json);
+CallStackData _declspec(dllexport) __stdcall DecodeCmdCallStack(const std::mstring &json);
 #endif //TRANSFERENCODER_H_H_

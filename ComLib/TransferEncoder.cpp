@@ -142,3 +142,61 @@ DllLoadInfo _declspec(dllexport) __stdcall DecodeDllLoadInfo(const std::mstring 
     info.mEndAddr = content["endAddr"].asString();
     return info;
 }
+
+/*
+{
+    "cmd": "reply",
+    "content": {
+        "status": 0,
+        "reason": "abcdef",
+        "result":{
+            "cmdCode":0,
+            "cmdShow":"abcd1234",
+            "cmdResult": [{
+                "addr": "0x0xabcd12ff",
+                "function":"kernel32!CreateFileW",
+                "param0": "0xabcd1234",
+                "param1": "0xabcd1234",
+                "param2": "0xabcd1233",
+                "param3": "0xabcd1233"
+            }]
+        } 
+    }
+}
+*/
+mstring _declspec(dllexport) __stdcall EncodeCmdCallStack(const CallStackData &callStack) {
+    Value result(arrayValue);
+
+    for (list<CallStackSingle>::const_iterator it = callStack.mCallStack.begin() ; it != callStack.mCallStack.end() ; it++)
+    {
+        Value single;
+        single["addr"] = it->mAddr;
+        single["function"] = it->mFunction;
+        single["param0"] = it->mParam0;
+        single["param1"] = it->mParam1;
+        single["param2"] = it->mParam2;
+        single["param3"] = it->mParam3;
+        result.append(single);
+    }
+    return FastWriter().write(result);
+}
+
+CallStackData __stdcall DecodeCmdCallStack(const mstring &json) {
+    CallStackData data;
+    Value result;
+
+    Reader().parse(json, result);
+    for (int i = 0 ; i < (int)result.size() ; i++)
+    {
+        Value singleJson = result[i];
+        CallStackSingle single;
+        single.mAddr = singleJson["addr"].asString();
+        single.mFunction = singleJson["function"].asString();
+        single.mParam0 = singleJson["param0"].asString();
+        single.mParam1 = singleJson["param1"].asString();
+        single.mParam2 = singleJson["param2"].asString();
+        single.mParam3 = singleJson["param3"].asString();
+        data.mCallStack.push_back(single);
+    }
+    return data;
+}

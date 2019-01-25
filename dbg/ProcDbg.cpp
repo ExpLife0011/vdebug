@@ -1203,36 +1203,29 @@ list<STACKFRAME64> CProcDbgger::GetStackFrame(const mstring &wstrParam)
     return info.m_FrameSet;
 }
 
-mstring CProcDbgger::OnCmdKv(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam)
+mstring CProcDbgger::OnCmdKv(const mstring &cmdParam, BOOL bShow, const CmdUserParam *pParam)
 {
-    /*
-    list<STACKFRAME64> vStack = GetCurrentDbgger()->GetStackFrame(wstrCmdParam);
+    list<STACKFRAME64> vStack = GetInstance()->GetStackFrame(cmdParam);
+    CmdReplyResult result;
     if (vStack.empty())
     {
-        return mstring();
+        return MakeCmdReply(result);
     }
-    */
 
-    /*
-    //CSyntaxDescHlpr hlpr;
-    hlpr.NextLine();
-    hlpr.FormatDesc(L"返回地址 ", COLOUR_MSG, 17);
-    hlpr.FormatDesc(L"参数列表 ", COLOUR_MSG, 17);
-    hlpr.NextLine();
+    CallStackData callSet;
+    CallStackSingle single;
     for (list<STACKFRAME64>::const_iterator it = vStack.begin() ; it != vStack.end() ; it++)
     {
-        hlpr.FormatDesc(FormatW(L"%016llx ", it->AddrPC.Offset), COLOUR_ADDR);
-        for (int j = 0 ; j < 4 ; j++)
-        {
-            hlpr.FormatDesc(FormatW(L"%016llx ", it->Params[j]), COLOUR_PARAM);
-        }
-
-        hlpr.FormatDesc(FormatW(L"%ls", GetInstance()->GetSymFromAddr(it->AddrPC.Offset).c_str()), COLOUR_PROC);
-        hlpr.NextLine();
+        single.mAddr = FormatA("%08llx ", it->AddrPC.Offset);
+        single.mParam0 = FormatA("%08llx ", it->Params[0]);
+        single.mParam1 = FormatA("%08llx ", it->Params[1]);
+        single.mParam2 = FormatA("%08llx ", it->Params[2]);
+        single.mParam3 = FormatA("%08llx ", it->Params[3]);
+        single.mFunction = FormatA("%hs", GetInstance()->GetSymFromAddr(it->AddrPC.Offset).c_str());
+        callSet.mCallStack.push_back(single);
     }
-    return mstring(em_dbgstat_succ, hlpr.GetResult());
-    */
-    return mstring();
+    result.mCmdResult = EncodeCmdCallStack(callSet);
+    return MakeCmdReply(result);
 }
 
 mstring CProcDbgger::OnCmdDb(const mstring &strCmdParam, BOOL bShow, const CmdUserParam *pParam)
