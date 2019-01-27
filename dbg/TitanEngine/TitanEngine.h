@@ -8,7 +8,7 @@
 #endif
 
 #include <windows.h>
-#include <stdint.h>
+#include "../include/stdint.h"
 
 #pragma pack(push, 1)
 
