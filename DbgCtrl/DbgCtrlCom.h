@@ -40,12 +40,33 @@ bool __stdcall ParserDbgReply(const std::mstring &reply, DbgReplyResult &result)
 /*
 调试命令回执解析，Cmd回执是在DbgProtocol之上的又一层封装
 */
+#define CMD_MASK_SHOW       (1 << 0)    //展示字符串
+#define CMD_MASK_RESULT     (1 << 1)    //结果Json
+
+struct CmdRequest {
+    std::mstring mCmd;
+    int mCmdMode;
+
+    CmdRequest() {
+        mCmdMode = (CMD_MASK_SHOW | CMD_MASK_RESULT);
+    }
+
+    CmdRequest(const std::mstring &cmd) {
+        mCmdMode = CMD_MASK_SHOW;
+        mCmd = cmd;
+    }
+};
+std::mstring MakeCmdRequest(const CmdRequest &request);
+CmdRequest ParserCmdRequest(const std::mstring &json);
+
 struct CmdReplyResult {
-    int mCmdCode;
-    std::mstring mCmdShow;
-    std::mstring mCmdResult;
+    int mCmdCode;               //状态码
+    int mResultMode;            //展示状态 
+    std::mstring mCmdShow;      //展示字符串
+    std::mstring mCmdResult;    //命令执行结果集
 
     CmdReplyResult() {
+        mResultMode = (CMD_MASK_SHOW | CMD_MASK_RESULT);
         mCmdCode = 0;
     }
 

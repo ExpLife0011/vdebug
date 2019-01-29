@@ -5,5 +5,7 @@ MakeDbgRelpy
 IsDbgReplySucc
 ParserDbgReply
 
+MakeCmdRequest
+ParserCmdRequest
 MakeCmdReply
 ParserCmdReply

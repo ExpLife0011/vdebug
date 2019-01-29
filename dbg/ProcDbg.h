@@ -181,26 +181,26 @@ protected:
     bool DisassUntilRet(DWORD64 dwStartAddr, mstring &data) const;
     void GetDisassContentDesc(const mstring &wstrContent, mstring &data) const; //»ã±àÖ¸Áî×ÅÉ«
 
-    virtual std::mstring OnCommand(const mstring &wstrCmd, const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
-    std::mstring OnCmdBp(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
-    std::mstring OnCmdBl(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
-    std::mstring OnCmdBc(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
-    std::mstring OnCmdBu(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
-    std::mstring OnCmdClear(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
-    std::mstring OnCmdDisass(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
-    std::mstring OnCmdUb(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
-    std::mstring OnCmdUf(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
-    std::mstring OnCmdGo(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
-    std::mstring OnCmdGu(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
-    std::mstring OnCmdKv(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
-    std::mstring OnCmdDb(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
-    std::mstring OnCmdDd(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
-    std::mstring OnCmdDu(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
-    std::mstring OnCmdReg(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
-    std::mstring OnCmdScript(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
-    std::mstring OnCmdTs(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
-    std::mstring OnCmdTc(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
-    std::mstring OnCmdLm(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam);
+    virtual CmdReplyResult OnCommand(const mstring &cmd, const mstring &param, DWORD mode, const CmdUserParam *pParam);
+    CmdReplyResult OnCmdBp(const mstring &cmd, DWORD mode, const CmdUserParam *pParam);
+    CmdReplyResult OnCmdBl(const mstring &cmd, DWORD mode, const CmdUserParam *pParam);
+    CmdReplyResult OnCmdBc(const mstring &cmd, DWORD mode, const CmdUserParam *pParam);
+    CmdReplyResult OnCmdBu(const mstring &cmd, DWORD mode, const CmdUserParam *pParam);
+    CmdReplyResult OnCmdClear(const mstring &cmd, DWORD mode, const CmdUserParam *pParam);
+    CmdReplyResult OnCmdDisass(const mstring &cmd, DWORD mode, const CmdUserParam *pParam);
+    CmdReplyResult OnCmdUb(const mstring &cmd, DWORD mode, const CmdUserParam *pParam);
+    CmdReplyResult OnCmdUf(const mstring &cmd, DWORD mode, const CmdUserParam *pParam);
+    CmdReplyResult OnCmdGo(const mstring &cmd, DWORD mode, const CmdUserParam *pParam);
+    CmdReplyResult OnCmdGu(const mstring &cmd, DWORD mode, const CmdUserParam *pParam);
+    CmdReplyResult OnCmdKv(const mstring &cmd, DWORD mode, const CmdUserParam *pParam);
+    CmdReplyResult OnCmdDb(const mstring &cmd, DWORD mode, const CmdUserParam *pParam);
+    CmdReplyResult OnCmdDd(const mstring &cmd, DWORD mode, const CmdUserParam *pParam);
+    CmdReplyResult OnCmdDu(const mstring &cmd, DWORD mode, const CmdUserParam *pParam);
+    CmdReplyResult OnCmdReg(const mstring &cmd, DWORD mode, const CmdUserParam *pParam);
+    CmdReplyResult OnCmdScript(const mstring &cmd, DWORD mode, const CmdUserParam *pParam);
+    CmdReplyResult OnCmdTs(const mstring &cmd, DWORD mode, const CmdUserParam *pParam);
+    CmdReplyResult OnCmdTc(const mstring &cmd, DWORD mode, const CmdUserParam *pParam);
+    CmdReplyResult OnCmdLm(const mstring &cmd, DWORD mode, const CmdUserParam *pParam);
 
     static void __cdecl GuCmdCallback();
 };

@@ -96,7 +96,8 @@
 {
     "cmd":"RunCmd",
     "content":{
-        "cmd":"bp kernen32!CreateFileW"
+        "mode":1,                          //1:仅返回展示字符串 2:返回Json格式的执行结果
+        "cmd":"bp kernen32!CreateFileW"    //cmd 内容
     }
 }
 
@@ -107,6 +108,7 @@
         "reason": "abcdef",
         "result":{
             "cmdCode":0,
+            "mode":1,
             "cmdShow":"abcd1234",
             "cmdResult": [{
                 "addr": "0x0xabcd12ff",

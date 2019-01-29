@@ -73,7 +73,9 @@ mstring ProcDbgProxy::RunCmd(const mstring &cmd, const mstring &content, void *p
         return MakeCmdReply(reply);
     }
 
-    return GetInstance()->m_pProcDbgger->RunCommand(data);
+    CmdRequest request = ParserCmdRequest(content);
+    CmdReplyResult result = GetInstance()->m_pProcDbgger->RunCommand(request);
+    return MakeCmdReply(result);
 }
 
 /*

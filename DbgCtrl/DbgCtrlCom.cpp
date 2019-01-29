@@ -93,22 +93,51 @@ bool __stdcall ParserDbgReply(const std::mstring &reply, DbgReplyResult &result)
 
 /*
 {
+    "cmd":"RunCmd",
+    "content":{
+        "mode":1,                          //1:仅返回展示字符串 2:返回Json格式的执行结果
+        "cmd":"bp kernen32!CreateFileW"    //cmd 内容
+    }
+}
+
+{
     "cmd": "reply",
     "content": {
         "status": 0,
         "reason": "abcdef",
         "result":{
             "cmdCode":0,
+            "mode":1,
+            "cmdShow":"abcd1234",
             "cmdResult": [{
-                "retaddr": "0x0xabcd12ff",
+                "addr": "0x0xabcd12ff",
+                "function":"kernel32!CreateFileW",
                 "param0": "0xabcd1234",
                 "param1": "0xabcd1234",
-                "param2": "0xabcd1233"
+                "param2": "0xabcd1233",
+                "param3": "0xabcd1233"
             }]
         } 
     }
 }
 */
+mstring MakeCmdRequest(const CmdRequest &request) {
+    Value json;
+    json["mode"] = request.mCmdMode;
+    json["cmd"] = request.mCmd;
+    return FastWriter().write(json);
+}
+
+CmdRequest ParserCmdRequest(const mstring &json) {
+    Value tmp;
+    Reader().parse(json, tmp);
+
+    CmdRequest result;
+    result.mCmdMode = tmp["mode"].asInt();
+    result.mCmd = tmp["cmd"].asString();
+    return result;
+}
+
 mstring __stdcall MakeCmdReply(const CmdReplyResult &cmdResult) {
     Value root;
     root["cmd"] = "reply";
@@ -119,10 +148,12 @@ mstring __stdcall MakeCmdReply(const CmdReplyResult &cmdResult) {
 
     Value result;
     result["cmdCode"] = cmdResult.mCmdCode;
+    result["mode"] = cmdResult.mResultMode;
 
     Value tmp;
     Reader().parse(cmdResult.mCmdResult, tmp);
     result["cmdResult"] = tmp;
+    result["cmdShow"] = cmdResult.mCmdShow;
     content["result"] = result;
 
     root["content"] = content;
@@ -140,6 +171,16 @@ bool __stdcall ParserCmdReply(const std::mstring &reply, CmdReplyResult &cmdResu
 
     Value result = root["result"];
     cmdResult.mCmdCode = result["cmdCode"].asInt();
-    cmdResult.mCmdResult = FastWriter().write(result["cmdResult"]);
+    cmdResult.mResultMode = result["mode"].asInt();
+
+    if (cmdResult.mResultMode & CMD_MASK_RESULT)
+    {
+        cmdResult.mCmdResult = FastWriter().write(result["cmdResult"]);
+    }
+
+    if (cmdResult.mResultMode & CMD_MASK_SHOW)
+    {
+        cmdResult.mCmdShow = FastWriter().write(result["cmdShow"]);
+    }
     return true;
 }

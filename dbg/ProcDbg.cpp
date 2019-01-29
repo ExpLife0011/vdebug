@@ -399,7 +399,8 @@ void CProcDbgger::OnSystemBreakpoint(void* ExceptionData)
         GetInstance()->OnDetachDbgger();
         return;
     }
-    GetInstance()->RunCommand("r");
+
+    //GetInstance()->RunCommand("r");
     GetInstance()->Wait();
 }
 
@@ -471,15 +472,15 @@ VOID CProcDbgger::InitEngine()
     SetCustomHandler(UE_CH_DEBUGEVENT, (void*)OnDebugEvent);
 }
 
-mstring CProcDbgger::OnCommand(const mstring &cmd, const mstring &cmdParam, BOOL bShow, const CmdUserParam *pParam)
+CmdReplyResult CProcDbgger::OnCommand(const mstring &cmd, const mstring &cmdParam, DWORD mode, const CmdUserParam *pParam)
 {
     if (cmd == "bp")
     {
-        return OnCmdBp(cmdParam, bShow, pParam);
+        return OnCmdBp(cmdParam, mode, pParam);
     }
     else if (cmd == "b")
     {
-        return OnCmdBl(cmdParam, bShow, pParam);
+        return OnCmdBl(cmdParam, mode, pParam);
     }
     else if (cmd == "bk")
     {
@@ -487,77 +488,77 @@ mstring CProcDbgger::OnCommand(const mstring &cmd, const mstring &cmdParam, BOOL
     }
     else if (cmd == "bc")
     {
-        return OnCmdBc(cmdParam, bShow, pParam);
+        return OnCmdBc(cmdParam, mode, pParam);
     }
     //切换到指定线程
     else if (cmd == "tc")
     {
-        return OnCmdTc(cmdParam, bShow, pParam);
+        return OnCmdTc(cmdParam, mode, pParam);
     }
     //展示指定线程
     else if (cmd == "ts")
     {
-        return OnCmdTs(cmdParam, bShow, pParam);
+        return OnCmdTs(cmdParam, mode, pParam);
     }
     //展示模块信息
     else if (cmd == "lm")
     {
-        return OnCmdLm(cmdParam, bShow, pParam);
+        return OnCmdLm(cmdParam, mode, pParam);
     }
     else if (cmd == "cls")
     {
-        return OnCmdClear(cmdParam, bShow, pParam);
+        return OnCmdClear(cmdParam, mode, pParam);
     }
     else if (cmd == "u")
     {
-        return OnCmdDisass(cmdParam, bShow, pParam);
+        return OnCmdDisass(cmdParam, mode, pParam);
     }
     else if (cmd == "ub")
     {
-        return OnCmdUb(cmdParam, bShow, pParam);
+        return OnCmdUb(cmdParam, mode, pParam);
     }
     else if (cmd == "uf")
     {
-        return OnCmdUf(cmdParam, bShow, pParam);
+        return OnCmdUf(cmdParam, mode, pParam);
     }
     else if (cmd == "g")
     {
-        return OnCmdGo(cmdParam, bShow, pParam);
+        return OnCmdGo(cmdParam, mode, pParam);
     }
     //执行到调用返回
     else if (cmd == "gu")
     {
-        return OnCmdGu(cmdParam, bShow, pParam);
+        return OnCmdGu(cmdParam, mode, pParam);
     }
     else if (cmd == "kv")
     {
-        return OnCmdKv(cmdParam, bShow, pParam);
+        return OnCmdKv(cmdParam, mode, pParam);
     }
     else if (cmd == "db")
     {
-        return OnCmdDb(cmdParam, bShow, pParam);
+        return OnCmdDb(cmdParam, mode, pParam);
     }
     else if (cmd == "dd")
     {
-        return OnCmdDd(cmdParam, bShow, pParam);
+        return OnCmdDd(cmdParam, mode, pParam);
     }
     else if (cmd == "du")
     {
-        return OnCmdDu(cmdParam, bShow, pParam);
+        return OnCmdDu(cmdParam, mode, pParam);
     }
     else if (cmd == "r")
     {
-        return OnCmdReg(cmdParam, bShow, pParam);
+        return OnCmdReg(cmdParam, mode, pParam);
     }
     else if (cmd == "sc")
     {
-        return OnCmdScript(cmdParam, bShow, pParam);
+        return OnCmdScript(cmdParam, mode, pParam);
     }
     else if (cmd == "help" || cmd == "h")
     {
-        return OnCmdHelp(cmdParam, bShow, pParam);
+        return OnCmdHelp(cmdParam, mode, pParam);
     }
-    return MakeDbgRelpy(DbgReplyResult(DBG_CTRL_ERROR_CMD_NOTFIND, "", ""));
+    return CmdReplyResult();
 }
 
 bool CProcDbgger::IsBreakpointSet(DWORD64 dwAddr) const
@@ -572,7 +573,7 @@ bool CProcDbgger::IsBreakpointSet(DWORD64 dwAddr) const
     return false;
 }
 
-mstring CProcDbgger::OnCmdBp(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam)
+CmdReplyResult CProcDbgger::OnCmdBp(const mstring &param, DWORD mode, const CmdUserParam *pParam)
 {
     /*
     mstring result;
@@ -615,10 +616,10 @@ mstring CProcDbgger::OnCmdBp(const mstring &wstrCmdParam, BOOL bShow, const CmdU
     }
     return mstring(em_dbgstat_faild, L"bp命令执行失败");
     */
-    return mstring();
+    return CmdReplyResult();
 }
 
-mstring CProcDbgger::OnCmdBl(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam)
+CmdReplyResult CProcDbgger::OnCmdBl(const mstring &param, DWORD mode, const CmdUserParam *pParam)
 {
     //CSyntaxDescHlpr hlpr;
     if (m_vBreakPoint.empty())
@@ -669,7 +670,7 @@ mstring CProcDbgger::OnCmdBl(const mstring &wstrCmdParam, BOOL bShow, const CmdU
     }
     return mstring(em_dbgstat_succ, hlpr.GetResult());
     */
-    return mstring();
+    return CmdReplyResult();
 }
 
 void CProcDbgger::ClearBreakPoint(DWORD dwSerial)
@@ -690,7 +691,7 @@ void CProcDbgger::ClearBreakPoint(DWORD dwSerial)
     }
 }
 
-mstring CProcDbgger::OnCmdBc(const mstring &cmdParam, BOOL bShow, const CmdUserParam *pParam)
+CmdReplyResult CProcDbgger::OnCmdBc(const mstring &cmdParam, DWORD mode, const CmdUserParam *pParam)
 {
     CmdReplyResult tmp;
     mstring str(cmdParam);
@@ -699,21 +700,21 @@ mstring CProcDbgger::OnCmdBc(const mstring &cmdParam, BOOL bShow, const CmdUserP
     {
         ClearBreakPoint(-1);
         tmp.mCmdShow = "已清空所有断点";
-        return MakeCmdReply(tmp);
+        return tmp;
     }
 
     if (!IsNumber(str))
     {
         tmp.mCmdCode = DBG_CMD_SYNTAX_ERR;
         tmp.mCmdShow = "bc 语法错误";
-        return MakeCmdReply(tmp);
+        return tmp;
     }
 
     DWORD64 dwSerial = 0;
     GetNumFromStr(str, dwSerial);
     ClearBreakPoint((DWORD)dwSerial);
     tmp.mCmdShow = FormatA("已清除%02x号断点", dwSerial);
-    return MakeCmdReply(tmp);
+    return tmp;
 }
 
 mstring CProcDbgger::GetStatusStr(ThreadStat eStat, ThreadWaitReason eWaitReason) const
@@ -721,13 +722,13 @@ mstring CProcDbgger::GetStatusStr(ThreadStat eStat, ThreadWaitReason eWaitReason
     return "正常运行";
 }
 
-mstring CProcDbgger::OnCmdTc(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam)
+CmdReplyResult CProcDbgger::OnCmdTc(const mstring &param, DWORD mode, const CmdUserParam *pParam)
 {
-    mstring wstr(wstrCmdParam);
-    wstr.trim();
+    mstring str(param);
+    str.trim();
 
     DWORD64 dwSerial = 0;
-    GetNumFromStr(wstr, dwSerial);
+    GetNumFromStr(str, dwSerial);
 
     CmdReplyResult reply;
 
@@ -738,14 +739,14 @@ mstring CProcDbgger::OnCmdTc(const mstring &wstrCmdParam, BOOL bShow, const CmdU
         {
             m_dwCurrentThreadId = it->m_dwThreadId;
             reply.mCmdShow = FormatA("切换至%d号线程成功，当前线程%x", dw, it->m_dwThreadId);
-            return MakeCmdReply(reply);
+            return reply;
         }
     }
     reply.mCmdShow = "未找到需要切换的线程";
-    return MakeCmdReply(reply);
+    return reply;
 }
 
-mstring CProcDbgger::OnCmdLm(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam)
+CmdReplyResult CProcDbgger::OnCmdLm(const mstring &param, DWORD mode, const CmdUserParam *pParam)
 {
     /*
     //CSyntaxDescHlpr hlpr;
@@ -774,10 +775,10 @@ mstring CProcDbgger::OnCmdLm(const mstring &wstrCmdParam, BOOL bShow, const CmdU
     }
     return mstring(em_dbgstat_succ, hlpr.GetResult());
     */
-    return mstring();
+    return CmdReplyResult();
 }
 
-mstring CProcDbgger::OnCmdTs(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam)
+CmdReplyResult CProcDbgger::OnCmdTs(const mstring &param, DWORD mode, const CmdUserParam *pParam)
 {
     mstring res;
     /*
@@ -824,12 +825,12 @@ mstring CProcDbgger::OnCmdTs(const mstring &wstrCmdParam, BOOL bShow, const CmdU
     }
     res.SetResult(hlpr.GetResult());
     */
-    return res;
+    return CmdReplyResult();
 }
 
-mstring CProcDbgger::OnCmdBu(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam)
+CmdReplyResult CProcDbgger::OnCmdBu(const mstring &param, DWORD mode, const CmdUserParam *pParam)
 {
-    return mstring(em_dbgstat_succ);
+    return CmdReplyResult();
 }
 
 void CProcDbgger::GetDisassContentDesc(const mstring &wstrContent, mstring &data) const
@@ -986,7 +987,7 @@ bool CProcDbgger::DisassUntilRet(DWORD64 dwStartAddr, mstring &data) const
     return true;
 }
 
-mstring CProcDbgger::OnCmdDisass(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam)
+CmdReplyResult CProcDbgger::OnCmdDisass(const mstring &wstrCmdParam, DWORD mode, const CmdUserParam *pParam)
 {
     mstring wstr(wstrCmdParam);
     wstr.makelower();
@@ -1001,7 +1002,7 @@ mstring CProcDbgger::OnCmdDisass(const mstring &wstrCmdParam, BOOL bShow, const 
     {
         result.mCmdCode = DBG_CMD_SYNTAX_ERR;
         result.mCmdShow = "语法错误";
-        return MakeCmdReply(result);
+        return result;
     }
 
     if (-1 == dwDisasmSize)
@@ -1022,38 +1023,38 @@ mstring CProcDbgger::OnCmdDisass(const mstring &wstrCmdParam, BOOL bShow, const 
     {
         result.mCmdCode = DBG_CMD_READMEM_ERR;
         result.mCmdShow = FormatA("获取%hs地址失败", strAddr.c_str());
-        return MakeCmdReply(result);
+        return result;
     }
     /*
     //CSyntaxDescHlpr hlpr;
     DisassWithSize(dwAddr, dwDisasmSize, hlpr);
     return mstring(em_dbgstat_succ, hlpr.GetResult());
     */
-    return MakeCmdReply(result);
+    return result;
 }
 
-mstring CProcDbgger::OnCmdClear(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam)
+CmdReplyResult CProcDbgger::OnCmdClear(const mstring &param, DWORD mode, const CmdUserParam *pParam)
 {
     //GetSyntaxView()->ClearView();
-    return MakeCmdReply(CmdReplyResult());
+    return CmdReplyResult();
 }
 
-mstring CProcDbgger::OnCmdUb(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam)
+CmdReplyResult CProcDbgger::OnCmdUb(const mstring &param, DWORD mode, const CmdUserParam *pParam)
 {
-    mstring wstr(wstrCmdParam);
-    wstr.makelower();
-    wstr.trim();
+    mstring str(param);
+    str.makelower();
+    str.trim();
 
     DWORD64 dwDisasmSize = ms_dwDefDisasmSize;
-    mstring wstrAddr;
+    mstring strAddr;
 
-    dwDisasmSize = GetSizeAndParam(wstr, wstrAddr);
+    dwDisasmSize = GetSizeAndParam(str, strAddr);
     CmdReplyResult reply;
     if (!dwDisasmSize)
     {
         reply.mCmdCode = DBG_CMD_UNKNOW_ERR;
         reply.mCmdShow = "获取反汇编地址长度失败";
-        return MakeCmdReply(reply);
+        return reply;
     }
 
     if (-1 == dwDisasmSize)
@@ -1062,16 +1063,16 @@ mstring CProcDbgger::OnCmdUb(const mstring &wstrCmdParam, BOOL bShow, const CmdU
     }
 
     DWORD64 dwAddr = 0;
-    if (!GetNumFromStr(wstrAddr, dwAddr))
+    if (!GetNumFromStr(strAddr, dwAddr))
     {
-        dwAddr = GetFunAddr(wstrAddr);
+        dwAddr = GetFunAddr(strAddr);
     }
 
     if (!dwAddr)
     {
         reply.mCmdCode = DBG_CMD_UNKNOW_ERR;
         reply.mCmdShow = "ub语法错误";
-        return MakeCmdReply(reply);
+        return reply;
     }
 
     DWORD64 dwEndAddr = dwAddr;
@@ -1081,24 +1082,24 @@ mstring CProcDbgger::OnCmdUb(const mstring &wstrCmdParam, BOOL bShow, const CmdU
     //mstring data;
     //DisassWithAddr(dwStartAddr, dwEndAddr, data);
     //return mstring(em_dbgstat_succ, hlpr.GetResult());
-    return MakeCmdReply(reply);
+    return reply;
 }
 
-mstring CProcDbgger::OnCmdUf(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam)
+CmdReplyResult CProcDbgger::OnCmdUf(const mstring &param, DWORD mode, const CmdUserParam *pParam)
 {
-    mstring wstr(wstrCmdParam);
-    wstr.makelower();
-    wstr.trim();
+    mstring str(param);
+    str.makelower();
+    str.trim();
 
     DWORD64 dwDisasmSize = ms_dwDefDisasmSize;
-    mstring wstrAddr;
+    mstring strAddr;
 
-    dwDisasmSize = GetSizeAndParam(wstr, wstrAddr);
+    dwDisasmSize = GetSizeAndParam(str, strAddr);
     CmdReplyResult reply;
     if (!dwDisasmSize)
     {
         reply.mCmdCode = DBG_CMD_UNKNOW_ERR;
-        return MakeCmdReply(reply);
+        return reply;
     }
 
     if (-1 == dwDisasmSize)
@@ -1107,15 +1108,15 @@ mstring CProcDbgger::OnCmdUf(const mstring &wstrCmdParam, BOOL bShow, const CmdU
     }
 
     DWORD64 dwAddr = 0;
-    if (!GetNumFromStr(wstrAddr, dwAddr))
+    if (!GetNumFromStr(strAddr, dwAddr))
     {
-        dwAddr = GetFunAddr(wstrAddr);
+        dwAddr = GetFunAddr(strAddr);
     }
 
     if (!dwAddr)
     {
         reply.mCmdCode = DBG_CMD_SYNTAX_ERR;
-        return MakeCmdReply(reply);
+        return reply;
     }
 
     /*
@@ -1123,13 +1124,13 @@ mstring CProcDbgger::OnCmdUf(const mstring &wstrCmdParam, BOOL bShow, const CmdU
     DisassUntilRet(dwAddr, hlpr);
     return mstring(em_dbgstat_succ, hlpr.GetResult());
     */
-    return MakeCmdReply(reply);
+    return reply;
 }
 
-mstring CProcDbgger::OnCmdGo(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam)
+CmdReplyResult CProcDbgger::OnCmdGo(const mstring &param, DWORD mode, const CmdUserParam *pParam)
 {
     Run();
-    return MakeCmdReply(CmdReplyResult());
+    return CmdReplyResult();
 }
 
 void CProcDbgger::GuCmdCallback()
@@ -1143,14 +1144,14 @@ void CProcDbgger::GuCmdCallback()
     GetInstance()->Wait();
 }
 
-mstring CProcDbgger::OnCmdGu(const mstring &cmdParam, BOOL bShow, const CmdUserParam *pParam)
+CmdReplyResult CProcDbgger::OnCmdGu(const mstring &param, DWORD mode, const CmdUserParam *pParam)
 {
     StepOut(GuCmdCallback, true);
     Run();
 
     CmdReplyResult reply;
     reply.mCmdShow = "执行gu成功";
-    return MakeCmdReply(reply);
+    return reply;
 }
 
 static BOOL CALLBACK StackReadProcessMemoryProc64(HANDLE hProcess, DWORD64 lpBaseAddress, PVOID lpBuffer, DWORD nSize, LPDWORD lpNumberOfBytesRead)
@@ -1203,13 +1204,13 @@ list<STACKFRAME64> CProcDbgger::GetStackFrame(const mstring &wstrParam)
     return info.m_FrameSet;
 }
 
-mstring CProcDbgger::OnCmdKv(const mstring &cmdParam, BOOL bShow, const CmdUserParam *pParam)
+CmdReplyResult CProcDbgger::OnCmdKv(const mstring &cmdParam, DWORD mode, const CmdUserParam *pParam)
 {
     list<STACKFRAME64> vStack = GetInstance()->GetStackFrame(cmdParam);
     CmdReplyResult result;
     if (vStack.empty())
     {
-        return MakeCmdReply(result);
+        return result;
     }
 
     CallStackData callSet;
@@ -1225,14 +1226,14 @@ mstring CProcDbgger::OnCmdKv(const mstring &cmdParam, BOOL bShow, const CmdUserP
         callSet.mCallStack.push_back(single);
     }
     result.mCmdResult = EncodeCmdCallStack(callSet);
-    return MakeCmdReply(result);
+    return result;
 }
 
-mstring CProcDbgger::OnCmdDb(const mstring &strCmdParam, BOOL bShow, const CmdUserParam *pParam)
+CmdReplyResult CProcDbgger::OnCmdDb(const mstring &cmdParam, DWORD mode, const CmdUserParam *pParam)
 {
     DWORD64 dwDataSize = 64;
     DWORD64 dwAddr = 0;
-    mstring str(strCmdParam);
+    mstring str(cmdParam);
     str.makelower();
     str.trim();
     mstring strAddr;
@@ -1245,7 +1246,7 @@ mstring CProcDbgger::OnCmdDb(const mstring &strCmdParam, BOOL bShow, const CmdUs
     }
     else
     {
-        strAddr = strCmdParam;
+        strAddr = cmdParam;
     }
     strAddr.trim();
 
@@ -1302,18 +1303,18 @@ mstring CProcDbgger::OnCmdDb(const mstring &strCmdParam, BOOL bShow, const CmdUs
     }
     return mstring(em_dbgstat_succ, desc.GetResult());
     */
-    return mstring();
+    return CmdReplyResult();
 }
 
-mstring CProcDbgger::OnCmdDd(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam)
+CmdReplyResult CProcDbgger::OnCmdDd(const mstring &cmdParam, DWORD mode, const CmdUserParam *pParam)
 {
     CScriptEngine script;
     script.SetContext(GetInstance()->GetCurrentContext(), ReadDbgProcMemory, WriteDbgProcMemory);
 
-    DWORD64 dwAddr = script.Compile(wstrCmdParam);
+    DWORD64 dwAddr = script.Compile(cmdParam);
     if (!dwAddr)
     {
-        return mstring();
+        return CmdReplyResult();
     }
 
     DWORD dwDataSize = 64;
@@ -1342,18 +1343,18 @@ mstring CProcDbgger::OnCmdDd(const mstring &wstrCmdParam, BOOL bShow, const CmdU
     }
     return mstring(em_dbgstat_succ, desc.GetResult());
     */
-    return mstring();
+    return CmdReplyResult();
 }
 
-mstring CProcDbgger::OnCmdDu(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam)
+CmdReplyResult CProcDbgger::OnCmdDu(const mstring &strCmdParam, DWORD mode, const CmdUserParam *pParam)
 {
     CScriptEngine script;
     script.SetContext(GetInstance()->GetCurrentContext(), ReadDbgProcMemory, WriteDbgProcMemory);
 
-    DWORD64 dwAddr = script.Compile(wstrCmdParam);
+    DWORD64 dwAddr = script.Compile(strCmdParam);
     if (!dwAddr)
     {
-        return mstring();
+        return CmdReplyResult();
     }
 
     CMemoryOperator mhlpr(GetInstance()->GetDbgProc());
@@ -1364,10 +1365,10 @@ mstring CProcDbgger::OnCmdDu(const mstring &wstrCmdParam, BOOL bShow, const CmdU
     desc.FormatDesc(wstrData.c_str(), COLOUR_DATA);
     return mstring(em_dbgstat_succ, desc.GetResult());
     */
-    return mstring();
+    return CmdReplyResult();
 }
 
-mstring CProcDbgger::OnCmdReg(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam)
+CmdReplyResult CProcDbgger::OnCmdReg(const mstring &cmdParam, DWORD mode, const CmdUserParam *pParam)
 {
     //TITAN_ENGINE_CONTEXT_t context = GetCurrentDbgger()->GetCurrentContext();
     /*
@@ -1432,11 +1433,10 @@ mstring CProcDbgger::OnCmdReg(const mstring &wstrCmdParam, BOOL bShow, const Cmd
     vDescHlpr.FormatDesc(wstrAddr, COLOUR_PROC);
     return mstring(em_dbgstat_succ, vDescHlpr.GetResult());
     */
-    return mstring();
+    return CmdReplyResult();
 }
 
-mstring CProcDbgger::OnCmdScript(const mstring &wstrCmdParam, BOOL bShow, const CmdUserParam *pParam)
+CmdReplyResult CProcDbgger::OnCmdScript(const mstring &cmdParam, DWORD mode, const CmdUserParam *pParam)
 {
-    mstring res;
-    return res;
+    return CmdReplyResult();
 }

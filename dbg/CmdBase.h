@@ -4,6 +4,7 @@
 #include <vector>
 #include <map>
 #include <string>
+#include <DbgCtrl/DbgCtrlCom.h>
 #include <ComStatic/ComStatic.h>
 
 using namespace std;
@@ -54,7 +55,7 @@ class CCmdBase
 public:
     CCmdBase();
     virtual ~CCmdBase();
-    mstring RunCommand(const mstring &strCmd, const CmdUserParam *pParam = NULL);
+    CmdReplyResult RunCommand(const CmdRequest &request, const CmdUserParam *pParam = NULL);
     BOOL InsertFunMsg(const mstring &strIndex, const DbgFunInfo &vProcInfo);
     //eg: kernel32!createfilew+0x1234
     DWORD64 GetFunAddr(const mstring &wstr);
@@ -74,6 +75,6 @@ protected:
     DWORD64 GetSizeAndParam(const mstring &strParam, mstring &strOut) const;
 
 protected:
-    virtual mstring OnCommand(const mstring &strCmd, const mstring &strCmdParam, const CmdUserParam *pParam);
+    virtual CmdReplyResult OnCommand(const mstring &strCmd, const mstring &strCmdParam, DWORD mode, const CmdUserParam *pParam);
 };
 #endif
