@@ -226,7 +226,7 @@ bool CSymbolHlpr::GetSymbolFromAddr(CTaskSymbolFromAddr *pSymbolInfo)
 
     if (dwOffset)
     {
-        pSymbolInfo->m_strSymbol = FormatA("%ls+0x%x", pSymbol->Name, dwOffset);
+        pSymbolInfo->m_strSymbol = FormatA("%hs+0x%x", pSymbol->Name, dwOffset);
     }
     else
     {

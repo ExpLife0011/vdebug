@@ -109,7 +109,8 @@
         "result":{
             "cmdCode":0,
             "mode":1,
-            "cmdShow":"abcd1234",
+            "cmdLabel":"CallStack",                     //展示标签
+            "cmdShow":"abcd1234",                       //展示内容
             "cmdResult": [{
                 "addr": "0x0xabcd12ff",
                 "function":"kernel32!CreateFileW",

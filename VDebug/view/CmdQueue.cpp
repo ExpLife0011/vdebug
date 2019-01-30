@@ -1,20 +1,22 @@
 #include "CmdQueue.h"
 
+using namespace std;
+
 CCmdQueue::CCmdQueue() : m_dwCurPos(0)
 {}
 
 CCmdQueue::~CCmdQueue()
 {}
 
-void CCmdQueue::EnterCmd(const ustring &wstrCmd)
+void CCmdQueue::EnterCmd(const mstring &wstrCmd)
 {
-    ustring wstr(wstrCmd);
+    mstring wstr(wstrCmd);
     wstr.trim();
 
-    set<ustring>::const_iterator it;
+    set<mstring>::const_iterator it;
     if (m_vCmdHash.end() != (it = m_vCmdHash.find(wstr)))
     {
-        for (vector<ustring>::const_iterator itCmd = m_vCmdList.begin() ; itCmd != m_vCmdList.end() ; itCmd++)
+        for (vector<mstring>::const_iterator itCmd = m_vCmdList.begin() ; itCmd != m_vCmdList.end() ; itCmd++)
         {
             if (*itCmd == wstr)
             {
@@ -31,11 +33,11 @@ void CCmdQueue::EnterCmd(const ustring &wstrCmd)
     m_dwCurPos = - 1;
 }
 
-ustring CCmdQueue::GetFrontCmd()
+mstring CCmdQueue::GetFrontCmd()
 {
     if (m_vCmdList.empty())
     {
-        return L"";
+        return "";
     }
 
     if (-1 == m_dwCurPos)
@@ -51,11 +53,11 @@ ustring CCmdQueue::GetFrontCmd()
     return m_vCmdList[0];
 }
 
-ustring CCmdQueue::GetLastCmd()
+mstring CCmdQueue::GetLastCmd()
 {
     if (m_vCmdList.empty() || -1 == m_dwCurPos)
     {
-        return L"";
+        return "";
     }
 
     if (m_dwCurPos < (m_vCmdList.size() - 1))

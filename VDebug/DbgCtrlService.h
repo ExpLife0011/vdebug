@@ -18,7 +18,7 @@ public:
     bool ExecProc(const std::mstring &path, const std::mstring &param);
     bool AttachProc(DWORD pid);
     bool DetachProc();
-    bool RunCmdInCtrlService(const std::mstring &command);
+    CmdReplyResult RunCmdInCtrlService(const std::mstring &cmd);
 
     //proc monitor
     bool StartProcMon();

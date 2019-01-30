@@ -1215,17 +1215,25 @@ CmdReplyResult CProcDbgger::OnCmdKv(const mstring &cmdParam, DWORD mode, const C
 
     CallStackData callSet;
     CallStackSingle single;
+    PrintFormater pf;
+    pf << "内存地址" << "返回地址" << "参数列表" << space << space << space <<"符号名称" << line_end;
     for (list<STACKFRAME64>::const_iterator it = vStack.begin() ; it != vStack.end() ; it++)
     {
-        single.mAddr = FormatA("%08llx ", it->AddrPC.Offset);
-        single.mParam0 = FormatA("%08llx ", it->Params[0]);
-        single.mParam1 = FormatA("%08llx ", it->Params[1]);
-        single.mParam2 = FormatA("%08llx ", it->Params[2]);
-        single.mParam3 = FormatA("%08llx ", it->Params[3]);
+        single.mAddr = FormatA("%08x", it->AddrPC.Offset);
+        single.mReturn = FormatA("%08x", it->AddrReturn);
+        single.mParam0 = FormatA("%08x", it->Params[0]);
+        single.mParam1 = FormatA("%08x", it->Params[1]);
+        single.mParam2 = FormatA("%08x", it->Params[2]);
+        single.mParam3 = FormatA("%08x", it->Params[3]);
         single.mFunction = FormatA("%hs", GetInstance()->GetSymFromAddr(it->AddrPC.Offset).c_str());
         callSet.mCallStack.push_back(single);
+
+        pf << single.mAddr << single.mReturn << single.mParam0 << single.mParam1 << single.mParam2 << single.mParam3 << single.mFunction << line_end;
     }
+    result.mCmdCode = 0;
+    result.mResultMode = mode;
     result.mCmdResult = EncodeCmdCallStack(callSet);
+    result.mCmdShow = pf.GetResult();
     return result;
 }
 

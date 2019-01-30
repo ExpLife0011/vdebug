@@ -1,9 +1,11 @@
-#include "SyntaxView.h"
+#include <Windows.h>
+#include <fstream>
+#include <ComLib/ComLib.h>
 #include <SyntaxView/include/Scintilla.h>
 #include <SyntaxView/include/SciLexer.h>
 #include <SyntaxView/LexVdebug.h>
-#include <fstream>
 #include <SyntaxHlpr/SyntaxCfg.h>
+#include "SyntaxView.h"
 
 #pragma comment(lib, "shlwapi.lib")
 

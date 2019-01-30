@@ -405,31 +405,18 @@ static VOID _OnClose(HWND hwnd)
 
 static VOID _OnExecCommand(HWND hwnd, WPARAM wp, LPARAM lp)
 {
-    WCHAR wszCmd[1024] = {0};
-    GetWindowTextW(gs_hCommand, wszCmd, 1024);
-
-    ustring wstr(wszCmd);
-    wstr.trim();
-    if (wstr.empty())
+    mstring cmd = GetWindowStrA(gs_hCommand);
+    cmd.trim();
+    if (cmd.empty())
     {
         return;
     }
 
-    gs_pCmdQueue->EnterCmd(wstr);
-    //DbgCmdResult res = GetCurrentDbgger()->RunCommand(wstr.c_str());
-
-    ////CSyntaxDescHlpr hlpr;
-    //if (res.m_eStatus != em_dbgstat_succ)
-    //{
-    //    gs_pSyntaxView->AppendSyntaxDesc(res.m_vSyntaxDesc);
-    //}
-    //else
-    //{
-    //    hlpr.FormatDesc(ustring().format(L"%ls Ö´ÐÐÍê³É", wstr.c_str()).c_str(), COLOUR_MSG);
-    //    hlpr.AddEmptyLine();
-    //    gs_pSyntaxView->AppendSyntaxDesc(res.m_vSyntaxDesc);
-    //}
-    SetWindowTextW(gs_hCommand, L"");
+    gs_pCmdQueue->EnterCmd(cmd);
+    AppendToSyntaxView(SCI_LABEL_DEFAULT, GetWindowStrA(gs_hStatEdit) + " " + cmd + "\n");
+    CmdReplyResult result = DbgCtrlService::GetInstance()->RunCmdInCtrlService(cmd);
+    AppendToSyntaxView(result.mCmdLabel, result.mCmdShow);
+    SetWindowTextA(gs_hCommand, "");
 }
 
 static VOID _OnPageChange(HWND hwnd, WPARAM wp, LPARAM lp)
@@ -439,17 +426,17 @@ static VOID _OnPageChange(HWND hwnd, WPARAM wp, LPARAM lp)
         return;
     }
 
-    ustring wstr;
+    mstring str;
     if (VK_UP == wp)
     {
-        wstr = gs_pCmdQueue->GetFrontCmd();
+        str = gs_pCmdQueue->GetFrontCmd();
     }
     else if (VK_DOWN == wp)
     {
-        wstr = gs_pCmdQueue->GetLastCmd();
+        str = gs_pCmdQueue->GetLastCmd();
     }
-    SetWindowTextW(gs_hCommand, wstr.c_str());
-    SendMessageW(gs_hCommand, EM_SETSEL, wstr.size(), wstr.size());
+    SetWindowTextA(gs_hCommand, str.c_str());
+    SendMessageA(gs_hCommand, EM_SETSEL, str.size(), str.size());
 }
 
 static void _OnAppendMsg() {

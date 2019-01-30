@@ -108,7 +108,8 @@ bool __stdcall ParserDbgReply(const std::mstring &reply, DbgReplyResult &result)
         "result":{
             "cmdCode":0,
             "mode":1,
-            "cmdShow":"abcd1234",
+            "cmdLabel":"CallStack",                     //展示标签
+            "cmdShow":"abcd1234",                       //展示内容
             "cmdResult": [{
                 "addr": "0x0xabcd12ff",
                 "function":"kernel32!CreateFileW",
@@ -153,6 +154,7 @@ mstring __stdcall MakeCmdReply(const CmdReplyResult &cmdResult) {
     Value tmp;
     Reader().parse(cmdResult.mCmdResult, tmp);
     result["cmdResult"] = tmp;
+    result["cmdLabel"] = cmdResult.mCmdLabel;
     result["cmdShow"] = cmdResult.mCmdShow;
     content["result"] = result;
 
@@ -164,14 +166,25 @@ bool __stdcall ParserCmdReply(const std::mstring &reply, CmdReplyResult &cmdResu
     Value root;
 
     Reader().parse(reply, root);
-    if (root.type() != objectValue)
+    if (root.type() != objectValue || root["cmd"].asString() != "reply")
     {
         return false;
     }
 
-    Value result = root["result"];
+    Value content = root["content"];
+    if (content.type() != objectValue)
+    {
+        return false;
+    }
+
+    Value result = content["result"];
+    if (result.type() != objectValue)
+    {
+        return false;
+    }
     cmdResult.mCmdCode = result["cmdCode"].asInt();
     cmdResult.mResultMode = result["mode"].asInt();
+    cmdResult.mCmdLabel = result["cmdLabel"].asString();
 
     if (cmdResult.mResultMode & CMD_MASK_RESULT)
     {
@@ -180,7 +193,7 @@ bool __stdcall ParserCmdReply(const std::mstring &reply, CmdReplyResult &cmdResu
 
     if (cmdResult.mResultMode & CMD_MASK_SHOW)
     {
-        cmdResult.mCmdShow = FastWriter().write(result["cmdShow"]);
+        cmdResult.mCmdShow = result["cmdShow"].asString();
     }
     return true;
 }

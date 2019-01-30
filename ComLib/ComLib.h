@@ -13,6 +13,7 @@
 #include "DbProxy.h"
 #include "TransferEncoder.h"
 #include "servhlpr.h"
+#include "SyntaxDef.h"
 
 #ifndef COMLIB_EXPORTS
     #if _WIN64 || WIN64

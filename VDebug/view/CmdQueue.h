@@ -5,8 +5,6 @@
 #include <set>
 #include <ComStatic/ComStatic.h>
 
-using namespace std;
-
 //命令控件上下翻页缓存
 //算法：
 //如果命令列表中有，将该命令置为最新一条,将已存在的删除
@@ -19,15 +17,15 @@ public:
 
     virtual ~CCmdQueue();
 
-    void EnterCmd(const ustring &wstrCmd);
+    void EnterCmd(const std::mstring &cmd);
 
-    ustring GetFrontCmd();
+    std::mstring GetFrontCmd();
 
-    ustring GetLastCmd();
+    std::mstring GetLastCmd();
 protected:
     DWORD m_dwCurPos;
-    vector<ustring> m_vCmdList;
-    set<ustring> m_vCmdHash;
+    std::vector<std::mstring> m_vCmdList;
+    std::set<std::mstring> m_vCmdHash;
 };
 
 #endif

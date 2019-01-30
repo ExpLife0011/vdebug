@@ -176,42 +176,14 @@ bool DbgCtrlService::DetachProc() {
     return true;
 }
 
-bool DbgCtrlService::RunCmdInCtrlService(const std::mstring &command) {
-    Value conent;
-    conent["cmd"] = command;
-
-    mstring reply = m_pCtrlService->DispatchCurDbgger(DBG_CTRL_RUNCMD, FastWriter().write(conent));
+CmdReplyResult DbgCtrlService::RunCmdInCtrlService(const std::mstring &command) {
+    CmdRequest request;
+    request.mCmdMode = CMD_MASK_SHOW;
+    request.mCmd = command;
+    mstring reply = m_pCtrlService->DispatchCurDbgger(DBG_CTRL_RUNCMD, MakeCmdRequest(request));
     CmdReplyResult result;
     ParserCmdReply(reply, result);
-
-    mstring cmd1;
-    size_t pos = command.find(" ");
-    if (mstring::npos == pos)
-    {
-        cmd1 = command;
-    } else {
-        cmd1 = command.substr(0, pos);
-    }
-    cmd1.trim();
-    cmd1.makelower();
-
-    if (cmd1 == "kv") {
-        if (0 == result.mCmdCode)
-        {
-            CallStackData data = DecodeCmdCallStack(result.mCmdResult);
-            PrintFormater pf;
-            pf << "指令地址" << "返回地址" << "参数列表" << space << space << "相关符号" << line_end; 
-            for (list<CallStackSingle>::const_iterator it = data.mCallStack.begin() ; it != data.mCallStack.end() ; it++)
-            {
-                pf << it->mAddr << it->mParam0 << it->mParam1 << it->mParam2 << it->mParam3 << it->mFunction << line_end;
-            }
-            AppendToSyntaxView(SCI_LABEL_CALLSTACK, pf.GetResult());
-        } else {
-            AppendToSyntaxView(SCI_LABEL_DEFAULT, result.mCmdShow);
-        }
-    } else {
-    }
-    return true;
+    return result;
 }
 
 void DbgCtrlService::OnProcCreate(const mstring &eventName, const mstring &content, void *param) {

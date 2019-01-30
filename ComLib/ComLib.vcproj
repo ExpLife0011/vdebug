@@ -278,6 +278,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\SyntaxDef.h"
+				>
+			</File>
+			<File
 				RelativePath=".\tpool.h"
 				>
 			</File>

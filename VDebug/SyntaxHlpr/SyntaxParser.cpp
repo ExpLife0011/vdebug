@@ -1,6 +1,8 @@
-#include "SyntaxParser.h"
+#include <Windows.h>
 #include <vector>
 #include <list>
+#include <ComLib/ComLib.h>
+#include "SyntaxParser.h"
 
 using namespace std;
 

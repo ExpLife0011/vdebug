@@ -1,5 +1,6 @@
 #ifndef COMMON_DBGCTRL_H_H_
 #define COMMON_DBGCTRL_H_H_
+#include <ComLib/ComLib.h>
 #include <ComStatic/ComStatic.h>
 
 enum DbggerType {
@@ -62,15 +63,18 @@ CmdRequest ParserCmdRequest(const std::mstring &json);
 struct CmdReplyResult {
     int mCmdCode;               //状态码
     int mResultMode;            //展示状态 
+    std::mstring mCmdLabel;     //命令标签
     std::mstring mCmdShow;      //展示字符串
     std::mstring mCmdResult;    //命令执行结果集
 
     CmdReplyResult() {
+        mCmdLabel = SCI_LABEL_DEFAULT;
         mResultMode = (CMD_MASK_SHOW | CMD_MASK_RESULT);
         mCmdCode = 0;
     }
 
     CmdReplyResult(int code, const std::mstring &show, const std::mstring &result) {
+        mCmdLabel = SCI_LABEL_DEFAULT;
         mCmdCode = 0;
         mCmdShow = show;
         mCmdResult = result;
