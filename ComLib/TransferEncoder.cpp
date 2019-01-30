@@ -143,6 +143,14 @@ DllLoadInfo _declspec(dllexport) __stdcall DecodeDllLoadInfo(const std::mstring 
     return info;
 }
 
+mstring _declspec(dllexport) __stdcall EncodeCmdRegister(const RegisterContent &context) {
+    return "{}";
+}
+
+RegisterContent _declspec(dllexport) __stdcall DecodeCmdRegister(const std::mstring &json) {
+    return RegisterContent();
+}
+
 /*
 {
     "cmd": "reply",

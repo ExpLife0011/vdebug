@@ -136,81 +136,74 @@ BOOL CScriptEngine::IsOperator(WCHAR cLetter) const
     return FALSE;
 }
 
-BOOL CScriptEngine::IsRegisterStr(const mstring &wstr, DWORD64 &dwData) const
+BOOL CScriptEngine::IsRegisterStr(const mstring &str, DWORD64 &dwData) const
 {
     BOOL bResult = FALSE;
-    /*
-    if (GetCurrentDbgger()->IsDbgProcx64())
+#if WIN64 || _WIN64
+    //x64
+    if (str == "csp" || str == "rsp")
     {
-        //x64
-        if (wstr == L"csp" || wstr == L"rsp")
-        {
-            dwData = m_vContex.csp;
-            bResult = TRUE;
-        }
-        else if (wstr == L"cbp" || wstr == L"rbp")
-        {
-            dwData = m_vContex.cbp;
-            bResult = TRUE;
-        }
-        else if (wstr == L"cax" || wstr == L"rax")
-        {
-            dwData = m_vContex.cax;
-            bResult = TRUE;
-        }
-        else if (wstr == L"cbx" || wstr == L"rbx")
-        {
-            dwData = m_vContex.cbx;
-            bResult = TRUE;
-        }
-        else if (wstr == L"ccx" || wstr == L"rcx")
-        {
-            dwData = m_vContex.ccx;
-            bResult = TRUE;
-        }
-        else if (wstr == L"cdx" || wstr == L"rdx")
-        {
-            dwData = m_vContex.cdx;
-            bResult = TRUE;
-        }
-        #ifdef _WIN64
-        else if (wstr == L"r8")
-        {
-            dwData = m_vContex.r8;
-            bResult = TRUE;
-        }
-        else if (wstr == L"r9")
-        {
-            dwData = m_vContex.r9;
-            bResult = TRUE;
-        }
-        #endif
+        dwData = m_vContex.csp;
+        bResult = TRUE;
     }
-    else
+    else if (str == "cbp" || str == "rbp")
     {
-        //x86
-        if (wstr == L"csp" || wstr == L"esp")
-        {
-            dwData = m_vContex.csp;
-            bResult = TRUE;
-        }
-        else if (wstr == L"cax" || wstr == L"eax")
-        {
-            dwData = m_vContex.cax;
-            bResult = TRUE;
-        }
-        else if (wstr == L"cbx" || wstr == L"ebx" || wstr == L"rbx")
-        {
-            dwData = m_vContex.cbx;
-            bResult = TRUE;
-        }
-        else if (wstr == L"cbp" || wstr == L"ebp" || wstr == L"rbp")
-        {
-            dwData = m_vContex.cbp;
-            bResult = TRUE;
-        }
+        dwData = m_vContex.cbp;
+        bResult = TRUE;
     }
-    */
+    else if (str == "cax" || str == "rax")
+    {
+        dwData = m_vContex.cax;
+        bResult = TRUE;
+    }
+    else if (str == "cbx" || str == "rbx")
+    {
+        dwData = m_vContex.cbx;
+        bResult = TRUE;
+    }
+    else if (str == "ccx" || str == "rcx")
+    {
+        dwData = m_vContex.ccx;
+        bResult = TRUE;
+    }
+    else if (str == "cdx" || str == "rdx")
+    {
+        dwData = m_vContex.cdx;
+        bResult = TRUE;
+    }
+    else if (str == "r8")
+    {
+        dwData = m_vContex.r8;
+        bResult = TRUE;
+    }
+    else if (str == "r9")
+    {
+        dwData = m_vContex.r9;
+        bResult = TRUE;
+    }
+#else
+    //x86
+    if (str == "csp" || str == "esp")
+    {
+        dwData = m_vContex.csp;
+        bResult = TRUE;
+    }
+    else if (str == "cax" || str == "eax")
+    {
+        dwData = m_vContex.cax;
+        bResult = TRUE;
+    }
+    else if (str == "cbx" || str == "ebx")
+    {
+        dwData = m_vContex.cbx;
+        bResult = TRUE;
+    }
+    else if (str == "cbp" || str == "ebp")
+    {
+        dwData = m_vContex.cbp;
+        bResult = TRUE;
+    }
+#endif
     return bResult;
 }
 

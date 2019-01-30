@@ -558,7 +558,8 @@ CmdReplyResult CProcDbgger::OnCommand(const mstring &cmd, const mstring &cmdPara
     {
         return OnCmdHelp(cmdParam, mode, pParam);
     }
-    return CmdReplyResult();
+
+    return CmdReplyResult(0, mstring("不支持的命令:") + cmd + "\n", "");
 }
 
 bool CProcDbgger::IsBreakpointSet(DWORD64 dwAddr) const
@@ -1262,8 +1263,7 @@ CmdReplyResult CProcDbgger::OnCmdDb(const mstring &cmdParam, DWORD mode, const C
     script.SetContext(GetInstance()->GetCurrentContext(), ReadDbgProcMemory, WriteDbgProcMemory);
     dwAddr = script.Compile(strAddr);
 
-    /**
-    //CSyntaxDescHlpr desc;
+    CmdReplyResult result;
     CMemoryOperator mhlpr(GetInstance()->GetDbgProc());
     for (int i = 0 ; i < dwDataSize ; i += 16)
     {
@@ -1285,23 +1285,23 @@ CmdReplyResult CProcDbgger::OnCmdDb(const mstring &cmdParam, DWORD mode, const C
             break;
         }
 
-        desc.FormatDesc(FormatW(L"%08x  ", dwAddr), COLOUR_ADDR);
+        result.mCmdShow += FormatA("%08x  ", dwAddr);
         int j = 0;
         for (j = 0 ; j < 16 ; j++)
         {
             if (j < (int)dwRead)
             {
-                desc.FormatDesc(FormatW(L"%02x ", (BYTE)szData[j]), COLOUR_HEX);
+                result.mCmdShow += FormatA("%02x ", (BYTE)szData[j]);
             }
             else
             {
-                desc.FormatDesc(L"   ", COLOUR_MSG);
+                result.mCmdShow += "   ";
             }
         }
 
-        desc.FormatDesc(L" ", COLOUR_MSG);
-        desc.FormatDesc(FormatW(L"%hs", GetPrintStr(szData, dwRead).c_str()), COLOUR_DATA);
-        desc.NextLine();
+        result.mCmdShow += " ";
+        result.mCmdShow += GetPrintStr(szData, dwRead);
+        result.mCmdShow += "\n";
 
         if (dwRead != dwReadSize)
         {
@@ -1309,9 +1309,7 @@ CmdReplyResult CProcDbgger::OnCmdDb(const mstring &cmdParam, DWORD mode, const C
         }
         dwAddr += 16;
     }
-    return mstring(em_dbgstat_succ, desc.GetResult());
-    */
-    return CmdReplyResult();
+    return result;
 }
 
 CmdReplyResult CProcDbgger::OnCmdDd(const mstring &cmdParam, DWORD mode, const CmdUserParam *pParam)
@@ -1378,70 +1376,27 @@ CmdReplyResult CProcDbgger::OnCmdDu(const mstring &strCmdParam, DWORD mode, cons
 
 CmdReplyResult CProcDbgger::OnCmdReg(const mstring &cmdParam, DWORD mode, const CmdUserParam *pParam)
 {
-    //TITAN_ENGINE_CONTEXT_t context = GetCurrentDbgger()->GetCurrentContext();
-    /*
-    //CSyntaxDescHlpr vDescHlpr;
+    RegisterContent ctx;
+    ctx.mContext = GetInstance()->GetCurrentContext();
+    ctx.mCipStr = GetInstance()->GetSymFromAddr(ctx.mContext.cip).c_str();
 
-    if (GetCurrentDbgger()->IsDbgProcx64())
-    {
-        vDescHlpr.FormatDesc(FormatW(L"rax=0x%016llx ", context.cax), COLOUR_MSG);
-        vDescHlpr.FormatDesc(FormatW(L"rbx=0x%016llx ", context.cbx), COLOUR_MSG);
-        vDescHlpr.FormatDesc(FormatW(L"rcx=0x%016llx ", context.ccx), COLOUR_HIGHT);
-        vDescHlpr.NextLine();
+    CmdReplyResult result;
+    result.mCmdResult = EncodeCmdRegister(ctx);
 
-        vDescHlpr.FormatDesc(FormatW(L"rdx=0x%016llx ", context.cdx), COLOUR_HIGHT);
-        vDescHlpr.FormatDesc(FormatW(L"rsi=0x%016llx ", context.csi), COLOUR_MSG);
-        vDescHlpr.FormatDesc(FormatW(L"rdi=0x%016llx ", context.cdi), COLOUR_MSG);
-        vDescHlpr.NextLine();
+    PrintFormater pf;
+    pf << FormatA("eax=0x%08x", ctx.mContext.cax) << FormatA("ebx=0x%08x", ctx.mContext.cbx);
+    pf << FormatA("ecx=0x%08x", ctx.mContext.ccx) << FormatA("edx=0x%08x", ctx.mContext.cdx) << line_end;
 
-        vDescHlpr.FormatDesc(FormatW(L"rip=0x%016llx ", context.cip), COLOUR_HIGHT);
-        vDescHlpr.FormatDesc(FormatW(L"rsp=0x%016llx ", context.csp), COLOUR_HIGHT);
-        vDescHlpr.FormatDesc(FormatW(L"rbp=0x%016llx ", context.cbp), COLOUR_HIGHT);
-        vDescHlpr.NextLine();
+    pf << FormatA("esi=0x%08x", ctx.mContext.csi) << FormatA("edi=0x%08x", ctx.mContext.cdi);
+    pf << FormatA("eip=0x%08x", ctx.mContext.cip) << FormatA("esp=0x%08x", ctx.mContext.csp) << line_end;
 
-        #ifdef _WIN64
-        vDescHlpr.FormatDesc(FormatW(L" r8=0x%016llx ", context.r8), COLOUR_HIGHT);
-        vDescHlpr.FormatDesc(FormatW(L" r9=0x%016llx ", context.r9), COLOUR_HIGHT);
-        vDescHlpr.FormatDesc(FormatW(L"r10=0x%016llx ", context.r10), COLOUR_MSG);
-        vDescHlpr.NextLine();
+    pf << FormatA("ebp=0x%08x", ctx.mContext.cbp) << space << space << space << line_end;
+    result.mCmdShow = pf.GetResult();
+    pf.Reset();
 
-        vDescHlpr.FormatDesc(FormatW(L"r11=0x%016llx ", context.r11), COLOUR_MSG);
-        vDescHlpr.FormatDesc(FormatW(L"r12=0x%016llx ", context.r12), COLOUR_MSG);
-        vDescHlpr.FormatDesc(FormatW(L"r13=0x%016llx ", context.r13), COLOUR_MSG);
-        vDescHlpr.NextLine();
-
-        vDescHlpr.FormatDesc(FormatW(L"r14=0x%016llx ", context.r14), COLOUR_MSG);
-        vDescHlpr.FormatDesc(FormatW(L"r15=0x%016llx ", context.r15), COLOUR_MSG);
-        vDescHlpr.NextLine();
-        #endif
-    }
-    else
-    {
-        vDescHlpr.FormatDesc(FormatW(L"eax=0x%08x ", context.cax), COLOUR_MSG);
-        vDescHlpr.FormatDesc(FormatW(L"ebx=0x%08x ", context.cbx), COLOUR_MSG);
-        vDescHlpr.FormatDesc(FormatW(L"ecx=0x%08x ", context.ccx), COLOUR_MSG);
-        vDescHlpr.NextLine();
-
-        vDescHlpr.FormatDesc(FormatW(L"edx=0x%08x ", context.cdx), COLOUR_MSG);
-        vDescHlpr.FormatDesc(FormatW(L"esi=0x%08x ", context.csi), COLOUR_MSG);
-        vDescHlpr.FormatDesc(FormatW(L"edi=0x%08x ", context.cdi), COLOUR_MSG);
-        vDescHlpr.NextLine();
-
-        vDescHlpr.FormatDesc(FormatW(L"esp=0x%08x ", context.csp), COLOUR_MSG);
-        vDescHlpr.FormatDesc(FormatW(L"ebp=0x%08x ", context.cbp), COLOUR_MSG);
-    }
-    vDescHlpr.FormatDesc(FormatW(L"cs=0x%04x  ", context.cs), COLOUR_MSG);
-    vDescHlpr.FormatDesc(FormatW(L"ss=0x%04x  ", context.ss), COLOUR_MSG);
-    vDescHlpr.FormatDesc(FormatW(L"ds=0x%04x  ", context.ds), COLOUR_MSG);
-    vDescHlpr.FormatDesc(FormatW(L"es=0x%04x  ", context.es), COLOUR_MSG);
-    vDescHlpr.FormatDesc(FormatW(L"fs=0x%04x  ", context.fs), COLOUR_MSG);
-    vDescHlpr.FormatDesc(FormatW(L"gs=0x%04x  ", context.gs), COLOUR_MSG);
-    vDescHlpr.NextLine();
-    mstring wstrAddr = GetSymFromAddr(context.cip);
-    vDescHlpr.FormatDesc(wstrAddr, COLOUR_PROC);
-    return mstring(em_dbgstat_succ, vDescHlpr.GetResult());
-    */
-    return CmdReplyResult();
+    pf << ctx.mCipStr << line_end;
+    result.mCmdShow += pf.GetResult();
+    return result;
 }
 
 CmdReplyResult CProcDbgger::OnCmdScript(const mstring &cmdParam, DWORD mode, const CmdUserParam *pParam)

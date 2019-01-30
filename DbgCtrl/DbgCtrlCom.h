@@ -75,6 +75,7 @@ struct CmdReplyResult {
 
     CmdReplyResult(int code, const std::mstring &show, const std::mstring &result) {
         mCmdLabel = SCI_LABEL_DEFAULT;
+        mResultMode = (CMD_MASK_SHOW | CMD_MASK_RESULT);
         mCmdCode = 0;
         mCmdShow = show;
         mCmdResult = result;
