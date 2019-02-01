@@ -44,6 +44,8 @@ bool ProcDbgProxy::InitProcDbgProxy(const char *unique) {
     m_pDbgClient->RegisterCtrlHandler(DBG_TASK_GET_PROC, GetProcInfo, this);
     m_pDbgClient->RegisterCtrlHandler(DBG_CTRL_DETACH, DetachProc, this);
     m_pProcDbgger = CProcDbgger::GetInstance();
+    m_pCmdRunner = CProcCmd::GetInst();
+    m_pCmdRunner->InitProcCmd(m_pProcDbgger);
     return true;
 }
 
@@ -74,7 +76,7 @@ mstring ProcDbgProxy::RunCmd(const mstring &cmd, const mstring &content, void *p
     }
 
     CmdRequest request = ParserCmdRequest(content);
-    CmdReplyResult result = GetInstance()->m_pProcDbgger->RunCommand(request);
+    CmdReplyResult result = GetInstance()->m_pCmdRunner->RunCommand(request);
     return MakeCmdReply(result);
 }
 

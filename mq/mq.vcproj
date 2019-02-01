@@ -62,7 +62,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				OutputFile="$(OutDir)\$(ProjectName)32.dll"
-				LinkIncremental="2"
+				LinkIncremental="1"
 				ModuleDefinitionFile="mq.def"
 				GenerateDebugInformation="true"
 				SubSystem="2"

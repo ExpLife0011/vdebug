@@ -324,7 +324,7 @@ static VOID _OnInitDialog(HWND hwnd, WPARAM wp, LPARAM lp)
     gs_pfnCommandProc = (PWIN_PROC)SetWindowLongPtr(gs_hCommand, GWLP_WNDPROC, (LONG_PTR)_CommandProc);
     gs_pCmdQueue = new CCmdQueue();
 
-    SetWindowPos(gs_hMainView, 0, 0, 0, 600, 160, SWP_NOMOVE | SWP_NOZORDER);
+    //SetWindowPos(gs_hMainView, 0, 0, 0, 600, 160, SWP_NOMOVE | SWP_NOZORDER);
 
     ustring wstrVersion;
     WCHAR wszBuf[MAX_PATH] = {0};

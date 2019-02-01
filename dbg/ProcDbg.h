@@ -6,7 +6,6 @@
 #include <ComLib/ComLib.h>
 #include "DbgBase.h"
 #include "CmdBase.h"
-#include "DbgProxy.h"
 #include "TitanEngine/TitanEngine.h"
 
 using namespace std;
@@ -99,8 +98,9 @@ struct ProcDbgBreakPoint
     ProcDbgBreakPointStat m_eStat;
 };
 
-class CProcDbgger : public CDbggerProxy
+class CProcDbgger : public CDbgBase
 {
+    friend class CProcCmd;
 private:
     CProcDbgger();
 public:
@@ -115,6 +115,7 @@ public:
     TITAN_ENGINE_CONTEXT_t GetThreadContext(HANDLE hThread);
     VOID Wait();
     void Run();
+    void RunExitProc();
     DbgModuleInfo GetModuleFromAddr(DWORD64 dwAddr) const;
     mstring GetSymFromAddr(DWORD64 dwAddr) const;
     HANDLE GetDbgProc() const;
@@ -179,29 +180,8 @@ protected:
     bool DisassWithSize(DWORD64 dwAddr, DWORD64 dwSize, mstring &data) const;
     bool DisassWithAddr(DWORD64 dwStartAddr, DWORD64 dwEndAddr, mstring &data) const;
     bool DisassUntilRet(DWORD64 dwStartAddr, mstring &data) const;
-    void GetDisassContentDesc(const mstring &wstrContent, mstring &data) const; //»ã±àÖ¸Áî×ÅÉ«
-
-    virtual CmdReplyResult OnCommand(const mstring &cmd, const mstring &param, DWORD mode, const CmdUserParam *pParam);
-    CmdReplyResult OnCmdBp(const mstring &cmd, DWORD mode, const CmdUserParam *pParam);
-    CmdReplyResult OnCmdBl(const mstring &cmd, DWORD mode, const CmdUserParam *pParam);
-    CmdReplyResult OnCmdBc(const mstring &cmd, DWORD mode, const CmdUserParam *pParam);
-    CmdReplyResult OnCmdBu(const mstring &cmd, DWORD mode, const CmdUserParam *pParam);
-    CmdReplyResult OnCmdClear(const mstring &cmd, DWORD mode, const CmdUserParam *pParam);
-    CmdReplyResult OnCmdDisass(const mstring &cmd, DWORD mode, const CmdUserParam *pParam);
-    CmdReplyResult OnCmdUb(const mstring &cmd, DWORD mode, const CmdUserParam *pParam);
-    CmdReplyResult OnCmdUf(const mstring &cmd, DWORD mode, const CmdUserParam *pParam);
-    CmdReplyResult OnCmdGo(const mstring &cmd, DWORD mode, const CmdUserParam *pParam);
-    CmdReplyResult OnCmdGu(const mstring &cmd, DWORD mode, const CmdUserParam *pParam);
-    CmdReplyResult OnCmdKv(const mstring &cmd, DWORD mode, const CmdUserParam *pParam);
-    CmdReplyResult OnCmdDb(const mstring &cmd, DWORD mode, const CmdUserParam *pParam);
-    CmdReplyResult OnCmdDd(const mstring &cmd, DWORD mode, const CmdUserParam *pParam);
-    CmdReplyResult OnCmdDu(const mstring &cmd, DWORD mode, const CmdUserParam *pParam);
-    CmdReplyResult OnCmdReg(const mstring &cmd, DWORD mode, const CmdUserParam *pParam);
-    CmdReplyResult OnCmdScript(const mstring &cmd, DWORD mode, const CmdUserParam *pParam);
-    CmdReplyResult OnCmdTs(const mstring &cmd, DWORD mode, const CmdUserParam *pParam);
-    CmdReplyResult OnCmdTc(const mstring &cmd, DWORD mode, const CmdUserParam *pParam);
-    CmdReplyResult OnCmdLm(const mstring &cmd, DWORD mode, const CmdUserParam *pParam);
 
     static void __cdecl GuCmdCallback();
+
 };
 #endif

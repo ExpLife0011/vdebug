@@ -1220,85 +1220,91 @@ static BOOL _GetProcressPebString(HANDLE hProcress, ULONG eOffsetType, char *buf
     }
 
     pfnNtQueryInformationProcess pfn = GetNtQueryInformationProc();
-    //x86
-    if (eOffsetType & PhpoWow64)
+    BOOL stat = TRUE;
+    do 
     {
-        PVOID peb32;
-        ULONG processParameters32;
-        UNICODE_STRING unicodeString32;
-
-        pfn(hProcress, ProcessWow64Information, &peb32, sizeof(PVOID), NULL);
-        ReadProcessMemory(
-            hProcress,
-            PTR_ADD_OFFSET(peb32, FIELD_OFFSET(PEB32, ProcessParameters)),
-            &processParameters32,
-            sizeof(ULONG),
-            NULL
-            );
-
-        ReadProcessMemory(
-            hProcress,
-            PTR_ADD_OFFSET(processParameters32, uOffset),
-            &unicodeString32,
-            sizeof(UNICODE_STRING32),
-            NULL
-            );
-
-        if (unicodeString32.Length + 1 >= (int)pLength[0])
+        //x86
+        if (eOffsetType & PhpoWow64)
         {
-            pLength[0] = unicodeString32.Length;
-            return FALSE;
+            PVOID peb32;
+            ULONG processParameters32;
+            UNICODE_STRING unicodeString32;
+
+            stat &= (0 == pfn(hProcress, ProcessWow64Information, &peb32, sizeof(PVOID), NULL));
+            stat &= ReadProcessMemory(
+                hProcress,
+                PTR_ADD_OFFSET(peb32, FIELD_OFFSET(PEB32, ProcessParameters)),
+                &processParameters32,
+                sizeof(ULONG),
+                NULL
+                );
+
+            stat &= ReadProcessMemory(
+                hProcress,
+                PTR_ADD_OFFSET(processParameters32, uOffset),
+                &unicodeString32,
+                sizeof(UNICODE_STRING32),
+                NULL
+                );
+
+            if (unicodeString32.Length + 1 >= (int)pLength[0])
+            {
+                pLength[0] = unicodeString32.Length;
+                break;
+            }
+
+            UNICODE_STRING32 *pStr = (UNICODE_STRING32 *)buffer;
+            stat &= ReadProcessMemory(
+                hProcress,
+                (LPCVOID)unicodeString32.Buffer,
+                pStr,
+                unicodeString32.Length,
+                NULL
+                );
         }
-
-        UNICODE_STRING32 *pStr = (UNICODE_STRING32 *)buffer;
-        ReadProcessMemory(
-            hProcress,
-            (LPCVOID)unicodeString32.Buffer,
-            pStr,
-            unicodeString32.Length,
-            NULL
-            );
-    }
-    //x64
-    else
-    {
-        PROCESS_BASIC_INFORMATION basicInfo;
-        PVOID processParameters;
-        UNICODE_STRING unicodeString;
-
-        // Get the PEB address
-        pfn(hProcress, ProcessBasicInformation, &basicInfo, sizeof(basicInfo), NULL);
-        ReadProcessMemory(
-            hProcress,
-            PTR_ADD_OFFSET(basicInfo.PebBaseAddress, FIELD_OFFSET(VDPEB, ProcessParameters)),
-            &processParameters,
-            sizeof(PVOID),
-            NULL
-            );
-
-        ReadProcessMemory(
-            hProcress,
-            PTR_ADD_OFFSET(processParameters, uOffset),
-            &unicodeString,
-            sizeof(UNICODE_STRING),
-            NULL
-            );
-
-        if (unicodeString.Length + 1 >= (int)pLength[0])
+        //x64
+        else
         {
-            pLength[0] = unicodeString.Length + 512;
-            return FALSE;
-        }
+            PROCESS_BASIC_INFORMATION basicInfo;
+            PVOID processParameters;
+            UNICODE_STRING unicodeString;
 
-        UNICODE_STRING *pStr = (UNICODE_STRING *)buffer;
-        ReadProcessMemory(hProcress,
-            unicodeString.Buffer,
-            pStr,
-            unicodeString.Length,
-            NULL
-            );
-    }
-    return TRUE;
+            // Get the PEB address
+            stat &= (0 == pfn(hProcress, ProcessBasicInformation, &basicInfo, sizeof(basicInfo), NULL));
+            stat &= ReadProcessMemory(
+                hProcress,
+                PTR_ADD_OFFSET(basicInfo.PebBaseAddress, FIELD_OFFSET(VDPEB, ProcessParameters)),
+                &processParameters,
+                sizeof(PVOID),
+                NULL
+                );
+
+            stat &= ReadProcessMemory(
+                hProcress,
+                PTR_ADD_OFFSET(processParameters, uOffset),
+                &unicodeString,
+                sizeof(UNICODE_STRING),
+                NULL
+                );
+
+            if (unicodeString.Length + 1 >= (int)pLength[0])
+            {
+                pLength[0] = unicodeString.Length + 512;
+                break;
+            }
+
+            UNICODE_STRING *pStr = (UNICODE_STRING *)buffer;
+            stat &= ReadProcessMemory(hProcress,
+                unicodeString.Buffer,
+                pStr,
+                unicodeString.Length,
+                NULL
+                );
+        }
+    } while (FALSE);
+    
+
+    return stat;
 }
 
 ustring __stdcall GetProcessCommandLineW(_In_ DWORD dwPid, BOOL bx64)

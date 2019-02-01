@@ -62,7 +62,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				OutputFile="$(OutDir)\$(ProjectName)32.dll"
-				LinkIncremental="2"
+				LinkIncremental="1"
 				ModuleDefinitionFile="DbgCtrl.def"
 				DelayLoadDLLs="ComLib32.dll;mq32.dll"
 				GenerateDebugInformation="true"

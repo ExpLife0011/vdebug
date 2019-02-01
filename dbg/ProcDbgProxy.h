@@ -4,6 +4,7 @@
 #include <ComStatic/ComStatic.h>
 #include <DbgCtrl/DbgCtrl.h>
 #include "ProcDbg.h"
+#include "ProcCmd.h"
 #include "procmon.h"
 
 class ProcDbgProxy : public ProcListener {
@@ -30,6 +31,7 @@ private:
     bool m_init;
     bool m_x64;
     CProcDbgger *m_pProcDbgger;
+    CProcCmd *m_pCmdRunner;
     DbgClientBase *m_pDbgClient;
     HProcListener m_hProcListener;
 

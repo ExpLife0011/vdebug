@@ -62,7 +62,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				OutputFile="$(OutDir)\$(ProjectName)32.exe"
-				LinkIncremental="2"
+				LinkIncremental="1"
 				DelayLoadDLLs="ComLib32.dll;mq32.dll;DbgCtrl32.dll"
 				GenerateDebugInformation="true"
 				SubSystem="2"
@@ -186,10 +186,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\DbgProxy.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\Disasm.cpp"
 				>
 			</File>
@@ -203,10 +199,6 @@
 			</File>
 			<File
 				RelativePath=".\minidump.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\ProcDbg.cpp"
 				>
 			</File>
 			<File
@@ -236,10 +228,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\DbgProxy.h"
-				>
-			</File>
-			<File
 				RelativePath=".\Disasm.h"
 				>
 			</File>
@@ -249,10 +237,6 @@
 			</File>
 			<File
 				RelativePath=".\minidump.h"
-				>
-			</File>
-			<File
-				RelativePath=".\ProcDbg.h"
 				>
 			</File>
 			<File
@@ -583,14 +567,34 @@
 			</File>
 		</Filter>
 		<Filter
-			Name="proxy"
+			Name="procmon"
 			>
 			<File
-				RelativePath=".\DumpDbgProxy.cpp"
+				RelativePath=".\procmon.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\DumpDbgProxy.h"
+				RelativePath=".\procmon.h"
+				>
+			</File>
+		</Filter>
+		<Filter
+			Name="ProcDbgger"
+			>
+			<File
+				RelativePath=".\ProcCmd.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\ProcCmd.h"
+				>
+			</File>
+			<File
+				RelativePath=".\ProcDbg.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\ProcDbg.h"
 				>
 			</File>
 			<File
@@ -603,14 +607,14 @@
 			</File>
 		</Filter>
 		<Filter
-			Name="procmon"
+			Name="DumpDbgger"
 			>
 			<File
-				RelativePath=".\procmon.cpp"
+				RelativePath=".\DumpDbgProxy.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\procmon.h"
+				RelativePath=".\DumpDbgProxy.h"
 				>
 			</File>
 		</Filter>
