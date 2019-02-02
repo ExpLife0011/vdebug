@@ -462,6 +462,19 @@ BOOL __stdcall GetPeVersionW(LPCWSTR lpszFileName, LPWSTR outBuf, UINT size)
     return bRet;
 }
 
+BOOL __stdcall GetPeVersionA(LPCSTR lpszFileName, LPSTR outBuf, UINT size) {
+    MemoryAlloc<WCHAR> allocer;
+    WCHAR *buff = allocer.GetMemory(size);
+    buff[0] = 0;
+
+    BOOL stat = GetPeVersionW(AtoW(lpszFileName).c_str(), buff, size);
+    if (buff)
+    {
+        lstrcpyA(outBuf, WtoA(buff).c_str());
+    }
+    return stat;
+}
+
 BOOL __stdcall IsSystem64()
 {
 #if WIN64 || _WIN64

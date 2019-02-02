@@ -117,14 +117,19 @@ public:
     void Run();
     void RunExitProc();
     DbgModuleInfo GetModuleFromAddr(DWORD64 dwAddr) const;
-    mstring GetSymFromAddr(DWORD64 dwAddr) const;
+    mstring GetSymFromAddr(void *dwAddr) const;
     HANDLE GetDbgProc() const;
     DWORD GetCurDbgProcId() const;
     HANDLE GetCurrentThread();
     HANDLE GetThreadById(DWORD dwId) const;
     DbggerStatus GetDbggerStatus();
+    map<DWORD64, DbgModuleInfo> GetModuleInfo() const;
+    list<DbgProcThreadInfo> GetThreadCache() const;
+    list<ThreadInformation> GetCurrentThreadSet() const;
 
 protected:
+    static list<ThreadInformation> msCurThreadSet;
+    static void __cdecl ThreadEnumCallBack(THREAD_ITEM_DATA *threadData);
     //读写调试进程内存
     static DWORD __stdcall ReadDbgProcMemory(IN DWORD64 dwAddr, IN DWORD dwReadLength, OUT char *pBuffer);
     static DWORD __stdcall WriteDbgProcMemory(IN DWORD64 dwAddr, IN DWORD dwWriteLength, IN const char *pBuffer);
@@ -174,7 +179,6 @@ protected:
 
     //调试器对应的命令
 protected:
-    mstring GetStatusStr(ThreadStat eStat, ThreadWaitReason eWaitReason) const;
     void ClearBreakPoint(DWORD dwSerial = -1);
     bool IsBreakpointSet(DWORD64 dwAddr) const;
     bool DisassWithSize(DWORD64 dwAddr, DWORD64 dwSize, mstring &data) const;

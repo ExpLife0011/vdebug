@@ -15,6 +15,8 @@
 #pragma comment(lib, "TitanEngine/TitanEngine_x86.lib")
 #endif
 
+list<ThreadInformation> CProcDbgger::msCurThreadSet;
+
 CProcDbgger *CProcDbgger::GetInstance()
 {
     static CProcDbgger *s_ptr = NULL;
@@ -56,7 +58,7 @@ void CProcDbgger::GuCmdCallback()
 {
     HANDLE hThread = GetInstance()->GetCurrentThread();
     TITAN_ENGINE_CONTEXT_t context = GetInstance()->GetThreadContext(hThread);
-    mstring strSymbol = GetInstance()->GetSymFromAddr(context.cip);
+    mstring strSymbol = GetInstance()->GetSymFromAddr((void *)context.cip);
     //CSyntaxDescHlpr hlpr;
     //hlpr.FormatDesc(FormatW(L"进程中断于%ls", wstrSymbol.c_str()));
     //GetSyntaxView()->AppendSyntaxDesc(hlpr.GetResult());
@@ -94,6 +96,7 @@ BOOL CProcDbgger::Connect(LPCSTR target, LPVOID pParam)
 
 BOOL CProcDbgger::Connect(DWORD dwPid)
 {
+    InitEngine();
     m_vDbgProcInfo.m_eType = em_dbgproc_attach;
     m_vDbgProcInfo.m_dwPid = dwPid;
     CloseHandle(CreateThread(NULL, 0, DebugThread, NULL, 0, NULL));
@@ -133,13 +136,17 @@ void CProcDbgger::ResetCache()
     m_bDetachDbgger = FALSE;
 }
 
+void fCustomBreakPoint() {
+    int ddd = 123;
+}
+
 DWORD CProcDbgger::DebugThread(LPVOID pParam)
 {
     if (em_dbgproc_attach == GetInstance()->m_vDbgProcInfo.m_eType)
     {
         DWORD dwPid = GetInstance()->m_vDbgProcInfo.m_dwPid;
         GetInstance()->m_vDbgProcInfo.m_hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, dwPid);
-        AttachDebugger(dwPid, true, NULL, NULL);
+        AttachDebugger(dwPid, true, NULL, fCustomBreakPoint);
     }
     else if (em_dbgproc_open == GetInstance()->m_vDbgProcInfo.m_eType)
     {
@@ -240,6 +247,36 @@ DbggerStatus CProcDbgger::GetDbggerStatus() {
     return m_eDbggerStat;
 }
 
+map<DWORD64, DbgModuleInfo> CProcDbgger::GetModuleInfo() const {
+    return m_vModuleInfo;
+}
+
+list<DbgProcThreadInfo> CProcDbgger::GetThreadCache() const {
+    return m_vThreadMap;
+}
+
+void CProcDbgger::ThreadEnumCallBack(THREAD_ITEM_DATA *threadData) {
+    ThreadInformation tmp;
+    tmp.m_dwStartAddr = threadData->ThreadStartAddress;
+    tmp.m_dwSwitchCount = threadData->ContextSwitches;
+    tmp.m_dwTebBase = threadData->TebAddress;
+    tmp.m_dwThreadId = threadData->dwThreadId;
+    tmp.m_eStat = threadData->ThreadState;
+    tmp.m_eWaitReason = threadData->WaitReason;
+    tmp.m_Priority = threadData->Priority;
+
+    FILETIME a, b, c = {0};
+    GetThreadTimes(threadData->hThread, &tmp.m_vCreateTime, &a, &b, &c);
+    msCurThreadSet.push_back(tmp);
+}
+
+list<ThreadInformation> CProcDbgger::GetCurrentThreadSet() const {
+    msCurThreadSet.clear();
+    ThreaderImportRunningThreadData(m_vDbgProcInfo.m_dwPid);
+    ThreaderEnumThreadInfo(ThreadEnumCallBack);
+    return msCurThreadSet;
+}
+
 DbgModuleInfo CProcDbgger::GetModuleFromAddr(DWORD64 dwAddr) const
 {
     for (map<DWORD64, DbgModuleInfo>::const_iterator it = m_vModuleInfo.begin() ; it != m_vModuleInfo.end() ; it++)
@@ -264,15 +301,15 @@ void CProcDbgger::DeleteThreadById(DWORD dwId)
     }
 }
 
-mstring CProcDbgger::GetSymFromAddr(DWORD64 dwAddr) const
+mstring CProcDbgger::GetSymFromAddr(void *dwAddr) const
 {
     CTaskSymbolFromAddr task;
-    task.m_dwAddr = dwAddr;
+    task.m_dwAddr = (DWORD64)dwAddr;
     CSymbolTaskHeader header;
     header.m_dwSize = sizeof(CTaskSymbolFromAddr) + sizeof(CSymbolTaskHeader);
     header.m_eTaskType = em_task_strfromaddr;
 
-    DbgModuleInfo module = GetModuleFromAddr(dwAddr);
+    DbgModuleInfo module = GetModuleFromAddr((DWORD64)dwAddr);
     if (module.m_strDllName.empty())
     {
         return "";

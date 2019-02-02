@@ -38,6 +38,7 @@ BOOL __stdcall IsSameFileW(LPCWSTR file1, LPCWSTR file2);
 BOOL __stdcall IsSameFileA(LPCSTR file1, LPCSTR file2);
 
 BOOL __stdcall GetPeVersionW(LPCWSTR lpszFileName, LPWSTR outBuf, UINT size);
+BOOL __stdcall GetPeVersionA(LPCSTR lpszFileName, LPSTR outBuf, UINT size);
 
 PVOID __stdcall DisableWow64Red();
 

@@ -112,6 +112,11 @@ mstring ProcDbgProxy::ExecProc(const std::mstring &cmd, const std::mstring &cont
 }
 
 mstring ProcDbgProxy::AttachProc(const std::mstring &cmd, const std::mstring &content, void *param) {
+    Value root;
+    Reader().parse(content, root);
+
+    DWORD pid = (DWORD)root["pid"].asInt();
+    GetInstance()->m_pProcDbgger->Connect(pid);
     return MakeDbgRelpy(DbgReplyResult(0, "success", ""));
 }
 

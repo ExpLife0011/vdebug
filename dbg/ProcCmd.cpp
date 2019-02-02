@@ -398,7 +398,7 @@ CmdReplyResult CProcCmd::OnCmdReg(const mstring &cmdParam, DWORD mode, const Cmd
 {
     RegisterContent ctx;
     ctx.mContext = mProcDbgger->GetCurrentContext();
-    ctx.mCipStr = mProcDbgger->GetSymFromAddr(ctx.mContext.cip).c_str();
+    ctx.mCipStr = mProcDbgger->GetSymFromAddr((void *)ctx.mContext.cip).c_str();
 
     CmdReplyResult result;
     result.mCmdResult = EncodeCmdRegister(ctx);
@@ -677,21 +677,23 @@ CmdReplyResult CProcCmd::OnCmdDu(const mstring &strCmdParam, DWORD mode, const C
     CScriptEngine script;
     script.SetContext(mProcDbgger->GetCurrentContext(), CProcDbgger::ReadDbgProcMemory, CProcDbgger::WriteDbgProcMemory);
 
+    CmdReplyResult result;
     DWORD64 dwAddr = script.Compile(strCmdParam);
     if (!dwAddr)
     {
-        return CmdReplyResult();
+        result.mCmdShow = "语法错误\n";
+    } else {
+        CMemoryOperator mhlpr(mProcDbgger->GetDbgProc());
+        ustring strData = mhlpr.MemoryReadStrUnicode(dwAddr, MAX_PATH);
+
+        if (strData.empty())
+        {
+            result.mCmdShow = "没有读到有效的字符串数据";
+        } else {
+            result.mCmdShow = WtoA(strData);
+        }
     }
-
-    CMemoryOperator mhlpr(mProcDbgger->GetDbgProc());
-    ustring strData = mhlpr.MemoryReadStrUnicode(dwAddr, MAX_PATH);
-
-    /*
-    //CSyntaxDescHlpr desc;
-    desc.FormatDesc(wstrData.c_str(), COLOUR_DATA);
-    return mstring(em_dbgstat_succ, desc.GetResult());
-    */
-    return CmdReplyResult();
+    return result;
 }
 
 CmdReplyResult CProcCmd::OnCmdKv(const mstring &cmdParam, DWORD mode, const CmdUserParam *pParam)
@@ -715,7 +717,7 @@ CmdReplyResult CProcCmd::OnCmdKv(const mstring &cmdParam, DWORD mode, const CmdU
         single.mParam1 = FormatA("%08x", it->Params[1]);
         single.mParam2 = FormatA("%08x", it->Params[2]);
         single.mParam3 = FormatA("%08x", it->Params[3]);
-        single.mFunction = FormatA("%hs", mProcDbgger->GetSymFromAddr(it->AddrPC.Offset).c_str());
+        single.mFunction = FormatA("%hs", mProcDbgger->GetSymFromAddr((void *)it->AddrPC.Offset).c_str());
         callSet.mCallStack.push_back(single);
 
         pf << single.mAddr << single.mReturn << single.mParam0 << single.mParam1 << single.mParam2 << single.mParam3 << single.mFunction << line_end;
@@ -753,39 +755,56 @@ CmdReplyResult CProcCmd::OnCmdTc(const mstring &param, DWORD mode, const CmdUser
 
 CmdReplyResult CProcCmd::OnCmdLm(const mstring &param, DWORD mode, const CmdUserParam *pParam)
 {
-    /*
-    //CSyntaxDescHlpr hlpr;
+    map<DWORD64, DbgModuleInfo> moduleSet = mProcDbgger->GetModuleInfo();
 
-    BOOL bx64 = GetInstance()->IsDbgProcx64();
-    DWORD dwLength = bx64 ? 20 : 12;
-    hlpr.FormatDesc(L"起始位置", COLOUR_MSG, dwLength);
-    hlpr.FormatDesc(L"结束位置", COLOUR_MSG, dwLength);
-    hlpr.FormatDesc(L"模块名称", COLOUR_MSG, dwLength);
-
-    for (map<DWORD64, DbgModuleInfo>::const_iterator it = m_vModuleInfo.begin() ; it != m_vModuleInfo.end() ; it++)
+    PrintFormater pf;
+    pf << "起始地址" << "结束地址" << "版本信息" << "模块路径" << line_end;
+    for (map<DWORD64, DbgModuleInfo>::const_iterator it = moduleSet.begin() ; it != moduleSet.end() ; it++)
     {
-        hlpr.NextLine();
-        if (bx64)
-        {
-            hlpr.FormatDesc(FormatW(L"0x%016llx", it->second.m_dwBaseOfImage), COLOUR_MSG, dwLength);
-            hlpr.FormatDesc(FormatW(L"0x%016llx", it->second.m_dwEndAddr), COLOUR_MSG, dwLength);
-            hlpr.FormatDesc(FormatW(L"%ls", it->second.m_wstrDllName.c_str()));
-        }
-        else
-        {
-            hlpr.FormatDesc(FormatW(L"0x%08x", it->second.m_dwBaseOfImage), COLOUR_MSG, dwLength);
-            hlpr.FormatDesc(FormatW(L"0x%08x", it->second.m_dwEndAddr), COLOUR_MSG, dwLength);
-            hlpr.FormatDesc(FormatW(L"%ls", it->second.m_wstrDllName.c_str()));
-        }
+        string a = FormatA("0x%08x", it->second.m_dwBaseOfImage);
+        string b = FormatA("0x%08x", it->second.m_dwEndAddr);
+
+        char version[128] = {0};
+        GetPeVersionA(it->second.m_strDllPath.c_str(), version, 128);
+        string c = version;
+        pf << a << b << c << it->second.m_strDllPath << line_end;
     }
-    return mstring(em_dbgstat_succ, hlpr.GetResult());
-    */
-    return CmdReplyResult();
+
+    CmdReplyResult result;
+    result.mCmdShow = pf.GetResult();
+    return result;
 }
 
 CmdReplyResult CProcCmd::OnCmdTs(const mstring &param, DWORD mode, const CmdUserParam *pParam)
 {
-    mstring res;
+    list<ThreadInformation> threadSet = mProcDbgger->GetCurrentThreadSet();
+
+    PrintFormater pf;
+    pf << "线程ID" << "启动时间" << "状态" << "启动位置" << line_end;
+    for (list<ThreadInformation>::const_iterator it = threadSet.begin() ; it != threadSet.end() ; it++)
+    {
+        string a = FormatA("0x%08x", it->m_dwThreadId);
+
+        SYSTEMTIME time = {0};
+        FileTimeToSystemTime(&(it->m_vCreateTime), &time);
+        string b = FormatA(
+            "%04d-%02d-%02d %02d:%02d:%02d %03d ",
+            time.wYear,
+            time.wMonth,
+            time.wDay,
+            time.wHour,
+            time.wMinute,
+            time.wSecond,
+            time.wMilliseconds
+            );
+        string c = "正常运行";
+        string d = FormatA("0x%08x %hs", it->m_dwStartAddr, mProcDbgger->GetSymFromAddr(it->m_dwStartAddr).c_str());
+        pf << a << b << c << d << line_end;
+    }
+
+    CmdReplyResult result;
+    result.mCmdShow = pf.GetResult();
+    return result;
     /*
     //CSyntaxDescHlpr hlpr;
     hlpr.FormatDesc(L"序号 ");
@@ -830,5 +849,5 @@ CmdReplyResult CProcCmd::OnCmdTs(const mstring &param, DWORD mode, const CmdUser
     }
     res.SetResult(hlpr.GetResult());
     */
-    return CmdReplyResult();
+    //return CmdReplyResult();
 }

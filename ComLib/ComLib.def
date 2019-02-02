@@ -13,6 +13,7 @@ crc32
 ErrMessage
 PrintDbgInternal
 GetPeVersionW
+GetPeVersionA
 GetPeDescStrA
 CentreWindow
 ShlParseShortcutsW

@@ -30,68 +30,22 @@ std::mstring __stdcall GetFilePathFromHandle(HANDLE hFile);
 std::mstring __stdcall GetStdErrorStr(DWORD dwErr = GetLastError());
 std::wstring __stdcall RegGetStrValueExW(HKEY hKey, LPCWSTR wszSubKey, LPCWSTR wszValue);
 
-enum ThreadStat
-{
-    StateInitialized,
-    StateReady,
-    StateRunning,
-    StateStandby,
-    StateTerminated,
-    StateWait,
-    StateTransition,
-    StateUnknown
-};
-
-enum ThreadWaitReason
-{
-    Executive,
-    FreePage,
-    PageIn,
-    PoolAllocation,
-    DelayExecution,
-    Suspended,
-    UserRequest,
-    WrExecutive,
-    WrFreePage,
-    WrPageIn,
-    WrPoolAllocation,
-    WrDelayExecution,
-    WrSuspended,
-    WrUserRequest,
-    WrEventPair,
-    WrQueue,
-    WrLpcReceive,
-    WrLpcReply,
-    WrVirtualMemory,
-    WrPageOut,
-    WrRendezvous,
-    Spare2,
-    Spare3,
-    Spare4,
-    Spare5,
-    Spare6,
-    WrKernel,
-    MaximumWaitReason
-};
-
 struct ThreadInformation
 {
     DWORD m_dwThreadId;
-    DWORD64 m_dwStartAddr;
+    void *m_dwStartAddr;
     DWORD m_dwSwitchCount;
-    DWORD64 m_dwTebBase;
+    void *m_dwTebBase;
     FILETIME m_vCreateTime;
     LONG m_Priority; 
-    ThreadStat m_eStat;
-    ThreadWaitReason m_eWaitReason;
+    ULONG m_eStat;
+    ULONG m_eWaitReason;
 
     ThreadInformation()
     {
         ZeroMemory(this, sizeof(ThreadInformation));
     }
 };
-
-BOOL __stdcall GetThreadInformation(DWORD dwProcressId, std::list<ThreadInformation> &vThreads);
 
 HANDLE WINAPI CreateLowsdEvent(BOOL bReset, BOOL bInitStat, LPCSTR szName);
 

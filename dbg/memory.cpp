@@ -80,10 +80,6 @@ ustring CMemoryOperator::MemoryReadStrUnicode(DWORD64 dwAddr, DWORD dwMaxSize) c
         }
 
         wstrBuffer += cBuffer;
-        if (dwMaxSize <= (dwOffset / sizeof(WCHAR)))
-        {
-            return L"";
-        }
     }
 
     return L"";

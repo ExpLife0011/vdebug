@@ -76,9 +76,13 @@ void CProcSelectView::InitListCtrl()
     col.pszText = "进程";
     SendMessageA(m_hProcList, LVM_INSERTCOLUMNA, 0, (LPARAM)&col);
 
+    col.cx = 40;
+    col.pszText = "类型";
+    SendMessageA(m_hProcList, LVM_INSERTCOLUMNA, 1, (LPARAM)&col);
+
     col.cx = 60;
     col.pszText = "Pid";
-    SendMessageA(m_hProcList, LVM_INSERTCOLUMNA, 1, (LPARAM)&col);
+    SendMessageA(m_hProcList, LVM_INSERTCOLUMNA, 2, (LPARAM)&col);
 
     col.cx = 90;
     col.pszText = "启动时间";
@@ -280,10 +284,17 @@ VOID CProcSelectView::OnGetListCtrlDisplsy(IN OUT NMLVDISPINFOA* ptr)
         case  0:
             s_strBuf = pInfo->m_procShow;
             break;
-        case 1:
-            s_strBuf.format("%d", pInfo->info.procPid);
+        case  1:
+            if (pInfo->info.x64) {
+                s_strBuf = "64位";
+            } else {
+                s_strBuf = "32位";
+            }
             break;
         case 2:
+            s_strBuf.format("%d", pInfo->info.procPid);
+            break;
+        case 3:
             s_strBuf = pInfo->info.startTime;
             break;
         }
@@ -382,9 +393,19 @@ INT_PTR CProcSelectView::OnCommand(HWND hwnd, WPARAM wp, LPARAM lp)
         }
         else
         {
-            //CScopedLocker lock(this);
-            //m_dwSelectPid = m_vProcInfo[iSelect]->m_dwPid;
-            //PostMessageW(m_hwnd, WM_CLOSE, 0, 0);
+            CScopedLocker lock(this);
+            BOOL x64 = m_procShow[iSelect]->info.x64;
+            m_dwSelectPid = m_procShow[iSelect]->info.procPid;
+
+            if (x64)
+            {
+                DbgCtrlService::GetInstance()->SetDebugger(em_dbg_proc64);
+            } else {
+                DbgCtrlService::GetInstance()->SetDebugger(em_dbg_proc86);
+            }
+            
+            DbgCtrlService::GetInstance()->AttachProc(m_dwSelectPid);
+            PostMessageW(m_hwnd, WM_CLOSE, 0, 0);
         }
     }
     return 0;

@@ -171,6 +171,13 @@ bool DbgCtrlService::ExecProc(const std::mstring &path, const std::mstring &para
     return true;
 }
 
+bool DbgCtrlService::AttachProc(DWORD pid) {
+    Value content;
+    content["pid"] = (int)pid;
+    m_pCtrlService->DispatchCurDbgger(DBG_CTRL_ATTACH, FastWriter().write(content));
+    return true;
+}
+
 bool DbgCtrlService::DetachProc() {
     m_pCtrlService->DispatchCurDbgger(DBG_CTRL_DETACH, "{}");
     SetCmdNotify(em_dbg_status_init, "³õÊ¼×´Ì¬");
