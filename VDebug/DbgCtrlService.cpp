@@ -8,6 +8,7 @@
 
 DbgCtrlService::DbgCtrlService() {
     m_procMon = false;
+    m_stat = em_dbg_status_init;
 }
 
 DbgCtrlService::~DbgCtrlService() {
@@ -24,11 +25,11 @@ DbgCtrlService *DbgCtrlService::GetInstance() {
 
 bool DbgCtrlService::SetDebugger(DbggerType type) {
     m_pCtrlService->SetActivity(type);
-    m_stat = type;;
+    m_type = type;;
     return true;
 }
 
-DbggerType DbgCtrlService::GetDebuggerStat() {
+DbggerStatus DbgCtrlService::GetDebuggerStat() {
     return m_stat;
 }
 
@@ -207,7 +208,8 @@ void DbgCtrlService::OnSystemBreakpoint(const mstring &eventName, const mstring 
     Reader().parse(content, json);
     int tid = json["tid"].asInt();
 
-    SetCmdNotify(em_dbg_status_free, FormatA("线程 %d >>", tid));
+    GetInstance()->m_stat = em_dbg_status_free;
+    SetCmdNotify(GetInstance()->m_stat, FormatA("线程 %d >>", tid));
 }
 
 void DbgCtrlService::OnDbgMessage(const mstring &event, const mstring &content, void *param) {

@@ -214,7 +214,7 @@ mstring CScriptEngine::GetPointerData(const mstring &strPointer) const
     DWORD dwRead = 0;
     DWORD dwSize = 4;
 
-    if (!IsRegisterStr(strPointer, dwData))
+    if (!IsRegisterStr(strPointer, dwAddr))
     {
         if (!GetNumFromStr(strPointer, dwAddr))
         {
@@ -368,7 +368,7 @@ mstring CScriptEngine::GetSimpleResult2(const mstring &wstrScript) const
     return DeleteOperator(wstrResult, "+-");
 }
 
-//无圆括号表达式计算
+//无圆括号表达式计算,消去方括号
 mstring CScriptEngine::GetSimpleResult1(const mstring &script) const
 {
     mstring str(script);
@@ -388,7 +388,7 @@ mstring CScriptEngine::GetSimpleResult1(const mstring &script) const
                     mstring result = GetSimpleResult2(sub);
                     result = GetPointerData(result);
                     str.replace(j, i - j + 1, result);
-                    i = (int)(i - 1 + sub.size());
+                    i = (int)(j + result.size());
                     break;
                 }
             }

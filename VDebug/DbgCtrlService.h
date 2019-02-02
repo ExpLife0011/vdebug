@@ -14,7 +14,7 @@ public:
 
     bool InitCtrlService();
     bool SetDebugger(DbggerType type);
-    DbggerType GetDebuggerStat();
+    DbggerStatus GetDebuggerStat();
     bool ExecProc(const std::mstring &path, const std::mstring &param);
     bool AttachProc(DWORD pid);
     bool DetachProc();
@@ -42,7 +42,8 @@ private:
 private:
     void RunProcInUser(LPCSTR image, LPCSTR cmd, DWORD session);
 private:
-    DbggerType m_stat;
+    DbggerType m_type;
+    DbggerStatus m_stat;
     std::mstring m_DbgChannel;
     std::mstring m_unique;
     DbgServiceBase *m_pCtrlService;
