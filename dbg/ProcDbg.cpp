@@ -43,14 +43,14 @@ VOID CProcDbgger::Wait()
 {
     DWORD dwId = ((DEBUG_EVENT*)GetDebugData())->dwThreadId;
     m_eDbggerStat = em_dbg_status_free;
-    //SetCmdNotify(em_dbg_status_free, mstring().format(L"线程 %04x >>", dwId).c_str());
     WaitForSingleObject(m_hRunNotify, INFINITE);
-    //SetCmdNotify(em_dbg_status_busy, mstring().format(L"线程 %04x >>", dwId).c_str());
+
+    utf8_mstring package = MakeDbgEvent(DBG_EVENT_DBG_PROC_RUNNING, "{}");
+    MsgSend(MQ_CHANNEL_DBG_SERVER, package.c_str());
 }
 
 void CProcDbgger::Run()
 {
-    //SetCmdNotify(em_dbg_status_busy, L"正在运行");
     SetEvent(m_hRunNotify);
 }
 
@@ -265,8 +265,9 @@ void CProcDbgger::ThreadEnumCallBack(THREAD_ITEM_DATA *threadData) {
     tmp.m_eWaitReason = threadData->WaitReason;
     tmp.m_Priority = threadData->Priority;
 
-    FILETIME a, b, c = {0};
-    GetThreadTimes(threadData->hThread, &tmp.m_vCreateTime, &a, &b, &c);
+    FILETIME a, b, c, d= {0};
+    GetThreadTimes(threadData->hThread, &a, &b, &c, &d);
+    FileTimeToLocalFileTime(&a, &tmp.m_vCreateTime);
     msCurThreadSet.push_back(tmp);
 }
 
@@ -442,7 +443,7 @@ void CProcDbgger::OnSystemBreakpoint(void* ExceptionData)
         return;
     }
 
-    mstring package = MakeDbgEvent(DBG_EVENT_SYSTEM_BREAKPOINTA, FormatA("{\"tid\":%d}", dwId));
+    mstring package = MakeDbgEvent(DBG_EVENT_SYSTEM_BREAKPOINT, FormatA("{\"tid\":%d}", dwId));
     MsgSend(MQ_CHANNEL_DBG_SERVER, package.c_str());
 
     //脱离调试器
@@ -502,6 +503,11 @@ void CProcDbgger::OnException(EXCEPTION_DEBUG_INFO* ExceptionData)
             DetachDebuggerEx(GetInstance()->m_vDbgProcInfo.m_dwPid);
             GetInstance()->OnDetachDbgger();
         } else {
+            DWORD dwId = ((DEBUG_EVENT*)GetDebugData())->dwThreadId;
+
+            mstring package = MakeDbgEvent(DBG_EVENT_SYSTEM_BREAKPOINT, FormatA("{\"tid\":%d}", dwId));
+            MsgSend(MQ_CHANNEL_DBG_SERVER, package.c_str());
+            GetInstance()->Wait();
         }
     }
 }

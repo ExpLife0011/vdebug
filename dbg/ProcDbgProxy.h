@@ -22,6 +22,7 @@ private:
     static std::mstring __stdcall AttachProc(const std::mstring &cmd, const std::mstring &content, void *param);
     static std::mstring __stdcall RunCmd(const std::mstring &cmd, const std::mstring &content, void *param);
     static std::mstring __stdcall DetachProc(const std::mstring &cmd, const std::mstring &content, void *param);
+    static std::mstring __stdcall BreakDebugger(const std::mstring &cmd, const std::mstring &content, void *param);
 
 private:
     //proc event

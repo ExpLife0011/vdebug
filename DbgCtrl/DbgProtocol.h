@@ -1,6 +1,84 @@
 #ifndef DBGPROTOCOL_DBGCTRL_H_H_
 #define DBGPROTOCOL_DBGCTRL_H_H_
 
+//消息抽象成ctrl 和 event两种
+//ctrl 是调试控制端控制调试器执行调试动作
+//event 是调试器向调试控制端上报调试事件
+
+/*********************调试控制指令开始*****************************/
+/*
+{
+    "cmd":"attach",
+    "content":{
+        "pid":1234
+    }
+}
+*/
+#define DBG_CTRL_ATTACH              "attach"
+
+/*
+{
+    "cmd":"exec",
+    "content":{
+        "path":"abcdef.exe",
+        "param":"abcdefgh"
+    }
+}
+*/
+#define DBG_CTRL_EXEC                "exec"
+
+//{}
+#define DBG_CTRL_DETACH              "ctrlDetach"
+
+
+/*
+{
+    "cmd":"RunCmd",
+    "content":{
+        "mode":1,                          //1:仅返回展示字符串 2:返回Json格式的执行结果
+        "cmd":"bp kernen32!CreateFileW"    //cmd 内容
+    }
+}
+
+{
+    "cmd": "reply",
+    "content": {
+        "status": 0,
+        "reason": "abcdef",
+        "result":{
+            "cmdCode":0,
+            "mode":1,
+            "cmdLabel":"CallStack",                     //展示标签
+            "cmdShow":"abcd1234",                       //展示内容
+            "cmdResult": [{
+                "addr": "0x0xabcd12ff",
+                "function":"kernel32!CreateFileW",
+                "param0": "0xabcd1234",
+                "param1": "0xabcd1234",
+                "param2": "0xabcd1233",
+                "param3": "0xabcd1233"
+            }]
+        } 
+    }
+}
+*/
+#define DBG_CTRL_RUNCMD               "RunCmd"
+
+/*
+{
+    "cmd":"GetProcInfo",
+    "content":{
+        "start":1
+    }
+}
+*/
+#define DBG_CTRL_GET_PROC            "GetProcInfo"
+
+//中断调试器
+#define DBG_CTRL_BREAK               "BreakDebugger"
+/*********************调试控制指令结束******************************/
+
+/*********************调试事件开始**********************************/
 /*
 {
     "cmd":"event",
@@ -51,6 +129,19 @@
 {
     "cmd":"event",
     "content":{
+        "type":"procRunning",
+        "data":{
+            "abcdef"
+        }
+    }
+}
+*/
+#define DBG_EVENT_DBG_PROC_RUNNING       "procRunning"          //调试进程执行中
+
+/*
+{
+    "cmd":"event",
+    "content":{
         "type":"moduleload",
         "data":{
             "name":"kernel32.dll",
@@ -65,75 +156,8 @@
 #define DBG_EVENT_MODULE_LOADA       "moduleload"
 #define DBG_EVENT_MODULE_UNLOADA     "moduelunload"
 
-/*
-{
-    "cmd":"attach",
-    "content":{
-        "pid":1234
-    }
-}
-*/
-#define DBG_CTRL_ATTACH              "attach"
-
-/*
-{
-    "cmd":"exec",
-    "content":{
-        "path":"abcdef.exe",
-        "param":"abcdefgh"
-    }
-}
-*/
-#define DBG_CTRL_EXEC                "exec"
-
-//{}
-#define DBG_CTRL_DETACH              "ctrlDetach"
-
 //{}
 #define DBG_EVENT_DETACH             "eventDetach"
-
-/*
-{
-    "cmd":"RunCmd",
-    "content":{
-        "mode":1,                          //1:仅返回展示字符串 2:返回Json格式的执行结果
-        "cmd":"bp kernen32!CreateFileW"    //cmd 内容
-    }
-}
-
-{
-    "cmd": "reply",
-    "content": {
-        "status": 0,
-        "reason": "abcdef",
-        "result":{
-            "cmdCode":0,
-            "mode":1,
-            "cmdLabel":"CallStack",                     //展示标签
-            "cmdShow":"abcd1234",                       //展示内容
-            "cmdResult": [{
-                "addr": "0x0xabcd12ff",
-                "function":"kernel32!CreateFileW",
-                "param0": "0xabcd1234",
-                "param1": "0xabcd1234",
-                "param2": "0xabcd1233",
-                "param3": "0xabcd1233"
-            }]
-        } 
-    }
-}
-*/
-#define DBG_CTRL_RUNCMD               "RunCmd"
-
-/*
-{
-    "cmd":"GetProcInfo",
-    "content":{
-        "start":1
-    }
-}
-*/
-#define DBG_TASK_GET_PROC            "GetProcInfo"
 
 
 /*
@@ -165,9 +189,8 @@
 }
 */
 #define DBG_EVENT_PROC_CHANGED       "ProcChanged"
-#define DBG_EVENT_PROC_CHANGEDA      "ProcChanged"
 
 //{"tid":12354}
 #define DBG_EVENT_SYSTEM_BREAKPOINT   "SyatemBreakpoint"
-#define DBG_EVENT_SYSTEM_BREAKPOINTA  "SyatemBreakpoint"
+/*********************调试事件结束**********************************/
 #endif //DBGPROTOCOL_DBGCTRL_H_H_

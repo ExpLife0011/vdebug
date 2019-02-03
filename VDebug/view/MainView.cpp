@@ -281,6 +281,26 @@ static void _InitSyntaxView() {
     gs_pSyntaxView->ShowHsScrollBar(false);
 }
 
+static HHOOK gs_pfnKeyboardHook = NULL;
+static LRESULT CALLBACK _KeyboardProc(int code, WPARAM wParam, LPARAM lParam) {
+    if (GetAsyncKeyState(VK_CONTROL) & (1 << 16)){
+        // ctrl+b break debugger
+        if (wParam == 0x42 && DbgCtrlService::GetInstance()->GetDebuggerStat() == em_dbg_status_busy)
+        {
+            static DWORD s_lastCount = 0;
+
+            DWORD curCount = GetTickCount();
+            if (curCount - s_lastCount >= 1000)
+            {
+                s_lastCount = curCount;
+                DbgCtrlService::GetInstance()->BreakDbgProcInCtrlService();
+            }
+        }
+    }
+
+    return CallNextHookEx(gs_pfnKeyboardHook, code, wParam, lParam);
+}
+
 static VOID _OnInitDialog(HWND hwnd, WPARAM wp, LPARAM lp)
 {
     SendMessageW(hwnd, WM_SETICON, (WPARAM)ICON_BIG, (LPARAM)LoadIconW(g_hInstance, MAKEINTRESOURCEW(IDI_MAIN)));
@@ -331,6 +351,8 @@ static VOID _OnInitDialog(HWND hwnd, WPARAM wp, LPARAM lp)
     GetModuleFileNameW(NULL, wszBuf, MAX_PATH);
     GetPeVersionW(wszBuf, wstrVersion.alloc(MAX_PATH), MAX_PATH);
     wstrVersion.setbuffer();
+
+    gs_pfnKeyboardHook = SetWindowsHookEx(WH_KEYBOARD, _KeyboardProc, g_hInstance, GetCurrentThreadId());
 
     AppendToSyntaxView(SCI_LABEL_DEFAULT, FormatA("VDebugµ÷ÊÔÆ÷£¬°æ±¾£º%ls\n", wstrVersion.c_str()));
 }
@@ -456,6 +478,14 @@ static void _OnAppendMsg() {
     gs_pSyntaxView->SetScrollEndLine();
 }
 
+static INT_PTR _OnKeyDown(HWND hdlg, WPARAM wp, LPARAM lp) {
+    if (GetAsyncKeyState(VK_CONTROL) & (1 << 16))
+    {
+        int ddd = 123;
+    }
+    return 0;
+}
+
 static INT_PTR CALLBACK _MainViewProc(HWND hdlg, UINT msg, WPARAM wp, LPARAM lp)
 {
     int ret = 0;
@@ -474,6 +504,11 @@ static INT_PTR CALLBACK _MainViewProc(HWND hdlg, UINT msg, WPARAM wp, LPARAM lp)
     case WM_TIMER:
         {
             _OnTimer(hdlg, wp, lp);
+        }
+        break;
+    case WM_KEYDOWN:
+        {
+            _OnKeyDown(hdlg, wp, lp);
         }
         break;
     case MSG_EXEC_COMMAND:

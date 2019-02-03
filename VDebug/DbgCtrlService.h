@@ -15,6 +15,7 @@ public:
     bool InitCtrlService();
     bool SetDebugger(DbggerType type);
     DbggerStatus GetDebuggerStat();
+    bool BreakDbgProcInCtrlService() const;
     bool ExecProc(const std::mstring &path, const std::mstring &param);
     bool AttachProc(DWORD pid);
     bool DetachProc();
@@ -35,6 +36,7 @@ private:
     static void WINAPI OnProcExit(const std::mstring &eventName, const std::mstring &content, void *param);
     static void WINAPI OnModuleLoad(const std::mstring &eventName, const std::mstring &content, void *param);
     static void WINAPI OnModuleUnLoad(const std::mstring &eventName, const std::mstring &content, void *param);
+    static void WINAPI OnDbgProcRunning(const std::mstring &eventName, const std::mstring &content, void *param);
 
     //Proc changed
     static void WINAPI OnProcChanged(const std::mstring &eventName, const std::mstring &content, void *param);

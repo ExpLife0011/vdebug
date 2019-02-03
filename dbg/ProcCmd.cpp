@@ -382,7 +382,9 @@ CmdReplyResult CProcCmd::OnCmdUf(const mstring &param, DWORD mode, const CmdUser
 CmdReplyResult CProcCmd::OnCmdGo(const mstring &param, DWORD mode, const CmdUserParam *pParam)
 {
     mProcDbgger->Run();
-    return CmdReplyResult();
+    CmdReplyResult result;
+    result.mCmdShow = "进程继续运行\n";
+    return result;
 }
 
 CmdReplyResult CProcCmd::OnCmdGu(const mstring &param, DWORD mode, const CmdUserParam *pParam)

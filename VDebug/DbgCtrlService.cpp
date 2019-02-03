@@ -33,6 +33,11 @@ DbggerStatus DbgCtrlService::GetDebuggerStat() {
     return m_stat;
 }
 
+bool DbgCtrlService::BreakDbgProcInCtrlService() const {
+    m_pCtrlService->DispatchCurDbgger(DBG_CTRL_BREAK, "{}");
+    return true;
+}
+
 bool DbgCtrlService::InitCtrlService() {
 #ifdef _DEBUG
     m_unique = UNIQUE_DEBUG;
@@ -70,18 +75,19 @@ bool DbgCtrlService::InitCtrlService() {
     m_pCtrlService->RegisterDbgEvent(DBG_EVENT_MODULE_LOAD, OnModuleLoad, this);
     m_pCtrlService->RegisterDbgEvent(DBG_EVENT_MODULE_UNLOAD, OnModuleUnLoad, this);
     m_pCtrlService->RegisterDbgEvent(DBG_EVENT_PROC_CHANGED, OnProcChanged, this);
+    m_pCtrlService->RegisterDbgEvent(DBG_EVENT_DBG_PROC_RUNNING, OnDbgProcRunning, this);
     return true;
 }
 
 bool DbgCtrlService::StartProcMon() {
     m_procMon = true;
-    m_pCtrlService->DispatchSpecDbgger(em_dbg_proc86, DBG_TASK_GET_PROC, "{\"start\":1}");
+    m_pCtrlService->DispatchSpecDbgger(em_dbg_proc86, DBG_CTRL_GET_PROC, "{\"start\":1}");
     return true;
 }
 
 void DbgCtrlService::StopProcMon() {
     m_procMon = false;
-    m_pCtrlService->DispatchSpecDbgger(em_dbg_proc86, DBG_TASK_GET_PROC, "{\"start\":0}");
+    m_pCtrlService->DispatchSpecDbgger(em_dbg_proc86, DBG_CTRL_GET_PROC, "{\"start\":0}");
     return;
 }
 
@@ -234,6 +240,11 @@ void DbgCtrlService::OnModuleLoad(const mstring &eventName, const mstring &conte
 }
 
 void DbgCtrlService::OnModuleUnLoad(const mstring &event, const mstring &content, void *param) {
+}
+
+void DbgCtrlService::OnDbgProcRunning(const std::mstring &eventName, const std::mstring &content, void *param) {
+    GetInstance()->m_stat = em_dbg_status_busy;
+    SetCmdNotify(GetInstance()->m_stat, "ÔËÐÐÖÐ");
 }
 
 void DbgCtrlService::OnProcChanged(const mstring &event, const mstring &content, void *param) {

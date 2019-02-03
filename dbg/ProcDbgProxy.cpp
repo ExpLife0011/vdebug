@@ -41,8 +41,9 @@ bool ProcDbgProxy::InitProcDbgProxy(const char *unique) {
     m_pDbgClient->RegisterCtrlHandler(DBG_CTRL_EXEC, ExecProc, this);
     m_pDbgClient->RegisterCtrlHandler(DBG_CTRL_ATTACH, AttachProc, this);
     m_pDbgClient->RegisterCtrlHandler(DBG_CTRL_RUNCMD, RunCmd, this);
-    m_pDbgClient->RegisterCtrlHandler(DBG_TASK_GET_PROC, GetProcInfo, this);
+    m_pDbgClient->RegisterCtrlHandler(DBG_CTRL_GET_PROC, GetProcInfo, this);
     m_pDbgClient->RegisterCtrlHandler(DBG_CTRL_DETACH, DetachProc, this);
+    m_pDbgClient->RegisterCtrlHandler(DBG_CTRL_BREAK, BreakDebugger, this);
     m_pProcDbgger = CProcDbgger::GetInstance();
     m_pCmdRunner = CProcCmd::GetInst();
     m_pCmdRunner->InitProcCmd(m_pProcDbgger);
@@ -129,6 +130,18 @@ mstring ProcDbgProxy::DetachProc(const std::mstring &cmd, const std::mstring &co
     return MakeDbgRelpy(DbgReplyResult(0, "success", ""));
 }
 
+mstring ProcDbgProxy::BreakDebugger(const std::mstring &cmd, const std::mstring &content, void *param) {
+    if (GetInstance()->m_pProcDbgger->GetDbggerStatus() != em_dbg_status_busy)
+    {
+        CmdRequest request;
+        request.mCmd = "bk";
+        GetInstance()->m_pCmdRunner->RunCommand(request);
+    } else {
+    }
+    return MakeDbgRelpy(DbgReplyResult(0, "success", ""));
+}
+
+
 mstring ProcDbgProxy::GetProcInfo(const mstring &cmd, const mstring &content, void *param) {
     Value root;
     Reader().parse(content, root);
@@ -158,6 +171,6 @@ void ProcDbgProxy::OnProcChanged(HProcListener listener, const list<const ProcMo
     }
     procSet.mKillSet = killed;
 
-    mstring packet = MakeDbgEvent(DBG_EVENT_PROC_CHANGEDA, EncodeProcMon(procSet));
+    mstring packet = MakeDbgEvent(DBG_EVENT_PROC_CHANGED, EncodeProcMon(procSet));
     m_pDbgClient->ReportDbgEvent(packet);
 }
