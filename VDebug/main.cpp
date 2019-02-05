@@ -104,7 +104,7 @@ static BOOL _StartService() {
     CHAR szRunner[MAX_PATH] = {0};
     CHAR szServ[MAX_PATH] = {0};
     GetModuleFileNameA(NULL, szRunner, MAX_PATH);
-    PathAppendA(szRunner, "../runner.exe");
+    PathAppendA(szRunner, "..\\runner.exe");
 
     GetWindowsDirectoryA(szServ, MAX_PATH);
     PathAppendA(szServ, "DbgService.exe");
@@ -149,10 +149,8 @@ static BOOL _StartService() {
             break;
         }
 
-        PathQuoteSpacesA(szServ);
-        mstring cmd = FormatA("%hs -service", szServ);
-
-        bServ = (InstallLocalServiceA(cmd.c_str(), SFV_SERVICE_NAME, SFV_SERVICE_DISPLAY_NAME, SFV_SERVICE_DESCRIPTION) && StartLocalServiceA(SFV_SERVICE_NAME));
+        bServ = (InstallLocalServiceA(szServ, "-service", SFV_SERVICE_NAME, SFV_SERVICE_DISPLAY_NAME, SFV_SERVICE_DESCRIPTION) && StartLocalServiceA(SFV_SERVICE_NAME));
+        dp(L"stat:%d, err:%d", bServ, GetLastError());
         if (bServ)
         {
             hNotify = OpenEventA(EVENT_MODIFY_STATE, FALSE, SFV_NOTIFY_NAME);

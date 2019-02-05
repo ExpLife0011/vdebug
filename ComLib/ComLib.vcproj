@@ -118,12 +118,14 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;COMLIB_EXPORTS"
+				AdditionalIncludeDirectories="../"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;COMLIB_EXPORTS;JSON_DLL_BUILD"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
 				DebugInformationFormat="3"
+				DisableSpecificWarnings="4251"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -136,6 +138,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
+				OutputFile="$(OutDir)\$(ProjectName)32.dll"
 				LinkIncremental="1"
 				ModuleDefinitionFile="ComLib.def"
 				GenerateDebugInformation="true"
@@ -247,6 +250,10 @@
 			</File>
 			<File
 				RelativePath=".\DbProxy.h"
+				>
+			</File>
+			<File
+				RelativePath=".\LibDef.h"
 				>
 			</File>
 			<File

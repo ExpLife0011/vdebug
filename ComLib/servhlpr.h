@@ -3,8 +3,8 @@
 #include <Windows.h>
 
 //初始化服务
-BOOL WINAPI InstallLocalServiceW(LPCWSTR cmd, LPCWSTR wszsName, LPCWSTR wszDisplayName, LPCWSTR wszDescripion);
-BOOL WINAPI InstallLocalServiceA(LPCSTR cmd, LPCSTR name, LPCSTR displayName, LPCSTR descripion);
+BOOL WINAPI InstallLocalServiceW(LPCWSTR image, LPCWSTR cmd, LPCWSTR wszsName, LPCWSTR wszDisplayName, LPCWSTR wszDescripion);
+BOOL WINAPI InstallLocalServiceA(LPCSTR image, LPCSTR cmd, LPCSTR name, LPCSTR displayName, LPCSTR descripion);
 
 //启动指定的服务
 BOOL WINAPI ServStartW(LPCWSTR servName);

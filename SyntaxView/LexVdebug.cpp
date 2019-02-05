@@ -160,7 +160,9 @@ void LexVdebugParser::FoldPyDoc(
    WordList *[],
    Accessor &styler
    )
-{}
+{
+    printf("abcdef");
+}
 
 void LexVdebugParser::OnParserStr(const mstring &lebal, int startPos, const string &data, int initStyle, StyleContext &sc) {
     dp(L"parser start:%d, length:%d", startPos, data.size());

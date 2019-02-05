@@ -58,11 +58,11 @@ bool DbgCtrlService::InitCtrlService() {
 
 #ifdef _DEBUG
 #else
-    WCHAR image[256];
-    GetModuleFileNameW(NULL, image, 256);
-    PathAppendW(image, L"..\\x32\\dbg32.exe");
+    char image[256];
+    GetModuleFileNameA(NULL, image, 256);
+    PathAppendA(image, "..\\x32\\dbg32.exe");
 
-    wstring cmd = FormatW(RUNNER_EVENT32, m_unique.c_str());
+    mstring cmd = FormatA(RUNNER_EVENT32, m_unique.c_str());
     DWORD session = 0;
     ProcessIdToSessionId(GetCurrentProcessId(), &session);
     RunProcInUser(image, cmd.c_str(), session);
@@ -108,7 +108,7 @@ void DbgCtrlService::RunProcInUser(LPCSTR image, LPCSTR cmd, DWORD session) {
     char szSub[1024] = {0};
     char szMagic[32] = {0};
     wnsprintfA(szMagic, 32, "%04X%04X%08X", rand(), rand(), s_dwSerial++);
-    wnsprintfA(szSub, 1024, "%ls\\%ls", PATH_SERVICE_CACHE, szMagic);
+    wnsprintfA(szSub, 1024, "%hs\\%hs", PATH_SERVICE_CACHE, szMagic);
     SHSetValueA(
         HKEY_LOCAL_MACHINE,
         szSub,

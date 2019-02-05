@@ -2,8 +2,6 @@
 #include <Shlwapi.h>
 #include <list>
 #include <string>
-
-#include <ComLib/ComLib.h>
 #include <ComStatic/ComStatic.h>
 #include "ServiceRunner.h"
 #include "runner.h"
@@ -164,6 +162,25 @@ DWORD ServiceRunner::ServiveMain(LPVOID param)
     return 0;
 }
 
+BOOL ServiceRunner::ReportLocalServStatusInRunner(SERVICE_STATUS_HANDLE hStatus, DWORD dwCurrentStat, DWORD dwWin32ExitCode)
+{
+    static SERVICE_STATUS s_stat =
+    {
+        SERVICE_WIN32_OWN_PROCESS | SERVICE_INTERACTIVE_PROCESS
+    };
+    if (SERVICE_START_PENDING == dwCurrentStat)
+    {
+        s_stat.dwControlsAccepted = 0;
+    }
+    else
+    {
+        s_stat.dwControlsAccepted = SERVICE_ACCEPT_SHUTDOWN | SERVICE_ACCEPT_STOP;
+    }
+    s_stat.dwCurrentState = dwCurrentStat;
+    s_stat.dwWin32ExitCode = dwWin32ExitCode;
+    return SetServiceStatus(hStatus, &s_stat);
+}
+
 DWORD ServiceRunner::ServiceHandlerEx(DWORD dwControl, DWORD dwEvent, LPVOID pEventData, LPVOID pContext)
 {
     ServiceRunner *pThis = ServiceRunner::GetInstance();
@@ -174,10 +191,10 @@ DWORD ServiceRunner::ServiceHandlerEx(DWORD dwControl, DWORD dwEvent, LPVOID pEv
             OutputDebugStringA("runner:fff");
             if (!pThis->m_ServiceThread)
             {
-                ReportLocalServStatus(pThis->m_ServStatus, SERVICE_STOPPED, ERROR_SUCCESS);
+                ReportLocalServStatusInRunner(pThis->m_ServStatus, SERVICE_STOPPED, ERROR_SUCCESS);
                 break;
             }
-            ReportLocalServStatus(pThis->m_ServStatus, SERVICE_STOP_PENDING, ERROR_SUCCESS);
+            ReportLocalServStatusInRunner(pThis->m_ServStatus, SERVICE_STOP_PENDING, ERROR_SUCCESS);
             SetEvent(pThis->m_ServiceLeave);
             if (WAIT_TIMEOUT == WaitForSingleObject(pThis->m_ServiceThread, 3000))
             {
@@ -189,7 +206,7 @@ DWORD ServiceRunner::ServiceHandlerEx(DWORD dwControl, DWORD dwEvent, LPVOID pEv
             }
             CloseHandle(pThis->m_ServiceThread);
             pThis->m_ServiceThread = NULL;
-            ReportLocalServStatus(pThis->m_ServStatus, SERVICE_STOPPED, ERROR_SUCCESS);
+            ReportLocalServStatusInRunner(pThis->m_ServStatus, SERVICE_STOPPED, ERROR_SUCCESS);
         }
         break;
     case  SERVICE_CONTROL_SHUTDOWN:
@@ -198,11 +215,11 @@ DWORD ServiceRunner::ServiceHandlerEx(DWORD dwControl, DWORD dwEvent, LPVOID pEv
         {
             if (WAIT_OBJECT_0 == WaitForSingleObject(pThis->m_ServiceThread, 0))
             {
-                ReportLocalServStatus(pThis->m_ServStatus, SERVICE_STOPPED, ERROR_SUCCESS);
+                ReportLocalServStatusInRunner(pThis->m_ServStatus, SERVICE_STOPPED, ERROR_SUCCESS);
             }
             else
             {
-                ReportLocalServStatus(pThis->m_ServStatus, SERVICE_RUNNING, ERROR_SUCCESS);
+                ReportLocalServStatusInRunner(pThis->m_ServStatus, SERVICE_RUNNING, ERROR_SUCCESS);
             }
         }
         break;
@@ -219,11 +236,11 @@ VOID ServiceRunner::ServiceMainProc(DWORD dwArgc, LPSTR *szArgv) {
     pThis->m_ServiceLeave = CreateEventW(NULL, FALSE, FALSE, NULL);
     OutputDebugStringA("runner:bbb");
     pThis->m_ServStatus = RegisterServiceCtrlHandlerExA(SFV_SERVICE_NAME, ServiceHandlerEx, NULL);
-    ReportLocalServStatus(pThis->m_ServStatus, SERVICE_START_PENDING, ERROR_SUCCESS);
+    ReportLocalServStatusInRunner(pThis->m_ServStatus, SERVICE_START_PENDING, ERROR_SUCCESS);
     if (!pThis->m_ServiceThread)
     {
         OutputDebugStringA("runner:ccc");
         pThis->m_ServiceThread = CreateThread(NULL, 0, ServiveMain, NULL, 0, NULL);
     }
-    ReportLocalServStatus(pThis->m_ServStatus, SERVICE_RUNNING, ERROR_SUCCESS);
+    ReportLocalServStatusInRunner(pThis->m_ServStatus, SERVICE_RUNNING, ERROR_SUCCESS);
 }

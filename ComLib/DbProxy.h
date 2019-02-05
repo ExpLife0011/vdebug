@@ -2,8 +2,9 @@
 #define DBPROXY_STATIC_H_H_
 #include <ComStatic/mstring.h>
 #include "SqliteOperator.h"
+#include "LibDef.h"
 
-class _declspec(dllexport) DbProxy {
+class COMAPI DbProxy {
 private: 
     DbProxy();
 

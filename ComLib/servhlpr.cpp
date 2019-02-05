@@ -1,16 +1,17 @@
 #include <Windows.h>
 #include <Shlwapi.h>
 #include <ComStatic/StrUtil.h>
+#include "ComUtil.h"
 
 //初始化服务
-BOOL WINAPI InstallLocalServiceW(LPCWSTR wszCmd, LPCWSTR wszsName, LPCWSTR wszDisplayName, LPCWSTR wszDescripion)
+BOOL WINAPI InstallLocalServiceW(LPCWSTR image, LPCWSTR cmd, LPCWSTR wszsName, LPCWSTR wszDisplayName, LPCWSTR wszDescripion)
 {
     SC_HANDLE hScm = NULL;
     SC_HANDLE hSev = NULL;
     BOOL bStat = FALSE;
     do
     {
-        if (!wszCmd || !*wszCmd)
+        if (!cmd || !*cmd)
         {
             break;
         }
@@ -21,6 +22,12 @@ BOOL WINAPI InstallLocalServiceW(LPCWSTR wszCmd, LPCWSTR wszsName, LPCWSTR wszDi
         }
         WCHAR wszDependencies[] = L"tcpip\0\0\0";
         hSev = OpenServiceW(hScm, wszsName, SERVICE_ALL_ACCESS);
+        WCHAR wszCmd[MAX_PATH] = {0};
+        lstrcpynW(wszCmd, image, MAX_PATH);
+        PathQuoteSpacesW(wszCmd);
+        StrCatBuffW(wszCmd, L" ", MAX_PATH);
+        StrCatBuffW(wszCmd, cmd, MAX_PATH);
+
         if (!hSev)
         {
             hSev = CreateServiceW(
@@ -75,8 +82,8 @@ BOOL WINAPI InstallLocalServiceW(LPCWSTR wszCmd, LPCWSTR wszsName, LPCWSTR wszDi
     return bStat;
 }
 
-BOOL WINAPI InstallLocalServiceA(LPCSTR szCmd, LPCSTR szName, LPCSTR szDisplayName, LPCSTR szDescripion) {
-    return InstallLocalServiceW(AtoW(szCmd).c_str(), AtoW(szCmd).c_str(), AtoW(szDisplayName).c_str(), AtoW(szDescripion).c_str());
+BOOL WINAPI InstallLocalServiceA(LPCSTR image, LPCSTR cmd, LPCSTR szName, LPCSTR szDisplayName, LPCSTR szDescripion) {
+    return InstallLocalServiceW(AtoW(image).c_str(), AtoW(cmd).c_str(), AtoW(szName).c_str(), AtoW(szDisplayName).c_str(), AtoW(szDescripion).c_str());
 }
 
 //启动服务

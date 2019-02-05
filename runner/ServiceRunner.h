@@ -13,6 +13,7 @@ public:
 private:
     void OnServWork();
     void RunProcess(LPCSTR szKey);
+    static BOOL ReportLocalServStatusInRunner(SERVICE_STATUS_HANDLE hStatus, DWORD dwCurrentStat, DWORD dwWin32ExitCode);
     static DWORD WINAPI ServiveMain(LPVOID param);
     static DWORD WINAPI ServiceHandlerEx(DWORD dwControl, DWORD dwEvent, LPVOID pEventData, LPVOID pContext);
     static VOID WINAPI ServiceMainProc(DWORD dwArgc, LPSTR *wszArgv);

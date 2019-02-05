@@ -6,6 +6,7 @@
 #include <list>
 #include <ComStatic/mstring.h>
 #include <ComLib/sqlite3.h>
+#include "LibDef.h"
 
 #pragma warning(disable:4251)
 
@@ -30,7 +31,7 @@ struct IteratorCache {
     IteratorCache *mNext;
 };
 
-class _declspec(dllexport) SqliteIterator {
+class COMAPI SqliteIterator {
     friend class SqliteResult;
 public:
     SqliteIterator();
@@ -50,7 +51,7 @@ private:
     const IteratorCache *mData;
 };
 
-class _declspec(dllexport) SqliteResult {
+class COMAPI SqliteResult {
     friend class SqliteOperator;
 public:
     SqliteResult();
@@ -69,7 +70,7 @@ private:
     const std::list<IteratorCache *> *mResultSet;
 };
 
-class _declspec(dllexport) SqliteOperator {
+class COMAPI SqliteOperator {
 public:
     SqliteOperator();
     SqliteOperator(const std::mstring &filePath);
