@@ -30,16 +30,17 @@ private:
     void OnCmdReply(const std::mstring &content);
 
     //Debug Event
-    static void WINAPI OnProcCreate(const std::mstring &eventName, const std::mstring &content, void *param);
-    static void WINAPI OnSystemBreakpoint(const mstring &eventName, const mstring &content, void *param);
-    static void WINAPI OnDbgMessage(const std::mstring &eventName, const std::mstring &content, void *param);
-    static void WINAPI OnProcExit(const std::mstring &eventName, const std::mstring &content, void *param);
-    static void WINAPI OnModuleLoad(const std::mstring &eventName, const std::mstring &content, void *param);
-    static void WINAPI OnModuleUnLoad(const std::mstring &eventName, const std::mstring &content, void *param);
-    static void WINAPI OnDbgProcRunning(const std::mstring &eventName, const std::mstring &content, void *param);
+    static void WINAPI OnProcCreate(const EventDbgInfo &eventInfo, void *param);
+    static void WINAPI OnSystemBreakpoint(const EventDbgInfo &eventInfo, void *param);
+    static void WINAPI OnUserBreakpoint(const EventDbgInfo &eventInfo, void *param);
+    static void WINAPI OnDbgMessage(const EventDbgInfo &eventInfo, void *param);
+    static void WINAPI OnProcExit(const EventDbgInfo &eventInfo, void *param);
+    static void WINAPI OnModuleLoad(const EventDbgInfo &eventInfo, void *param);
+    static void WINAPI OnModuleUnLoad(const EventDbgInfo &eventInfo, void *param);
+    static void WINAPI OnDbgProcRunning(const EventDbgInfo &eventInfo, void *param);
 
     //Proc changed
-    static void WINAPI OnProcChanged(const std::mstring &eventName, const std::mstring &content, void *param);
+    static void WINAPI OnProcChanged(const EventDbgInfo &eventInfo, void *param);
 
 private:
     void RunProcInUser(LPCSTR image, LPCSTR cmd, DWORD session);

@@ -81,22 +81,6 @@ struct DbgProcThreadInfo
     }
 };
 
-enum ProcDbgBreakPointStat
-{
-    em_bp_enable,       //断点启用
-    em_bp_disable,      //断点禁用
-    em_bp_uneffect      //断点尚未生效
-};
-
-//断点信息
-struct ProcDbgBreakPoint
-{
-    DWORD m_dwSerial;
-    DWORD64 m_dwBpAddr;
-    mstring m_strAddr;
-    mstring m_strSymbol;
-    ProcDbgBreakPointStat m_eStat;
-};
 
 class CProcDbgger : public CDbgBase
 {
@@ -123,9 +107,10 @@ public:
     HANDLE GetCurrentThread();
     HANDLE GetThreadById(DWORD dwId) const;
     DbggerStatus GetDbggerStatus();
-    map<DWORD64, DbgModuleInfo> GetModuleInfo() const;
+    list<DbgModuleInfo> GetModuleInfo() const;
     list<DbgProcThreadInfo> GetThreadCache() const;
     list<ThreadInformation> GetCurrentThreadSet() const;
+    list<DbgModuleInfo> GetDllSet() const;
 
 protected:
     static list<ThreadInformation> msCurThreadSet;
@@ -162,9 +147,11 @@ protected:
     void OnDetachDbgger();
     virtual list<STACKFRAME64> GetStackFrame(const mstring &wstrParam);
 
+    void PushModule(const DbgModuleInfo &dll);
+    void EraseModule(DWORD64 baseAddr);
 protected:
     list<DbgProcThreadInfo> m_vThreadMap;
-    map<DWORD64, DbgModuleInfo> m_vModuleInfo;
+    list<DbgModuleInfo> mDllSet;
     DWORD m_dwCurDebugProc;
     DbgProcInfo m_vDbgProcInfo;
     DWORD m_dwCurrentThreadId;
@@ -173,14 +160,8 @@ protected:
     static const DWORD ms_dwDefDisasmSize = 128;
     BOOL m_bDetachDbgger;
 
-    //断点信息缓存
-    vector<ProcDbgBreakPoint> m_vBreakPoint;
-    DWORD m_dwLastBpSerial;
-
     //调试器对应的命令
 protected:
-    void ClearBreakPoint(DWORD dwSerial = -1);
-    bool IsBreakpointSet(DWORD64 dwAddr) const;
     bool DisassWithSize(DWORD64 dwAddr, DWORD64 dwSize, mstring &data) const;
     bool DisassWithAddr(DWORD64 dwStartAddr, DWORD64 dwEndAddr, mstring &data) const;
     bool DisassUntilRet(DWORD64 dwStartAddr, mstring &data) const;

@@ -19,6 +19,7 @@ using namespace Json;
     }
 }
 */
+/*
 std::mstring __stdcall MakeDbgEvent(const std::mstring &event, const std::mstring &data) {
     Value root;
     root["cmd"] = "event";
@@ -32,6 +33,7 @@ std::mstring __stdcall MakeDbgEvent(const std::mstring &event, const std::mstrin
 
     return FastWriter().write(root);
 }
+*/
 
 std::mstring __stdcall MakeDbgRequest(const std::mstring &cmd, const std::mstring &content) {
     Value root;
@@ -195,5 +197,46 @@ bool __stdcall ParserCmdReply(const std::mstring &reply, CmdReplyResult &cmdResu
     {
         cmdResult.mCmdShow = result["cmdShow"].asString();
     }
+    return true;
+}
+
+/*
+{
+    "cmd":"event",
+    "content":{
+        "eventType":"moduleload",
+        "mode":1,                                           //1:展示信息，2:结果信息
+        "eventLabel":"Default",                             //展示标签
+        "eventShow":"0xffaabbcc 0x11223344 kernel32.dll",   //展示内容
+        "eventResult": {
+            "name":"kernel32.dll",
+            "baseAddr":"0x4344353",
+            "endAddr":"0x43443ff"
+        }
+}
+*/
+std::mstring __stdcall MakeEventRequest(const EventDbgInfo &info) {
+    Value root;
+    root["cmd"] = "event";
+    Value content;
+    content["eventType"] = info.mEventType;
+    content["mode"] = info.mEventMode;
+    content["eventLabel"] = info.mEventLabel;
+    content["eventShow"] = info.mEventShow;
+    content["eventResult"] = info.mEventResult;
+
+    root["content"] = content;
+    return FastWriter().write(root);
+}
+
+bool __stdcall ParserEventRequest(const std::mstring eventStr, EventDbgInfo &info) {
+    Value root;
+    Reader().parse(eventStr, root);
+
+    info.mEventType = root["eventType"].asString();
+    info.mEventMode = root["mode"].asInt();
+    info.mEventLabel = root["eventLabel"].asString();
+    info.mEventShow = root["eventShow"].asString();
+    info.mEventResult = root["eventResult"];
     return true;
 }

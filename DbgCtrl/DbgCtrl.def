@@ -1,5 +1,4 @@
 EXPORTS
-MakeDbgEvent
 MakeDbgRequest
 MakeDbgRelpy
 IsDbgReplySucc
@@ -9,3 +8,6 @@ MakeCmdRequest
 ParserCmdRequest
 MakeCmdReply
 ParserCmdReply
+
+MakeEventRequest
+ParserEventRequest

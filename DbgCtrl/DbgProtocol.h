@@ -58,7 +58,7 @@
                 "param2": "0xabcd1233",
                 "param3": "0xabcd1233"
             }]
-        } 
+        }
     }
 }
 */
@@ -79,44 +79,37 @@
 /*********************调试控制指令结束******************************/
 
 /*********************调试事件开始**********************************/
-/*
-{
-    "cmd":"event",
-    "content":{
-        "type":"DbgMessage",
-        "data":{
-            "abcdef"
-        }
-    }
-}
-*/
 #define DBG_DBG_EVENT                   "event"
 
-//Debug Event
 /*
 {
     "cmd":"event",
     "content":{
-        "type":"DbgMessage",
-        "data":{
-            "abcdef"
+        "eventType":"DbgMessage",
+        "mode":1,                            //1:展示信息，2:结果信息
+        "eventLabel":"DbgMsg",               //展示标签
+        "eventShow":"abcd1234",              //展示内容
+        "eventResult": {
+            “msg”:"abcdefgh"
         }
-    }
 }
 */
 #define DBG_EVENT_MSG                    "dbgmsg"
+
 /*
 {
     "cmd":"event",
     "content":{
-        "type":"proccreate",
-        "data":{
+        "eventType":"proccreate",
+        "mode":1,                            //1:展示信息，2:结果信息
+        "eventLabel":"procCreate",           //展示标签
+        "eventShow":"abcd1234",              //展示内容
+        "eventResult": {
             "pid":1234,
             "image":"d:\\desktop\\1234.exe",
             "baseAddr":"0x4344353",
             "entryAddr":"0x4344389"
         }
-    }
 }
 */
 #define DBG_EVENT_DBG_PROC_CREATE        "proccreate"
@@ -129,11 +122,12 @@
 {
     "cmd":"event",
     "content":{
-        "type":"procRunning",
-        "data":{
-            "abcdef"
+        "eventType":"procRunning",
+        "mode":1,                            //0:展示信息，1:结果信息
+        "eventLabel":"Default",              //展示标签
+        "eventShow":"abcd1234",              //展示内容
+        "eventResult": {
         }
-    }
 }
 */
 #define DBG_EVENT_DBG_PROC_RUNNING       "procRunning"          //调试进程执行中
@@ -142,13 +136,15 @@
 {
     "cmd":"event",
     "content":{
-        "type":"moduleload",
-        "data":{
+        "eventType":"moduleload",
+        "mode":1,                                           //1:展示信息，2:结果信息
+        "eventLabel":"Default",                             //展示标签
+        "eventShow":"0xffaabbcc 0x11223344 kernel32.dll",   //展示内容
+        "eventResult": {
             "name":"kernel32.dll",
             "baseAddr":"0x4344353",
             "endAddr":"0x43443ff"
         }
-    }
 }
 */
 #define DBG_EVENT_MODULE_LOAD        "moduleload"
@@ -164,7 +160,8 @@
 {
     "cmd":"event",
     "content":{
-        "type":"proc_add",
+        "eventType":"proc_add",
+        "mode":1,
         "data":{
             "add":[
                 {
@@ -187,10 +184,56 @@
         }
     }
 }
+
+{
+    "cmd":"event",
+    "content":{
+        "eventType":"proc_add",
+        "mode":1,                                           //1:展示信息，2:结果信息
+        "eventLabel":"Default",                             //展示标签
+        "eventShow":"0xffaabbcc 0x11223344 kernel32.dll",   //展示内容
+        "eventResult": {
+            "add":[
+                {
+                    "unique":12345,
+                    "pid":1234,
+                    "procPath":"d:\\abcdef.exe",
+                    "procDesc":"desc",
+                    "cmd":"abcdef",
+                    "startTime":"2018-11-11 11:11:11:123",
+                    "x64":1,
+                    "session":1,
+                    "user":"DESKTOP-DCTRL5K\\Administrator",
+                    "sid":"S-1-5-21-2669793992-3689076831-3814312677-500"
+                },
+                ...
+            ],
+            "kill":[
+                1111,2222,3333
+            ]
+        }
+}
 */
 #define DBG_EVENT_PROC_CHANGED       "ProcChanged"
 
 //{"tid":12354}
-#define DBG_EVENT_SYSTEM_BREAKPOINT   "SyatemBreakpoint"
+#define DBG_EVENT_SYSTEM_BREAKPOINT  "SyatemBreakpoint"
+
+/*
+{
+    "cmd":"event",
+    "content":{
+        "eventType":"UserBreakpoint",
+        "mode":1,                                                       //1:展示信息，2:结果信息
+        "eventLabel":"Default",                                         //展示标签
+        "eventShow":""触发用户断点 0xaabb1122 kernel32!CreateFileW\n"",   //展示内容
+        "eventResult": {
+            "tid":1234,
+            "addr":"0x1234abcd",
+            "symbol":"kernel32!CreateFileW"
+        }
+}
+*/
+#define DBG_EVENT_USER_BREAKPOINT    "UserBreakpoint"
 /*********************调试事件结束**********************************/
 #endif //DBGPROTOCOL_DBGCTRL_H_H_

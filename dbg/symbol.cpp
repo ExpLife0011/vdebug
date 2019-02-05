@@ -161,6 +161,7 @@ bool CSymbolHlpr::LoadSymbol(CTaskLoadSymbol *pModuleInfo)
     SetLastError(0);
     DWORD64 dwBaseOfModule = (DWORD64)pModuleInfo->m_dwBaseOfModule;
     DWORD64 dwBaseAddr = dwBaseOfModule;
+    /*
     if (!GetSymbolHlpr()->IsSymbolLoaded(strName, dwBaseOfModule))
     {
         GetSymbolHlpr()->UnLoadModuleByName(strName);
@@ -169,6 +170,8 @@ bool CSymbolHlpr::LoadSymbol(CTaskLoadSymbol *pModuleInfo)
             return false;
         }
     }
+    */
+    GetSymbolHlpr()->LoadModule(pModuleInfo->m_hImgaeFile, strDll, dwBaseOfModule);
 
     mstring str1 = strDll;
     str1.makelower();

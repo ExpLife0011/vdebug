@@ -19,7 +19,7 @@ private:
     CmdReplyResult OnCmdBl(const mstring &cmd, DWORD mode, const CmdUserParam *pParam);
     CmdReplyResult OnCmdBc(const mstring &cmd, DWORD mode, const CmdUserParam *pParam);
     CmdReplyResult OnCmdBu(const mstring &cmd, DWORD mode, const CmdUserParam *pParam);
-    CmdReplyResult OnCmdClear(const mstring &cmd, DWORD mode, const CmdUserParam *pParam);
+    CmdReplyResult OnCmdBe(const mstring &cmd, DWORD mode, const CmdUserParam *pParam);
     CmdReplyResult OnCmdDisass(const mstring &cmd, DWORD mode, const CmdUserParam *pParam);
     CmdReplyResult OnCmdUb(const mstring &cmd, DWORD mode, const CmdUserParam *pParam);
     CmdReplyResult OnCmdUf(const mstring &cmd, DWORD mode, const CmdUserParam *pParam);

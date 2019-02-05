@@ -30,7 +30,7 @@ public:
 
 private:
     std::mstring GetSpecChannel(DbggerType type) const;
-    bool DispatchEventToRegister(const mstring &cmd, const mstring &content) const;
+    bool DispatchEventToRegister(const mstring &eventType, const EventDbgInfo &info) const;
     static LPCSTR WINAPI ServerNotify(LPCSTR wszChannel, LPCSTR wszContent, void *pParam);
 
 private:
@@ -73,18 +73,21 @@ LPCSTR DbgService::ServerNotify(LPCSTR szChannel, LPCSTR szContent, void *pParam
                 {
                     "cmd":"event",
                     "content":{
-                        "type":"proccreate",
-                        "data":{
-                            "pid":1234,
-                            "image":"d:\\desktop\\1234.exe",
+                        "eventType":"moduleload",
+                        "mode":1,                                           //1:展示信息，2:结果信息
+                        "eventLabel":"Default",                             //展示标签
+                        "eventShow":"0xffaabbcc 0x11223344 kernel32.dll",   //展示内容
+                        "eventResult": {
+                            "name":"kernel32.dll",
                             "baseAddr":"0x4344353",
-                            "entryAddr":"0x4344389"
+                            "endAddr":"0x43443ff"
                         }
-                    }
-                }*/
-                mstring event = GetStrFormJson(content, "type");
-                mstring data = GetStrFormJson(content, "data");
-                pThis->DispatchEventToRegister(event, data);
+                }
+                */
+                EventDbgInfo eventInfo;
+                ParserEventRequest(FastWriter().write(content), eventInfo);
+                mstring eventType = GetStrFormJson(content, "eventType");
+                pThis->DispatchEventToRegister(eventType, eventInfo);
             }
         } else {
         }
@@ -96,18 +99,20 @@ LPCSTR DbgService::ServerNotify(LPCSTR szChannel, LPCSTR szContent, void *pParam
 {
     "cmd":"event",
     "content":{
-        "type":"proccreate",
-        "data":{
+        "eventType":"proccreate",
+        "mode":1,                            //1:展示信息，2:结果信息
+        "eventLabel":"procCreate",           //展示标签
+        "eventShow":"abcd1234",              //展示内容
+        "eventResult": {
             "pid":1234,
             "image":"d:\\desktop\\1234.exe",
             "baseAddr":"0x4344353",
             "entryAddr":"0x4344389"
         }
-    }
 }
 */
-bool DbgService::DispatchEventToRegister(const mstring &cmd, const mstring &content) const {
-    map<string, list<DbgServiceCache *>>::const_iterator it = m_RegisterSet.find(cmd);
+bool DbgService::DispatchEventToRegister(const mstring &eventType, const EventDbgInfo &eventInfo) const {
+    map<string, list<DbgServiceCache *>>::const_iterator it = m_RegisterSet.find(eventType);
 
     if (it == m_RegisterSet.end())
     {
@@ -117,7 +122,7 @@ bool DbgService::DispatchEventToRegister(const mstring &cmd, const mstring &cont
     for (list<DbgServiceCache *>::const_iterator ij = it->second.begin() ; ij != it->second.end() ; ij++)
     {
         DbgServiceCache *ptr = *ij;
-        ptr->m_proc(cmd, content, ptr->m_param);
+        ptr->m_proc(eventInfo, ptr->m_param);
     }
     return true;
 }

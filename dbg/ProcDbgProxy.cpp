@@ -171,6 +171,10 @@ void ProcDbgProxy::OnProcChanged(HProcListener listener, const list<const ProcMo
     }
     procSet.mKillSet = killed;
 
-    mstring packet = MakeDbgEvent(DBG_EVENT_PROC_CHANGED, EncodeProcMon(procSet));
+    EventDbgInfo eventInfo;
+    eventInfo.mEventType = DBG_EVENT_PROC_CHANGED;
+    eventInfo.mEventMode = CMD_MASK_RESULT;
+    Reader().parse(EncodeProcMon(procSet), eventInfo.mEventResult);
+    mstring packet = MakeEventRequest(eventInfo);
     m_pDbgClient->ReportDbgEvent(packet);
 }

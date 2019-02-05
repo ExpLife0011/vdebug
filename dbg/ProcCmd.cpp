@@ -2,6 +2,7 @@
 #include "ProcCmd.h"
 #include "Script.h"
 #include "memory.h"
+#include "BreakPoint.h"
 
 CProcCmd *CProcCmd::GetInst() {
     static CProcCmd *s_ptr = NULL;
@@ -28,7 +29,7 @@ CmdReplyResult CProcCmd::OnCommand(const mstring &cmd, const mstring &cmdParam, 
     {
         return OnCmdBp(cmdParam, mode, pParam);
     }
-    else if (cmd == "b")
+    else if (cmd == "bl")
     {
         return OnCmdBl(cmdParam, mode, pParam);
     }
@@ -39,6 +40,14 @@ CmdReplyResult CProcCmd::OnCommand(const mstring &cmd, const mstring &cmdParam, 
     else if (cmd == "bc")
     {
         return OnCmdBc(cmdParam, mode, pParam);
+    }
+    else if (cmd == "bu")
+    {
+        return OnCmdBu(cmdParam, mode, pParam);
+    }
+    else if (cmd == "be")
+    {
+        return OnCmdBe(cmdParam, mode, pParam);
     }
     //切换到指定线程
     else if (cmd == "tc")
@@ -54,10 +63,6 @@ CmdReplyResult CProcCmd::OnCommand(const mstring &cmd, const mstring &cmdParam, 
     else if (cmd == "lm")
     {
         return OnCmdLm(cmdParam, mode, pParam);
-    }
-    else if (cmd == "cls")
-    {
-        return OnCmdClear(cmdParam, mode, pParam);
     }
     else if (cmd == "u")
     {
@@ -114,103 +119,67 @@ CmdReplyResult CProcCmd::OnCommand(const mstring &cmd, const mstring &cmdParam, 
 
 CmdReplyResult CProcCmd::OnCmdBp(const mstring &param, DWORD mode, const CmdUserParam *pParam)
 {
-    /*
-    mstring result;
-    //CSyntaxDescHlpr hlpr;
-    mstring wstr(wstrCmdParam);
-    wstr.trim();
+    CmdReplyResult result;
+    mstring str(param);
+    str.trim();
 
-    if (wstr.empty())
+    if (str.empty())
     {
-        hlpr.FormatDesc(L"bp参数错误");
-        result.SetResult(hlpr.GetResult());
+        result.mCmdShow = "bp参数错误\n";
         return result;
     }
 
     DWORD64 dwProcAddr = 0;
-    if (!GetNumFromStr(wstr, dwProcAddr))
+    if (!GetNumFromStr(str, dwProcAddr))
     {
-        dwProcAddr = GetFunAddr(wstr);
+        dwProcAddr = GetFunAddr(str);
     }
 
     if (dwProcAddr)
     {
-        if (IsBreakpointSet(dwProcAddr))
-        {
-            hlpr.FormatDesc(L"地址已存在断点");
-            return mstring(em_dbgstat_succ, hlpr.GetResult());
-        }
-
         if (GetBreakPointMgr()->SetBreakPoint(dwProcAddr, pParam))
         {
-            ProcDbgBreakPoint p;
-            p.m_dwBpAddr = dwProcAddr;
-            p.m_wstrSymbol = GetSymFromAddr(dwProcAddr);
-            p.m_eStat = em_bp_enable;
-            p.m_wstrAddr = FormatW(L"%I64d", dwProcAddr);
-            p.m_dwSerial = m_dwLastBpSerial++;
-            m_vBreakPoint.push_back(p);
-            return mstring(em_dbgstat_succ, L"bp 执行成功");
+            result.mCmdShow = "设置断点成功\n";
+        } else {
+            result.mCmdShow = GetBreakPointMgr()->GetLastErr() + "\n";
         }
+    } else {
+        result.mCmdShow = FormatA("未识别的地址 %hs\n", str.c_str());
     }
-    return mstring(em_dbgstat_faild, L"bp命令执行失败");
-    */
-    return CmdReplyResult();
+    return result;
 }
 
 CmdReplyResult CProcCmd::OnCmdBl(const mstring &param, DWORD mode, const CmdUserParam *pParam)
 {
-    /*
-    CSyntaxDescHlpr hlpr;
-    if (m_vBreakPoint.empty())
+    vector<BreakPointInfo> bpSet = GetBreakPointMgr()->GetBpSet();
+
+    CmdReplyResult result;
+    if (bpSet.empty())
     {
-        return mstring(em_dbgstat_succ, "尚未设置任何断点");
+        result.mCmdShow = "尚未设置任何断点\n";
+        return result;
     }
 
-    BOOL bx64 = GetCurrentDbgger()->IsDbgProcx64();
-
-    hlpr.FormatDesc(L"断点序号  ", COLOUR_MSG);
-    hlpr.FormatDesc(L"断点状态  ", COLOUR_MSG);
-
-    if (bx64)
+    PrintFormater pf;
+    pf << "断点序号" << "断点状态" << "断点地址" << "符号位置" << line_end;
+    for (vector<BreakPointInfo>::const_iterator it = bpSet.begin() ; it != bpSet.end() ; it++)
     {
-        hlpr.FormatDesc(L"断点地址  ", COLOUR_MSG, 18);
-    }
-    else
-    {
-        hlpr.FormatDesc(L"断点地址  ", COLOUR_MSG);
-    }
-    hlpr.FormatDesc(L"符号位置", COLOUR_MSG);
-    for (vector<ProcDbgBreakPoint>::const_iterator it = m_vBreakPoint.begin() ; it != m_vBreakPoint.end() ; it++)
-    {
-        hlpr.NextLine();
-        hlpr.FormatDesc(FormatW(L"%02x", it->m_dwSerial), COLOUR_MSG, 10);
-        switch (it->m_eStat)
-        {
-        case em_bp_enable:
-            hlpr.FormatDesc(L"启用", COLOUR_MSG, 10);
-            break;
-        case em_bp_disable:
-            hlpr.FormatDesc(L"禁用", COLOUR_MSG, 10);
-            break;
-        case em_bp_uneffect:
-            hlpr.FormatDesc(L"未生效", COLOUR_MSG, 10);
-            break;
+        string stat;
+        switch (it->mBpStat) {
+            case em_bp_enable:
+                stat = "启用";
+                break;;
+            case em_bp_disable:
+                stat = "禁用";
+                break;
+            case em_bp_uneffect:
+                stat = "未生效";
+                break;
         }
-
-        if (bx64)
-        {
-            hlpr.FormatDesc(FormatW(L"%016llx", it->m_dwBpAddr), COLOUR_MSG, 18);
-        }
-        else
-        {
-            hlpr.FormatDesc(FormatW(L"%08x", it->m_dwBpAddr), COLOUR_MSG, 10);
-        }
-        hlpr.FormatDesc(it->m_wstrSymbol, COLOUR_MSG);
+        pf << FormatA("%d", it->mSerial) << stat << FormatA("0x%08x", it->mBpAddr) << it->mSymbol << line_end;
     }
-    return mstring(em_dbgstat_succ, hlpr.GetResult());
-    */
-    return CmdReplyResult();
+    result.mCmdShow = pf.GetResult();
+    return result;
 }
 
 CmdReplyResult CProcCmd::OnCmdBc(const mstring &cmdParam, DWORD mode, const CmdUserParam *pParam)
@@ -220,7 +189,7 @@ CmdReplyResult CProcCmd::OnCmdBc(const mstring &cmdParam, DWORD mode, const CmdU
     str.makelower();
     if (str == "*")
     {
-        mProcDbgger->ClearBreakPoint(-1);
+        GetBreakPointMgr()->DeleteAllBp();
         tmp.mCmdShow = "已清空所有断点";
         return tmp;
     }
@@ -234,9 +203,69 @@ CmdReplyResult CProcCmd::OnCmdBc(const mstring &cmdParam, DWORD mode, const CmdU
 
     DWORD64 dwSerial = 0;
     GetNumFromStr(str, dwSerial);
-    mProcDbgger->ClearBreakPoint((DWORD)dwSerial);
-    tmp.mCmdShow = FormatA("已清除%02x号断点", dwSerial);
+
+    if (GetBreakPointMgr()->DeleteBpByIndex((int)dwSerial))
+    {
+        tmp.mCmdShow = FormatA("已清除%02x号断点", dwSerial);
+    } else {
+        tmp.mCmdShow = GetBreakPointMgr()->GetLastErr() + "\n";
+    }
+
     return tmp;
+}
+
+CmdReplyResult CProcCmd::OnCmdBu(const mstring &cmdParam, DWORD mode, const CmdUserParam *pParam) {
+    CmdReplyResult result;
+    mstring str(cmdParam);
+    str.makelower();
+
+    if (str.empty())
+    {
+        result.mCmdShow = "bu 需要断点序号\n";
+        return result;
+    }
+
+    DWORD64 index = 0;
+    if (!GetNumFromStr(str, index))
+    {
+        result.mCmdShow = "bu 格式错误";
+        return result;
+    }
+
+    if (GetBreakPointMgr()->DisableBpByIndex((int)index))
+    {
+        result.mCmdShow = FormatA("禁用 % 号断点成功", index);
+    } else {
+        result.mCmdShow = GetBreakPointMgr()->GetLastErr() + "\n";
+    }
+    return result;
+}
+
+CmdReplyResult CProcCmd::OnCmdBe(const mstring &cmdParam, DWORD mode, const CmdUserParam *pParam) {
+    CmdReplyResult result;
+    mstring str(cmdParam);
+    str.makelower();
+
+    if (str.empty())
+    {
+        result.mCmdShow = "be 需要断点序号\n";
+        return result;
+    }
+
+    DWORD64 index = 0;
+    if (!GetNumFromStr(str, index))
+    {
+        result.mCmdShow = "be 格式错误";
+        return result;
+    }
+
+    if (GetBreakPointMgr()->EnableBpByIndex((int)index))
+    {
+        result.mCmdShow = FormatA("启用 % 号断点成功", index);
+    } else {
+        result.mCmdShow = GetBreakPointMgr()->GetLastErr() + "\n";
+    }
+    return result;
 }
 
 CmdReplyResult CProcCmd::OnCmdDisass(const mstring &wstrCmdParam, DWORD mode, const CmdUserParam *pParam)
@@ -283,12 +312,6 @@ CmdReplyResult CProcCmd::OnCmdDisass(const mstring &wstrCmdParam, DWORD mode, co
     return mstring(em_dbgstat_succ, hlpr.GetResult());
     */
     return result;
-}
-
-CmdReplyResult CProcCmd::OnCmdClear(const mstring &param, DWORD mode, const CmdUserParam *pParam)
-{
-    //GetSyntaxView()->ClearView();
-    return CmdReplyResult();
 }
 
 CmdReplyResult CProcCmd::OnCmdUb(const mstring &param, DWORD mode, const CmdUserParam *pParam)
@@ -692,7 +715,7 @@ CmdReplyResult CProcCmd::OnCmdDu(const mstring &strCmdParam, DWORD mode, const C
         {
             result.mCmdShow = "没有读到有效的字符串数据";
         } else {
-            result.mCmdShow = WtoA(strData);
+            result.mCmdShow = WtoA(strData) + "\n";
         }
     }
     return result;
@@ -757,19 +780,19 @@ CmdReplyResult CProcCmd::OnCmdTc(const mstring &param, DWORD mode, const CmdUser
 
 CmdReplyResult CProcCmd::OnCmdLm(const mstring &param, DWORD mode, const CmdUserParam *pParam)
 {
-    map<DWORD64, DbgModuleInfo> moduleSet = mProcDbgger->GetModuleInfo();
+    list<DbgModuleInfo> moduleSet = mProcDbgger->GetModuleInfo();
 
     PrintFormater pf;
     pf << "起始地址" << "结束地址" << "版本信息" << "模块路径" << line_end;
-    for (map<DWORD64, DbgModuleInfo>::const_iterator it = moduleSet.begin() ; it != moduleSet.end() ; it++)
+    for (list<DbgModuleInfo>::const_iterator it = moduleSet.begin() ; it != moduleSet.end() ; it++)
     {
-        string a = FormatA("0x%08x", it->second.m_dwBaseOfImage);
-        string b = FormatA("0x%08x", it->second.m_dwEndAddr);
+        string a = FormatA("0x%08x", it->m_dwBaseOfImage);
+        string b = FormatA("0x%08x", it->m_dwEndAddr);
 
         char version[128] = {0};
-        GetPeVersionA(it->second.m_strDllPath.c_str(), version, 128);
+        GetPeVersionA(it->m_strDllPath.c_str(), version, 128);
         string c = version;
-        pf << a << b << c << it->second.m_strDllPath << line_end;
+        pf << a << b << c << it->m_strDllPath << line_end;
     }
 
     CmdReplyResult result;

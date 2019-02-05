@@ -30,7 +30,6 @@ CProcDbgger *CProcDbgger::GetInstance()
 
 CProcDbgger::CProcDbgger()
 {
-    m_dwLastBpSerial = 0;
     m_hRunNotify = CreateEventW(NULL, FALSE, FALSE, NULL);
     m_bDetachDbgger = FALSE;
     m_dwCurDebugProc = 0;
@@ -45,8 +44,9 @@ VOID CProcDbgger::Wait()
     m_eDbggerStat = em_dbg_status_free;
     WaitForSingleObject(m_hRunNotify, INFINITE);
 
-    utf8_mstring package = MakeDbgEvent(DBG_EVENT_DBG_PROC_RUNNING, "{}");
-    MsgSend(MQ_CHANNEL_DBG_SERVER, package.c_str());
+    EventDbgInfo eventInfo;
+    eventInfo.mEventType = DBG_EVENT_DBG_PROC_RUNNING;
+    MsgSend(MQ_CHANNEL_DBG_SERVER, MakeEventRequest(eventInfo).c_str());
 }
 
 void CProcDbgger::Run()
@@ -128,11 +128,9 @@ void CProcDbgger::ResetCache()
     m_vThreadMap.clear();
     m_dwCurDebugProc = 0;
     m_vDbgProcInfo.Clear();
-    m_vModuleInfo.clear();
+    mDllSet.clear();
     m_dwCurrentThreadId = 0;
     m_eDbggerStat = em_dbg_status_init;
-    m_vBreakPoint.clear();
-    m_dwLastBpSerial = 0;
     m_bDetachDbgger = FALSE;
 }
 
@@ -183,11 +181,11 @@ DWORD CProcDbgger::DebugThread(LPVOID pParam)
 DWORD64 CProcDbgger::GetModuelBaseFromAddr(HANDLE hProcress, DWORD64 dwAddr)
 {
     CProcDbgger *ptr = GetInstance();
-    for (map<DWORD64, DbgModuleInfo>::const_iterator it = ptr->m_vModuleInfo.begin() ; it != ptr->m_vModuleInfo.end() ; it++)
+    for (list<DbgModuleInfo>::const_iterator it = ptr->mDllSet.begin() ; it != ptr->mDllSet.end() ; it++)
     {
-        if (dwAddr >= it->second.m_dwBaseOfImage && dwAddr <= it->second.m_dwEndAddr)
+        if (dwAddr >= it->m_dwBaseOfImage && dwAddr <= it->m_dwEndAddr)
         {
-            return it->second.m_dwBaseOfImage;
+            return it->m_dwBaseOfImage;
         }
     }
     return 0;
@@ -247,8 +245,8 @@ DbggerStatus CProcDbgger::GetDbggerStatus() {
     return m_eDbggerStat;
 }
 
-map<DWORD64, DbgModuleInfo> CProcDbgger::GetModuleInfo() const {
-    return m_vModuleInfo;
+list<DbgModuleInfo> CProcDbgger::GetModuleInfo() const {
+    return mDllSet;
 }
 
 list<DbgProcThreadInfo> CProcDbgger::GetThreadCache() const {
@@ -280,11 +278,11 @@ list<ThreadInformation> CProcDbgger::GetCurrentThreadSet() const {
 
 DbgModuleInfo CProcDbgger::GetModuleFromAddr(DWORD64 dwAddr) const
 {
-    for (map<DWORD64, DbgModuleInfo>::const_iterator it = m_vModuleInfo.begin() ; it != m_vModuleInfo.end() ; it++)
+    for (list<DbgModuleInfo>::const_iterator it = mDllSet.begin() ; it != mDllSet.end() ; it++)
     {
-        if (dwAddr >= it->second.m_dwBaseOfImage && dwAddr <= it->second.m_dwEndAddr)
+        if (dwAddr >= it->m_dwBaseOfImage && dwAddr <= it->m_dwEndAddr)
         {
-            return it->second;
+            return *it;
         }
     }
     return DbgModuleInfo();
@@ -361,10 +359,19 @@ void CProcDbgger::OnCreateProcess(CREATE_PROCESS_DEBUG_INFO* pCreateProcessInfo)
     info.mBaseAddr = FormatA("0x%p", pCreateProcessInfo->lpBaseOfImage);
     info.mEntryAddr = FormatA("0x%p", pCreateProcessInfo->lpStartAddress);
 
-   GetInstance()->m_eStatus = em_dbg_status_busy;
+    GetInstance()->m_eStatus = em_dbg_status_busy;
 
-    mstring event = MakeDbgEvent(DBG_EVENT_DBG_PROC_CREATEA, EncodeProcCreate(info));
-    MsgSend(MQ_CHANNEL_DBG_SERVER, event.c_str());;
+    EventDbgInfo eventInfo;
+    eventInfo.mEventType = DBG_EVENT_DBG_PROC_CREATE;
+    PrintFormater pf;
+    pf << "进程启动" << space                     << line_end;
+    pf << "进程Pid"  << FormatA("%d", info.mPid) << line_end;
+    pf << "映像路径" << info.mImage               << line_end;
+    pf << "进程基址" << info.mBaseAddr            << line_end;
+    pf << "入口地址" << info.mEntryAddr           << line_end;
+    eventInfo.mEventShow = pf.GetResult();
+    Reader().parse(EncodeProcCreate(info), eventInfo.mEventResult);
+    MsgSend(MQ_CHANNEL_DBG_SERVER, MakeEventRequest(eventInfo).c_str());
 
     CSymbolTaskHeader task;
     CTaskSymbolInit param;
@@ -443,8 +450,12 @@ void CProcDbgger::OnSystemBreakpoint(void* ExceptionData)
         return;
     }
 
-    mstring package = MakeDbgEvent(DBG_EVENT_SYSTEM_BREAKPOINT, FormatA("{\"tid\":%d}", dwId));
-    MsgSend(MQ_CHANNEL_DBG_SERVER, package.c_str());
+    EventDbgInfo eventInfo;
+    eventInfo.mEventLabel = SCI_LABEL_DEFAULT;
+    eventInfo.mEventType = DBG_EVENT_SYSTEM_BREAKPOINT;
+    eventInfo.mEventResult["tid"] = (int)dwId;
+    eventInfo.mEventShow = "系统断点触发调试器中断\n";
+    MsgSend(MQ_CHANNEL_DBG_SERVER, MakeEventRequest(eventInfo).c_str());
 
     //脱离调试器
     if (GetInstance()->m_bDetachDbgger)
@@ -454,7 +465,6 @@ void CProcDbgger::OnSystemBreakpoint(void* ExceptionData)
         return;
     }
 
-    //GetInstance()->RunCommand("r");
     GetInstance()->Wait();
 }
 
@@ -470,15 +480,19 @@ bool CProcDbgger::LoadModuleInfo(HANDLE hFile, DWORD64 dwBaseOfModule)
 
     GetSymbolHlpr()->SendTask(&task);
     //两个结构完全一样，考虑到和dump可能有区别分别命名
-    m_vModuleInfo[dwBaseOfModule] = loadInfo.m_ModuleInfo;
+    PushModule(loadInfo.m_ModuleInfo);
 
     DllLoadInfo dllInfo;
     dllInfo.mDllName = loadInfo.m_ModuleInfo.m_strDllName;
-    dllInfo.mBaseAddr = FormatA("0x%p", loadInfo.m_ModuleInfo.m_dwBaseOfImage);
-    dllInfo.mEndAddr = FormatA("0x%p", loadInfo.m_ModuleInfo.m_dwEndAddr);
+    dllInfo.mBaseAddr = FormatA("0x%08x", loadInfo.m_ModuleInfo.m_dwBaseOfImage);
+    dllInfo.mEndAddr = FormatA("0x%08x", loadInfo.m_ModuleInfo.m_dwEndAddr);
 
-    utf8_mstring package = MakeDbgEvent(DBG_EVENT_MODULE_LOADA, EncodeDllLoadInfo(dllInfo));
-    MsgSend(MQ_CHANNEL_DBG_SERVER, package.c_str());
+    EventDbgInfo eventInfo;
+    eventInfo.mEventType = DBG_EVENT_MODULE_LOAD;
+    eventInfo.mEventLabel = SCI_LABEL_DEFAULT;
+    eventInfo.mEventShow = FormatA("模块加载  %hs  %hs  %hs\n", dllInfo.mBaseAddr.c_str(), dllInfo.mEndAddr.c_str(), dllInfo.mDllName.c_str());
+
+    MsgSend(MQ_CHANNEL_DBG_SERVER, MakeEventRequest(eventInfo).c_str());
     return true;
 }
 
@@ -489,6 +503,15 @@ void CProcDbgger::OnLoadDll(LOAD_DLL_DEBUG_INFO* LoadDll)
 
 void CProcDbgger::OnUnloadDll(UNLOAD_DLL_DEBUG_INFO* UnloadDll)
 {
+    CSymbolTaskHeader task;
+    CTaskUnloadSymbol unLoadInfo;
+    unLoadInfo.m_dwModuleAddr = (DWORD64)UnloadDll->lpBaseOfDll;
+    task.m_dwSize = sizeof(CSymbolTaskHeader) + sizeof(CTaskUnloadSymbol);
+    task.m_pParam = &unLoadInfo;
+    task.m_eTaskType = em_task_unloadsym;
+
+    GetSymbolHlpr()->SendTask(&task);
+    GetInstance()->EraseModule((DWORD64)UnloadDll->lpBaseOfDll);
 }
 
 void CProcDbgger::OnOutputDebugString(OUTPUT_DEBUG_STRING_INFO* DebugString)
@@ -503,11 +526,7 @@ void CProcDbgger::OnException(EXCEPTION_DEBUG_INFO* ExceptionData)
             DetachDebuggerEx(GetInstance()->m_vDbgProcInfo.m_dwPid);
             GetInstance()->OnDetachDbgger();
         } else {
-            DWORD dwId = ((DEBUG_EVENT*)GetDebugData())->dwThreadId;
-
-            mstring package = MakeDbgEvent(DBG_EVENT_SYSTEM_BREAKPOINT, FormatA("{\"tid\":%d}", dwId));
-            MsgSend(MQ_CHANNEL_DBG_SERVER, package.c_str());
-            GetInstance()->Wait();
+            OnSystemBreakpoint(NULL);
         }
     }
 }
@@ -529,36 +548,6 @@ VOID CProcDbgger::InitEngine()
     SetCustomHandler(UE_CH_OUTPUTDEBUGSTRING, (void*)OnOutputDebugString);
     SetCustomHandler(UE_CH_UNHANDLEDEXCEPTION, (void*)OnException);
     SetCustomHandler(UE_CH_DEBUGEVENT, (void*)OnDebugEvent);
-}
-
-bool CProcDbgger::IsBreakpointSet(DWORD64 dwAddr) const
-{
-    for (vector<ProcDbgBreakPoint>::const_iterator it = m_vBreakPoint.begin() ; it != m_vBreakPoint.end() ; it++)
-    {
-        if (it->m_dwBpAddr == dwAddr)
-        {
-            return true;
-        }
-    }
-    return false;
-}
-
-void CProcDbgger::ClearBreakPoint(DWORD dwSerial)
-{
-    for (vector<ProcDbgBreakPoint>::const_iterator it = m_vBreakPoint.begin() ; it != m_vBreakPoint.end() ;)
-    {
-        if (-1 == dwSerial)
-        {
-            GetBreakPointMgr()->DeleteBp(it->m_dwBpAddr);
-            it = m_vBreakPoint.erase(it);
-        }
-        else if (dwSerial == it->m_dwSerial)
-        {
-            GetBreakPointMgr()->DeleteBp(it->m_dwBpAddr);
-            m_vBreakPoint.erase(it);
-            return;
-        }
-    }
 }
 
 bool CProcDbgger::DisassWithSize(DWORD64 dwAddr, DWORD64 dwSize, mstring &data) const
@@ -682,6 +671,26 @@ static BOOL CALLBACK StackReadProcessMemoryProc64(HANDLE hProcess, DWORD64 lpBas
 {
     CMemoryOperator memory(hProcess);
     return memory.MemoryReadSafe(lpBaseAddress, (char *)lpBuffer, nSize, lpNumberOfBytesRead);
+}
+
+void CProcDbgger::PushModule(const DbgModuleInfo &dll) {
+    mDllSet.push_back(dll);
+}
+
+void CProcDbgger::EraseModule(DWORD64 baseAddr) {
+    for (list<DbgModuleInfo>::const_iterator it = mDllSet.begin() ; it != mDllSet.end() ;)
+    {
+        if (it->m_dwBaseOfImage == baseAddr)
+        {
+            it = mDllSet.erase(it);
+        } else {
+            it++;
+        }
+    }
+}
+
+list<DbgModuleInfo> CProcDbgger::GetDllSet() const {
+    return mDllSet;
 }
 
 list<STACKFRAME64> CProcDbgger::GetStackFrame(const mstring &wstrParam)

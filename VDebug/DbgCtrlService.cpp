@@ -71,6 +71,7 @@ bool DbgCtrlService::InitCtrlService() {
     m_pCtrlService->RegisterDbgEvent(DBG_EVENT_MSG, OnDbgMessage, this);
     m_pCtrlService->RegisterDbgEvent(DBG_EVENT_DBG_PROC_CREATE, OnProcCreate, this);
     m_pCtrlService->RegisterDbgEvent(DBG_EVENT_SYSTEM_BREAKPOINT, OnSystemBreakpoint, this);
+    m_pCtrlService->RegisterDbgEvent(DBG_EVENT_USER_BREAKPOINT, OnUserBreakpoint, this);
     m_pCtrlService->RegisterDbgEvent(DBG_EVENT_DBG_PROC_END, OnProcExit, this);
     m_pCtrlService->RegisterDbgEvent(DBG_EVENT_MODULE_LOAD, OnModuleLoad, this);
     m_pCtrlService->RegisterDbgEvent(DBG_EVENT_MODULE_UNLOAD, OnModuleUnLoad, this);
@@ -191,6 +192,16 @@ bool DbgCtrlService::DetachProc() {
 }
 
 CmdReplyResult DbgCtrlService::RunCmdInCtrlService(const std::mstring &command) {
+    mstring tmp = command;
+    tmp.trim();
+    tmp.makelower();
+
+    if (tmp == "cls")
+    {
+        GetSyntaxView()->ClearView();
+        return CmdReplyResult();
+    }
+
     CmdRequest request;
     request.mCmdMode = CMD_MASK_SHOW;
     request.mCmd = command;
@@ -200,54 +211,47 @@ CmdReplyResult DbgCtrlService::RunCmdInCtrlService(const std::mstring &command) 
     return result;
 }
 
-void DbgCtrlService::OnProcCreate(const mstring &eventName, const mstring &content, void *param) {
-    ProcCreateInfo info = DecodeProcCreate(content);
-
-    PrintFormater pf;
-    pf << "进程启动" << space                    << line_end;
-    pf << "进程Pid"  << FormatA("%d", info.mPid) << line_end;
-    pf << "映像路径" << info.mImage              << line_end;
-    pf << "进程基址" << info.mBaseAddr           << line_end;
-    pf << "入口地址" << info.mEntryAddr          << line_end;
-    AppendToSyntaxView(SCI_LABEL_DEFAULT, pf.GetResult());
+void DbgCtrlService::OnProcCreate(const EventDbgInfo &eventInfo, void *param) {
+    AppendToSyntaxView(SCI_LABEL_DEFAULT, eventInfo.mEventShow);
 }
 
-void DbgCtrlService::OnSystemBreakpoint(const mstring &eventName, const mstring &content, void *param) {
-    PrintFormater pf;
-    pf << "系统断点触发调试器中断" << line_end;
-    AppendToSyntaxView(SCI_LABEL_DEFAULT, pf.GetResult());
+void DbgCtrlService::OnSystemBreakpoint(const EventDbgInfo &eventInfo, void *param) {
+    AppendToSyntaxView(eventInfo.mEventLabel, eventInfo.mEventShow);
 
-    Value json;
-    Reader().parse(content, json);
-    int tid = json["tid"].asInt();
-
+    int tid = eventInfo.mEventResult["tid"].asInt();
     GetInstance()->m_stat = em_dbg_status_free;
     SetCmdNotify(GetInstance()->m_stat, FormatA("线程 %d >>", tid));
 }
 
-void DbgCtrlService::OnDbgMessage(const mstring &event, const mstring &content, void *param) {
+void DbgCtrlService::OnUserBreakpoint(const EventDbgInfo &eventInfo, void *param) {
+    AppendToSyntaxView(eventInfo.mEventLabel, eventInfo.mEventShow);
+
+    int tid = eventInfo.mEventResult["tid"].asInt();
+    GetInstance()->m_stat = em_dbg_status_free;
+    SetCmdNotify(GetInstance()->m_stat, FormatA("线程 %d >>", tid));
+    CmdReplyResult result = GetInstance()->RunCmdInCtrlService("r");
+    AppendToSyntaxView(result.mCmdLabel, result.mCmdShow);
 }
 
-void DbgCtrlService::OnProcExit(const mstring &event, const mstring &content, void *param) {
+void DbgCtrlService::OnDbgMessage(const EventDbgInfo &eventInfo, void *param) {
 }
 
-void DbgCtrlService::OnModuleLoad(const mstring &eventName, const mstring &content, void *param) {
-    DllLoadInfo dllInfo = DecodeDllLoadInfo(content);
-
-    PrintFormater pf;;
-    pf << "模块加载" << dllInfo.mBaseAddr << dllInfo.mEndAddr << dllInfo.mDllName << line_end;
-    AppendToSyntaxView(SCI_LABEL_DEFAULT, pf.GetResult());
+void DbgCtrlService::OnProcExit(const EventDbgInfo &eventInfo, void *param) {
 }
 
-void DbgCtrlService::OnModuleUnLoad(const mstring &event, const mstring &content, void *param) {
+void DbgCtrlService::OnModuleLoad(const EventDbgInfo &eventInfo, void *param) {
+    AppendToSyntaxView(eventInfo.mEventLabel, eventInfo.mEventShow);
 }
 
-void DbgCtrlService::OnDbgProcRunning(const std::mstring &eventName, const std::mstring &content, void *param) {
+void DbgCtrlService::OnModuleUnLoad(const EventDbgInfo &eventInfo, void *param) {
+}
+
+void DbgCtrlService::OnDbgProcRunning(const EventDbgInfo &eventInfo, void *param) {
     GetInstance()->m_stat = em_dbg_status_busy;
     SetCmdNotify(GetInstance()->m_stat, "运行中");
 }
 
-void DbgCtrlService::OnProcChanged(const mstring &event, const mstring &content, void *param) {
+void DbgCtrlService::OnProcChanged(const EventDbgInfo &eventInfo, void *param) {
     CProcSelectView *pProcView = GetProcView();
     if (!pProcView)
     {
@@ -259,6 +263,6 @@ void DbgCtrlService::OnProcChanged(const mstring &event, const mstring &content,
         return;
     }
 
-    ProcInfoSet info = DecodeProcMon(content);
+    ProcInfoSet info = DecodeProcMon(FastWriter().write(eventInfo.mEventResult));
     pProcView->OnProcChanged(info);
 }

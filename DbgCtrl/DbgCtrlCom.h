@@ -32,7 +32,7 @@ struct DbgReplyResult {
     }
 };
 
-std::mstring __stdcall MakeDbgEvent(const std::mstring &eventName, const std::mstring &data);
+//std::mstring __stdcall MakeDbgEvent(const std::mstring &eventName, const std::mstring &data);
 std::mstring __stdcall MakeDbgRequest(const std::mstring &cmd, const std::mstring &content);
 std::mstring __stdcall MakeDbgRelpy(const DbgReplyResult &result);
 bool __stdcall IsDbgReplySucc(const std::mstring &reply, DbgReplyResult &result);
@@ -83,4 +83,35 @@ struct CmdReplyResult {
 };
 std::mstring __stdcall MakeCmdReply(const CmdReplyResult &cmdResult);
 bool __stdcall ParserCmdReply(const std::mstring &reply, CmdReplyResult &cmdResult);
+
+/*
+{
+    "cmd":"event",
+    "content":{
+        "eventType":"moduleload",
+        "mode":1,                                           //1:展示信息，2:结果信息
+        "eventLabel":"Default",                             //展示标签
+        "eventShow":"0xffaabbcc 0x11223344 kernel32.dll",   //展示内容
+        "eventResult": {
+            "name":"kernel32.dll",
+            "baseAddr":"0x4344353",
+            "endAddr":"0x43443ff"
+        }
+}
+*/
+struct EventDbgInfo {
+    std::mstring mEventType;
+    int mEventMode;
+    std::mstring mEventLabel;
+    std::mstring mEventShow;
+    Json::Value mEventResult;
+
+    EventDbgInfo() {
+        mEventLabel = SCI_LABEL_DEFAULT;
+        mEventMode = (CMD_MASK_SHOW | CMD_MASK_RESULT);
+        Json::Reader().parse("{}", mEventResult);
+    }
+};
+std::mstring __stdcall MakeEventRequest(const EventDbgInfo &info);
+bool __stdcall ParserEventRequest(const std::mstring eventStr, EventDbgInfo &info);
 #endif //COMMON_DBGCTRL_H_H_

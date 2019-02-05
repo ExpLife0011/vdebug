@@ -3,7 +3,7 @@
 #include <ComStatic/ComStatic.h>
 #include "DbgCtrlCom.h"
 
-typedef void (__stdcall *pfnDbgEventProc)(const std::mstring &event, const std::mstring &content, void *param);
+typedef void (__stdcall *pfnDbgEventProc)(const EventDbgInfo &info, void *param);
 
 class DbgCtrlApi DbgServiceBase {
 public:
