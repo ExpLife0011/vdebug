@@ -9,19 +9,19 @@ using namespace std;
 
 struct DisasmInfo
 {
-    ustring m_wstrAddr;
-    DWORD64 m_dwAddr;
-    ustring m_wstrOpt;
-    ustring m_wstrContent;
-    ustring m_wstrByteCode;
-    int m_iByteCount;
-    BYTE m_vByteData[16];
+    mstring mAddrStr;
+    DWORD64 mAddr;
+    mstring mOpt;
+    mstring mContent;
+    mstring mByteCode;
+    int mByteCount;
+    BYTE mByteData[16];
 
     DisasmInfo()
     {
-        m_dwAddr = 0;
-        m_iByteCount = 0;
-        ZeroMemory(m_vByteData, sizeof(m_vByteData));
+        mAddr = 0;
+        mByteCount = 0;
+        ZeroMemory(mByteData, sizeof(mByteData));
     }
 };
 

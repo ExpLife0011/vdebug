@@ -32,7 +32,6 @@ struct DisasmInfoInternal
 
 CDisasmParser::CDisasmParser(HANDLE hProcess)
 {
-    //m_bx64 = GetCurrentDbgger()->IsDbgProcx64();
     m_hProcess = hProcess;
 }
 
@@ -43,28 +42,21 @@ BOOL CDisasmParser::DisasmCallback(const cs_insn *pAsmInfo, LPVOID pParam)
 {
     DisasmInfoInternal *pInfo = (DisasmInfoInternal *)pParam;
     DisasmInfo info;
-    info.m_dwAddr = (pAsmInfo->address);
-    info.m_wstrOpt = AtoW(pAsmInfo->mnemonic);
-    info.m_wstrContent = AtoW(pAsmInfo->op_str);
+    info.mAddr = pAsmInfo->address;
+    info.mOpt = pAsmInfo->mnemonic;
+    info.mContent = pAsmInfo->op_str;
 
-    if (pInfo->m_bx64)
-    {
-        info.m_wstrAddr.format(L"%016llx", info.m_dwAddr);
-    }
-    else
-    {
-        info.m_wstrAddr.format(L"%08x", info.m_dwAddr);
-    }
+    info.mAddrStr = FormatA("0x%08x", info.mAddr);
 
     for (int i = 0 ; i < pAsmInfo->size ; i++)
     {
-        info.m_wstrByteCode += FormatW(L"%02x", pAsmInfo->bytes[i]);
+        info.mByteCode += FormatA("%02x", pAsmInfo->bytes[i]);
     }
     pInfo->m_dwCurSize += pAsmInfo->size;
 
     if (em_disasm_byret == pInfo->m_eType)
     {
-        if (info.m_wstrOpt.startwith(L"nop") || info.m_wstrOpt.startwith(L"int3"))
+        if (info.mOpt.startwith("nop") || info.mOpt.startwith("int3"))
         {
             return FALSE;
         }
@@ -85,7 +77,7 @@ BOOL CDisasmParser::DisasmCallback(const cs_insn *pAsmInfo, LPVOID pParam)
     }
     else if (em_disasm_byret == pInfo->m_eType)
     {
-        if (info.m_wstrOpt.startwith(L"ret"))
+        if (info.mOpt.startwith("ret"))
         {
             return FALSE;
         }
@@ -107,14 +99,12 @@ bool CDisasmParser::DisasmInternal(DWORD64 dwAddr, pfnDisasmProc pfn, LPVOID pPa
         return false;
     }
     csh mHandle = NULL;
-    if (m_bx64)
-    {
-        cs_open(CS_ARCH_X86, CS_MODE_64, &mHandle);
-    }
-    else
-    {
-        cs_open(CS_ARCH_X86, CS_MODE_32, &mHandle);
-    }
+
+#if _WIN64 || WIN64
+    cs_open(CS_ARCH_X86, CS_MODE_64, &mHandle);
+#else
+    cs_open(CS_ARCH_X86, CS_MODE_32, &mHandle);
+#endif
     cs_option(mHandle, CS_OPT_DETAIL, CS_OPT_ON);
 
     cs_insn *asmabcd = cs_malloc(mHandle);

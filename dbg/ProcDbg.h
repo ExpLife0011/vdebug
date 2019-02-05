@@ -162,9 +162,9 @@ protected:
 
     //调试器对应的命令
 protected:
-    bool DisassWithSize(DWORD64 dwAddr, DWORD64 dwSize, mstring &data) const;
-    bool DisassWithAddr(DWORD64 dwStartAddr, DWORD64 dwEndAddr, mstring &data) const;
-    bool DisassUntilRet(DWORD64 dwStartAddr, mstring &data) const;
+    bool DisassWithSize(DWORD64 dwAddr, DWORD64 dwSize, CmdReplyResult &result) const;
+    bool DisassWithAddr(DWORD64 dwStartAddr, DWORD64 dwEndAddr, CmdReplyResult &result) const;
+    bool DisassUntilRet(DWORD64 dwStartAddr, CmdReplyResult &result) const;
 
     static void __cdecl GuCmdCallback();
 

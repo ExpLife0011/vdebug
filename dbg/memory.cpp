@@ -84,3 +84,32 @@ ustring CMemoryOperator::MemoryReadStrUnicode(DWORD64 dwAddr, DWORD dwMaxSize) c
 
     return L"";
 }
+
+mstring CMemoryOperator::MemoryReadStrGbk(DWORD64 dwAddr, DWORD dwMaxSize) const {
+    if (!dwAddr || !dwMaxSize)
+    {
+        return "";
+    }
+
+    char cBuffer = 0;
+    DWORD dwOffset = 0;
+    mstring strBuffer;
+    while (TRUE)
+    {
+        DWORD dwRead = 0;
+        if (!MemoryReadSafe(dwAddr + dwOffset, (char *)&cBuffer, sizeof(char), &dwRead))
+        {
+            break;
+        }
+
+        dwOffset += sizeof(char);
+        if (0 == cBuffer)
+        {
+            return strBuffer;
+        }
+
+        strBuffer += cBuffer;
+    }
+
+    return "";
+}

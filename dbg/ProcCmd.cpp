@@ -100,6 +100,9 @@ CmdReplyResult CProcCmd::OnCommand(const mstring &cmd, const mstring &cmdParam, 
     else if (cmd == "du")
     {
         return OnCmdDu(cmdParam, mode, pParam);
+    } else if (cmd == "da")
+    {
+        return OnCmdDa(cmdParam, mode, pParam);
     }
     else if (cmd == "r")
     {
@@ -306,11 +309,11 @@ CmdReplyResult CProcCmd::OnCmdDisass(const mstring &wstrCmdParam, DWORD mode, co
         result.mCmdShow = FormatA("获取%hs地址失败", strAddr.c_str());
         return result;
     }
-    /*
-    //CSyntaxDescHlpr hlpr;
-    DisassWithSize(dwAddr, dwDisasmSize, hlpr);
-    return mstring(em_dbgstat_succ, hlpr.GetResult());
-    */
+
+    if (!mProcDbgger->DisassWithSize(dwAddr, dwDisasmSize, result))
+    {
+        result.mCmdShow = FormatA("反汇编地址 0x%08x 失败\n", (DWORD)dwAddr);
+    }
     return result;
 }
 
@@ -353,10 +356,11 @@ CmdReplyResult CProcCmd::OnCmdUb(const mstring &param, DWORD mode, const CmdUser
     DWORD64 dwEndAddr = dwAddr;
     dwAddr -= dwDisasmSize;
     DWORD64 dwStartAddr = dwAddr;
-    ////CSyntaxDescHlpr hlpr;
-    //mstring data;
-    //DisassWithAddr(dwStartAddr, dwEndAddr, data);
-    //return mstring(em_dbgstat_succ, hlpr.GetResult());
+
+    if (!mProcDbgger->DisassWithAddr(dwStartAddr, dwEndAddr, reply))
+    {
+        reply.mCmdShow = FormatA("反汇编地址 0x%08x 失败\n", (DWORD)dwStartAddr);
+    }
     return reply;
 }
 
@@ -394,11 +398,10 @@ CmdReplyResult CProcCmd::OnCmdUf(const mstring &param, DWORD mode, const CmdUser
         return reply;
     }
 
-    /*
-    //CSyntaxDescHlpr hlpr;
-    DisassUntilRet(dwAddr, hlpr);
-    return mstring(em_dbgstat_succ, hlpr.GetResult());
-    */
+    if (!mProcDbgger->DisassUntilRet(dwAddr, reply))
+    {
+        reply.mCmdShow = FormatA("反汇编地址 0x%08x 失败\n", (DWORD)dwAddr);
+    }
     return reply;
 }
 
@@ -662,19 +665,19 @@ CmdReplyResult CProcCmd::OnCmdDd(const mstring &cmdParam, DWORD mode, const CmdU
     CScriptEngine script;
     script.SetContext(mProcDbgger->GetCurrentContext(), CProcDbgger::ReadDbgProcMemory, CProcDbgger::WriteDbgProcMemory);
 
+    CmdReplyResult result;
     DWORD64 dwAddr = script.Compile(cmdParam);
     if (!dwAddr)
     {
-        return CmdReplyResult();
+        result.mCmdShow = FormatA("编译 %hs 表达式失败", cmdParam.c_str());
+        return result;
     }
 
     DWORD dwDataSize = 64;
-    /*
-    //CSyntaxDescHlpr desc;
-    CMemoryOperator mhlpr(GetInstance()->GetDbgProc());
-    desc.FormatDesc(L"数据地址  ", COLOUR_MSG);
-    desc.FormatDesc(L"数据内容", COLOUR_MSG);
-    desc.NextLine();
+    PrintFormater pf;
+    pf << "数据地址" << "数据内容" << space << space << space << line_end;
+
+    CMemoryOperator mhlpr(mProcDbgger->GetDbgProc());
     for (int i = 0 ; i < (int)dwDataSize ; i += 16)
     {
         char szData[16] = {0};
@@ -684,17 +687,18 @@ CmdReplyResult CProcCmd::OnCmdDd(const mstring &cmdParam, DWORD mode, const CmdU
         {
             break;
         }
-        desc.FormatDesc(FormatW(L"%08x  ", dwAddr), COLOUR_ADDR);
+
+        pf << FormatA("0x%08x", dwAddr);
+
         for (int j = 0 ; j < (int)dwReadSize / 4 ; j += 1)
         {
-            desc.FormatDesc(FormatW(L"%08x ", *((DWORD *)szData + j)), COLOUR_DATA);
+            pf << FormatA("%08x ", *((DWORD *)szData + j));
         }
-        desc.NextLine();
+        pf << line_end;
         dwAddr += 16;
     }
-    return mstring(em_dbgstat_succ, desc.GetResult());
-    */
-    return CmdReplyResult();
+    result.mCmdShow = pf.GetResult();
+    return result;
 }
 
 CmdReplyResult CProcCmd::OnCmdDu(const mstring &strCmdParam, DWORD mode, const CmdUserParam *pParam)
@@ -716,6 +720,29 @@ CmdReplyResult CProcCmd::OnCmdDu(const mstring &strCmdParam, DWORD mode, const C
             result.mCmdShow = "没有读到有效的字符串数据";
         } else {
             result.mCmdShow = WtoA(strData) + "\n";
+        }
+    }
+    return result;
+}
+
+CmdReplyResult CProcCmd::OnCmdDa(const mstring &strCmdParam, DWORD mode, const CmdUserParam *pParam) {
+    CScriptEngine script;
+    script.SetContext(mProcDbgger->GetCurrentContext(), CProcDbgger::ReadDbgProcMemory, CProcDbgger::WriteDbgProcMemory);
+
+    CmdReplyResult result;
+    DWORD64 dwAddr = script.Compile(strCmdParam);
+    if (!dwAddr)
+    {
+        result.mCmdShow = "语法错误\n";
+    } else {
+        CMemoryOperator mhlpr(mProcDbgger->GetDbgProc());
+        mstring strData = mhlpr.MemoryReadStrGbk(dwAddr, MAX_PATH);
+
+        if (strData.empty())
+        {
+            result.mCmdShow = "没有读到有效的字符串数据";
+        } else {
+            result.mCmdShow = strData + "\n";
         }
     }
     return result;

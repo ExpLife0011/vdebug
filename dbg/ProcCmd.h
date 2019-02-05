@@ -29,6 +29,7 @@ private:
     CmdReplyResult OnCmdDb(const mstring &cmd, DWORD mode, const CmdUserParam *pParam);
     CmdReplyResult OnCmdDd(const mstring &cmd, DWORD mode, const CmdUserParam *pParam);
     CmdReplyResult OnCmdDu(const mstring &cmd, DWORD mode, const CmdUserParam *pParam);
+    CmdReplyResult OnCmdDa(const mstring &cmd, DWORD mode, const CmdUserParam *pParam);
     CmdReplyResult OnCmdReg(const mstring &cmd, DWORD mode, const CmdUserParam *pParam);
     CmdReplyResult OnCmdScript(const mstring &cmd, DWORD mode, const CmdUserParam *pParam);
     CmdReplyResult OnCmdTs(const mstring &cmd, DWORD mode, const CmdUserParam *pParam);

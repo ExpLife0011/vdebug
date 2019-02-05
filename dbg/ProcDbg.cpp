@@ -59,9 +59,19 @@ void CProcDbgger::GuCmdCallback()
     HANDLE hThread = GetInstance()->GetCurrentThread();
     TITAN_ENGINE_CONTEXT_t context = GetInstance()->GetThreadContext(hThread);
     mstring strSymbol = GetInstance()->GetSymFromAddr((void *)context.cip);
-    //CSyntaxDescHlpr hlpr;
-    //hlpr.FormatDesc(FormatW(L"进程中断于%ls", wstrSymbol.c_str()));
-    //GetSyntaxView()->AppendSyntaxDesc(hlpr.GetResult());
+
+    Value result;
+    result["addr"] = FormatA("0x%08x", (DWORD)context.cip);
+    result["symbol"] = strSymbol;
+    result["tid"] = (int)((DEBUG_EVENT*)GetDebugData())->dwThreadId;
+
+    EventDbgInfo eventInfo;
+    eventInfo.mEventType = DBG_EVENT_USER_BREAKPOINT;
+    eventInfo.mEventResult = result;
+    eventInfo.mEventLabel = SCI_LABEL_DEFAULT;
+    eventInfo.mEventShow = FormatA("触发用户断点 %hs %hs\n", result["addr"].asString().c_str(), strSymbol.c_str());
+
+    MsgSend(MQ_CHANNEL_DBG_SERVER, MakeEventRequest(eventInfo).c_str());
     GetInstance()->Wait();
 }
 
@@ -550,45 +560,29 @@ VOID CProcDbgger::InitEngine()
     SetCustomHandler(UE_CH_DEBUGEVENT, (void*)OnDebugEvent);
 }
 
-bool CProcDbgger::DisassWithSize(DWORD64 dwAddr, DWORD64 dwSize, mstring &data) const
+bool CProcDbgger::DisassWithSize(DWORD64 dwAddr, DWORD64 dwSize, CmdReplyResult &result) const
 {
-    /*
     CDisasmParser Disasm(GetDbgProc());
     vector<DisasmInfo> vDisasmSet;
-    mstring wstr = GetSymFromAddr(dwAddr);
-    wstr += L":";
-    hlpr.NextLine();
-    hlpr.FormatDesc(wstr, COLOUR_PROC);
-    hlpr.NextLine();
+    mstring str = GetSymFromAddr((void *)dwAddr);
+    str += ":";
+
+    result.mCmdShow = str + "\n";
+
+    PrintFormater pf;
     if (Disasm.DisasmWithSize(dwAddr, (DWORD)dwSize, vDisasmSet))
     {
         for (vector<DisasmInfo>::const_iterator it = vDisasmSet.begin() ; it != vDisasmSet.end() ; it++)
         {
-            if (GetCurrentDbgger()->IsDbgProcx64())
-            {
-                hlpr.FormatDesc(it->m_wstrAddr, COLOUR_ADDR, 18);
-                hlpr.FormatDesc(it->m_wstrByteCode, COLOUR_BYTE, 28);
-                hlpr.FormatDesc(it->m_wstrOpt, COLOUR_INST, 16);
-            }
-            else
-            {
-                hlpr.FormatDesc(it->m_wstrAddr, COLOUR_ADDR, 10);
-                hlpr.FormatDesc(it->m_wstrByteCode, COLOUR_BYTE, 18);
-                hlpr.FormatDesc(it->m_wstrOpt, COLOUR_INST, 16);
-            }
-            GetDisassContentDesc(it->m_wstrContent, hlpr);
-            hlpr.NextLine();
+            pf << it->mAddrStr << it->mByteCode << it->mOpt << it->mContent << line_end;
         }
-        return true;
     }
-    return false;
-    */
+    result.mCmdShow += pf.GetResult();
     return true;
 }
 
-bool CProcDbgger::DisassWithAddr(DWORD64 dwStartAddr, DWORD64 dwEndAddr, mstring &data) const
+bool CProcDbgger::DisassWithAddr(DWORD64 dwStartAddr, DWORD64 dwEndAddr, CmdReplyResult &result) const
 {
-    /*
     if (dwEndAddr <= dwStartAddr)
     {
         return false;
@@ -596,74 +590,47 @@ bool CProcDbgger::DisassWithAddr(DWORD64 dwStartAddr, DWORD64 dwEndAddr, mstring
 
     DWORD64 dwSize = (dwEndAddr - dwStartAddr + 16);
     CDisasmParser Disasm(GetDbgProc());
-    vector<DisasmInfo> vDisasmSet;
-    mstring wstr = GetSymFromAddr(dwStartAddr);
-    wstr += L":";
-    hlpr.NextLine();
-    hlpr.FormatDesc(wstr, COLOUR_PROC);
-    hlpr.NextLine();
-    if (Disasm.DisasmWithSize(dwStartAddr, (DWORD)dwSize, vDisasmSet))
+    mstring str = GetSymFromAddr((void *)dwStartAddr);
+    str += ":";
+    result.mCmdShow = str + "\n";
+
+    vector<DisasmInfo> disasmSet;
+    PrintFormater pf;
+    if (Disasm.DisasmWithSize(dwStartAddr, (DWORD)dwSize, disasmSet))
     {
-        for (vector<DisasmInfo>::const_iterator it = vDisasmSet.begin() ; it != vDisasmSet.end() ; it++)
+        for (vector<DisasmInfo>::const_iterator it = disasmSet.begin() ; it != disasmSet.end() ; it++)
         {
-            if (it->m_dwAddr > dwEndAddr)
+            if (it->mAddr > dwEndAddr)
             {
                 break;
             }
 
-            if (GetCurrentDbgger()->IsDbgProcx64())
-            {
-                hlpr.FormatDesc(it->m_wstrAddr, COLOUR_ADDR, 18);
-                hlpr.FormatDesc(it->m_wstrByteCode, COLOUR_BYTE, 28);
-                hlpr.FormatDesc(it->m_wstrOpt, COLOUR_INST, 16);
-            }
-            else
-            {
-                hlpr.FormatDesc(it->m_wstrAddr, COLOUR_ADDR, 10);
-                hlpr.FormatDesc(it->m_wstrByteCode, COLOUR_BYTE, 18);
-                hlpr.FormatDesc(it->m_wstrOpt, COLOUR_INST, 16);
-            }
-            GetDisassContentDesc(it->m_wstrContent, hlpr);
-            hlpr.NextLine();
+            pf << it->mAddrStr << it->mByteCode << it->mOpt << it->mContent << line_end;
         }
-        return true;
     }
-    */
-    return false;
+    result.mCmdShow += pf.GetResult();
+    return true;
 }
 
-bool CProcDbgger::DisassUntilRet(DWORD64 dwStartAddr, mstring &data) const
+bool CProcDbgger::DisassUntilRet(DWORD64 dwStartAddr, CmdReplyResult &result) const
 {
-    /*
     CDisasmParser Disasm(GetDbgProc());
-    vector<DisasmInfo> vDisasmSet;
-    mstring wstr = GetSymFromAddr(dwStartAddr);
-    wstr += L":";
-    hlpr.FormatDesc(wstr, COLOUR_PROC);
-    hlpr.NextLine();
-    if (Disasm.DisasmUntilReturn(dwStartAddr, vDisasmSet))
+    vector<DisasmInfo> disasmSet;
+    mstring str = GetSymFromAddr((void *)dwStartAddr);
+    str += ":";
+    result.mCmdShow = str + "\n";
+
+    PrintFormater pf;
+    if (!Disasm.DisasmUntilReturn(dwStartAddr, disasmSet))
     {
-        for (vector<DisasmInfo>::const_iterator it = vDisasmSet.begin() ; it != vDisasmSet.end() ; it++)
-        {
-            if (GetCurrentDbgger()->IsDbgProcx64())
-            {
-                hlpr.FormatDesc(it->m_wstrAddr, COLOUR_ADDR, 18);
-                hlpr.FormatDesc(it->m_wstrByteCode, COLOUR_BYTE, 28);
-                hlpr.FormatDesc(it->m_wstrOpt, COLOUR_INST, 16);
-            }
-            else
-            {
-                hlpr.FormatDesc(it->m_wstrAddr, COLOUR_ADDR, 10);
-                hlpr.FormatDesc(it->m_wstrByteCode, COLOUR_BYTE, 18);
-                hlpr.FormatDesc(it->m_wstrOpt, COLOUR_INST, 16);
-            }
-            GetDisassContentDesc(it->m_wstrContent, hlpr);
-            hlpr.NextLine();
-        }
-        return true;
+        return false;
     }
-    return false;
-    */
+
+    for (vector<DisasmInfo>::const_iterator it = disasmSet.begin() ; it != disasmSet.end() ; it++)
+    {
+        pf << it->mAddrStr << it->mByteCode << it->mOpt << it->mContent << line_end;
+    }
+    result.mCmdShow += pf.GetResult();
     return true;
 }
 
