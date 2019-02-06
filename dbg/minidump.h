@@ -1,6 +1,7 @@
 #ifndef MINIDUMP_VDEBUG_H_H_
 #define MINIDUMP_VDEBUG_H_H_
 #include <Windows.h>
+#include <DbgHelp.h>
 #include <list>
 #include <ComStatic/ComStatic.h>
 #include <ComLib/ComLib.h>

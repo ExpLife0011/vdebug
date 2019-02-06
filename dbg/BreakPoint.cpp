@@ -39,7 +39,7 @@ void CBreakPointMgr::Int3BpCallback()
         eventInfo.mEventLabel = SCI_LABEL_DEFAULT;
         eventInfo.mEventShow = FormatA("触发用户断点 %hs %hs\n", result["addr"].asString().c_str(), bp.mSymbol.c_str());
 
-        MsgSend(MQ_CHANNEL_DBG_SERVER, MakeEventRequest(eventInfo).c_str());
+        MsgSend(CHANNEL_PROC_SERVER, MakeEventRequest(eventInfo).c_str());
         CProcDbgger::GetInstance()->Wait();
     } else {
     }

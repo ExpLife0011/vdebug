@@ -46,7 +46,7 @@ VOID CProcDbgger::Wait()
 
     EventDbgInfo eventInfo;
     eventInfo.mEventType = DBG_EVENT_DBG_PROC_RUNNING;
-    MsgSend(MQ_CHANNEL_DBG_SERVER, MakeEventRequest(eventInfo).c_str());
+    MsgSend(CHANNEL_PROC_SERVER, MakeEventRequest(eventInfo).c_str());
 }
 
 void CProcDbgger::Run()
@@ -71,7 +71,7 @@ void CProcDbgger::GuCmdCallback()
     eventInfo.mEventLabel = SCI_LABEL_DEFAULT;
     eventInfo.mEventShow = FormatA("触发用户断点 %hs %hs\n", result["addr"].asString().c_str(), strSymbol.c_str());
 
-    MsgSend(MQ_CHANNEL_DBG_SERVER, MakeEventRequest(eventInfo).c_str());
+    MsgSend(CHANNEL_PROC_SERVER, MakeEventRequest(eventInfo).c_str());
     GetInstance()->Wait();
 }
 
@@ -387,7 +387,7 @@ void CProcDbgger::OnCreateProcess(CREATE_PROCESS_DEBUG_INFO* pCreateProcessInfo)
     pf << "入口地址" << info.mEntryAddr           << line_end;
     eventInfo.mEventShow = pf.GetResult();
     Reader().parse(EncodeProcCreate(info), eventInfo.mEventResult);
-    MsgSend(MQ_CHANNEL_DBG_SERVER, MakeEventRequest(eventInfo).c_str());
+    MsgSend(CHANNEL_PROC_SERVER, MakeEventRequest(eventInfo).c_str());
 
     CSymbolTaskHeader task;
     CTaskSymbolInit param;
@@ -426,7 +426,7 @@ void CProcDbgger::OnDetachDbgger()
     eventInfo.mEventType = DBG_EVENT_DETACH;
     eventInfo.mEventShow = "进程已脱离调试器";
     mstring package = MakeEventRequest(eventInfo);
-    MsgSend(MQ_CHANNEL_DBG_SERVER, MakeEventRequest(eventInfo).c_str());
+    MsgSend(CHANNEL_PROC_SERVER, MakeEventRequest(eventInfo).c_str());
 
     m_eDbggerStat = em_dbg_status_init;
 }
@@ -470,7 +470,7 @@ void CProcDbgger::OnSystemBreakpoint(void* ExceptionData)
     eventInfo.mEventType = DBG_EVENT_SYSTEM_BREAKPOINT;
     eventInfo.mEventResult["tid"] = (int)dwId;
     eventInfo.mEventShow = "系统断点触发调试器中断\n";
-    MsgSend(MQ_CHANNEL_DBG_SERVER, MakeEventRequest(eventInfo).c_str());
+    MsgSend(CHANNEL_PROC_SERVER, MakeEventRequest(eventInfo).c_str());
 
     //脱离调试器
     if (GetInstance()->m_bDetachDbgger)
@@ -507,7 +507,7 @@ bool CProcDbgger::LoadModuleInfo(HANDLE hFile, DWORD64 dwBaseOfModule)
     eventInfo.mEventLabel = SCI_LABEL_DEFAULT;
     eventInfo.mEventShow = FormatA("模块加载  %hs  %hs  %hs\n", dllInfo.mBaseAddr.c_str(), dllInfo.mEndAddr.c_str(), dllInfo.mDllName.c_str());
 
-    MsgSend(MQ_CHANNEL_DBG_SERVER, MakeEventRequest(eventInfo).c_str());
+    MsgSend(CHANNEL_PROC_SERVER, MakeEventRequest(eventInfo).c_str());
     return true;
 }
 
@@ -594,7 +594,7 @@ void CProcDbgger::OnProgramException(EXCEPTION_DEBUG_INFO* ExceptionData) {
     eventInfo.mEventShow += pf.GetResult();
     eventInfo.mEventResult["tid"] = (int)((DEBUG_EVENT*)GetDebugData())->dwThreadId;
     mstring package = MakeEventRequest(eventInfo);
-    MsgSend(MQ_CHANNEL_DBG_SERVER, package.c_str());
+    MsgSend(CHANNEL_PROC_SERVER, package.c_str());
     GetInstance()->Wait();
 }
 

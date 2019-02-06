@@ -54,7 +54,7 @@ LPCSTR DbgService::ServerNotify(LPCSTR szChannel, LPCSTR szContent, void *pParam
 
     do 
     {
-        if (0 == lstrcmpA(szChannel, MQ_CHANNEL_DBG_SERVER))
+        if (0 == lstrcmpA(szChannel, CHANNEL_PROC_SERVER))
         {
             Value root;
             Reader().parse(szContent, root);
@@ -133,7 +133,7 @@ bool DbgService::InitDbgService(const char *unique) {
 
     MsgInitServ(m_port);
     MsgInitClient(m_port);
-    MsgRegister(MQ_CHANNEL_DBG_SERVER, ServerNotify, this);
+    MsgRegister(CHANNEL_PROC_SERVER, ServerNotify, this);
     return true;
 }
 
@@ -158,16 +158,16 @@ mstring DbgService::GetSpecChannel(DbggerType type) const {
     mstring channel;
     switch (type) {
         case em_dbg_proc86:
-            channel = MQ_CHANNEL_DBG_CLIENT32;
+            channel = CHANNEL_RPOC32;
             break;
         case em_dbg_proc64:
-            channel = MQ_CHANNEL_DBG_CLIENT64;
+            channel = CHANNEL_RPOC64;
             break;
         case em_dbg_dump86:
-            channel = MQ_CHANNEL_DBG_DUMP32;
+            channel = CHANNEL_DUMP32;
             break;
         case em_dbg_dump64:
-            channel = MQ_CHANNEL_DBG_DUMP64;
+            channel = CHANNEL_DUMP64;
             break;
     }
     return channel;

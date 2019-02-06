@@ -5,6 +5,7 @@
 #include <ComLib/ComLib.h>
 #include <runner/runner.h>
 #include "ProcDbgProxy.h"
+#include "DumpDbgProxy.h"
 #include "symbol.h"
 #include "procmon.h"
 
@@ -88,6 +89,7 @@ int WINAPI WinMain(HINSTANCE hT, HINSTANCE hP, LPSTR szCmdLine, int iShow)
     mstring unique = cmd.substr(pos + 1, cmd.size() - pos - 1);
 
     ProcDbgProxy::GetInstance()->InitProcDbgProxy(unique.c_str());
+    DumpDbgProxy::GetInstance()->InitDumpDbgProxy(unique.c_str());
 #ifdef _DEBUG
     MessageBoxA(0, "DbgTest", "dbg", 0);
 #else

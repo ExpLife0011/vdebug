@@ -74,6 +74,42 @@
 */
 #define DBG_CTRL_GET_PROC            "GetProcInfo"
 
+/*
+{
+    "cmd":"OpenDump",
+    "content":{
+        "dumpPath":"d:\\abcdef.dmp"
+    }
+}
+
+{
+    "cmd": "reply",
+    "content": {
+        "status": 0,
+        "reason": "abcdef"
+    }
+}
+*/
+#define DBG_CTRL_OPEN_DUMP           "OpenDump"
+
+/*
+{
+    "cmd":"DumpProc",
+    "content":{
+        "pid":1122
+    }
+}
+
+{
+    "cmd": "reply",
+    "content": {
+        "status": 0,
+        "reason": "abcdef"
+    }
+}
+*/
+#define DBG_CTRL_DUMP_PROC           "DumpProc"
+
 //中断调试器
 #define DBG_CTRL_BREAK               "BreakDebugger"
 /*********************调试控制指令结束******************************/

@@ -29,7 +29,7 @@ private:
     void SetCtrlStatus(DbggerStatus stat);
     void OnCmdReply(const std::mstring &content);
 
-    //Debug Event
+    //Proc Debug Event
     static void WINAPI OnProcCreate(const EventDbgInfo &eventInfo, void *param);
     static void WINAPI OnSystemBreakpoint(const EventDbgInfo &eventInfo, void *param);
     static void WINAPI OnUserBreakpoint(const EventDbgInfo &eventInfo, void *param);

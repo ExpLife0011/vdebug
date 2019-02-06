@@ -25,6 +25,10 @@ struct DbgReplyResult {
     std::mstring mReason;
     std::mstring mResult;
 
+    DbgReplyResult() {
+        mCode = 0;
+    }
+
     DbgReplyResult(int a, const std::mstring &b, const std::mstring &c) {
         mCode = a;
         mReason = b;

@@ -357,6 +357,28 @@ static VOID _OnInitDialog(HWND hwnd, WPARAM wp, LPARAM lp)
     AppendToSyntaxView(SCI_LABEL_DEFAULT, FormatA("VDebug调试器，版本：%ls\n", wstrVersion.c_str()));
 }
 
+static mstring _OpenDumpFile() {
+    char dumpPath[256] = {0};
+
+    OPENFILENAMEA ofn = {0};
+    ofn.lStructSize = sizeof(ofn);
+    ofn.hwndOwner = gs_hMainView;
+    ofn.hInstance = GetModuleHandleA(NULL);
+    ofn.Flags = OFN_ENABLESIZING | OFN_EXPLORER | OFN_FILEMUSTEXIST | OFN_HIDEREADONLY | OFN_ENABLETEMPLATE;
+    ofn.lpstrFilter = "dump文件\0*.dmp;*.dump\0所有文件(*.*)\0*.*\0\0";
+    ofn.lpstrFile = dumpPath;
+    ofn.nMaxFile = MAX_PATH;
+    ofn.lpstrTitle = "选择要分析的Dump文件";
+    ofn.lpfnHook = NULL;
+    ofn.lpTemplateName = MAKEINTRESOURCEA(IDD_PROC_OPEN);
+   
+    if (GetOpenFileNameA(&ofn))
+    {
+        return dumpPath;
+    }
+    return "";
+}
+
 static VOID _OnCommand(HWND hwnd, WPARAM wp, LPARAM lp)
 {
     DWORD dwId = LOWORD(wp);
@@ -386,6 +408,12 @@ static VOID _OnCommand(HWND hwnd, WPARAM wp, LPARAM lp)
         {
             gs_pProcSelect->CreateDlg(IDD_PROC_ATTACH, hwnd, TRUE);
         }
+        break;
+    case IDC_CMD_OPEN_DUMP: 
+        {
+        }
+        break;
+    default:
         break;
     }
 }

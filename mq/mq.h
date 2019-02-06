@@ -12,13 +12,14 @@ MsgSend£ºÏûÏ¢·¢²¼½Ó¿Ú£¬µÚÒ»¸ö²ÎÊýÊÇÏûÏ¢Òª·¢²¼µ½µÄÆµµÀ£¬µÚ¶þ¸ö²ÎÊýÊÇÒª·¢²¼ÏûÏ¢µÄÄ
 #include <Windows.h>
 
 //×¢²áµÄÏà¹Ø¹¦ÄÜÆµµÀ
-#define MQ_CHANNEL_DBG_SERVER      "mq_event_dbg_server"
-#define MQ_CHANNEL_DBG_CLIENT32    "mq_event_dbg_client_proc32"
-#define MQ_CHANNEL_DBG_CLIENT64    "mq_event_dbg_client_proc64"
-#define MQ_CHANNEL_DBG_DUMP32      "mq_event_dbg_client_dump32"
-#define MQ_CHANNEL_DBG_DUMP64      "mq_event_dbg_client_dump64"
-#define MQ_CHANNEL_TASK32          "mq_event_task32"
-#define MQ_CHANNEL_TASK64          "mq_event_task64"
+#define CHANNEL_PROC_SERVER      "channel_proc_server"
+#define CHANNEL_DUMP_SERVER      "channel_dump_server"
+#define CHANNEL_RPOC32           "channel_proc32"
+#define CHANNEL_RPOC64           "channel_proc64"
+#define CHANNEL_DUMP32           "channel_dump32"
+#define CHANNEL_DUMP64           "channel_dump64"
+#define CHANNEL_TASK32           "channel_task32"
+#define CHANNEL_TASK64           "channel_task64"
 
 #ifndef MQ_EXPORTS
     #if _WIN64 || WIN64

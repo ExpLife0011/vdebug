@@ -64,16 +64,16 @@ bool DbgClient::InitClient(DbggerType type, const char *unique) {
     mstring channel;
     switch (type) {
         case em_dbg_proc86:
-            channel = MQ_CHANNEL_DBG_CLIENT32;
+            channel = CHANNEL_RPOC32;
             break;
         case em_dbg_proc64:
-            channel = MQ_CHANNEL_DBG_CLIENT64;
+            channel = CHANNEL_RPOC64;
             break;
         case em_dbg_dump86:
-            channel = MQ_CHANNEL_DBG_DUMP32;
+            channel = CHANNEL_DUMP32;
             break;
         case em_dbg_dump64:
-            channel = MQ_CHANNEL_DBG_DUMP64;
+            channel = CHANNEL_DUMP64;
             break;
     }
 
@@ -83,7 +83,7 @@ bool DbgClient::InitClient(DbggerType type, const char *unique) {
 }
 
 bool DbgClient::ReportDbgEvent(const std::mstring &content) {
-    MsgSend(MQ_CHANNEL_DBG_SERVER, content.c_str());
+    MsgSend(CHANNEL_PROC_SERVER, content.c_str());
     return true;
 }
 
