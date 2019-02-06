@@ -21,9 +21,9 @@ class DbgClient : public DbgClientBase, public CCriticalSectionLockable {
 public:
     DbgClient();
     virtual ~DbgClient();
-    virtual bool InitClient(DbggerType type, const char *unique);
-    virtual HDbgCtrl RegisterCtrlHandler(const char *cmd, pfnDbgClientProc pfn, void *param);
-    virtual bool ReportDbgEvent(const std::utf8_mstring &content);
+    virtual bool InitClient(DbggerType type, const mstring &unique);
+    virtual HDbgCtrl RegisterCtrlHandler(const std::mstring &cmd, pfnDbgClientProc pfn, void *param);
+    virtual bool ReportDbgEvent(const EventInfo &eventInfo);
 
 private:
     static LPCSTR WINAPI ClientNotify(LPCSTR szChannel, LPCSTR szContent, void *pParam);
@@ -51,7 +51,7 @@ m_curIndex(0xffab){
 DbgClient ::~DbgClient() {
 }
 
-bool DbgClient::InitClient(DbggerType type, const char *unique) {
+bool DbgClient::InitClient(DbggerType type, const mstring &unique) {
     if (m_init)
     {
         return true;
@@ -82,12 +82,12 @@ bool DbgClient::InitClient(DbggerType type, const char *unique) {
     return true;
 }
 
-bool DbgClient::ReportDbgEvent(const std::mstring &content) {
-    MsgSend(CHANNEL_PROC_SERVER, content.c_str());
+bool DbgClient::ReportDbgEvent(const EventInfo &eventInfo) {
+    MsgSend(CHANNEL_PROC_SERVER, MakeEvent(eventInfo).c_str());
     return true;
 }
 
-HDbgCtrl DbgClient::RegisterCtrlHandler(const char *cmd, pfnDbgClientProc pfn, void *param) {
+HDbgCtrl DbgClient::RegisterCtrlHandler(const mstring &cmd, pfnDbgClientProc pfn, void *param) {
     CScopedLocker lock(this);
     DbgClientCache *cache = new DbgClientCache();
     cache->m_CtrlCode = cmd;
@@ -112,13 +112,14 @@ LPCSTR DbgClient::ClientNotify(LPCSTR szChannel, LPCSTR szContent, void *pParam)
             break;
         }
 
-        mstring cmd = json["cmd"].asString();
-        mstring content = json["content"].asString();
+        mstring type = json["type"].asString();
 
+        if (type == "ctrl")
         {
+            CtrlRequest request = ParserRequest(szContent);
             CScopedLocker lock(pThis);
             map<mstring, list<DbgClientCache *>>::const_iterator it;
-            it = pThis->m_RegisterSet.find(cmd);
+            it = pThis->m_RegisterSet.find(request.mCmd);
 
             if (it == pThis->m_RegisterSet.end())
             {
@@ -129,8 +130,8 @@ LPCSTR DbgClient::ClientNotify(LPCSTR szChannel, LPCSTR szContent, void *pParam)
             for (list<DbgClientCache *>::const_iterator ij = tmp.begin() ; ij != tmp.end() ; ij++)
             {
                 DbgClientCache *ptr = *ij;
-                mstring p = ptr->m_proc(cmd, content, ptr->m_param);
-                result = p;
+                CtrlReply reply = ptr->m_proc(request, ptr->m_param);
+                result = MakeReply(reply);
             }
         }
     } while (FALSE);

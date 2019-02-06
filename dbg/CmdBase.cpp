@@ -58,10 +58,10 @@ bool CCmdBase::OnHight(SyntaxDesc &desc, const mstring &wstrHight) const
 }
 */
 
-CmdReplyResult CCmdBase::RunCommand(const CmdRequest &cmd, const CmdUserParam *pParam)
+CtrlReply CCmdBase::RunCommand(const mstring &cmd, const CmdUserParam *pParam)
 {
-    CmdReplyResult result;
-    mstring str(cmd.mCmd);
+    CtrlReply result;
+    mstring str(cmd);
     str.makelower();
     str.trim();
     if (str.empty())
@@ -91,7 +91,7 @@ CmdReplyResult CCmdBase::RunCommand(const CmdRequest &cmd, const CmdUserParam *p
         strParam.trim();
     }
 
-    result = OnCommand(strStart, strParam, cmd.mCmdMode, pParam);
+    result = OnCommand(strStart, strParam, pParam);
     return result;
 }
 
@@ -348,7 +348,7 @@ DWORD64 CCmdBase::GetSizeAndParam(const mstring &strParam, mstring &strOut) cons
     return dwSize;
 }
 
-CmdReplyResult CCmdBase::OnCommand(const mstring &wstrCmd, const mstring &wstrCmdParam, DWORD mode, const CmdUserParam *pParam)
+CtrlReply CCmdBase::OnCommand(const mstring &wstrCmd, const mstring &wstrCmdParam, const CmdUserParam *pParam)
 {
-    return CmdReplyResult();
+    return CtrlReply();
 }

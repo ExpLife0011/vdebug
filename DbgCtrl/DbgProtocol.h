@@ -1,9 +1,51 @@
 #ifndef DBGPROTOCOL_DBGCTRL_H_H_
 #define DBGPROTOCOL_DBGCTRL_H_H_
 
+/*
+协议按应用场景抽象成两类，一问一答的应答方式和单向的数据上报
+一问一答的应答方式
+请求方：
+{
+    "type":"ctrl",
+    "cmd":"attach",
+    "content": {
+        "pid":1234
+    }
+}
+
+应答方：
+{
+    "status":0,
+    "label":"default",
+    "show":"showmsg",
+    "result":{
+        ...
+    }
+}
+
+单向数据推送
+{
+    "type":"event",
+    "event":"moduleload",
+    "label":"default",
+    "show":"xxxx 模块加载",
+    "content":{
+    }
+}
+
+调试命令作为ctrl的子类
+{
+    "type":"ctrl",
+    "cmd":"RunCmd",
+    "content": {
+        "command":"kv"
+    }
+}
+*/
+
 //消息抽象成ctrl 和 event两种
-//ctrl 是调试控制端控制调试器执行调试动作
-//event 是调试器向调试控制端上报调试事件
+//ctrl 是调试控制端控制调试器执行调试动作,有应答，交互式通讯
+//event 是调试器向调试控制端上报调试事件，是单向推送数据
 
 /*********************调试控制指令开始*****************************/
 /*
@@ -11,6 +53,29 @@
     "cmd":"attach",
     "content":{
         "pid":1234
+    }
+}
+
+{
+    "cmd":"DbgCtrl",
+    "content":{
+        "ctrlType":"attach",
+        "mode":1,
+        "ctrlContnet":{
+            "pid":1234
+        }
+    }
+}
+
+{
+    "cmd": "reply",
+    "content": {
+        "ctrlCode":0,
+        "mode":1,
+        "ctrlLabel":"CallStack",                     //展示标签
+        "ctrlShow":"abcd1234",                       //展示内容
+        "ctrlResult": {
+        }
     }
 }
 */

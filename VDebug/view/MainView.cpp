@@ -471,8 +471,8 @@ static VOID _OnExecCommand(HWND hwnd, WPARAM wp, LPARAM lp)
 
     gs_pCmdQueue->EnterCmd(cmd);
     AppendToSyntaxView(SCI_LABEL_DEFAULT, GetWindowStrA(gs_hStatEdit) + " " + cmd + "\n");
-    CmdReplyResult result = DbgCtrlService::GetInstance()->RunCmdInCtrlService(cmd);
-    AppendToSyntaxView(result.mCmdLabel, result.mCmdShow);
+    CtrlReply result = DbgCtrlService::GetInstance()->RunCmdInCtrlService(cmd);
+    AppendToSyntaxView(result.mLabel, result.mShow);
     SetWindowTextA(gs_hCommand, "");
 }
 

@@ -21,7 +21,7 @@ public:
     bool DetachProc();
 
     bool OpenDump(const std::mstring &path) const;
-    CmdReplyResult RunCmdInCtrlService(const std::mstring &cmd);
+    CtrlReply RunCmdInCtrlService(const std::mstring &cmd);
 
     //proc monitor
     bool StartProcMon();
@@ -32,19 +32,19 @@ private:
     void OnCmdReply(const std::mstring &content);
 
     //Proc Debug Event
-    static void WINAPI OnProcCreate(const EventDbgInfo &eventInfo, void *param);
-    static void WINAPI OnSystemBreakpoint(const EventDbgInfo &eventInfo, void *param);
-    static void WINAPI OnUserBreakpoint(const EventDbgInfo &eventInfo, void *param);
-    static void WINAPI OnDbgMessage(const EventDbgInfo &eventInfo, void *param);
-    static void WINAPI OnProcExit(const EventDbgInfo &eventInfo, void *param);
-    static void WINAPI OnModuleLoad(const EventDbgInfo &eventInfo, void *param);
-    static void WINAPI OnModuleUnLoad(const EventDbgInfo &eventInfo, void *param);
-    static void WINAPI OnDbgProcRunning(const EventDbgInfo &eventInfo, void *param);
-    static void WINAPI OnDetachDbgger(const EventDbgInfo &eventInfo, void *param);
-    static void WINAPI OnProgramException(const EventDbgInfo &eventInfo, void *param);
+    static void WINAPI OnProcCreate(const EventInfo &eventInfo, void *param);
+    static void WINAPI OnSystemBreakpoint(const EventInfo &eventInfo, void *param);
+    static void WINAPI OnUserBreakpoint(const EventInfo &eventInfo, void *param);
+    static void WINAPI OnDbgMessage(const EventInfo &eventInfo, void *param);
+    static void WINAPI OnProcExit(const EventInfo &eventInfo, void *param);
+    static void WINAPI OnModuleLoad(const EventInfo &eventInfo, void *param);
+    static void WINAPI OnModuleUnLoad(const EventInfo &eventInfo, void *param);
+    static void WINAPI OnDbgProcRunning(const EventInfo &eventInfo, void *param);
+    static void WINAPI OnDetachDbgger(const EventInfo &eventInfo, void *param);
+    static void WINAPI OnProgramException(const EventInfo &eventInfo, void *param);
 
     //Proc changed
-    static void WINAPI OnProcChanged(const EventDbgInfo &eventInfo, void *param);
+    static void WINAPI OnProcChanged(const EventInfo &eventInfo, void *param);
 
 private:
     void RunProcInUser(LPCSTR image, LPCSTR cmd, DWORD session);

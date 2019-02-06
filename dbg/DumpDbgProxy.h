@@ -14,8 +14,8 @@ public:
 
 private:
     //Dbg Ctrl
-    static std::mstring __stdcall OpenDump(const std::mstring &cmdParam, const std::mstring &content, void *param);
-    static std::mstring __stdcall DumpProc(const std::mstring &cmdParam, const std::mstring &content, void *param);
+    static CtrlReply __stdcall OpenDump(const CtrlRequest &request, void *param);
+    static CtrlReply __stdcall DumpProc(const CtrlRequest &request, void *param);
 
 private:
     bool mInit;

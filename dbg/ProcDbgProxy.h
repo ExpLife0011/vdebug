@@ -17,12 +17,12 @@ public:
 
 private:
     //Dbg Ctrl
-    static std::mstring __stdcall GetProcInfo(const std::mstring &cmd, const std::mstring &content, void *param);
-    static std::mstring __stdcall ExecProc(const std::mstring &cmd, const std::mstring &content, void *param);
-    static std::mstring __stdcall AttachProc(const std::mstring &cmd, const std::mstring &content, void *param);
-    static std::mstring __stdcall RunCmd(const std::mstring &cmd, const std::mstring &content, void *param);
-    static std::mstring __stdcall DetachProc(const std::mstring &cmd, const std::mstring &content, void *param);
-    static std::mstring __stdcall BreakDebugger(const std::mstring &cmd, const std::mstring &content, void *param);
+    static CtrlReply __stdcall GetProcInfo(const CtrlRequest &request, void *param);
+    static CtrlReply __stdcall ExecProc(const CtrlRequest &request, void *param);
+    static CtrlReply __stdcall AttachProc(const CtrlRequest &request, void *param);
+    static CtrlReply __stdcall RunCmd(const CtrlRequest &request, void *param);
+    static CtrlReply __stdcall DetachProc(const CtrlRequest &request, void *param);
+    static CtrlReply __stdcall BreakDebugger(const CtrlRequest &request, void *param);
 
 private:
     //proc event

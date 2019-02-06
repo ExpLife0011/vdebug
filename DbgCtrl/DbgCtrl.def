@@ -1,13 +1,8 @@
 EXPORTS
-MakeDbgRequest
-MakeDbgRelpy
-IsDbgReplySucc
-ParserDbgReply
+MakeRequest
+ParserRequest
+MakeReply
+ParserReply
 
-MakeCmdRequest
-ParserCmdRequest
-MakeCmdReply
-ParserCmdReply
-
-MakeEventRequest
-ParserEventRequest
+MakeEvent
+ParserEvent

@@ -33,13 +33,13 @@ void CBreakPointMgr::Int3BpCallback()
         result["symbol"] = bp.mSymbol;
         result["tid"] = (int)((DEBUG_EVENT*)GetDebugData())->dwThreadId;
 
-        EventDbgInfo eventInfo;
-        eventInfo.mEventType = DBG_EVENT_USER_BREAKPOINT;
-        eventInfo.mEventResult = result;
-        eventInfo.mEventLabel = SCI_LABEL_DEFAULT;
-        eventInfo.mEventShow = FormatA("触发用户断点 %hs %hs\n", result["addr"].asString().c_str(), bp.mSymbol.c_str());
+        EventInfo eventInfo;
+        eventInfo.mEvent = DBG_EVENT_USER_BREAKPOINT;
+        eventInfo.mContent = result;
+        eventInfo.mLabel = SCI_LABEL_DEFAULT;
+        eventInfo.mShow = FormatA("触发用户断点 %hs %hs\n", result["addr"].asString().c_str(), bp.mSymbol.c_str());
 
-        MsgSend(CHANNEL_PROC_SERVER, MakeEventRequest(eventInfo).c_str());
+        MsgSend(CHANNEL_PROC_SERVER, MakeEvent(eventInfo).c_str());
         CProcDbgger::GetInstance()->Wait();
     } else {
     }

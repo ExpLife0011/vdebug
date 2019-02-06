@@ -7,236 +7,98 @@ using namespace std;
 using namespace Json;
 
 /*
+协议按应用场景抽象成两类，一问一答的应答方式和单向的数据上报
+一问一答的应答方式
+请求方：
 {
-    "cmd":"event",
-    "content":{
-        "type":"moduleload",
-        "data":{
-            "name":"kernel32.dll",
-            "baseAddr":"0x4344353",
-            "endAddr":"0x43443ff"
-        }
-    }
-}
-*/
-/*
-std::mstring __stdcall MakeDbgEvent(const std::mstring &event, const std::mstring &data) {
-    Value root;
-    root["cmd"] = "event";
-
-    Value content;
-    content["type"] = event;
-    Value data1;
-    Reader().parse(data, data1);
-    content["data"] = data1;
-    root["content"] = content;
-
-    return FastWriter().write(root);
-}
-*/
-
-std::mstring __stdcall MakeDbgRequest(const std::mstring &cmd, const std::mstring &content) {
-    Value root;
-    root["cmd"] = cmd;
-
-    Value contentJson;
-    Reader().parse(content, contentJson);
-    root["content"] = contentJson;
-
-    return FastWriter().write(root);
-}
-
-/*
-{
-    "cmd": "reply",
-        "content": {
-            "command": "kv",
-            "status": 0,
-            "reason": "abcdef",
-            "result": [{
-                "retaddr": "0x0xabcd12ff",
-                "param0": "0xabcd1234",
-                "param1": "0xabcd1234",
-                "param2": "0xabcd1233"
-            }]
-        }
-}
-*/
-std::mstring __stdcall MakeDbgRelpy(const DbgReplyResult &result) {
-    Value root;
-    root["cmd"] = "reply";
-
-    Value content;
-    content["status"] = result.mCode;
-    content["reason"] = result.mReason;
-
-    Value resultJson;
-    Reader().parse(result.mResult, resultJson);
-    content["result"] = resultJson;
-    root["content"] = content;
-    return FastWriter().write(root);
-}
-
-bool __stdcall IsDbgReplySucc(const std::mstring &reply, DbgReplyResult &result) {
-    return ParserDbgReply(reply, result) && (0 == result.mCode);
-}
-
-bool __stdcall ParserDbgReply(const std::mstring &reply, DbgReplyResult &result) {
-    Value root;
-
-    Reader().parse(reply, root);
-    Value content = root["content"];
-
-    result.mCode = GetIntFromJson(content, "status");
-    result.mReason = GetStrFormJson(content, "reason");
-    result.mResult = GetStrFormJson(content, "result");
-    return true;
-}
-
-/*
-{
-    "cmd":"RunCmd",
-    "content":{
-        "mode":1,                          //1:仅返回展示字符串 2:返回Json格式的执行结果
-        "cmd":"bp kernen32!CreateFileW"    //cmd 内容
-    }
-}
-
-{
-    "cmd": "reply",
+    "type":"ctrl",
+    "cmd":"attach",
     "content": {
-        "status": 0,
-        "reason": "abcdef",
-        "result":{
-            "cmdCode":0,
-            "mode":1,
-            "cmdLabel":"CallStack",                     //展示标签
-            "cmdShow":"abcd1234",                       //展示内容
-            "cmdResult": [{
-                "addr": "0x0xabcd12ff",
-                "function":"kernel32!CreateFileW",
-                "param0": "0xabcd1234",
-                "param1": "0xabcd1234",
-                "param2": "0xabcd1233",
-                "param3": "0xabcd1233"
-            }]
-        } 
+        "pid":1234
+    }
+}
+
+应答方：
+{
+    "status":0,
+    "label":"default",
+    "show":"showmsg",
+    "result":{
+        ...
+    }
+}
+
+单向数据推送
+{
+    "type":"event",
+    "event":"moduleload",
+    "label":"default",
+    "show":"xxxx 模块加载",
+    "content":{
     }
 }
 */
-mstring MakeCmdRequest(const CmdRequest &request) {
-    Value json;
-    json["mode"] = request.mCmdMode;
-    json["cmd"] = request.mCmd;
-    return FastWriter().write(json);
+
+std::mstring __stdcall MakeRequest(const CtrlRequest &request) {
+    Value root;
+    root["type"] = "ctrl";
+    root["cmd"] = request.mCmd;
+    root["content"] = request.mContent;
+
+    return FastWriter().write(root);
 }
 
-CmdRequest ParserCmdRequest(const mstring &json) {
-    Value tmp;
-    Reader().parse(json, tmp);
+CtrlRequest __stdcall ParserRequest(const std::mstring &cmd){
+    Value root;
+    Reader().parse(cmd, root);
 
-    CmdRequest result;
-    result.mCmdMode = tmp["mode"].asInt();
-    result.mCmd = tmp["cmd"].asString();
+    CtrlRequest result;
+    result.mCmd = root["cmd"].asString();
+    result.mContent = root["content"];
     return result;
 }
 
-mstring __stdcall MakeCmdReply(const CmdReplyResult &cmdResult) {
+std::mstring __stdcall MakeReply(const CtrlReply &reply) {
     Value root;
-    root["cmd"] = "reply";
-
-    Value content;
-    content["status"] = 0;
-    content["reason"] = "";
-
-    Value result;
-    result["cmdCode"] = cmdResult.mCmdCode;
-    result["mode"] = cmdResult.mResultMode;
-
-    Value tmp;
-    Reader().parse(cmdResult.mCmdResult, tmp);
-    result["cmdResult"] = tmp;
-    result["cmdLabel"] = cmdResult.mCmdLabel;
-    result["cmdShow"] = cmdResult.mCmdShow;
-    content["result"] = result;
-
-    root["content"] = content;
+    root["status"] = reply.mStatus;
+    root["label"] = reply.mLabel;
+    root["show"] = reply.mShow;
+    root["result"] = reply.mResult;
     return FastWriter().write(root);
 }
 
-bool __stdcall ParserCmdReply(const std::mstring &reply, CmdReplyResult &cmdResult) {
+CtrlReply __stdcall ParserReply(const std::mstring &reply) {
+    Value root;
+    Reader().parse(reply, root);
+
+    CtrlReply result;
+    result.mStatus = root["status"].asInt();
+    result.mLabel = root["label"].asString();
+    result.mShow = root["show"].asString();
+    result.mResult = root["result"];
+    return result;
+}
+
+std::mstring __stdcall MakeEvent(const EventInfo &eventInfo) {
+    Value root;
+    root["type"] = "event";
+    root["event"] = eventInfo.mEvent;
+    root["label"] = eventInfo.mLabel;
+    root["show"] = eventInfo.mShow;
+    root["content"] = eventInfo.mContent;
+
+    return FastWriter().write(root);
+}
+
+EventInfo __stdcall ParserEvent(const std::mstring &reply) {
     Value root;
 
     Reader().parse(reply, root);
-    if (root.type() != objectValue || root["cmd"].asString() != "reply")
-    {
-        return false;
-    }
+    EventInfo result;
+    result.mEvent = root["event"].asString();
+    result.mLabel = root["label"].asString();
+    result.mShow = root["show"].asString();
+    result.mContent = root["content"];
 
-    Value content = root["content"];
-    if (content.type() != objectValue)
-    {
-        return false;
-    }
-
-    Value result = content["result"];
-    if (result.type() != objectValue)
-    {
-        return false;
-    }
-    cmdResult.mCmdCode = result["cmdCode"].asInt();
-    cmdResult.mResultMode = result["mode"].asInt();
-    cmdResult.mCmdLabel = result["cmdLabel"].asString();
-
-    if (cmdResult.mResultMode & CMD_MASK_RESULT)
-    {
-        cmdResult.mCmdResult = FastWriter().write(result["cmdResult"]);
-    }
-
-    if (cmdResult.mResultMode & CMD_MASK_SHOW)
-    {
-        cmdResult.mCmdShow = result["cmdShow"].asString();
-    }
-    return true;
-}
-
-/*
-{
-    "cmd":"event",
-    "content":{
-        "eventType":"moduleload",
-        "mode":1,                                           //1:展示信息，2:结果信息
-        "eventLabel":"Default",                             //展示标签
-        "eventShow":"0xffaabbcc 0x11223344 kernel32.dll",   //展示内容
-        "eventResult": {
-            "name":"kernel32.dll",
-            "baseAddr":"0x4344353",
-            "endAddr":"0x43443ff"
-        }
-}
-*/
-std::mstring __stdcall MakeEventRequest(const EventDbgInfo &info) {
-    Value root;
-    root["cmd"] = "event";
-    Value content;
-    content["eventType"] = info.mEventType;
-    content["mode"] = info.mEventMode;
-    content["eventLabel"] = info.mEventLabel;
-    content["eventShow"] = info.mEventShow;
-    content["eventResult"] = info.mEventResult;
-
-    root["content"] = content;
-    return FastWriter().write(root);
-}
-
-bool __stdcall ParserEventRequest(const std::mstring eventStr, EventDbgInfo &info) {
-    Value root;
-    Reader().parse(eventStr, root);
-
-    info.mEventType = root["eventType"].asString();
-    info.mEventMode = root["mode"].asInt();
-    info.mEventLabel = root["eventLabel"].asString();
-    info.mEventShow = root["eventShow"].asString();
-    info.mEventResult = root["eventResult"];
-    return true;
+    return result;
 }

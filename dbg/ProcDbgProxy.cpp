@@ -61,24 +61,19 @@ ProcDbgProxy::~ProcDbgProxy() {
     }
 }
 */
-mstring ProcDbgProxy::RunCmd(const mstring &cmd, const mstring &content, void *param) {
-    Value json;
-    Reader().parse(content, json);
-
-    mstring data = json["cmd"].asString();
+CtrlReply ProcDbgProxy::RunCmd(const CtrlRequest &request, void *param) {
+    mstring data = request.mContent["command"].asString();
     data.trim();
 
-    CmdReplyResult reply;
+    CtrlReply reply;
     if (data.empty())
     {
-        reply.mCmdCode = DBG_CMD_SYNTAX_ERR;
-        reply.mCmdShow = "ÃüÁîÓï·¨´íÎó";
-        return MakeCmdReply(reply);
+        reply.mStatus = DBG_CMD_SYNTAX_ERR;
+        reply.mShow = "ÃüÁîÓï·¨´íÎó";
+        return reply;
     }
 
-    CmdRequest request = ParserCmdRequest(content);
-    CmdReplyResult result = GetInstance()->m_pCmdRunner->RunCommand(request);
-    return MakeCmdReply(result);
+    return GetInstance()->m_pCmdRunner->RunCommand(data);
 }
 
 /*
@@ -90,63 +85,53 @@ mstring ProcDbgProxy::RunCmd(const mstring &cmd, const mstring &content, void *p
     }
 }
 */
-mstring ProcDbgProxy::ExecProc(const std::mstring &cmd, const std::mstring &content, void *param) {
-    Value root;
-    Reader().parse(content, root);
-
-    mstring path = root["path"].asString();
-    mstring exeParam = root["param"].asString();
+CtrlReply ProcDbgProxy::ExecProc(const CtrlRequest &request, void *param) {
+    mstring path = request.mContent["path"].asString();
+    mstring exeParam = request.mContent["param"].asString();
 
     DbgProcUserContext context;
     context.m_strCmd = exeParam;
     context.m_strPePath = path;
     BOOL ret = GetInstance()->m_pProcDbgger->Connect(path.c_str(), &context);
 
-    mstring res;
+    CtrlReply reply;
     if (ret)
     {
-        res = MakeDbgRelpy(DbgReplyResult(0, "exec success", ""));
+        reply.mStatus = 0;
     } else {
-        res = MakeDbgRelpy(DbgReplyResult(GetLastError(), "exec error", ""));
+        reply.mStatus = 1;
     }
-    return res;
+    return reply;
 }
 
-mstring ProcDbgProxy::AttachProc(const std::mstring &cmd, const std::mstring &content, void *param) {
-    Value root;
-    Reader().parse(content, root);
-
-    DWORD pid = (DWORD)root["pid"].asInt();
+CtrlReply ProcDbgProxy::AttachProc(const CtrlRequest &request, void *param) {
+    DWORD pid = (DWORD)request.mContent["pid"].asInt();
     GetInstance()->m_pProcDbgger->Connect(pid);
-    return MakeDbgRelpy(DbgReplyResult(0, "success", ""));
+
+    return CtrlReply();
 }
 
-mstring ProcDbgProxy::DetachProc(const std::mstring &cmd, const std::mstring &content, void *param) {
+CtrlReply ProcDbgProxy::DetachProc(const CtrlRequest &request, void *param) {
     if (GetInstance()->m_pProcDbgger->GetDbggerStatus() != em_dbg_status_init)
     {
         GetInstance()->m_pProcDbgger->DisConnect();
     }
 
-    return MakeDbgRelpy(DbgReplyResult(0, "success", ""));
+    return CtrlReply();
 }
 
-mstring ProcDbgProxy::BreakDebugger(const std::mstring &cmd, const std::mstring &content, void *param) {
-    if (GetInstance()->m_pProcDbgger->GetDbggerStatus() != em_dbg_status_busy)
+CtrlReply ProcDbgProxy::BreakDebugger(const CtrlRequest &request, void *param) {
+    if (GetInstance()->m_pProcDbgger->GetDbggerStatus() == em_dbg_status_busy)
     {
-        CmdRequest request;
-        request.mCmd = "bk";
-        GetInstance()->m_pCmdRunner->RunCommand(request);
+        return GetInstance()->m_pCmdRunner->RunCommand("bk");
     } else {
     }
-    return MakeDbgRelpy(DbgReplyResult(0, "success", ""));
+    return CtrlReply();
 }
 
 
-mstring ProcDbgProxy::GetProcInfo(const mstring &cmd, const mstring &content, void *param) {
-    Value root;
-    Reader().parse(content, root);
-
-    int start = GetIntFromJson(root, "start");
+CtrlReply ProcDbgProxy::GetProcInfo(const CtrlRequest &request, void *param) {
+    int start = GetIntFromJson(request.mContent, "start");
     if (1 == start)
     {
         if (GetInstance()->m_hProcListener != NULL)
@@ -160,7 +145,7 @@ mstring ProcDbgProxy::GetProcInfo(const mstring &cmd, const mstring &content, vo
         ProcMonitor::GetInstance()->UnRegisterListener(GetInstance()->m_hProcListener);
         GetInstance()->m_hProcListener = NULL;
     }
-    return MakeDbgRelpy(DbgReplyResult(0, "success", ""));
+    return CtrlReply();
 }
 
 void ProcDbgProxy::OnProcChanged(HProcListener listener, const list<const ProcMonInfo *> &added, const list<DWORD> &killed) {
@@ -171,10 +156,8 @@ void ProcDbgProxy::OnProcChanged(HProcListener listener, const list<const ProcMo
     }
     procSet.mKillSet = killed;
 
-    EventDbgInfo eventInfo;
-    eventInfo.mEventType = DBG_EVENT_PROC_CHANGED;
-    eventInfo.mEventMode = CMD_MASK_RESULT;
-    Reader().parse(EncodeProcMon(procSet), eventInfo.mEventResult);
-    mstring packet = MakeEventRequest(eventInfo);
-    m_pDbgClient->ReportDbgEvent(packet);
+    EventInfo eventInfo;
+    eventInfo.mEvent = DBG_EVENT_PROC_CHANGED;
+    Reader().parse(EncodeProcMon(procSet), eventInfo.mContent);
+    m_pDbgClient->ReportDbgEvent(eventInfo);
 }

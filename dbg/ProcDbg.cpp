@@ -44,9 +44,9 @@ VOID CProcDbgger::Wait()
     m_eDbggerStat = em_dbg_status_free;
     WaitForSingleObject(m_hRunNotify, INFINITE);
 
-    EventDbgInfo eventInfo;
-    eventInfo.mEventType = DBG_EVENT_DBG_PROC_RUNNING;
-    MsgSend(CHANNEL_PROC_SERVER, MakeEventRequest(eventInfo).c_str());
+    EventInfo eventInfo;
+    eventInfo.mEvent = DBG_EVENT_DBG_PROC_RUNNING;
+    MsgSend(CHANNEL_PROC_SERVER, MakeEvent(eventInfo).c_str());
 }
 
 void CProcDbgger::Run()
@@ -65,13 +65,13 @@ void CProcDbgger::GuCmdCallback()
     result["symbol"] = strSymbol;
     result["tid"] = (int)((DEBUG_EVENT*)GetDebugData())->dwThreadId;
 
-    EventDbgInfo eventInfo;
-    eventInfo.mEventType = DBG_EVENT_USER_BREAKPOINT;
-    eventInfo.mEventResult = result;
-    eventInfo.mEventLabel = SCI_LABEL_DEFAULT;
-    eventInfo.mEventShow = FormatA("触发用户断点 %hs %hs\n", result["addr"].asString().c_str(), strSymbol.c_str());
+    EventInfo eventInfo;
+    eventInfo.mEvent = DBG_EVENT_USER_BREAKPOINT;
+    eventInfo.mContent = result;
+    eventInfo.mLabel = SCI_LABEL_DEFAULT;
+    eventInfo.mShow = FormatA("触发用户断点 %hs %hs\n", result["addr"].asString().c_str(), strSymbol.c_str());
 
-    MsgSend(CHANNEL_PROC_SERVER, MakeEventRequest(eventInfo).c_str());
+    MsgSend(CHANNEL_PROC_SERVER, MakeEvent(eventInfo).c_str());
     GetInstance()->Wait();
 }
 
@@ -377,17 +377,17 @@ void CProcDbgger::OnCreateProcess(CREATE_PROCESS_DEBUG_INFO* pCreateProcessInfo)
 
     GetInstance()->m_eStatus = em_dbg_status_busy;
 
-    EventDbgInfo eventInfo;
-    eventInfo.mEventType = DBG_EVENT_DBG_PROC_CREATE;
+    EventInfo eventInfo;
+    eventInfo.mEvent = DBG_EVENT_DBG_PROC_CREATE;
     PrintFormater pf;
     pf << "进程启动" << space                     << line_end;
     pf << "进程Pid"  << FormatA("%d", info.mPid) << line_end;
     pf << "映像路径" << info.mImage               << line_end;
     pf << "进程基址" << info.mBaseAddr            << line_end;
     pf << "入口地址" << info.mEntryAddr           << line_end;
-    eventInfo.mEventShow = pf.GetResult();
-    Reader().parse(EncodeProcCreate(info), eventInfo.mEventResult);
-    MsgSend(CHANNEL_PROC_SERVER, MakeEventRequest(eventInfo).c_str());
+    eventInfo.mShow = pf.GetResult();
+    Reader().parse(EncodeProcCreate(info), eventInfo.mContent);
+    MsgSend(CHANNEL_PROC_SERVER, MakeEvent(eventInfo).c_str());
 
     CSymbolTaskHeader task;
     CTaskSymbolInit param;
@@ -422,11 +422,10 @@ void CProcDbgger::OnDetachDbgger()
     task.m_eTaskType = em_task_unloadall;
     GetSymbolHlpr()->SendTask(&task);
 
-    EventDbgInfo eventInfo;
-    eventInfo.mEventType = DBG_EVENT_DETACH;
-    eventInfo.mEventShow = "进程已脱离调试器";
-    mstring package = MakeEventRequest(eventInfo);
-    MsgSend(CHANNEL_PROC_SERVER, MakeEventRequest(eventInfo).c_str());
+    EventInfo eventInfo;
+    eventInfo.mEvent = DBG_EVENT_DETACH;
+    eventInfo.mShow = "进程已脱离调试器";
+    MsgSend(CHANNEL_PROC_SERVER, MakeEvent(eventInfo).c_str());
 
     m_eDbggerStat = em_dbg_status_init;
 }
@@ -465,12 +464,12 @@ void CProcDbgger::OnSystemBreakpoint(void* ExceptionData)
         return;
     }
 
-    EventDbgInfo eventInfo;
-    eventInfo.mEventLabel = SCI_LABEL_DEFAULT;
-    eventInfo.mEventType = DBG_EVENT_SYSTEM_BREAKPOINT;
-    eventInfo.mEventResult["tid"] = (int)dwId;
-    eventInfo.mEventShow = "系统断点触发调试器中断\n";
-    MsgSend(CHANNEL_PROC_SERVER, MakeEventRequest(eventInfo).c_str());
+    EventInfo eventInfo;
+    eventInfo.mLabel = SCI_LABEL_DEFAULT;
+    eventInfo.mEvent = DBG_EVENT_SYSTEM_BREAKPOINT;
+    eventInfo.mContent["tid"] = (int)dwId;
+    eventInfo.mShow = "系统断点触发调试器中断\n";
+    MsgSend(CHANNEL_PROC_SERVER, MakeEvent(eventInfo).c_str());
 
     //脱离调试器
     if (GetInstance()->m_bDetachDbgger)
@@ -502,12 +501,12 @@ bool CProcDbgger::LoadModuleInfo(HANDLE hFile, DWORD64 dwBaseOfModule)
     dllInfo.mBaseAddr = FormatA("0x%08x", loadInfo.m_ModuleInfo.m_dwBaseOfImage);
     dllInfo.mEndAddr = FormatA("0x%08x", loadInfo.m_ModuleInfo.m_dwEndAddr);
 
-    EventDbgInfo eventInfo;
-    eventInfo.mEventType = DBG_EVENT_MODULE_LOAD;
-    eventInfo.mEventLabel = SCI_LABEL_DEFAULT;
-    eventInfo.mEventShow = FormatA("模块加载  %hs  %hs  %hs\n", dllInfo.mBaseAddr.c_str(), dllInfo.mEndAddr.c_str(), dllInfo.mDllName.c_str());
+    EventInfo eventInfo;
+    eventInfo.mEvent = DBG_EVENT_MODULE_LOAD;
+    eventInfo.mLabel = SCI_LABEL_DEFAULT;
+    eventInfo.mShow = FormatA("模块加载  %hs  %hs  %hs\n", dllInfo.mBaseAddr.c_str(), dllInfo.mEndAddr.c_str(), dllInfo.mDllName.c_str());
 
-    MsgSend(CHANNEL_PROC_SERVER, MakeEventRequest(eventInfo).c_str());
+    MsgSend(CHANNEL_PROC_SERVER, MakeEvent(eventInfo).c_str());
     return true;
 }
 
@@ -572,8 +571,8 @@ void CProcDbgger::OnProgramException(EXCEPTION_DEBUG_INFO* ExceptionData) {
             break;
     }
 
-    EventDbgInfo eventInfo;
-    eventInfo.mEventShow = "被调试进程因异常中断\n";
+    EventInfo eventInfo;
+    eventInfo.mShow = "被调试进程因异常中断\n";
     PrintFormater pf;
     pf << "异常类型" << FormatA("0x%08x, %hs", ExceptionData->ExceptionRecord.ExceptionCode, exceptionDesc.c_str()) << line_end;
 
@@ -590,10 +589,10 @@ void CProcDbgger::OnProgramException(EXCEPTION_DEBUG_INFO* ExceptionData) {
     pf << "异常地址" << FormatA("0x%08x %hs", (DWORD)addr, symbol.c_str()) << line_end;
 
     GetInstance()->m_eDbggerStat = em_dbg_status_free;
-    eventInfo.mEventType = DBG_EVENT_EXCEPTION;
-    eventInfo.mEventShow += pf.GetResult();
-    eventInfo.mEventResult["tid"] = (int)((DEBUG_EVENT*)GetDebugData())->dwThreadId;
-    mstring package = MakeEventRequest(eventInfo);
+    eventInfo.mEvent = DBG_EVENT_EXCEPTION;
+    eventInfo.mShow += pf.GetResult();
+    eventInfo.mContent["tid"] = (int)((DEBUG_EVENT*)GetDebugData())->dwThreadId;
+    mstring package = MakeEvent(eventInfo);
     MsgSend(CHANNEL_PROC_SERVER, package.c_str());
     GetInstance()->Wait();
 }
@@ -634,14 +633,14 @@ VOID CProcDbgger::InitEngine()
     SetCustomHandler(UE_CH_DEBUGEVENT, (void*)OnDebugEvent);
 }
 
-bool CProcDbgger::DisassWithSize(DWORD64 dwAddr, DWORD64 dwSize, CmdReplyResult &result) const
+bool CProcDbgger::DisassWithSize(DWORD64 dwAddr, DWORD64 dwSize, CtrlReply &result) const
 {
     CDisasmParser Disasm(GetDbgProc());
     vector<DisasmInfo> vDisasmSet;
     mstring str = GetSymFromAddr((void *)dwAddr);
     str += ":";
 
-    result.mCmdShow = str + "\n";
+    result.mShow = str + "\n";
 
     PrintFormater pf;
     if (Disasm.DisasmWithSize(dwAddr, (DWORD)dwSize, vDisasmSet))
@@ -651,11 +650,11 @@ bool CProcDbgger::DisassWithSize(DWORD64 dwAddr, DWORD64 dwSize, CmdReplyResult 
             pf << it->mAddrStr << it->mByteCode << it->mOpt << it->mContent << line_end;
         }
     }
-    result.mCmdShow += pf.GetResult();
+    result.mShow += pf.GetResult();
     return true;
 }
 
-bool CProcDbgger::DisassWithAddr(DWORD64 dwStartAddr, DWORD64 dwEndAddr, CmdReplyResult &result) const
+bool CProcDbgger::DisassWithAddr(DWORD64 dwStartAddr, DWORD64 dwEndAddr, CtrlReply &result) const
 {
     if (dwEndAddr <= dwStartAddr)
     {
@@ -666,7 +665,7 @@ bool CProcDbgger::DisassWithAddr(DWORD64 dwStartAddr, DWORD64 dwEndAddr, CmdRepl
     CDisasmParser Disasm(GetDbgProc());
     mstring str = GetSymFromAddr((void *)dwStartAddr);
     str += ":";
-    result.mCmdShow = str + "\n";
+    result.mShow = str + "\n";
 
     vector<DisasmInfo> disasmSet;
     PrintFormater pf;
@@ -682,17 +681,17 @@ bool CProcDbgger::DisassWithAddr(DWORD64 dwStartAddr, DWORD64 dwEndAddr, CmdRepl
             pf << it->mAddrStr << it->mByteCode << it->mOpt << it->mContent << line_end;
         }
     }
-    result.mCmdShow += pf.GetResult();
+    result.mShow += pf.GetResult();
     return true;
 }
 
-bool CProcDbgger::DisassUntilRet(DWORD64 dwStartAddr, CmdReplyResult &result) const
+bool CProcDbgger::DisassUntilRet(DWORD64 dwStartAddr, CtrlReply &result) const
 {
     CDisasmParser Disasm(GetDbgProc());
     vector<DisasmInfo> disasmSet;
     mstring str = GetSymFromAddr((void *)dwStartAddr);
     str += ":";
-    result.mCmdShow = str + "\n";
+    result.mShow = str + "\n";
 
     PrintFormater pf;
     if (!Disasm.DisasmUntilReturn(dwStartAddr, disasmSet))
@@ -704,7 +703,7 @@ bool CProcDbgger::DisassUntilRet(DWORD64 dwStartAddr, CmdReplyResult &result) co
     {
         pf << it->mAddrStr << it->mByteCode << it->mOpt << it->mContent << line_end;
     }
-    result.mCmdShow += pf.GetResult();
+    result.mShow += pf.GetResult();
     return true;
 }
 

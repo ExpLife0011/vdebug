@@ -42,28 +42,24 @@ bool DumpDbgProxy::InitDumpDbgProxy(const char *unique) {
 DumpDbgProxy::~DumpDbgProxy() {
 }
 
-std::mstring DumpDbgProxy::OpenDump(const std::mstring &cmdParam, const std::mstring &content, void *param) {
-    Value json;
-    Reader().parse(content, json);
-    mstring path = json["dumpPath"].asString();
+CtrlReply DumpDbgProxy::OpenDump(const CtrlRequest &request, void *param) {
+    mstring path = request.mContent["dumpPath"].asString();
 
     GetInstance()->mDumpHlpr->LodeDump(path);
     list<DumpModuleInfo> moduleSet;
     GetInstance()->mDumpHlpr->GetModuleSet(moduleSet);
 
-    DbgReplyResult result;
-
+    CtrlReply result;
     if (GetInstance()->mDumpHlpr->LodeDump(path))
     {
-        result.mCode = 0;
+        result.mStatus = 0;
     } else {
-        result.mCode = 1;
-        result.mReason = FormatA("调试器打开Dump文件失败，错误码:%d", GetLastError());
+        result.mStatus = 1;
+        result.mShow = FormatA("调试器打开Dump文件失败，错误码:%d", GetLastError());
     }
-    return MakeDbgRelpy(result);
+    return result;
 }
 
-std::mstring DumpDbgProxy::DumpProc(const std::mstring &cmdParam, const std::mstring &content, void *param) {
-    DbgReplyResult result(0, "", "");
-    return MakeDbgRelpy(result);
+CtrlReply DumpDbgProxy::DumpProc(const CtrlRequest &request, void *param) {
+    return CtrlReply();
 }

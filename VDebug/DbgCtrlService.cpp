@@ -34,7 +34,9 @@ DbggerStatus DbgCtrlService::GetDebuggerStat() {
 }
 
 bool DbgCtrlService::BreakDbgProcInCtrlService() const {
-    m_pCtrlService->DispatchCurDbgger(DBG_CTRL_BREAK, "{}");
+    CtrlRequest ctrl;
+    ctrl.mCmd = DBG_CTRL_BREAK;
+    m_pCtrlService->DispatchCurDbgger(ctrl);
     return true;
 }
 
@@ -84,13 +86,19 @@ bool DbgCtrlService::InitCtrlService() {
 
 bool DbgCtrlService::StartProcMon() {
     m_procMon = true;
-    m_pCtrlService->DispatchSpecDbgger(em_dbg_proc86, DBG_CTRL_GET_PROC, "{\"start\":1}");
+    CtrlRequest ctrl;
+    ctrl.mCmd = DBG_CTRL_GET_PROC;
+    ctrl.mContent["start"] = 1;
+    m_pCtrlService->DispatchSpecDbgger(em_dbg_proc86, ctrl);
     return true;
 }
 
 void DbgCtrlService::StopProcMon() {
     m_procMon = false;
-    m_pCtrlService->DispatchSpecDbgger(em_dbg_proc86, DBG_CTRL_GET_PROC, "{\"start\":0}");
+    CtrlRequest ctrl;
+    ctrl.mCmd = DBG_CTRL_GET_PROC;
+    ctrl.mContent["start"] = 0;
+    m_pCtrlService->DispatchSpecDbgger(em_dbg_proc86, ctrl);
     return;
 }
 
@@ -172,42 +180,46 @@ bool DbgCtrlService::ExecProc(const std::mstring &path, const std::mstring &para
     content["path"] = path;
     content["param"] = param;
 
-    m_pCtrlService->DispatchCurDbgger(DBG_CTRL_EXEC, FastWriter().write(content));
+    CtrlRequest ctrl;
+    ctrl.mCmd = DBG_CTRL_EXEC;
+    ctrl.mContent = content;
+    m_pCtrlService->DispatchCurDbgger(ctrl);
     return true;
 }
 
 bool DbgCtrlService::AttachProc(DWORD pid) {
-    Value content;
-    content["pid"] = (int)pid;
-    m_pCtrlService->DispatchCurDbgger(DBG_CTRL_ATTACH, FastWriter().write(content));
+    CtrlRequest ctrl;
+    ctrl.mCmd = DBG_CTRL_ATTACH;
+    ctrl.mContent["pid"] = (int)pid;
+    m_pCtrlService->DispatchCurDbgger(ctrl);
     return true;
 }
 
 bool DbgCtrlService::DetachProc() {
-    m_pCtrlService->DispatchCurDbgger(DBG_CTRL_DETACH, "{}");
+    CtrlRequest ctrl;
+    ctrl.mCmd = DBG_CTRL_DETACH;
+    m_pCtrlService->DispatchCurDbgger(ctrl);
     SetCmdNotify(em_dbg_status_init, "初始状态");
     return true;
 }
 
 bool DbgCtrlService::OpenDump(const std::mstring &path) const {
-    Value json;
-    json["dumpPath"] = path;
-    mstring reply = m_pCtrlService->DispatchCurDbgger(DBG_CTRL_OPEN_DUMP, FastWriter().write(json));
+    CtrlRequest ctrl;
+    ctrl.mCmd = DBG_CTRL_OPEN_DUMP;
+    ctrl.mContent["dumpPath"] = path;
+    CtrlReply d  = m_pCtrlService->DispatchCurDbgger(ctrl);
 
-    DbgReplyResult result;
-    ParserDbgReply(reply, result);
-
-    if (result.mCode == 0)
+    if (d.mStatus == 0)
     {
         AppendToSyntaxView(SCI_LABEL_DEFAULT, "加载dump文件成功");
         return true;
     } else {
-        AppendToSyntaxView(SCI_LABEL_DEFAULT, result.mReason);
+        AppendToSyntaxView(SCI_LABEL_DEFAULT, d.mShow);
         return false;
     }
 }
 
-CmdReplyResult DbgCtrlService::RunCmdInCtrlService(const std::mstring &command) {
+CtrlReply DbgCtrlService::RunCmdInCtrlService(const std::mstring &command) {
     mstring tmp = command;
     tmp.trim();
     tmp.makelower();
@@ -215,73 +227,70 @@ CmdReplyResult DbgCtrlService::RunCmdInCtrlService(const std::mstring &command) 
     if (tmp == "cls")
     {
         GetSyntaxView()->ClearView();
-        return CmdReplyResult();
+        return CtrlReply();
     }
 
-    CmdRequest request;
-    request.mCmdMode = CMD_MASK_SHOW;
-    request.mCmd = command;
-    mstring reply = m_pCtrlService->DispatchCurDbgger(DBG_CTRL_RUNCMD, MakeCmdRequest(request));
-    CmdReplyResult result;
-    ParserCmdReply(reply, result);
-    return result;
+    CtrlRequest request;
+    request.mCmd = DBG_CTRL_RUNCMD;
+    request.mContent["command"] = command;
+    return m_pCtrlService->DispatchCurDbgger(request);
 }
 
-void DbgCtrlService::OnProcCreate(const EventDbgInfo &eventInfo, void *param) {
-    AppendToSyntaxView(SCI_LABEL_DEFAULT, eventInfo.mEventShow);
+void DbgCtrlService::OnProcCreate(const EventInfo &eventInfo, void *param) {
+    AppendToSyntaxView(SCI_LABEL_DEFAULT, eventInfo.mShow);
 }
 
-void DbgCtrlService::OnSystemBreakpoint(const EventDbgInfo &eventInfo, void *param) {
-    AppendToSyntaxView(eventInfo.mEventLabel, eventInfo.mEventShow);
+void DbgCtrlService::OnSystemBreakpoint(const EventInfo &eventInfo, void *param) {
+    AppendToSyntaxView(eventInfo.mLabel, eventInfo.mShow);
 
-    int tid = eventInfo.mEventResult["tid"].asInt();
+    int tid = eventInfo.mContent["tid"].asInt();
     GetInstance()->m_stat = em_dbg_status_free;
     SetCmdNotify(GetInstance()->m_stat, FormatA("线程 %d >>", tid));
 }
 
-void DbgCtrlService::OnUserBreakpoint(const EventDbgInfo &eventInfo, void *param) {
-    AppendToSyntaxView(eventInfo.mEventLabel, eventInfo.mEventShow);
+void DbgCtrlService::OnUserBreakpoint(const EventInfo &eventInfo, void *param) {
+    AppendToSyntaxView(eventInfo.mLabel, eventInfo.mShow);
 
-    int tid = eventInfo.mEventResult["tid"].asInt();
+    int tid = eventInfo.mContent["tid"].asInt();
     GetInstance()->m_stat = em_dbg_status_free;
     SetCmdNotify(GetInstance()->m_stat, FormatA("线程 %d >>", tid));
-    CmdReplyResult result = GetInstance()->RunCmdInCtrlService("r");
-    AppendToSyntaxView(result.mCmdLabel, result.mCmdShow);
+    CtrlReply result = GetInstance()->RunCmdInCtrlService("r");
+    AppendToSyntaxView(result.mLabel, result.mShow);
 }
 
-void DbgCtrlService::OnDbgMessage(const EventDbgInfo &eventInfo, void *param) {
+void DbgCtrlService::OnDbgMessage(const EventInfo &eventInfo, void *param) {
 }
 
-void DbgCtrlService::OnProcExit(const EventDbgInfo &eventInfo, void *param) {
+void DbgCtrlService::OnProcExit(const EventInfo &eventInfo, void *param) {
 }
 
-void DbgCtrlService::OnModuleLoad(const EventDbgInfo &eventInfo, void *param) {
-    AppendToSyntaxView(eventInfo.mEventLabel, eventInfo.mEventShow);
+void DbgCtrlService::OnModuleLoad(const EventInfo &eventInfo, void *param) {
+    AppendToSyntaxView(eventInfo.mLabel, eventInfo.mShow);
 }
 
-void DbgCtrlService::OnModuleUnLoad(const EventDbgInfo &eventInfo, void *param) {
+void DbgCtrlService::OnModuleUnLoad(const EventInfo &eventInfo, void *param) {
 }
 
-void DbgCtrlService::OnDbgProcRunning(const EventDbgInfo &eventInfo, void *param) {
+void DbgCtrlService::OnDbgProcRunning(const EventInfo &eventInfo, void *param) {
     GetInstance()->m_stat = em_dbg_status_busy;
     SetCmdNotify(GetInstance()->m_stat, "运行中");
 }
 
-void DbgCtrlService::OnDetachDbgger(const EventDbgInfo &eventInfo, void *param) {
-    AppendToSyntaxView(eventInfo.mEventLabel, eventInfo.mEventShow);
+void DbgCtrlService::OnDetachDbgger(const EventInfo &eventInfo, void *param) {
+    AppendToSyntaxView(eventInfo.mLabel, eventInfo.mShow);
     GetInstance()->m_stat = em_dbg_status_init;
     SetCmdNotify(GetInstance()->m_stat, "初始状态");
 }
 
-void DbgCtrlService::OnProgramException(const EventDbgInfo &eventInfo, void *param) {
-    AppendToSyntaxView(eventInfo.mEventLabel, eventInfo.mEventShow);
+void DbgCtrlService::OnProgramException(const EventInfo &eventInfo, void *param) {
+    AppendToSyntaxView(eventInfo.mLabel, eventInfo.mShow);
     GetInstance()->m_stat = em_dbg_status_free;
 
-    int tid = eventInfo.mEventResult["tid"].asInt();
+    int tid = eventInfo.mContent["tid"].asInt();
     SetCmdNotify(GetInstance()->m_stat, FormatA("线程 %d >>", tid));
 }
 
-void DbgCtrlService::OnProcChanged(const EventDbgInfo &eventInfo, void *param) {
+void DbgCtrlService::OnProcChanged(const EventInfo &eventInfo, void *param) {
     CProcSelectView *pProcView = GetProcView();
     if (!pProcView)
     {
@@ -293,6 +302,6 @@ void DbgCtrlService::OnProcChanged(const EventDbgInfo &eventInfo, void *param) {
         return;
     }
 
-    ProcInfoSet info = DecodeProcMon(FastWriter().write(eventInfo.mEventResult));
+    ProcInfoSet info = DecodeProcMon(FastWriter().write(eventInfo.mContent));
     pProcView->OnProcChanged(info);
 }

@@ -55,7 +55,7 @@ class CCmdBase
 public:
     CCmdBase();
     virtual ~CCmdBase();
-    CmdReplyResult RunCommand(const CmdRequest &request, const CmdUserParam *pParam = NULL);
+    CtrlReply RunCommand(const mstring &request, const CmdUserParam *pParam = NULL);
     BOOL InsertFunMsg(const mstring &strIndex, const DbgFunInfo &vProcInfo);
     //eg: kernel32!createfilew+0x1234
     DWORD64 GetFunAddr(const mstring &wstr);
@@ -75,6 +75,6 @@ protected:
     DWORD64 GetSizeAndParam(const mstring &strParam, mstring &strOut) const;
 
 protected:
-    virtual CmdReplyResult OnCommand(const mstring &strCmd, const mstring &strCmdParam, DWORD mode, const CmdUserParam *pParam);
+    virtual CtrlReply OnCommand(const mstring &strCmd, const mstring &strCmdParam, const CmdUserParam *pParam);
 };
 #endif

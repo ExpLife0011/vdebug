@@ -22,15 +22,23 @@ class DbgService : public DbgServiceBase, CCriticalSectionLockable {
 public:
     DbgService();
     virtual ~DbgService();
-    virtual bool InitDbgService(const char *unique);
-    virtual std::mstring DispatchCurDbgger(const std::mstring &cmd, const std::mstring &content);
-    virtual std::mstring DispatchSpecDbgger(DbggerType type, const std::mstring &cmd, const std::mstring &content);
-    virtual HDbgCtrl RegisterDbgEvent(const char *event, pfnDbgEventProc pfn, void *param);
+    virtual bool InitDbgService(const mstring &unique);
+    virtual CtrlReply DispatchCurDbgger(const CtrlRequest &request);
+    virtual CtrlReply DispatchSpecDbgger(DbggerType type, const CtrlRequest &request);
+    virtual HDbgCtrl RegisterDbgEvent(const std::mstring &dbgEvent, pfnDbgEventProc pfn, void *param);
     virtual bool SetActivity(DbggerType type);
+    /*
+    virtual ~DbgServiceBase() {};
+    virtual bool InitDbgService(const std::mstring &unique) = 0;
+    virtual std::mstring DispatchCurDbgger(const CtrlRequest &request) = 0;
+    virtual std::mstring DispatchSpecDbgger(DbggerType type, CtrlRequest &request) = 0;
+    virtual HDbgCtrl RegisterDbgEvent(const std::mstring &dbgEvent, pfnDbgEventProc pfn, void *param) = 0;
+    virtual bool SetActivity(DbggerType type) = 0;
+    */
 
 private:
     std::mstring GetSpecChannel(DbggerType type) const;
-    bool DispatchEventToRegister(const mstring &eventType, const EventDbgInfo &info) const;
+    bool DispatchEventToRegister(const EventInfo &info) const;
     static LPCSTR WINAPI ServerNotify(LPCSTR wszChannel, LPCSTR wszContent, void *pParam);
 
 private:
@@ -56,38 +64,15 @@ LPCSTR DbgService::ServerNotify(LPCSTR szChannel, LPCSTR szContent, void *pParam
     {
         if (0 == lstrcmpA(szChannel, CHANNEL_PROC_SERVER))
         {
-            Value root;
-            Reader().parse(szContent, root);
+            Value json;
+            Reader().parse(szContent, json);
 
-            if (root.type() != objectValue)
+            mstring type = json["type"].asString();
+
+            if (type == "event")
             {
-                break;
-            }
-
-            mstring cmd = GetStrFormJson(root, "cmd");
-            Value content = root["content"];
-
-            if (cmd == DBG_DBG_EVENT)
-            {
-                /*
-                {
-                    "cmd":"event",
-                    "content":{
-                        "eventType":"moduleload",
-                        "mode":1,                                           //1:展示信息，2:结果信息
-                        "eventLabel":"Default",                             //展示标签
-                        "eventShow":"0xffaabbcc 0x11223344 kernel32.dll",   //展示内容
-                        "eventResult": {
-                            "name":"kernel32.dll",
-                            "baseAddr":"0x4344353",
-                            "endAddr":"0x43443ff"
-                        }
-                }
-                */
-                EventDbgInfo eventInfo;
-                ParserEventRequest(FastWriter().write(content), eventInfo);
-                mstring eventType = GetStrFormJson(content, "eventType");
-                pThis->DispatchEventToRegister(eventType, eventInfo);
+                EventInfo eventInfo = ParserEvent(szContent);
+                pThis->DispatchEventToRegister(eventInfo);
             }
         } else {
         }
@@ -95,24 +80,8 @@ LPCSTR DbgService::ServerNotify(LPCSTR szChannel, LPCSTR szContent, void *pParam
     return MsgStrCopy(result.c_str());
 }
 
-/*
-{
-    "cmd":"event",
-    "content":{
-        "eventType":"proccreate",
-        "mode":1,                            //1:展示信息，2:结果信息
-        "eventLabel":"procCreate",           //展示标签
-        "eventShow":"abcd1234",              //展示内容
-        "eventResult": {
-            "pid":1234,
-            "image":"d:\\desktop\\1234.exe",
-            "baseAddr":"0x4344353",
-            "entryAddr":"0x4344389"
-        }
-}
-*/
-bool DbgService::DispatchEventToRegister(const mstring &eventType, const EventDbgInfo &eventInfo) const {
-    map<string, list<DbgServiceCache *>>::const_iterator it = m_RegisterSet.find(eventType);
+bool DbgService::DispatchEventToRegister(const EventInfo &eventInfo) const {
+    map<string, list<DbgServiceCache *>>::const_iterator it = m_RegisterSet.find(eventInfo.mEvent);
 
     if (it == m_RegisterSet.end())
     {
@@ -127,7 +96,7 @@ bool DbgService::DispatchEventToRegister(const mstring &eventType, const EventDb
     return true;
 }
 
-bool DbgService::InitDbgService(const char *unique) {
+bool DbgService::InitDbgService(const mstring &unique) {
     m_unique = unique;
     m_port = CalPortFormUnique(unique);
 
@@ -137,21 +106,17 @@ bool DbgService::InitDbgService(const char *unique) {
     return true;
 }
 
-mstring DbgService::DispatchCurDbgger(const mstring &cmd, const mstring &content) {
-    return DispatchSpecDbgger(m_DbgClient, cmd, content);
+CtrlReply DbgService::DispatchCurDbgger(const CtrlRequest &request) {
+    return DispatchSpecDbgger(m_DbgClient, request);
 }
 
-mstring DbgService::DispatchSpecDbgger(DbggerType type, const mstring &cmd, const mstring &content) {
+CtrlReply DbgService::DispatchSpecDbgger(DbggerType type, const CtrlRequest &request) {
     mstring channel = GetSpecChannel(type);
 
-    Value root;
-    root["cmd"] = cmd;
-    root["content"] = content;
-
-    LPCSTR sz = MsgSendForResult(channel.c_str(), FastWriter().write(root).c_str());
+    LPCSTR sz = MsgSendForResult(channel.c_str(), MakeRequest(request).c_str());
     mstring result = sz;
     MsgStrFree(sz);
-    return result;
+    return ParserReply(result);
 }
 
 mstring DbgService::GetSpecChannel(DbggerType type) const {
@@ -179,14 +144,14 @@ bool DbgService::SetActivity(DbggerType type) {
     return true;
 }
 
-HDbgCtrl DbgService::RegisterDbgEvent(const char *event, pfnDbgEventProc pfn, void *param) {
+HDbgCtrl DbgService::RegisterDbgEvent(const mstring &eventName, pfnDbgEventProc pfn, void *param) {
     CScopedLocker lock(this);
     DbgServiceCache *cache = new DbgServiceCache();
     cache->m_idex = m_curIndex++;
-    cache->m_event = event;
+    cache->m_event = eventName;
     cache->m_param = param;
     cache->m_proc = pfn;
-    m_RegisterSet[event].push_back(cache);
+    m_RegisterSet[eventName].push_back(cache);
     return cache->m_idex;
 }
 
