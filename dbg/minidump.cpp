@@ -158,7 +158,7 @@ bool CMiniDumpHlpr::LodeDump(const mstring &strFilePath)
     return (m_pDumpFile && m_pDumpFile->lpView);
 }
 
-bool CMiniDumpHlpr::GetModuleSet(list<DumpModuleInfo> &vModules)
+bool CMiniDumpHlpr::GetModuleSet(list<DumpModuleInfo> &modulesSet)
 {
     DWORD dwStreamSize = 0;
     LPVOID pStream = GetSpecStream(ModuleListStream, dwStreamSize);
@@ -169,9 +169,9 @@ bool CMiniDumpHlpr::GetModuleSet(list<DumpModuleInfo> &vModules)
     }
 
     PMINIDUMP_MODULE_LIST pModuleList = (PMINIDUMP_MODULE_LIST)pStream;
-    DumpModuleInfo info;
     for (int i = 0 ; i < (int)pModuleList->NumberOfModules ; i++)
     {
+        DumpModuleInfo info;
         PMINIDUMP_MODULE pModule = pModuleList->Modules + i;
         info.m_dwBaseAddr = pModule->BaseOfImage;
         info.m_dwModuleSize = pModule->SizeOfImage;
@@ -196,6 +196,7 @@ bool CMiniDumpHlpr::GetModuleSet(list<DumpModuleInfo> &vModules)
         {
             info.m_strModulePath = task.m_strFullPath;
         }
+        modulesSet.push_back(info);
     }
     return true;
 }

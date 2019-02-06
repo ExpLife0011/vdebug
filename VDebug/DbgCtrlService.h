@@ -19,6 +19,8 @@ public:
     bool ExecProc(const std::mstring &path, const std::mstring &param);
     bool AttachProc(DWORD pid);
     bool DetachProc();
+
+    bool OpenDump(const std::mstring &path) const;
     CmdReplyResult RunCmdInCtrlService(const std::mstring &cmd);
 
     //proc monitor

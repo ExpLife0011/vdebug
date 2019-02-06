@@ -158,10 +158,6 @@ void DbgCtrlService::RunProcInUser(LPCSTR image, LPCSTR cmd, DWORD session) {
     return;
 }
 
-void DbgCtrlService::SetCtrlStatus(DbggerStatus stat) {
-    SetCmdNotify(stat, "abcdef");
-}
-
 /*
 {
     "cmd":"exec",
@@ -191,6 +187,24 @@ bool DbgCtrlService::DetachProc() {
     m_pCtrlService->DispatchCurDbgger(DBG_CTRL_DETACH, "{}");
     SetCmdNotify(em_dbg_status_init, "初始状态");
     return true;
+}
+
+bool DbgCtrlService::OpenDump(const std::mstring &path) const {
+    Value json;
+    json["dumpPath"] = path;
+    mstring reply = m_pCtrlService->DispatchCurDbgger(DBG_CTRL_OPEN_DUMP, FastWriter().write(json));
+
+    DbgReplyResult result;
+    ParserDbgReply(reply, result);
+
+    if (result.mCode == 0)
+    {
+        AppendToSyntaxView(SCI_LABEL_DEFAULT, "加载dump文件成功");
+        return true;
+    } else {
+        AppendToSyntaxView(SCI_LABEL_DEFAULT, result.mReason);
+        return false;
+    }
 }
 
 CmdReplyResult DbgCtrlService::RunCmdInCtrlService(const std::mstring &command) {

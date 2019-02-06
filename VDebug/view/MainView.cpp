@@ -411,6 +411,13 @@ static VOID _OnCommand(HWND hwnd, WPARAM wp, LPARAM lp)
         break;
     case IDC_CMD_OPEN_DUMP: 
         {
+            mstring dump = _OpenDumpFile();
+
+            if (!dump.empty())
+            {
+                DbgCtrlService::GetInstance()->SetDebugger(em_dbg_dump86);
+                DbgCtrlService::GetInstance()->OpenDump(dump);
+            }
         }
         break;
     default:

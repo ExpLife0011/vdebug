@@ -45,7 +45,7 @@ DumpDbgProxy::~DumpDbgProxy() {
 std::mstring DumpDbgProxy::OpenDump(const std::mstring &cmdParam, const std::mstring &content, void *param) {
     Value json;
     Reader().parse(content, json);
-    mstring path = json["path"].asString();
+    mstring path = json["dumpPath"].asString();
 
     GetInstance()->mDumpHlpr->LodeDump(path);
     list<DumpModuleInfo> moduleSet;

@@ -86,7 +86,7 @@
     "cmd": "reply",
     "content": {
         "status": 0,
-        "reason": "abcdef"
+        "reason": "abcdef",
     }
 }
 */
