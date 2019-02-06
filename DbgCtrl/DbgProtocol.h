@@ -115,9 +115,6 @@
 #define DBG_EVENT_DBG_PROC_CREATE        "proccreate"
 #define DBG_EVENT_DBG_PROC_END           "procend"
 
-#define DBG_EVENT_DBG_PROC_CREATEA       "proccreate"
-#define DBG_EVENT_DBG_PROC_ENDA          "procend"
-
 /*
 {
     "cmd":"event",
@@ -151,10 +148,21 @@
 #define DBG_EVENT_MODULE_UNLOAD      "moduelunload"
 #define DBG_EVENT_MODULE_LOADA       "moduleload"
 #define DBG_EVENT_MODULE_UNLOADA     "moduelunload"
-
-//{}
 #define DBG_EVENT_DETACH             "eventDetach"
 
+/*
+{
+    "cmd":"event",
+    "content":{
+        "eventType":"exception",
+        "mode":1,                                           //1:展示信息，2:结果信息
+        "eventLabel":"Default",                             //展示标签
+        "eventShow":"调试器首次捕获到该异常信息",              //展示内容
+        "eventResult": {
+        }
+}
+*/
+#define DBG_EVENT_EXCEPTION          "exception"
 
 /*
 {

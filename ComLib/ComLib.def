@@ -36,6 +36,9 @@ RegGetDWORDFromRegW
 RegSetDWORDValueA
 RegSetDWORDValueW
 RegSetStrValueW
+RegEnumValuesA
+RegEnumValuesW
+
 CreateLowsdEvent
 RunInSession
 

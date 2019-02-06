@@ -227,6 +227,12 @@ bool CSymbolHlpr::GetSymbolFromAddr(CTaskSymbolFromAddr *pSymbolInfo)
         return false;
     }
 
+    DWORD lineOffset = 0;
+    IMAGEHLP_LINE64 lineInfo = {sizeof(lineInfo)};
+    SymGetLineFromAddr64(GetSymbolHlpr()->m_hDbgProc, pSymbolInfo->m_dwAddr, &lineOffset, &lineInfo);
+    pSymbolInfo->m_filePath = lineInfo.FileName;
+    pSymbolInfo->m_lineNumber = lineInfo.LineNumber;
+
     if (dwOffset)
     {
         pSymbolInfo->m_strSymbol = FormatA("%hs+0x%x", pSymbol->Name, dwOffset);

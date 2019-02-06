@@ -1679,3 +1679,74 @@ std::ustring __stdcall GetWindowStrW(HWND hwnd) {
 std::mstring __stdcall GetWindowStrA(HWND hwnd) {
     return WtoA(GetWindowStrW(hwnd));
 }
+
+typedef struct _REG_VALUE_HANDLER_DECORATOR
+{
+    pfnRegValueHandlerA handler;
+    void* lpParam;
+} REG_VALUE_HANDLER_DECORATOR, *PREG_VALUE_HANDLER_DECORATOR;
+
+static BOOL WINAPI _GdRegValueEnumTransfer(LPCWSTR wszValue, void* lpParam)
+{
+    PREG_VALUE_HANDLER_DECORATOR pRVHD = (PREG_VALUE_HANDLER_DECORATOR)lpParam;
+
+    return pRVHD->handler(WtoA(wszValue).c_str(), pRVHD->lpParam);
+}
+
+BOOL WINAPI RegEnumValuesA(HKEY hKey, LPCSTR szSubKey, pfnRegValueHandlerA handler, void* lpParam)
+{
+    if (!szSubKey || !handler)
+    {
+        return FALSE;
+    }
+
+    REG_VALUE_HANDLER_DECORATOR rvhd = {handler, lpParam};
+
+    return RegEnumValuesW(hKey, AtoW(szSubKey).c_str(), _GdRegValueEnumTransfer, (void*)&rvhd);
+}
+
+BOOL WINAPI RegEnumValuesW(HKEY hKey, LPCWSTR wszSubKey, pfnRegValueHandlerW handler, void* lpParam)
+{
+    HKEY hTarKey = 0;
+    BOOL bRet = FALSE;
+
+    do
+    {
+        if (ERROR_SUCCESS != RegOpenKeyExW(hKey, wszSubKey, 0, KEY_READ | KEY_QUERY_VALUE, &hTarKey))
+        {
+            break;
+        }
+
+        WCHAR wszValueName[MAX_PATH] = {0};
+        DWORD dwValueNameSize = RTL_NUMBER_OF(wszValueName);
+        DWORD dwIndex = 0;
+
+        while (ERROR_SUCCESS == RegEnumValueW(
+            hTarKey,
+            dwIndex,
+            wszValueName,
+            &dwValueNameSize,
+            NULL,
+            NULL,
+            NULL,
+            NULL
+            ))
+        {
+            dwIndex++;
+            bRet = TRUE;
+            if (!handler(wszValueName, lpParam))
+            {
+                break;
+            }
+            RtlZeroMemory(wszValueName, sizeof(WCHAR) * RTL_NUMBER_OF(wszValueName));
+            dwValueNameSize = RTL_NUMBER_OF(wszValueName);
+        }
+    } while (FALSE);
+
+    if (hTarKey)
+    {
+        RegCloseKey(hTarKey);
+    }
+
+    return bRet;
+}

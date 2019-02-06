@@ -38,6 +38,8 @@ private:
     static void WINAPI OnModuleLoad(const EventDbgInfo &eventInfo, void *param);
     static void WINAPI OnModuleUnLoad(const EventDbgInfo &eventInfo, void *param);
     static void WINAPI OnDbgProcRunning(const EventDbgInfo &eventInfo, void *param);
+    static void WINAPI OnDetachDbgger(const EventDbgInfo &eventInfo, void *param);
+    static void WINAPI OnProgramException(const EventDbgInfo &eventInfo, void *param);
 
     //Proc changed
     static void WINAPI OnProcChanged(const EventDbgInfo &eventInfo, void *param);

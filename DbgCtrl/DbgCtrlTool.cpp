@@ -59,5 +59,42 @@ unsigned short CalPortFormUnique(const string &unique) {
 
     port = _GetMinUnUsedPort();
     RegSetDWORDValueA(HKEY_LOCAL_MACHINE, REG_VDEBUG_CACHE, unique.c_str(), port);
+
+    //清理同样是该端口的缓存
+    class DbgPortCache {
+    public:
+        static BOOL __stdcall RegValueHandlerA(LPCSTR valueName, void *pParam) {
+            DbgPortCache *pThis = (DbgPortCache *)pParam;
+            if (pThis->mUnique == valueName)
+            {
+                return TRUE;
+            }
+
+            if (RegGetDWORDFromRegA(HKEY_LOCAL_MACHINE, REG_VDEBUG_CACHE, valueName, 0) == pThis->mPort)
+            {
+                pThis->mDelSet.push_back(valueName);
+            }
+            
+            return TRUE;
+        }
+
+        void ClearCache(const mstring &unique, int port) {
+            mUnique = unique;
+            mPort = port;
+            RegEnumValuesA(HKEY_LOCAL_MACHINE, REG_VDEBUG_CACHE, RegValueHandlerA, this);
+
+            for (list<mstring>::const_iterator it = mDelSet.begin() ; it != mDelSet.end() ; it++)
+            {
+                SHDeleteValueA(HKEY_LOCAL_MACHINE, REG_VDEBUG_CACHE, it->c_str());
+            }
+            
+        }
+
+        list<mstring> mDelSet;
+        mstring mUnique;
+        int mPort;
+    };
+    DbgPortCache abc;
+    abc.ClearCache(unique, port);
     return (unsigned short)port;
 }

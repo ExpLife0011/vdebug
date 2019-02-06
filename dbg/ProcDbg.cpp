@@ -333,7 +333,13 @@ mstring CProcDbgger::GetSymFromAddr(void *dwAddr) const
     {
         str.erase(pos, str.size() - pos);
     }
-    return FormatA("%hs!%hs", str.c_str(), task.m_strSymbol.c_str());
+
+    mstring symbol = FormatA("%hs!%hs", str.c_str(), task.m_strSymbol.c_str());
+    if (!task.m_filePath.empty())
+    {
+        symbol += FormatA("  %hs %d", task.m_filePath.c_str(), task.m_lineNumber);
+    }
+    return symbol;
 }
 
 DWORD CProcDbgger::GetCurDbgProcId() const
@@ -415,19 +421,18 @@ void CProcDbgger::OnDetachDbgger()
     task.m_dwSize = sizeof(CSymbolTaskHeader);
     task.m_eTaskType = em_task_unloadall;
     GetSymbolHlpr()->SendTask(&task);
-    //SetCmdNotify(em_dbg_status_init, L"初始状态");
 
-    //CSyntaxDescHlpr hlpr;
-    //hlpr.FormatDesc(L"已脱离调试器", COLOUR_MSG);
-    //GetSyntaxView()->AppendSyntaxDesc(hlpr.GetResult());
+    EventDbgInfo eventInfo;
+    eventInfo.mEventType = DBG_EVENT_DETACH;
+    eventInfo.mEventShow = "进程已脱离调试器";
+    mstring package = MakeEventRequest(eventInfo);
+    MsgSend(MQ_CHANNEL_DBG_SERVER, MakeEventRequest(eventInfo).c_str());
+
     m_eDbggerStat = em_dbg_status_init;
 }
 
 void CProcDbgger::OnExitProcess(EXIT_PROCESS_DEBUG_INFO* ExitProcess)
 {
-    ////CSyntaxDescHlpr hlpr;
-    //hlpr.FormatDesc(FormatW(L"调试进程退出,返回码:%08x", ExitProcess->dwExitCode), COLOUR_MSG);
-    //GetSyntaxView()->AppendSyntaxDesc(hlpr.GetResult());
     GetInstance()->OnDetachDbgger();
 }
 
@@ -527,6 +532,72 @@ void CProcDbgger::OnUnloadDll(UNLOAD_DLL_DEBUG_INFO* UnloadDll)
 void CProcDbgger::OnOutputDebugString(OUTPUT_DEBUG_STRING_INFO* DebugString)
 {}
 
+void CProcDbgger::OnProgramException(EXCEPTION_DEBUG_INFO* ExceptionData) {
+    mstring exceptionDesc;
+    switch (ExceptionData->ExceptionRecord.ExceptionCode) {
+        case  EXCEPTION_ACCESS_VIOLATION:
+            exceptionDesc = "非法地址访问异常";
+            break;
+        case EXCEPTION_ARRAY_BOUNDS_EXCEEDED:
+            exceptionDesc = "数组访问越界异常";
+        case EXCEPTION_BREAKPOINT:
+            exceptionDesc = "用户断点Int3异常";
+            break;
+        case EXCEPTION_DATATYPE_MISALIGNMENT:
+            exceptionDesc = "数据对其异常";
+            break;
+        case EXCEPTION_FLT_DENORMAL_OPERAND:
+            exceptionDesc = "浮点运算异常(非法线值太小，无法表示为标准浮点值)";
+            break;
+        case EXCEPTION_FLT_DIVIDE_BY_ZERO:
+            exceptionDesc = "线程试图用一个0的浮点除数除以一个浮点值";
+            break;
+        case EXCEPTION_INT_DIVIDE_BY_ZERO:
+            exceptionDesc = "除零异常";
+            break;
+        case EXCEPTION_INT_OVERFLOW:
+            exceptionDesc = "整型溢出";
+            break;
+        case EXCEPTION_NONCONTINUABLE_EXCEPTION:
+            exceptionDesc = "致命错误继续执行异常";
+            break;
+        case EXCEPTION_SINGLE_STEP:
+            exceptionDesc = "单步执行异常";
+            break;
+        case EXCEPTION_STACK_OVERFLOW:
+            exceptionDesc = "栈溢出异常";
+            break;
+        default:
+            exceptionDesc = "其他异常";
+            break;
+    }
+
+    EventDbgInfo eventInfo;
+    eventInfo.mEventShow = "被调试进程因异常中断\n";
+    PrintFormater pf;
+    pf << "异常类型" << FormatA("0x%08x, %hs", ExceptionData->ExceptionRecord.ExceptionCode, exceptionDesc.c_str()) << line_end;
+
+    if (ExceptionData->ExceptionRecord.ExceptionFlags == 0)
+    {
+        pf << "异常标识" << "可继续执行" << line_end;
+    } else {
+        pf << "异常标识" << "不能继续执行" << line_end;
+    }
+    pf << "关联异常" << FormatA("0x%08x", ExceptionData->ExceptionRecord.ExceptionRecord) << line_end;
+
+    void *addr = ExceptionData->ExceptionRecord.ExceptionAddress;
+    mstring symbol = GetInstance()->GetSymFromAddr(addr);
+    pf << "异常地址" << FormatA("0x%08x %hs", (DWORD)addr, symbol.c_str()) << line_end;
+
+    GetInstance()->m_eDbggerStat = em_dbg_status_free;
+    eventInfo.mEventType = DBG_EVENT_EXCEPTION;
+    eventInfo.mEventShow += pf.GetResult();
+    eventInfo.mEventResult["tid"] = (int)((DEBUG_EVENT*)GetDebugData())->dwThreadId;
+    mstring package = MakeEventRequest(eventInfo);
+    MsgSend(MQ_CHANNEL_DBG_SERVER, package.c_str());
+    GetInstance()->Wait();
+}
+
 void CProcDbgger::OnException(EXCEPTION_DEBUG_INFO* ExceptionData)
 {
     if (EXCEPTION_BREAKPOINT == ExceptionData->ExceptionRecord.ExceptionCode)
@@ -538,6 +609,9 @@ void CProcDbgger::OnException(EXCEPTION_DEBUG_INFO* ExceptionData)
         } else {
             OnSystemBreakpoint(NULL);
         }
+    } else {
+        //异常信息
+        OnProgramException(ExceptionData);
     }
 }
 

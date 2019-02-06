@@ -77,6 +77,8 @@ bool DbgCtrlService::InitCtrlService() {
     m_pCtrlService->RegisterDbgEvent(DBG_EVENT_MODULE_UNLOAD, OnModuleUnLoad, this);
     m_pCtrlService->RegisterDbgEvent(DBG_EVENT_PROC_CHANGED, OnProcChanged, this);
     m_pCtrlService->RegisterDbgEvent(DBG_EVENT_DBG_PROC_RUNNING, OnDbgProcRunning, this);
+    m_pCtrlService->RegisterDbgEvent(DBG_EVENT_DETACH, OnDetachDbgger, this);
+    m_pCtrlService->RegisterDbgEvent(DBG_EVENT_EXCEPTION, OnProgramException, this);
     return true;
 }
 
@@ -249,6 +251,20 @@ void DbgCtrlService::OnModuleUnLoad(const EventDbgInfo &eventInfo, void *param) 
 void DbgCtrlService::OnDbgProcRunning(const EventDbgInfo &eventInfo, void *param) {
     GetInstance()->m_stat = em_dbg_status_busy;
     SetCmdNotify(GetInstance()->m_stat, "运行中");
+}
+
+void DbgCtrlService::OnDetachDbgger(const EventDbgInfo &eventInfo, void *param) {
+    AppendToSyntaxView(eventInfo.mEventLabel, eventInfo.mEventShow);
+    GetInstance()->m_stat = em_dbg_status_init;
+    SetCmdNotify(GetInstance()->m_stat, "初始状态");
+}
+
+void DbgCtrlService::OnProgramException(const EventDbgInfo &eventInfo, void *param) {
+    AppendToSyntaxView(eventInfo.mEventLabel, eventInfo.mEventShow);
+    GetInstance()->m_stat = em_dbg_status_free;
+
+    int tid = eventInfo.mEventResult["tid"].asInt();
+    SetCmdNotify(GetInstance()->m_stat, FormatA("线程 %d >>", tid));
 }
 
 void DbgCtrlService::OnProcChanged(const EventDbgInfo &eventInfo, void *param) {

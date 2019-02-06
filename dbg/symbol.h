@@ -65,7 +65,15 @@ struct CTaskSymbolFromAddr
 {
     DbgModuleInfo m_ModuleInfo; //IN
     DWORD64 m_dwAddr;           //IN
-    mstring m_strSymbol;       //OUT
+    mstring m_strSymbol;        //OUT
+
+    mstring m_filePath;         //source path
+    DWORD m_lineNumber;         //source line
+
+    CTaskSymbolFromAddr() {
+        m_dwAddr = 0;
+        m_lineNumber = 0;
+    }
 };
 
 struct CTaskSetSymbolPath

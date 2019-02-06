@@ -76,6 +76,11 @@ BOOL __stdcall RegSetDWORDValueA(HKEY hKey, LPCSTR szSubKey, LPCSTR szValue, DWO
 BOOL __stdcall RegSetDWORDValueW(HKEY hKey, LPCWSTR wszSubKey, LPCWSTR wszValue, DWORD dwData);
 BOOL __stdcall RegSetStrValueW(HKEY hKey, LPCWSTR wszSubKey, LPCWSTR wszValue, LPCWSTR wszData);
 
+typedef BOOL (__stdcall* pfnRegValueHandlerA)(LPCSTR, void*);
+typedef BOOL (__stdcall* pfnRegValueHandlerW)(LPCWSTR, void*);
+BOOL __stdcall RegEnumValuesA(HKEY hKey, LPCSTR szSubKey, pfnRegValueHandlerA handler, void* lpParam);
+BOOL __stdcall RegEnumValuesW(HKEY hKey, LPCWSTR wszSubKey, pfnRegValueHandlerW handler, void* lpParam);
+
 class HandleAutoClose {
 public:
     inline HandleAutoClose(HANDLE h) {

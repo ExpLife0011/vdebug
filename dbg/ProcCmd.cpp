@@ -760,7 +760,7 @@ CmdReplyResult CProcCmd::OnCmdKv(const mstring &cmdParam, DWORD mode, const CmdU
     CallStackData callSet;
     CallStackSingle single;
     PrintFormater pf;
-    pf << "内存地址" << "返回地址" << "参数列表" << space << space << space <<"符号名称" << line_end;
+    pf << "内存地址" << "返回地址" << "参数列表" << space << space << space << "符号名称" << line_end;
     for (list<STACKFRAME64>::const_iterator it = vStack.begin() ; it != vStack.end() ; it++)
     {
         single.mAddr = FormatA("%08x", it->AddrPC.Offset);

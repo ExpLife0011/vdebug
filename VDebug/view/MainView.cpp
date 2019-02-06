@@ -278,7 +278,7 @@ static void _InitSyntaxView() {
 
     gs_pSyntaxView->SendMsg(SCI_STYLESETSIZE, STYLE_DEFAULT, 10);
     gs_pSyntaxView->ShowVsScrollBar(true);
-    gs_pSyntaxView->ShowHsScrollBar(false);
+    gs_pSyntaxView->ShowHsScrollBar(true);
 }
 
 static HHOOK gs_pfnKeyboardHook = NULL;
@@ -589,4 +589,8 @@ VOID SetMainviewTitle(const ustring &wstrTitle)
 VOID ShowMainView()
 {
     DialogBoxW(NULL, MAKEINTRESOURCEW(IDD_MAINVIEW), NULL, _MainViewProc);
+}
+
+VOID SetInputStat() {
+    SetFocus(gs_hCommand);
 }

@@ -10,4 +10,5 @@ void AppendToSyntaxView(const std::mstring &label, const std::mstring &data);
 CProcSelectView *GetProcView();
 SyntaxView *GetSyntaxView();
 VOID SetCmdNotify(DbggerStatus status, const mstring &strShowMsg);
+VOID SetInputStat();
 #endif

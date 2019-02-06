@@ -129,6 +129,7 @@ protected:
     static void __cdecl OnUnloadDll(UNLOAD_DLL_DEBUG_INFO* UnloadDll);
     static void __cdecl OnOutputDebugString(OUTPUT_DEBUG_STRING_INFO* DebugString);
     static void __cdecl OnException(EXCEPTION_DEBUG_INFO* ExceptionData);
+    static void __cdecl OnProgramException(EXCEPTION_DEBUG_INFO* ExceptionData);
     static void __cdecl OnDebugEvent(DEBUG_EVENT* DebugEvent);
     static void __cdecl CustomBreakPoint();
 
