@@ -2,17 +2,21 @@
 #include <DbgHelp.h>
 #include "symbol.h"
 #include <ComLib/ComLib.h>
-//#include "view/MainView.h"
 #include <ComLib/ComLib.h>
 
-CSymbolHlpr::CSymbolHlpr(const mstring &wstrSymbolPath)
+CSymbolHlpr *CSymbolHlpr::GetInst() {
+    static CSymbolHlpr *s_ptr = NULL;
+
+    if (!s_ptr)
+    {
+        s_ptr = new CSymbolHlpr();
+    }
+    return s_ptr;
+}
+
+CSymbolHlpr::CSymbolHlpr()
 {
-    m_hNotifyEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
-    m_hInitEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
-    m_hDbgProc = NULL;
-    m_strSymbolPath = wstrSymbolPath;
-    CloseHandle(CreateThread(NULL, 0, WorkThread, this, 0, 0));
-    WaitForSingleObject(m_hInitEvent, INFINITE);
+    mInit = false;
 }
 
 bool CSymbolHlpr::SetSymbolPath(const mstring &wstrSymbolPath)
@@ -24,6 +28,27 @@ bool CSymbolHlpr::SetSymbolPath(const mstring &wstrSymbolPath)
     task.m_pParam = NULL;
     SendTask(&task);
     return true;
+}
+
+bool CSymbolHlpr::InitSymbol(const std::mstring &strSymbolPath, HANDLE hProc) {
+    if (mInit)
+    {
+        return true;
+    }
+    
+    m_hNotifyEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
+    m_hInitEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
+    m_hDbgProc = NULL;
+    m_strSymbolPath = strSymbolPath;
+
+    SymSetOptions(SymGetOptions() | SYMOPT_CASE_INSENSITIVE | SYMOPT_LOAD_LINES | SYMOPT_FAIL_CRITICAL_ERRORS);
+    SymInitializeW(hProc, NULL, FALSE);
+    GetInst()->m_hDbgProc = hProc;
+
+    CloseHandle(CreateThread(NULL, 0, WorkThread, this, 0, 0));
+    WaitForSingleObject(m_hInitEvent, INFINITE);
+    mInit = true;
+    return mInit;
 }
 
 CSymbolHlpr:: ~CSymbolHlpr()
@@ -67,12 +92,20 @@ bool CSymbolHlpr::PostTask(CSymbolTaskHeader *pTask, BOOL bAtOnce)
     return true;
 }
 
-bool CSymbolHlpr::IsSymbolLoaded(const mstring &strDll, DWORD64 dwBaseOfModule)
+bool CSymbolHlpr::UnloadAll() {
+    CSymbolTaskHeader task;
+    task.m_dwSize = sizeof(CSymbolTaskHeader);
+    task.m_eTaskType = em_task_unloadall;
+    CSymbolHlpr::GetInst()->SendTask(&task);
+    return true;
+}
+
+bool CSymbolHlpr::IsSymbolLoaded(DWORD64 addr) const
 {
     CScopedLocker lock(this);
-    for (list<SymbolLoadInfo>::iterator it = m_vSymbolInfo.begin() ; it != m_vSymbolInfo.end() ; it++)
+    for (list<SymbolLoadInfo>::const_iterator it = m_vSymbolInfo.begin() ; it != m_vSymbolInfo.end() ; it++)
     {
-        if (it->m_dwBaseOfModule == dwBaseOfModule && (0 == it->m_strMuduleName.comparei(strDll)))
+        if (addr >= it->m_dwBaseOfModule && addr <= (it->m_dwBaseOfModule + it->m_dwModuleSize))
         {
             return true;
         }
@@ -102,7 +135,7 @@ bool CSymbolHlpr::UnLoadModuleByAddr(DWORD64 dwAddr)
     {
         if (it->m_dwBaseOfModule == dwAddr)
         {
-            SymUnloadModule64(GetSymbolHlpr()->m_hDbgProc, dwAddr);
+            SymUnloadModule64(GetInst()->m_hDbgProc, dwAddr);
             m_vSymbolInfo.erase(it);
             return true;
         }
@@ -115,7 +148,7 @@ bool CSymbolHlpr::UnloadAllModules()
     CScopedLocker lock(this);
     for (list<SymbolLoadInfo>::iterator it = m_vSymbolInfo.begin() ; it != m_vSymbolInfo.end() ; it++)
     {
-        SymUnloadModule64(GetSymbolHlpr()->m_hDbgProc, it->m_dwBaseOfModule);
+        SymUnloadModule64(GetInst()->m_hDbgProc, it->m_dwBaseOfModule);
     }
     m_vSymbolInfo.clear();
     return true;
@@ -136,13 +169,10 @@ bool CSymbolHlpr::LoadModule(HANDLE hFile, const mstring &strDllPath, DWORD64 dw
         );
     if (dwBaseAddr)
     {
-        SymbolLoadInfo info;
-        info.m_dwBaseOfModule = dwBaseAddr;
-        info.m_strModulePath = strDllPath;
-        info.m_strMuduleName = PathFindFileNameA(strDllPath.c_str());
-        m_vSymbolInfo.push_back(info);
         return true;
     }
+
+    int err = GetLastError();
     return false;
 }
 
@@ -150,7 +180,7 @@ bool CSymbolHlpr::InitEngine(CTaskSymbolInit *pInitInfo)
 {
     SymSetOptions(SymGetOptions() | SYMOPT_CASE_INSENSITIVE | SYMOPT_LOAD_LINES | SYMOPT_FAIL_CRITICAL_ERRORS);
     SymInitializeW(pInitInfo->m_hDstProc, NULL, FALSE);
-    GetSymbolHlpr()->m_hDbgProc = pInitInfo->m_hDstProc;
+    GetInst()->m_hDbgProc = pInitInfo->m_hDstProc;
     return true;
 }
 
@@ -162,35 +192,20 @@ bool CSymbolHlpr::LoadSymbol(CTaskLoadSymbol *pModuleInfo)
     DWORD64 dwBaseOfModule = (DWORD64)pModuleInfo->m_dwBaseOfModule;
     DWORD64 dwBaseAddr = dwBaseOfModule;
     /*
-    if (!GetSymbolHlpr()->IsSymbolLoaded(strName, dwBaseOfModule))
+    if (!GetInst()->IsSymbolLoaded(strName, dwBaseOfModule))
     {
-        GetSymbolHlpr()->UnLoadModuleByName(strName);
-        if (!GetSymbolHlpr()->LoadModule(pModuleInfo->m_hImgaeFile, strDll, dwBaseOfModule))
+        GetInst()->UnLoadModuleByName(strName);
+        if (!GetInst()->LoadModule(pModuleInfo->m_hImgaeFile, strDll, dwBaseOfModule))
         {
             return false;
         }
     }
     */
-    GetSymbolHlpr()->LoadModule(pModuleInfo->m_hImgaeFile, strDll, dwBaseOfModule);
-
-    mstring str1 = strDll;
-    str1.makelower();
-    if (mstring::npos != str1.find("kernelbase.dll"))
-    {
-        mstring wstrError = GetStdErrorStr();
-
-        char szBuffer[4096] = {0};
-        SYMBOL_INFO *pTest = (SYMBOL_INFO *)szBuffer;
-        pTest->SizeOfStruct  = sizeof(SYMBOL_INFO);
-        pTest->MaxNameLen = 1024;
-        pTest->ModBase = dwBaseOfModule;
-        SymFromName(NULL, "kernelbase!createfileW", pTest);
-        int dd = 0;
-    }
+    GetInst()->LoadModule(pModuleInfo->m_hImgaeFile, strDll, dwBaseOfModule);
 
     IMAGEHLP_MODULEW64 info = {0};
     info.SizeOfStruct = sizeof(info);
-    SymGetModuleInfoW64(GetSymbolHlpr()->m_hDbgProc, (DWORD64)dwBaseAddr, &info);
+    SymGetModuleInfoW64(GetInst()->m_hDbgProc, (DWORD64)dwBaseAddr, &info);
 
     DbgModuleInfo *pModule = &(pModuleInfo->m_ModuleInfo);
     pModule->m_strDllPath = strDll;
@@ -199,7 +214,28 @@ bool CSymbolHlpr::LoadSymbol(CTaskLoadSymbol *pModuleInfo)
     pModule->m_dwModuleSize = info.ImageSize;
     pModule->m_dwEndAddr = (pModule->m_dwBaseOfImage + pModule->m_dwModuleSize);
     pModule->m_hModule = (HMODULE)dwBaseAddr;
+
+    CSymbolHlpr *ptr = GetInst();
+    CScopedLocker lock(ptr);
+    SymbolLoadInfo newDll;
+    newDll.m_dwBaseOfModule = dwBaseAddr;
+    newDll.m_dwModuleSize = info.ImageSize;
+    newDll.m_strModulePath = strDll;
+    newDll.m_strMuduleName = pModule->m_strDllName;
+    ptr->m_vSymbolInfo.push_back(newDll);
     return true;
+}
+
+SymbolLoadInfo CSymbolHlpr::GetLoadInfoByAddr(DWORD64 addr) const {
+    CScopedLocker lock(this);
+    for (list<SymbolLoadInfo>::const_iterator it = m_vSymbolInfo.begin() ; it != m_vSymbolInfo.end() ; it++)
+    {
+        if (addr >= it->m_dwBaseOfModule && addr <= (it->m_dwBaseOfModule + it->m_dwModuleSize))
+        {
+            return *it;
+        }
+    }
+    return SymbolLoadInfo();
 }
 
 bool CSymbolHlpr::GetSymbolFromAddr(CTaskSymbolFromAddr *pSymbolInfo)
@@ -214,32 +250,34 @@ bool CSymbolHlpr::GetSymbolFromAddr(CTaskSymbolFromAddr *pSymbolInfo)
     pSymbol->SizeOfStruct = sizeof(SYMBOL_INFO);
     pSymbol->MaxNameLen = MAX_SYM_NAME;
 
-    DWORD64 dwBaseOfModule = (DWORD64)pSymbolInfo->m_ModuleInfo.m_dwBaseOfImage;
-    if (!GetSymbolHlpr()->IsSymbolLoaded(pSymbolInfo->m_ModuleInfo.m_strDllName, dwBaseOfModule))
+    DWORD64 dwAddr = pSymbolInfo->mAddr;
+    SymbolLoadInfo loadInfo = GetInst()->GetLoadInfoByAddr(dwAddr);
+    if (!loadInfo.m_dwBaseOfModule)
     {
         return false;
     }
 
-    if (!SymFromAddr(GetSymbolHlpr()->m_hDbgProc, pSymbolInfo->m_dwAddr, &dwOffset, pSymbol))
+    if (!SymFromAddr(GetInst()->m_hDbgProc, pSymbolInfo->mAddr, &dwOffset, pSymbol))
     {
         mstring strErr = GetStdErrorStr();
-        pSymbolInfo->m_strSymbol = FormatA("0x%x", pSymbolInfo->m_dwAddr - dwBaseOfModule);
+        pSymbolInfo->mSymbol = FormatA("0x%x", pSymbolInfo->mAddr - loadInfo.m_dwBaseOfModule);
         return false;
     }
 
     DWORD lineOffset = 0;
     IMAGEHLP_LINE64 lineInfo = {sizeof(lineInfo)};
-    SymGetLineFromAddr64(GetSymbolHlpr()->m_hDbgProc, pSymbolInfo->m_dwAddr, &lineOffset, &lineInfo);
-    pSymbolInfo->m_filePath = lineInfo.FileName;
-    pSymbolInfo->m_lineNumber = lineInfo.LineNumber;
+    SymGetLineFromAddr64(GetInst()->m_hDbgProc, pSymbolInfo->mAddr, &lineOffset, &lineInfo);
+    pSymbolInfo->mDllName = loadInfo.m_strMuduleName;
+    pSymbolInfo->mFilePath = lineInfo.FileName;
+    pSymbolInfo->mLineNumber = lineInfo.LineNumber;
 
     if (dwOffset)
     {
-        pSymbolInfo->m_strSymbol = FormatA("%hs+0x%x", pSymbol->Name, dwOffset);
+        pSymbolInfo->mSymbol = FormatA("%hs+0x%x", pSymbol->Name, dwOffset);
     }
     else
     {
-        pSymbolInfo->m_strSymbol = pSymbol->Name;
+        pSymbolInfo->mSymbol = pSymbol->Name;
     }
     return true;
 }
@@ -252,7 +290,7 @@ bool CSymbolHlpr::GetAddrFromStr(CTaskGetAddrFromStr *pSymbolInfo)
     pSymbol->MaxNameLen = 512;
     pSymbol->ModBase = pSymbolInfo->m_dwBaseOfModule;
 
-    if (SymFromName(GetSymbolHlpr()->m_hDbgProc, pSymbolInfo->m_strStr.c_str(), pSymbol))
+    if (SymFromName(GetInst()->m_hDbgProc, pSymbolInfo->m_strStr.c_str(), pSymbol))
     {
         pSymbolInfo->m_dwAddr = pSymbol->Address;
         return true;
@@ -262,7 +300,7 @@ bool CSymbolHlpr::GetAddrFromStr(CTaskGetAddrFromStr *pSymbolInfo)
 
 bool CSymbolHlpr::SetSymbolPath(CTaskSetSymbolPath *pSymbolPath)
 {
-    return (TRUE == SymSetSearchPath(GetSymbolHlpr()->m_hDbgProc, pSymbolPath->m_wstrSymbolPath.c_str()));
+    return (TRUE == SymSetSearchPath(GetInst()->m_hDbgProc, pSymbolPath->m_wstrSymbolPath.c_str()));
 }
 
 bool CSymbolHlpr::StackWalk(CTaskStackWalkInfo *pStackWalkInfo)
@@ -332,7 +370,7 @@ bool CSymbolHlpr::FindFileForDump(CTaskFindFileForDump *pFileInfo)
     CHAR szOut[MAX_PATH] = {0};
     SymFindFileInPath(
         NULL,
-        GetSymbolHlpr()->m_strSymbolPath.c_str(),
+        GetInst()->m_strSymbolPath.c_str(),
         pFileInfo->m_strModuleName.c_str(),
         (PVOID)pFileInfo->m_TimeStamp,
         (DWORD)pFileInfo->m_SizeofImage,
@@ -348,13 +386,13 @@ bool CSymbolHlpr::FindFileForDump(CTaskFindFileForDump *pFileInfo)
 
 bool CSymbolHlpr::UnloadModuleTask(CTaskUnloadSymbol *pUnloadInfo)
 {
-    GetSymbolHlpr()->UnLoadModuleByAddr(pUnloadInfo->m_dwModuleAddr);
+    GetInst()->UnLoadModuleByAddr(pUnloadInfo->m_dwModuleAddr);
     return true;
 }
 
 bool CSymbolHlpr::UnloadAllModuleTask(LPVOID pParam)
 {
-    GetSymbolHlpr()->UnloadAllModules();
+    GetInst()->UnloadAllModules();
     return true;
 }
 
@@ -447,17 +485,4 @@ DWORD CSymbolHlpr::WorkThread(LPVOID pParam)
         SetEvent(pTask->m_hNotify);
     }
     return 0;
-}
-
-static CSymbolHlpr *s_ptr = NULL;
-
-CSymbolHlpr *GetSymbolHlpr()
-{
-    return s_ptr;
-}
-
-bool InitSymbolHlpr(const mstring &strSymbolPath)
-{
-    s_ptr = new CSymbolHlpr(strSymbolPath);
-    return true;
 }

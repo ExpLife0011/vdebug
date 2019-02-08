@@ -86,21 +86,6 @@ public:
         m_eStatus = eStatus;
     }
 
-    virtual TITAN_ENGINE_CONTEXT_t GetCurrentContext()
-    {
-        return TITAN_ENGINE_CONTEXT_t();
-    }
-
-    virtual ustring GetSymFromAddr(DWORD64 dwAddr)
-    {
-        return L"";
-    }
-
-    virtual list<STACKFRAME64> GetStackFrame(const ustring &wstrParam)
-    {
-        return list<STACKFRAME64>();
-    }
-
     BOOL IsDbgProcx64()
     {
         return m_bX64;

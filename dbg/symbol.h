@@ -50,6 +50,12 @@ struct SymbolLoadInfo   //已加载模块的符号信息
     mstring m_strModulePath;
     mstring m_strMuduleName;
     DWORD64 m_dwBaseOfModule;
+    DWORD64 m_dwModuleSize;
+
+    SymbolLoadInfo() {
+        m_dwBaseOfModule = 0;
+        m_dwModuleSize = 0;
+    }
 };
 
 struct CTaskLoadSymbol
@@ -58,21 +64,21 @@ struct CTaskLoadSymbol
     DWORD64 m_dwBaseOfModule;   //IN
 
     DbgModuleInfo m_ModuleInfo; //OUT
-    CCmdBase *m_pCmdEngine;     //OUT
+    //CCmdBase *m_pCmdEngine;     //OUT
 };
 
 struct CTaskSymbolFromAddr
 {
-    DbgModuleInfo m_ModuleInfo; //IN
-    DWORD64 m_dwAddr;           //IN
-    mstring m_strSymbol;        //OUT
+    DWORD64 mAddr;           //IN
+    mstring mDllName;        //DLL
+    mstring mSymbol;         //OUT
 
-    mstring m_filePath;         //source path
-    DWORD m_lineNumber;         //source line
+    mstring mFilePath;       //source path
+    DWORD mLineNumber;       //source line
 
     CTaskSymbolFromAddr() {
-        m_dwAddr = 0;
-        m_lineNumber = 0;
+        mAddr = 0;
+        mLineNumber = 0;
     }
 };
 
@@ -154,14 +160,17 @@ struct CSymbolTaskHeader
 
 class CSymbolHlpr : public CCriticalSectionLockable
 {
-public:
-    CSymbolHlpr(const mstring &wstrSymboPath);
+private:
+    CSymbolHlpr();
     virtual ~CSymbolHlpr();
-
+public:
+    static CSymbolHlpr *GetInst();
+    bool InitSymbol(const std::mstring &strSymbolPath, HANDLE hProc);
     bool SetSymbolPath(const mstring &wstrSymbolPath);
     bool SendTask(CSymbolTaskHeader *pTask, BOOL bAtOnce = TRUE);
     bool PostTask(CSymbolTaskHeader *pTask, BOOL bAtOnce = TRUE);
     bool DeleteTask(CSymbolTaskHeader *pTask);
+    bool UnloadAll();
 
 protected:
     static bool InitEngine(CTaskSymbolInit *pInitInfo);
@@ -177,8 +186,9 @@ protected:
     static DWORD WINAPI WorkThread(LPVOID pParam);
 
 protected:
+    SymbolLoadInfo GetLoadInfoByAddr(DWORD64 addr) const;
     //符号是否已经被加载
-    bool IsSymbolLoaded(const mstring &strDll, DWORD64 dwBaseOfModule);
+    bool IsSymbolLoaded(DWORD64 addr) const;
     //重新加载指定模块
     bool ReloadModule(const mstring &wstrDll, DWORD64 dwBaseOfModule);
     //卸载指定模块符号
@@ -191,6 +201,7 @@ protected:
     bool UnloadAllModules();
 
 protected:
+    bool mInit;
     list<SymbolLoadInfo> m_vSymbolInfo;
     list<CSymbolTaskHeader *> m_vTaskQueue;
     HANDLE m_hNotifyEvent;
@@ -198,8 +209,4 @@ protected:
     HANDLE m_hDbgProc;
     mstring m_strSymbolPath;
 };
-
-bool InitSymbolHlpr(const mstring &strSymbolPath);
-
-CSymbolHlpr *GetSymbolHlpr();
-#endif
+#endif //SYMBOL_VDEBUG_H_H_

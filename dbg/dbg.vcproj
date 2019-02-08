@@ -185,6 +185,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\DbgCommon.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\Disasm.cpp"
 				>
 			</File>
@@ -194,6 +198,10 @@
 			</File>
 			<File
 				RelativePath=".\memory.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\MemoryBase.cpp"
 				>
 			</File>
 			<File
@@ -219,11 +227,19 @@
 				>
 			</File>
 			<File
+				RelativePath=".\DbgCommon.h"
+				>
+			</File>
+			<File
 				RelativePath=".\Disasm.h"
 				>
 			</File>
 			<File
 				RelativePath=".\memory.h"
+				>
+			</File>
+			<File
+				RelativePath=".\MemoryBase.h"
 				>
 			</File>
 			<File
@@ -604,6 +620,10 @@
 		<Filter
 			Name="DumpDbgger"
 			>
+			<File
+				RelativePath=".\DumpCmd.cpp"
+				>
+			</File>
 			<File
 				RelativePath=".\DumpCmd.h"
 				>

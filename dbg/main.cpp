@@ -84,7 +84,7 @@ int WINAPI WinMain(HINSTANCE hT, HINSTANCE hP, LPSTR szCmdLine, int iShow)
     PathAppendA(path, "..\\DbgCtrl32.dll");
     LoadLibraryA(path);
 #endif
-    InitSymbolHlpr("SRV*F:\\mysymbol*http://msdl.microsoft.com/download/symbols/");
+    CSymbolHlpr::GetInst()->InitSymbol("SRV*F:\\mysymbol*http://msdl.microsoft.com/download/symbols/", GetCurrentProcess());
     size_t pos = cmd.rfind('_');
     mstring unique = cmd.substr(pos + 1, cmd.size() - pos - 1);
 

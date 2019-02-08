@@ -122,7 +122,7 @@ DWORD64 CCmdBase::GetFunAddr(const mstring &wstr)
     header.m_pParam = &param;
     header.m_eTaskType = em_task_addrfromstr;
     param.m_strStr = strContent;
-    GetSymbolHlpr()->SendTask(&header);
+    CSymbolHlpr::GetInst()->SendTask(&header);
     return (param.m_dwAddr + dwOffset);
 }
 

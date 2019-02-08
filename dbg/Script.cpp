@@ -739,7 +739,7 @@ int CScriptEngine::DbgReadStr(lua_State *pLuaState)
         return 1;
     }
 
-    //CMemoryOperator m(GetDebugger()->GetDebugProc());
+    //CMemoryProc m(GetDebugger()->GetDebugProc());
     //mstring strData = m.MemoryReadStrUnicode(dwAddr, 1024);
     //lua_pushstring(pLuaState, strData.c_str());
     return 1;
@@ -766,7 +766,7 @@ int CScriptEngine::DbgReadInt32(lua_State *pLuaState)
         return 1;
     }
 
-    //CMemoryOperator m(GetDebugger()->GetDebugProc());
+    //CMemoryProc m(GetDebugger()->GetDebugProc());
     //UINT uData = 0;
     //DWORD dwSize = sizeof(uData);
     //m.MemoryReadSafe(dwAddr, (char *)&uData, dwSize, &dwSize);

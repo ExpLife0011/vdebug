@@ -8,6 +8,7 @@
 #include "Disasm.h"
 #include "Script.h"
 #include "memory.h"
+#include "DbgCommon.h"
 
 #if WIN64 || _WIN64
 #pragma comment(lib, "TitanEngine/TitanEngine_x64.lib")
@@ -44,6 +45,7 @@ VOID CProcDbgger::Wait()
     m_eDbggerStat = em_dbg_status_free;
     WaitForSingleObject(m_hRunNotify, INFINITE);
 
+    m_eDbggerStat = em_dbg_status_busy;
     EventInfo eventInfo;
     eventInfo.mEvent = DBG_EVENT_DBG_PROC_RUNNING;
     MsgSend(CHANNEL_PROC_SERVER, MakeEvent(eventInfo).c_str());
@@ -58,7 +60,7 @@ void CProcDbgger::GuCmdCallback()
 {
     HANDLE hThread = GetInstance()->GetCurrentThread();
     TITAN_ENGINE_CONTEXT_t context = GetInstance()->GetThreadContext(hThread);
-    mstring strSymbol = GetInstance()->GetSymFromAddr((void *)context.cip);
+    mstring strSymbol = CDbgCommon::GetSymFromAddr((DWORD64)context.cip);
 
     Value result;
     result["addr"] = FormatA("0x%08x", (DWORD)context.cip);
@@ -310,38 +312,6 @@ void CProcDbgger::DeleteThreadById(DWORD dwId)
     }
 }
 
-mstring CProcDbgger::GetSymFromAddr(void *dwAddr) const
-{
-    CTaskSymbolFromAddr task;
-    task.m_dwAddr = (DWORD64)dwAddr;
-    CSymbolTaskHeader header;
-    header.m_dwSize = sizeof(CTaskSymbolFromAddr) + sizeof(CSymbolTaskHeader);
-    header.m_eTaskType = em_task_strfromaddr;
-
-    DbgModuleInfo module = GetModuleFromAddr((DWORD64)dwAddr);
-    if (module.m_strDllName.empty())
-    {
-        return "";
-    }
-    task.m_ModuleInfo = module;
-    header.m_pParam = &task;
-    GetSymbolHlpr()->SendTask(&header);
-
-    mstring str = module.m_strDllName;
-    size_t pos = str.rfind('.');
-    if (mstring::npos != pos)
-    {
-        str.erase(pos, str.size() - pos);
-    }
-
-    mstring symbol = FormatA("%hs!%hs", str.c_str(), task.m_strSymbol.c_str());
-    if (!task.m_filePath.empty())
-    {
-        symbol += FormatA("  %hs %d", task.m_filePath.c_str(), task.m_lineNumber);
-    }
-    return symbol;
-}
-
 DWORD CProcDbgger::GetCurDbgProcId() const
 {
     return m_dwCurDebugProc;
@@ -355,7 +325,7 @@ HANDLE CProcDbgger::GetDbgProc() const
 //读调试进程内存
 DWORD CProcDbgger::ReadDbgProcMemory(IN DWORD64 dwAddr, IN DWORD dwReadLength, OUT char *pBuffer)
 {
-    CMemoryOperator memory(GetInstance()->GetDbgProc());
+    CMemoryProc memory(GetInstance()->GetDbgProc());
     DWORD dwReadSize = 0;
     memory.MemoryReadSafe(dwAddr, pBuffer, dwReadLength, &dwReadSize);
     return dwReadSize;
@@ -396,7 +366,7 @@ void CProcDbgger::OnCreateProcess(CREATE_PROCESS_DEBUG_INFO* pCreateProcessInfo)
     task.m_pParam = &param;
     task.m_eTaskType = em_task_initsymbol;
 
-    GetSymbolHlpr()->SendTask(&task);
+    CSymbolHlpr::GetInst()->SendTask(&task);
 
     DWORD dwId = ((DEBUG_EVENT*)GetDebugData())->dwThreadId;
     DbgProcThreadInfo tp;
@@ -417,10 +387,7 @@ void CProcDbgger::OnDetachDbgger()
 {
     GetInstance()->ResetCache();
     GetBreakPointMgr()->DeleteAllBp();
-    CSymbolTaskHeader task;
-    task.m_dwSize = sizeof(CSymbolTaskHeader);
-    task.m_eTaskType = em_task_unloadall;
-    GetSymbolHlpr()->SendTask(&task);
+    CSymbolHlpr::GetInst()->UnloadAll();
 
     EventInfo eventInfo;
     eventInfo.mEvent = DBG_EVENT_DETACH;
@@ -492,7 +459,7 @@ bool CProcDbgger::LoadModuleInfo(HANDLE hFile, DWORD64 dwBaseOfModule)
     task.m_pParam = &loadInfo;
     task.m_eTaskType = em_task_loadsym;
 
-    GetSymbolHlpr()->SendTask(&task);
+    CSymbolHlpr::GetInst()->SendTask(&task);
     //两个结构完全一样，考虑到和dump可能有区别分别命名
     PushModule(loadInfo.m_ModuleInfo);
 
@@ -524,7 +491,7 @@ void CProcDbgger::OnUnloadDll(UNLOAD_DLL_DEBUG_INFO* UnloadDll)
     task.m_pParam = &unLoadInfo;
     task.m_eTaskType = em_task_unloadsym;
 
-    GetSymbolHlpr()->SendTask(&task);
+    CSymbolHlpr::GetInst()->SendTask(&task);
     GetInstance()->EraseModule((DWORD64)UnloadDll->lpBaseOfDll);
 }
 
@@ -532,44 +499,7 @@ void CProcDbgger::OnOutputDebugString(OUTPUT_DEBUG_STRING_INFO* DebugString)
 {}
 
 void CProcDbgger::OnProgramException(EXCEPTION_DEBUG_INFO* ExceptionData) {
-    mstring exceptionDesc;
-    switch (ExceptionData->ExceptionRecord.ExceptionCode) {
-        case  EXCEPTION_ACCESS_VIOLATION:
-            exceptionDesc = "非法地址访问异常";
-            break;
-        case EXCEPTION_ARRAY_BOUNDS_EXCEEDED:
-            exceptionDesc = "数组访问越界异常";
-        case EXCEPTION_BREAKPOINT:
-            exceptionDesc = "用户断点Int3异常";
-            break;
-        case EXCEPTION_DATATYPE_MISALIGNMENT:
-            exceptionDesc = "数据对其异常";
-            break;
-        case EXCEPTION_FLT_DENORMAL_OPERAND:
-            exceptionDesc = "浮点运算异常(非法线值太小，无法表示为标准浮点值)";
-            break;
-        case EXCEPTION_FLT_DIVIDE_BY_ZERO:
-            exceptionDesc = "线程试图用一个0的浮点除数除以一个浮点值";
-            break;
-        case EXCEPTION_INT_DIVIDE_BY_ZERO:
-            exceptionDesc = "除零异常";
-            break;
-        case EXCEPTION_INT_OVERFLOW:
-            exceptionDesc = "整型溢出";
-            break;
-        case EXCEPTION_NONCONTINUABLE_EXCEPTION:
-            exceptionDesc = "致命错误继续执行异常";
-            break;
-        case EXCEPTION_SINGLE_STEP:
-            exceptionDesc = "单步执行异常";
-            break;
-        case EXCEPTION_STACK_OVERFLOW:
-            exceptionDesc = "栈溢出异常";
-            break;
-        default:
-            exceptionDesc = "其他异常";
-            break;
-    }
+    mstring exceptionDesc = CDbgCommon::GetExceptionDesc(ExceptionData->ExceptionRecord.ExceptionCode);
 
     EventInfo eventInfo;
     eventInfo.mShow = "被调试进程因异常中断\n";
@@ -585,7 +515,7 @@ void CProcDbgger::OnProgramException(EXCEPTION_DEBUG_INFO* ExceptionData) {
     pf << "关联异常" << FormatA("0x%08x", ExceptionData->ExceptionRecord.ExceptionRecord) << line_end;
 
     void *addr = ExceptionData->ExceptionRecord.ExceptionAddress;
-    mstring symbol = GetInstance()->GetSymFromAddr(addr);
+    mstring symbol = CDbgCommon::GetSymFromAddr((DWORD64)addr);
     pf << "异常地址" << FormatA("0x%08x %hs", (DWORD)addr, symbol.c_str()) << line_end;
 
     GetInstance()->m_eDbggerStat = em_dbg_status_free;
@@ -637,7 +567,7 @@ bool CProcDbgger::DisassWithSize(DWORD64 dwAddr, DWORD64 dwSize, CtrlReply &resu
 {
     CDisasmParser Disasm(GetDbgProc());
     vector<DisasmInfo> vDisasmSet;
-    mstring str = GetSymFromAddr((void *)dwAddr);
+    mstring str = CDbgCommon::GetSymFromAddr(dwAddr);
     str += ":";
 
     result.mShow = str + "\n";
@@ -663,7 +593,7 @@ bool CProcDbgger::DisassWithAddr(DWORD64 dwStartAddr, DWORD64 dwEndAddr, CtrlRep
 
     DWORD64 dwSize = (dwEndAddr - dwStartAddr + 16);
     CDisasmParser Disasm(GetDbgProc());
-    mstring str = GetSymFromAddr((void *)dwStartAddr);
+    mstring str = CDbgCommon::GetSymFromAddr(dwStartAddr);
     str += ":";
     result.mShow = str + "\n";
 
@@ -689,7 +619,7 @@ bool CProcDbgger::DisassUntilRet(DWORD64 dwStartAddr, CtrlReply &result) const
 {
     CDisasmParser Disasm(GetDbgProc());
     vector<DisasmInfo> disasmSet;
-    mstring str = GetSymFromAddr((void *)dwStartAddr);
+    mstring str = CDbgCommon::GetSymFromAddr(dwStartAddr);
     str += ":";
     result.mShow = str + "\n";
 
@@ -709,7 +639,7 @@ bool CProcDbgger::DisassUntilRet(DWORD64 dwStartAddr, CtrlReply &result) const
 
 static BOOL CALLBACK StackReadProcessMemoryProc64(HANDLE hProcess, DWORD64 lpBaseAddress, PVOID lpBuffer, DWORD nSize, LPDWORD lpNumberOfBytesRead)
 {
-    CMemoryOperator memory(hProcess);
+    CMemoryProc memory(hProcess);
     return memory.MemoryReadSafe(lpBaseAddress, (char *)lpBuffer, nSize, lpNumberOfBytesRead);
 }
 
@@ -773,6 +703,6 @@ list<STACKFRAME64> CProcDbgger::GetStackFrame(const mstring &wstrParam)
     header.m_dwSize = sizeof(CTaskStackWalkInfo) + sizeof(CSymbolTaskHeader);
     header.m_eTaskType = em_task_stackwalk;
     header.m_pParam = &info;
-    GetSymbolHlpr()->SendTask(&header);
+    CSymbolHlpr::GetInst()->SendTask(&header);
     return info.m_FrameSet;
 }

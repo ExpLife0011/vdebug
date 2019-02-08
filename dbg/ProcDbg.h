@@ -101,7 +101,6 @@ public:
     void Run();
     void RunExitProc();
     DbgModuleInfo GetModuleFromAddr(DWORD64 dwAddr) const;
-    mstring GetSymFromAddr(void *dwAddr) const;
     HANDLE GetDbgProc() const;
     DWORD GetCurDbgProcId() const;
     HANDLE GetCurrentThread();

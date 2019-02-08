@@ -91,7 +91,7 @@ bool CDisasmParser::DisasmInternal(DWORD64 dwAddr, pfnDisasmProc pfn, LPVOID pPa
     static const DWORD dwDisasmSize = 4096;
 
     DWORD dwReadSize = 0;
-    CMemoryOperator memReader(m_hProcess);
+    CMemoryProc memReader(m_hProcess);
     memReader.MemoryReadSafe(dwAddr, s_szBuffer, dwDisasmSize, &dwReadSize);
 
     if (!dwReadSize)

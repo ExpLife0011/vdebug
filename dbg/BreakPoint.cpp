@@ -6,6 +6,7 @@
 //#include <SyntaxHlpr/SyntaxParser.h>
 #include <ComLib/ComLib.h>
 #include <mq/mq.h>
+#include "DbgCommon.h"
 
 DWORD CBreakPointMgr::msSerial = 0;
 
@@ -100,7 +101,7 @@ BOOL CBreakPointMgr::SetBreakPoint(DWORD64 dwAddr, const CmdUserParam *pUserCont
     {
         BreakPointInfo point;
         point.mBpAddr = dwAddr;
-        point.mSymbol = CProcDbgger::GetInstance()->GetSymFromAddr((void *)dwAddr);
+        point.mSymbol = CDbgCommon::GetSymFromAddr(dwAddr);
         point.mSerial = msSerial++;
         point.mBpType = em_breakpoint_int3;
 

@@ -3,6 +3,7 @@
 #include "Script.h"
 #include "memory.h"
 #include "BreakPoint.h"
+#include "DbgCommon.h"
 
 CProcCmd *CProcCmd::GetInst() {
     static CProcCmd *s_ptr = NULL;
@@ -428,7 +429,7 @@ CtrlReply CProcCmd::OnCmdReg(const mstring &cmdParam, const CmdUserParam *pParam
 {
     RegisterContent ctx;
     ctx.mContext = mProcDbgger->GetCurrentContext();
-    ctx.mCipStr = mProcDbgger->GetSymFromAddr((void *)ctx.mContext.cip).c_str();
+    ctx.mCipStr = CDbgCommon::GetSymFromAddr((DWORD64)ctx.mContext.cip);
 
     CtrlReply result;
     result.mResult = EncodeCmdRegister(ctx);
@@ -618,7 +619,7 @@ CtrlReply CProcCmd::OnCmdDb(const mstring &cmdParam, const CmdUserParam *pParam)
     dwAddr = script.Compile(strAddr);
 
     CtrlReply result;
-    CMemoryOperator mhlpr(mProcDbgger->GetDbgProc());
+    CMemoryProc mhlpr(mProcDbgger->GetDbgProc());
     for (int i = 0 ; i < dwDataSize ; i += 16)
     {
         DWORD dwReadSize = 0;
@@ -679,7 +680,7 @@ CtrlReply CProcCmd::OnCmdDd(const mstring &cmdParam, const CmdUserParam *pParam)
     PrintFormater pf;
     pf << "数据地址" << "数据内容" << space << space << space << line_end;
 
-    CMemoryOperator mhlpr(mProcDbgger->GetDbgProc());
+    CMemoryProc mhlpr(mProcDbgger->GetDbgProc());
     for (int i = 0 ; i < (int)dwDataSize ; i += 16)
     {
         char szData[16] = {0};
@@ -714,7 +715,7 @@ CtrlReply CProcCmd::OnCmdDu(const mstring &strCmdParam, const CmdUserParam *pPar
     {
         result.mShow = "语法错误\n";
     } else {
-        CMemoryOperator mhlpr(mProcDbgger->GetDbgProc());
+        CMemoryProc mhlpr(mProcDbgger->GetDbgProc());
         ustring strData = mhlpr.MemoryReadStrUnicode(dwAddr, MAX_PATH);
 
         if (strData.empty())
@@ -737,7 +738,7 @@ CtrlReply CProcCmd::OnCmdDa(const mstring &strCmdParam, const CmdUserParam *pPar
     {
         result.mShow = "语法错误\n";
     } else {
-        CMemoryOperator mhlpr(mProcDbgger->GetDbgProc());
+        CMemoryProc mhlpr(mProcDbgger->GetDbgProc());
         mstring strData = mhlpr.MemoryReadStrGbk(dwAddr, MAX_PATH);
 
         if (strData.empty())
@@ -771,7 +772,7 @@ CtrlReply CProcCmd::OnCmdKv(const mstring &cmdParam, const CmdUserParam *pParam)
         single.mParam1 = FormatA("%08x", it->Params[1]);
         single.mParam2 = FormatA("%08x", it->Params[2]);
         single.mParam3 = FormatA("%08x", it->Params[3]);
-        single.mFunction = FormatA("%hs", mProcDbgger->GetSymFromAddr((void *)it->AddrPC.Offset).c_str());
+        single.mFunction = FormatA("%hs", CDbgCommon::GetSymFromAddr((DWORD64)it->AddrPC.Offset).c_str());
         callSet.mCallStack.push_back(single);
 
         pf << single.mAddr << single.mReturn << single.mParam0 << single.mParam1 << single.mParam2 << single.mParam3 << single.mFunction << line_end;
@@ -851,56 +852,11 @@ CtrlReply CProcCmd::OnCmdTs(const mstring &param, const CmdUserParam *pParam)
             time.wMilliseconds
             );
         string c = "正常运行";
-        string d = FormatA("0x%08x %hs", it->m_dwStartAddr, mProcDbgger->GetSymFromAddr(it->m_dwStartAddr).c_str());
+        string d = FormatA("0x%08x %hs", it->m_dwStartAddr, CDbgCommon::GetSymFromAddr((DWORD64)it->m_dwStartAddr).c_str());
         pf << a << b << c << d << line_end;
     }
 
     CtrlReply result;
     result.mShow = pf.GetResult();
     return result;
-    /*
-    //CSyntaxDescHlpr hlpr;
-    hlpr.FormatDesc(L"序号 ");
-    hlpr.FormatDesc(L"线程ID", COLOUR_MSG, 12);
-    hlpr.FormatDesc(L"启动时间", COLOUR_MSG, 25);
-    hlpr.FormatDesc(L"状态", COLOUR_MSG, 10);
-    hlpr.FormatDesc(L"启动位置");
-
-    list<ThreadInformation> vThreads;
-    GetThreadInformation(GetInstance()->GetDebugProcData()->dwProcessId, vThreads);
-    int iIndex = 0;
-    for (list<DbgProcThreadInfo>::const_iterator it = m_vThreadMap.begin() ; it != m_vThreadMap.end() ; it++, iIndex++)
-    {
-        for (list<ThreadInformation>::const_iterator itSingle = vThreads.begin() ; itSingle != vThreads.end() ; itSingle++)
-        {
-            if (it->m_dwThreadId == itSingle->m_dwThreadId)
-            {
-                hlpr.NextLine();
-                hlpr.FormatDesc(FormatW(L"%02x", iIndex), COLOUR_MSG, 5);
-                hlpr.FormatDesc(FormatW(L"%x:%d", it->m_dwThreadId, it->m_dwThreadId), COLOUR_MSG, 12);
-
-                SYSTEMTIME time = {0};
-                FileTimeToSystemTime(&(itSingle->m_vCreateTime), &time);
-                hlpr.FormatDesc(
-                    FormatW(
-                    L"%04d-%02d-%02d %02d:%02d:%02d %03d ",
-                    time.wYear,
-                    time.wMonth,
-                    time.wDay,
-                    time.wHour,
-                    time.wMinute,
-                    time.wSecond,
-                    time.wMilliseconds
-                    ),
-                    COLOUR_MSG,
-                    25
-                    );
-                hlpr.FormatDesc(GetStatusStr(itSingle->m_eStat, itSingle->m_eWaitReason), COLOUR_MSG, 10);
-                hlpr.FormatDesc(GetSymFromAddr(it->m_dwStartAddr), COLOUR_PROC);
-            }
-        }
-    }
-    res.SetResult(hlpr.GetResult());
-    */
-    //return CtrlReply();
 }

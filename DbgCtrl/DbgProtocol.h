@@ -42,43 +42,6 @@
     }
 }
 */
-
-//消息抽象成ctrl 和 event两种
-//ctrl 是调试控制端控制调试器执行调试动作,有应答，交互式通讯
-//event 是调试器向调试控制端上报调试事件，是单向推送数据
-
-/*********************调试控制指令开始*****************************/
-/*
-{
-    "cmd":"attach",
-    "content":{
-        "pid":1234
-    }
-}
-
-{
-    "cmd":"DbgCtrl",
-    "content":{
-        "ctrlType":"attach",
-        "mode":1,
-        "ctrlContnet":{
-            "pid":1234
-        }
-    }
-}
-
-{
-    "cmd": "reply",
-    "content": {
-        "ctrlCode":0,
-        "mode":1,
-        "ctrlLabel":"CallStack",                     //展示标签
-        "ctrlShow":"abcd1234",                       //展示内容
-        "ctrlResult": {
-        }
-    }
-}
-*/
 #define DBG_CTRL_ATTACH              "attach"
 
 /*

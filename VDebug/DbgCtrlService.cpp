@@ -209,14 +209,12 @@ bool DbgCtrlService::OpenDump(const std::mstring &path) const {
     ctrl.mContent["dumpPath"] = path;
     CtrlReply d  = m_pCtrlService->DispatchCurDbgger(ctrl);
 
-    if (d.mStatus == 0)
-    {
-        AppendToSyntaxView(SCI_LABEL_DEFAULT, "加载dump文件成功");
-        return true;
-    } else {
-        AppendToSyntaxView(SCI_LABEL_DEFAULT, d.mShow);
-        return false;
-    }
+    AppendToSyntaxView(d.mLabel, d.mShow);
+
+    int tid = d.mResult["tid"].asInt();
+    GetInstance()->m_stat = em_dbg_status_free;
+    SetCmdNotify(GetInstance()->m_stat, FormatA("线程 %d >>", tid));
+    return (0 == d.mStatus);
 }
 
 CtrlReply DbgCtrlService::RunCmdInCtrlService(const std::mstring &command) {

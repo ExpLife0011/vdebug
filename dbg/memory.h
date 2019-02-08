@@ -2,28 +2,18 @@
 #define MEMORY_VDEBUG_H_H_
 #include <Windows.h>
 #include <ComStatic/ComStatic.h>
+#include "MemoryBase.h"
 
 using namespace std;
 
-class CMemoryOperator
+class CMemoryProc : public CMemoryBase
 {
 public:
-    CMemoryOperator(HANDLE hProcess);
-
-    virtual ~CMemoryOperator();
-
+    CMemoryProc(HANDLE hProcess);
+    virtual ~CMemoryProc();
+    virtual bool MemoryReadSafe(DWORD64 dwAddr, char *szBuffer, DWORD dwBufferSize, IN OUT DWORD *pReadSize) const;
+private:
     bool MemoryReadPageSafe(DWORD64 dwAddr, char *szBuffer, DWORD dwBufferSize, IN OUT SIZE_T *pReadSize) const;
-
-    bool MemoryReadSafe(DWORD64 dwAddr, char *szBuffer, DWORD dwBufferSize, IN OUT DWORD *pReadSize) const;
-
-    bool MemoryReadUnSafe(DWORD64 dwAddr, char *szBuffer, DWORD dwBufferSize, IN OUT DWORD *pReadSize) const;
-
-    ustring MemoryReadStrUnicode(DWORD64 dwAddr, DWORD dwMaxSize) const;
-
-    mstring MemoryReadStrGbk(DWORD64 dwAddr, DWORD dwMaxSize) const;
-
-    mstring MemoryReadStrUtf8(DWORD64 dwAddr, DWORD dwMaxSize) const;
-
 protected:
     HANDLE m_hProcess;
 };

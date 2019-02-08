@@ -1,19 +1,19 @@
-#include "memory.h"
-//#include "common.h"
-#include "TitanEngine/TitanEngine.h"
+#include <Windows.h>
 #include <ComLib/ComUtil.h>
+#include "memory.h"
+#include "TitanEngine/TitanEngine.h"
 
 #define PAGE_SIZE 0x1000
 
-CMemoryOperator::CMemoryOperator(HANDLE hProcess)
+CMemoryProc::CMemoryProc(HANDLE hProcess)
 {
     m_hProcess = hProcess;
 }
 
-CMemoryOperator::~CMemoryOperator()
+CMemoryProc::~CMemoryProc()
 {}
 
-bool CMemoryOperator::MemoryReadPageSafe(DWORD64 dwAddr, char *szBuffer, DWORD dwBufferSize, IN OUT SIZE_T *pReadSize) const
+bool CMemoryProc::MemoryReadPageSafe(DWORD64 dwAddr, char *szBuffer, DWORD dwBufferSize, IN OUT SIZE_T *pReadSize) const
 {
     if (dwBufferSize > (PAGE_SIZE - (dwAddr & (PAGE_SIZE - 1))))
     {
@@ -24,7 +24,7 @@ bool CMemoryOperator::MemoryReadPageSafe(DWORD64 dwAddr, char *szBuffer, DWORD d
     return ::MemoryReadSafe(m_hProcess, (LPVOID)dwAddr, szBuffer, dwBufferSize, pReadSize);
 }
 
-bool CMemoryOperator::MemoryReadSafe(DWORD64 dwAddr, char *szBuffer, DWORD dwBufferSize, IN OUT DWORD *pReadSize) const
+bool CMemoryProc::MemoryReadSafe(DWORD64 dwAddr, char *szBuffer, DWORD dwBufferSize, IN OUT DWORD *pReadSize) const
 {
     if (!szBuffer || !dwBufferSize)
     {
@@ -53,63 +53,4 @@ bool CMemoryOperator::MemoryReadSafe(DWORD64 dwAddr, char *szBuffer, DWORD dwBuf
         dwReadSize = min(PAGE_SIZE, dwRequest);
     }
     return true;
-}
-
-ustring CMemoryOperator::MemoryReadStrUnicode(DWORD64 dwAddr, DWORD dwMaxSize) const
-{
-    if (!dwAddr || !dwMaxSize)
-    {
-        return L"";
-    }
-
-    WCHAR cBuffer = 0;
-    DWORD dwOffset = 0;
-    ustring wstrBuffer;
-    while (TRUE)
-    {
-        DWORD dwRead = 0;
-        if (!MemoryReadSafe(dwAddr + dwOffset, (char *)&cBuffer, sizeof(WCHAR), &dwRead))
-        {
-            break;
-        }
-
-        dwOffset += sizeof(WCHAR);
-        if (0 == cBuffer)
-        {
-            return wstrBuffer;
-        }
-
-        wstrBuffer += cBuffer;
-    }
-
-    return L"";
-}
-
-mstring CMemoryOperator::MemoryReadStrGbk(DWORD64 dwAddr, DWORD dwMaxSize) const {
-    if (!dwAddr || !dwMaxSize)
-    {
-        return "";
-    }
-
-    char cBuffer = 0;
-    DWORD dwOffset = 0;
-    mstring strBuffer;
-    while (TRUE)
-    {
-        DWORD dwRead = 0;
-        if (!MemoryReadSafe(dwAddr + dwOffset, (char *)&cBuffer, sizeof(char), &dwRead))
-        {
-            break;
-        }
-
-        dwOffset += sizeof(char);
-        if (0 == cBuffer)
-        {
-            return strBuffer;
-        }
-
-        strBuffer += cBuffer;
-    }
-
-    return "";
 }
