@@ -160,6 +160,8 @@ struct DumpModuleInfo
     DWORD64 m_dwModuleSize;
     DWORD64 m_dwBaseAddr;
     DWORD64 m_dwTimeStamp;
+    mstring mTimeStr;
+    mstring mVersion;
     BOOL mLoadSymbol;
     BOOL mLoadFaild;
 
@@ -256,6 +258,10 @@ public:
     bool GetCallStack();
     DumpException GetException();
     bool SetCurThread(DWORD tid);
+    list<STACKFRAME64> GetStackFrame(int tid);
+    list<STACKFRAME64> GetCurrentStackFrame();
+    DumpThreadInfo GetThreadByTid(int tid) const;
+    std::mstring GetDumpSymbol(DWORD64 addr);
 
 protected:
     bool LoadSystemInfo();
@@ -270,8 +276,8 @@ protected:
     static BOOL CALLBACK ReadDumpMemoryProc64(HANDLE hProcess, DWORD64 lpBaseAddress, PVOID lpBuffer, DWORD nSize, LPDWORD lpNumberOfBytesRead);
     LPVOID GetSpecStream(MINIDUMP_STREAM_TYPE eType, DWORD &dwStreamSize) const;
     //获取dump符号信息，dump和普通的进程调试不同，dump可能需要获取本地没有的pe文件的符号，需要特殊处理
-    std::mstring GetDumpSymbol(DWORD64 addr);
     DumpModuleInfo GetModuleFromAddr(DWORD64 addr) const;
+    mstring GetVersionStr(const VS_FIXEDFILEINFO &version) const;
 
 protected:
     list<DumpModuleInfo> m_vModuleSet;

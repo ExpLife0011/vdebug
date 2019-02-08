@@ -1,6 +1,5 @@
 #include "DumpCmd.h"
 #include "minidump.h"
-#include "DbgCommon.h"
 
 CDumpCmd::CDumpCmd() {
 }
@@ -98,8 +97,35 @@ CtrlReply CDumpCmd::OnCmdUf(const std::mstring &cmd, const CmdUserParam *pParam)
 }
 
 CtrlReply CDumpCmd::OnCmdKv(const std::mstring &cmd, const CmdUserParam *pParam) {
-    CtrlReply reply;
-    return reply;
+    list<STACKFRAME64> callStack = CMiniDumpHlpr::GetInst()->GetCurrentStackFrame();
+
+    CtrlReply result;
+    if (callStack.empty())
+    {
+        return result;
+    }
+
+    CallStackData callSet;
+    CallStackSingle single;
+    PrintFormater pf;
+    pf << "内存地址" << "返回地址" << "参数列表" << space << space << space << "符号名称" << line_end;
+    for (list<STACKFRAME64>::const_iterator it = callStack.begin() ; it != callStack.end() ; it++)
+    {
+        single.mAddr = FormatA("%08x", it->AddrPC.Offset);
+        single.mReturn = FormatA("%08x", it->AddrReturn);
+        single.mParam0 = FormatA("%08x", it->Params[0]);
+        single.mParam1 = FormatA("%08x", it->Params[1]);
+        single.mParam2 = FormatA("%08x", it->Params[2]);
+        single.mParam3 = FormatA("%08x", it->Params[3]);
+        single.mFunction = FormatA("%hs", CMiniDumpHlpr::GetInst()->GetDumpSymbol((DWORD64)it->AddrPC.Offset).c_str());
+        callSet.mCallStack.push_back(single);
+
+        pf << single.mAddr << single.mReturn << single.mParam0 << single.mParam1 << single.mParam2 << single.mParam3 << single.mFunction << line_end;
+    }
+    result.mStatus = 0;
+    result.mResult = EncodeCmdCallStack(callSet);
+    result.mShow = pf.GetResult();
+    return result;
 }
 
 CtrlReply CDumpCmd::OnCmdDb(const std::mstring &cmd, const CmdUserParam *pParam) {
@@ -154,8 +180,23 @@ CtrlReply CDumpCmd::OnCmdTc(const std::mstring &cmd, const CmdUserParam *pParam)
 }
 
 CtrlReply CDumpCmd::OnCmdLm(const std::mstring &cmd, const CmdUserParam *pParam) {
-    CtrlReply reply;
-    return reply;
+    list<DumpModuleInfo> moduleSet = CMiniDumpHlpr::GetInst()->GetModuleSet();
+
+    PrintFormater pf;
+    pf << "起始地址" << "结束地址" << "版本信息" << "时间戳" <<"模块路径" << line_end;
+    for (list<DumpModuleInfo>::const_iterator it = moduleSet.begin() ; it != moduleSet.end() ; it++)
+    {
+        string a = FormatA("0x%08x", it->m_dwBaseAddr);
+        string b = FormatA("0x%08x", it->m_dwBaseAddr + it->m_dwModuleSize);
+        string c = it->mVersion;
+        string d = it->mTimeStr;
+        string e = it->m_strModulePath;
+        pf << a << b << c << d << e << line_end;
+    }
+
+    CtrlReply result;
+    result.mShow = pf.GetResult();
+    return result;
 }
 
 CtrlReply CDumpCmd::OnCmdHelp(const std::mstring &param, const CmdUserParam *pParam) {

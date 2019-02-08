@@ -135,7 +135,8 @@ mstring __stdcall GetFilePathFromHandle(HANDLE hFile)
     return strPath;
 }
 
-mstring __stdcall GetStdErrorStr(DWORD dwErr)
+mstring __stdcall GetStdErrorStr
+(DWORD dwErr)
 {
     LPVOID lpMsgBuf = NULL;
     FormatMessageA(

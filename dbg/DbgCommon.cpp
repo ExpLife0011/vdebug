@@ -121,6 +121,11 @@ std::mstring CDbgCommon::GetSymFromAddr(DWORD64 dwAddr) {
     header.m_pParam = &task;
     CSymbolHlpr::GetInst()->SendTask(&header);
 
+    if (header.m_bSucc != TRUE)
+    {
+        return "";
+    }
+
     mstring str = task.mDllName;
     size_t pos = str.rfind('.');
     if (mstring::npos != pos)

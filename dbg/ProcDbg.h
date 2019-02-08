@@ -64,16 +64,16 @@ struct DbgProcInfo
 
 struct DbgProcThreadInfo
 {
-    DWORD m_dwThreadNum;
     HANDLE m_hThread;
     DWORD m_dwThreadId;
     DWORD64 m_dwStartAddr;
     DWORD64 m_dwLocalBase;
     mstring m_strName;
+    FILETIME mStartTime;
+    mstring mStartTimeStr;
 
     DbgProcThreadInfo()
     {
-        m_dwThreadNum = 0;
         m_hThread = NULL;
         m_dwThreadId = 0;
         m_dwStartAddr = 0;
@@ -103,15 +103,16 @@ public:
     DbgModuleInfo GetModuleFromAddr(DWORD64 dwAddr) const;
     HANDLE GetDbgProc() const;
     DWORD GetCurDbgProcId() const;
-    HANDLE GetCurrentThread();
-    HANDLE GetThreadById(DWORD dwId) const;
+    DbgProcThreadInfo GetCurrentThread();
+    DbgProcThreadInfo GetThreadById(DWORD dwId) const;
     DbggerStatus GetDbggerStatus();
     list<DbgModuleInfo> GetModuleInfo() const;
-    list<DbgProcThreadInfo> GetThreadCache() const;
+    vector<DbgProcThreadInfo> GetThreadCache() const;
     list<ThreadInformation> GetCurrentThreadSet() const;
     list<DbgModuleInfo> GetDllSet() const;
 
 protected:
+    void PushThread(const DbgProcThreadInfo &newThread);
     static list<ThreadInformation> msCurThreadSet;
     static void __cdecl ThreadEnumCallBack(THREAD_ITEM_DATA *threadData);
     //读写调试进程内存
@@ -150,11 +151,11 @@ protected:
     void PushModule(const DbgModuleInfo &dll);
     void EraseModule(DWORD64 baseAddr);
 protected:
-    list<DbgProcThreadInfo> m_vThreadMap;
+    vector<DbgProcThreadInfo> m_vThreadMap;
     list<DbgModuleInfo> mDllSet;
     DWORD m_dwCurDebugProc;
     DbgProcInfo m_vDbgProcInfo;
-    DWORD m_dwCurrentThreadId;
+    DbgProcThreadInfo mCurrentThread;
     DbggerStatus m_eDbggerStat;
     HANDLE m_hRunNotify;
     static const DWORD ms_dwDefDisasmSize = 128;

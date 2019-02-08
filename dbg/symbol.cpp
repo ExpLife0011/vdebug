@@ -100,15 +100,26 @@ bool CSymbolHlpr::UnloadAll() {
     return true;
 }
 
-bool CSymbolHlpr::IsSymbolLoaded(DWORD64 addr) const
+bool CSymbolHlpr::IsSymbolLoaded(const mstring &dllName, DWORD64 addr) const
 {
-    CScopedLocker lock(this);
-    for (list<SymbolLoadInfo>::const_iterator it = m_vSymbolInfo.begin() ; it != m_vSymbolInfo.end() ; it++)
+    IMAGEHLP_MODULEW64 info = {0};
+    info.SizeOfStruct = sizeof(info);
+    SymGetModuleInfoW64(GetInst()->m_hDbgProc, (DWORD64)addr, &info);
+
+    mstring tmp = WtoA(info.LoadedImageName);
+    tmp.makelower();
+
+    mstring sub = dllName;
+    sub.makelower();
+
+    if (mstring::npos != tmp.find(sub))
     {
-        if (addr >= it->m_dwBaseOfModule && addr <= (it->m_dwBaseOfModule + it->m_dwModuleSize))
-        {
-            return true;
-        }
+        return true;
+    }
+
+    if (info.ModuleName[0])
+    {
+        ErrMessage(L"该地址的模块已经被加载:%ls", info.ModuleName[0]);
     }
     return false;
 }
@@ -120,6 +131,7 @@ bool CSymbolHlpr::UnLoadModuleByName(const mstring &strDllName)
     {
         if (0 == it->m_strMuduleName.comparei(strDllName))
         {
+            dp(L"unload:%hs", strDllName.c_str());
             SymUnloadModule64(NULL, it->m_dwBaseOfModule);
             m_vSymbolInfo.erase(it);
             return true;
@@ -135,6 +147,7 @@ bool CSymbolHlpr::UnLoadModuleByAddr(DWORD64 dwAddr)
     {
         if (it->m_dwBaseOfModule == dwAddr)
         {
+            dp(L"unload:%d", (DWORD)dwAddr);
             SymUnloadModule64(GetInst()->m_hDbgProc, dwAddr);
             m_vSymbolInfo.erase(it);
             return true;
@@ -146,6 +159,7 @@ bool CSymbolHlpr::UnLoadModuleByAddr(DWORD64 dwAddr)
 bool CSymbolHlpr::UnloadAllModules()
 {
     CScopedLocker lock(this);
+    dp(L"unload all");
     for (list<SymbolLoadInfo>::iterator it = m_vSymbolInfo.begin() ; it != m_vSymbolInfo.end() ; it++)
     {
         SymUnloadModule64(GetInst()->m_hDbgProc, it->m_dwBaseOfModule);
@@ -173,6 +187,7 @@ bool CSymbolHlpr::LoadModule(HANDLE hFile, const mstring &strDllPath, DWORD64 dw
     }
 
     int err = GetLastError();
+    dp(L"模块:%hs加载失败", strDllPath.c_str());
     return false;
 }
 
@@ -191,17 +206,14 @@ bool CSymbolHlpr::LoadSymbol(CTaskLoadSymbol *pModuleInfo)
     SetLastError(0);
     DWORD64 dwBaseOfModule = (DWORD64)pModuleInfo->m_dwBaseOfModule;
     DWORD64 dwBaseAddr = dwBaseOfModule;
-    /*
+
     if (!GetInst()->IsSymbolLoaded(strName, dwBaseOfModule))
     {
-        GetInst()->UnLoadModuleByName(strName);
         if (!GetInst()->LoadModule(pModuleInfo->m_hImgaeFile, strDll, dwBaseOfModule))
         {
             return false;
         }
     }
-    */
-    GetInst()->LoadModule(pModuleInfo->m_hImgaeFile, strDll, dwBaseOfModule);
 
     IMAGEHLP_MODULEW64 info = {0};
     info.SizeOfStruct = sizeof(info);
@@ -214,6 +226,8 @@ bool CSymbolHlpr::LoadSymbol(CTaskLoadSymbol *pModuleInfo)
     pModule->m_dwModuleSize = info.ImageSize;
     pModule->m_dwEndAddr = (pModule->m_dwBaseOfImage + pModule->m_dwModuleSize);
     pModule->m_hModule = (HMODULE)dwBaseAddr;
+
+    dp(L"模块:%hs加载成功, 起始位置:%d 结束位置:%d", strDll.c_str(), (DWORD)pModule->m_dwBaseOfImage, (DWORD)(pModule->m_dwBaseOfImage + info.ImageSize));
 
     CSymbolHlpr *ptr = GetInst();
     CScopedLocker lock(ptr);
@@ -242,13 +256,13 @@ bool CSymbolHlpr::GetSymbolFromAddr(CTaskSymbolFromAddr *pSymbolInfo)
 {
     DWORD64 dwOffset = 0;
     ULONG64 buffer[(sizeof(SYMBOL_INFO) +
-        MAX_SYM_NAME*sizeof(CHAR) +
+        4096 * sizeof(CHAR) +
         sizeof(ULONG64) - 1) /
         sizeof(ULONG64)] = {0};
     PSYMBOL_INFO pSymbol = (PSYMBOL_INFO)buffer;
 
     pSymbol->SizeOfStruct = sizeof(SYMBOL_INFO);
-    pSymbol->MaxNameLen = MAX_SYM_NAME;
+    pSymbol->MaxNameLen = 4096;
 
     DWORD64 dwAddr = pSymbolInfo->mAddr;
     SymbolLoadInfo loadInfo = GetInst()->GetLoadInfoByAddr(dwAddr);
@@ -260,7 +274,6 @@ bool CSymbolHlpr::GetSymbolFromAddr(CTaskSymbolFromAddr *pSymbolInfo)
     if (!SymFromAddr(GetInst()->m_hDbgProc, pSymbolInfo->mAddr, &dwOffset, pSymbol))
     {
         mstring strErr = GetStdErrorStr();
-        pSymbolInfo->mSymbol = FormatA("0x%x", pSymbolInfo->mAddr - loadInfo.m_dwBaseOfModule);
         return false;
     }
 

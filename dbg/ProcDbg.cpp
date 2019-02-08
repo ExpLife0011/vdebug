@@ -58,7 +58,7 @@ void CProcDbgger::Run()
 
 void CProcDbgger::GuCmdCallback()
 {
-    HANDLE hThread = GetInstance()->GetCurrentThread();
+    HANDLE hThread = GetInstance()->GetCurrentThread().m_hThread;
     TITAN_ENGINE_CONTEXT_t context = GetInstance()->GetThreadContext(hThread);
     mstring strSymbol = CDbgCommon::GetSymFromAddr((DWORD64)context.cip);
 
@@ -141,7 +141,6 @@ void CProcDbgger::ResetCache()
     m_dwCurDebugProc = 0;
     m_vDbgProcInfo.Clear();
     mDllSet.clear();
-    m_dwCurrentThreadId = 0;
     m_eDbggerStat = em_dbg_status_init;
     m_bDetachDbgger = FALSE;
 }
@@ -220,7 +219,7 @@ DEBUG_EVENT *CProcDbgger::GetDebugProcData()
 
 TITAN_ENGINE_CONTEXT_t CProcDbgger::GetCurrentContext()
 {
-    return GetThreadContext(GetCurrentThread());
+    return GetThreadContext(GetCurrentThread().m_hThread);
 }
 
 TITAN_ENGINE_CONTEXT_t CProcDbgger::GetThreadContext(HANDLE hThread)
@@ -230,27 +229,21 @@ TITAN_ENGINE_CONTEXT_t CProcDbgger::GetThreadContext(HANDLE hThread)
     return context;
 }
 
-HANDLE CProcDbgger::GetCurrentThread()
+DbgProcThreadInfo CProcDbgger::GetCurrentThread()
 {
-    HANDLE hThread = NULL;
-    if (!(hThread = GetThreadById(m_dwCurrentThreadId)))
-    {
-        m_dwCurrentThreadId = m_vThreadMap.begin()->m_dwThreadId;
-        hThread = GetThreadById(m_dwCurrentThreadId);
-    }
-    return hThread;
+    return mCurrentThread;
 }
 
-HANDLE CProcDbgger::GetThreadById(DWORD dwId) const
+DbgProcThreadInfo CProcDbgger::GetThreadById(DWORD dwId) const
 {
-    for (list<DbgProcThreadInfo>::const_iterator it = m_vThreadMap.begin() ; it != m_vThreadMap.end() ; it++)
+    for (vector<DbgProcThreadInfo>::const_iterator it = m_vThreadMap.begin() ; it != m_vThreadMap.end() ; it++)
     {
         if (it->m_dwThreadId == dwId)
         {
-            return it->m_hThread;
+            return *it;
         }
     }
-    return NULL;
+    return DbgProcThreadInfo();
 }
 
 DbggerStatus CProcDbgger::GetDbggerStatus() {
@@ -261,7 +254,7 @@ list<DbgModuleInfo> CProcDbgger::GetModuleInfo() const {
     return mDllSet;
 }
 
-list<DbgProcThreadInfo> CProcDbgger::GetThreadCache() const {
+vector<DbgProcThreadInfo> CProcDbgger::GetThreadCache() const {
     return m_vThreadMap;
 }
 
@@ -302,7 +295,7 @@ DbgModuleInfo CProcDbgger::GetModuleFromAddr(DWORD64 dwAddr) const
 
 void CProcDbgger::DeleteThreadById(DWORD dwId)
 {
-    for (list<DbgProcThreadInfo>::const_iterator it = m_vThreadMap.begin() ; it != m_vThreadMap.end() ; it++)
+    for (vector<DbgProcThreadInfo>::const_iterator it = m_vThreadMap.begin() ; it != m_vThreadMap.end() ; it++)
     {
         if (it->m_dwThreadId == dwId)
         {
@@ -368,15 +361,31 @@ void CProcDbgger::OnCreateProcess(CREATE_PROCESS_DEBUG_INFO* pCreateProcessInfo)
 
     CSymbolHlpr::GetInst()->SendTask(&task);
 
-    DWORD dwId = ((DEBUG_EVENT*)GetDebugData())->dwThreadId;
-    DbgProcThreadInfo tp;
-    tp.m_dwThreadId = dwId;
-    tp.m_hThread = pCreateProcessInfo->hThread;
-    tp.m_dwLocalBase = (DWORD64)pCreateProcessInfo->lpThreadLocalBase;
-    tp.m_dwStartAddr = (DWORD64)pCreateProcessInfo->lpStartAddress;
-    tp.m_strName = "Ö÷Ïß³Ì";
+    DbgProcThreadInfo newThread;
+    newThread.m_dwThreadId = ((DEBUG_EVENT*)GetDebugData())->dwThreadId;
+    newThread.m_dwStartAddr = (DWORD64)pCreateProcessInfo->lpStartAddress;
+    newThread.m_dwLocalBase = (DWORD64)pCreateProcessInfo->lpThreadLocalBase;
+    newThread.m_hThread = pCreateProcessInfo->hThread;
 
-    (GetInstance()->m_vThreadMap).push_back(tp);
+    FILETIME a, b, c, d= {0};
+    GetThreadTimes(newThread.m_hThread, &a, &b, &c, &d);
+    FileTimeToLocalFileTime(&a, &newThread.mStartTime);
+
+    SYSTEMTIME time = {0};
+    FileTimeToSystemTime(&a, &time);
+    newThread.mStartTimeStr = FormatA(
+        "%04d-%02d-%02d %02d:%02d:%02d %03d",
+        time.wYear,
+        time.wMonth,
+        time.wDay,
+        time.wHour,
+        time.wMinute,
+        time.wSecond,
+        time.wMilliseconds
+        );
+
+    dp(L"thread create:%d", newThread.m_dwThreadId);
+    GetInstance()->PushThread(newThread);
     GetInstance()->m_dwCurDebugProc = GetProcessId(pCreateProcessInfo->hProcess);
 
     GetInstance()->m_vDbgProcInfo.m_hProcess = pCreateProcessInfo->hProcess;
@@ -402,15 +411,45 @@ void CProcDbgger::OnExitProcess(EXIT_PROCESS_DEBUG_INFO* ExitProcess)
     GetInstance()->OnDetachDbgger();
 }
 
+void CProcDbgger::PushThread(const DbgProcThreadInfo &newThread) {
+    for (vector<DbgProcThreadInfo>::const_iterator it = m_vThreadMap.begin() ; it != m_vThreadMap.end() ; it++)
+    {
+        if (it->m_dwThreadId == newThread.m_dwThreadId)
+        {
+            return;
+        }
+    }
+
+    m_vThreadMap.push_back(newThread);
+}
+
 void CProcDbgger::OnCreateThread(CREATE_THREAD_DEBUG_INFO* CreateThread)
 {
     DbgProcThreadInfo newThread;
-    newThread.m_dwThreadNum = (DWORD)GetInstance()->m_vThreadMap.size();
     newThread.m_dwThreadId = ((DEBUG_EVENT*)GetDebugData())->dwThreadId;
     newThread.m_dwStartAddr = (DWORD64)CreateThread->lpStartAddress;
     newThread.m_dwLocalBase = (DWORD64)CreateThread->lpThreadLocalBase;
     newThread.m_hThread = CreateThread->hThread;
-    GetInstance()->m_vThreadMap.push_back(newThread);
+
+    FILETIME a, b, c, d= {0};
+    GetThreadTimes(newThread.m_hThread, &a, &b, &c, &d);
+    FileTimeToLocalFileTime(&a, &newThread.mStartTime);
+
+    SYSTEMTIME time = {0};
+    FileTimeToSystemTime(&a, &time);
+    newThread.mStartTimeStr = FormatA(
+        "%04d-%02d-%02d %02d:%02d:%02d %03d",
+        time.wYear,
+        time.wMonth,
+        time.wDay,
+        time.wHour,
+        time.wMinute,
+        time.wSecond,
+        time.wMilliseconds
+        );
+
+    dp(L"thread create:%d", newThread.m_dwThreadId);
+    GetInstance()->PushThread(newThread);
 }
 
 void CProcDbgger::OnExitThread(EXIT_THREAD_DEBUG_INFO* ExitThread)
@@ -423,8 +462,8 @@ void CProcDbgger::OnExitThread(EXIT_THREAD_DEBUG_INFO* ExitThread)
 void CProcDbgger::OnSystemBreakpoint(void* ExceptionData)
 {
     DWORD dwId = ((DEBUG_EVENT*)GetDebugData())->dwThreadId;
-    GetInstance()->m_dwCurrentThreadId = dwId;
-    HANDLE hThread = GetInstance()->GetThreadById(dwId);
+    GetInstance()->mCurrentThread = GetInstance()->GetThreadById(dwId);
+    HANDLE hThread = GetInstance()->mCurrentThread.m_hThread;
 
     if (!hThread)
     {
@@ -666,7 +705,7 @@ list<DbgModuleInfo> CProcDbgger::GetDllSet() const {
 list<STACKFRAME64> CProcDbgger::GetStackFrame(const mstring &wstrParam)
 {
     const int iMaxWalks = 1024;
-    HANDLE hCurrentThread = GetInstance()->GetCurrentThread();
+    HANDLE hCurrentThread = GetInstance()->GetCurrentThread().m_hThread;
     CONTEXT context = {0};
     context.ContextFlags = CONTEXT_FULL;
     ::GetThreadContext(hCurrentThread, &context);

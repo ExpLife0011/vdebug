@@ -792,18 +792,13 @@ CtrlReply CProcCmd::OnCmdTc(const mstring &param, const CmdUserParam *pParam)
     GetNumFromStr(str, dwSerial);
 
     CtrlReply reply;
-
-    DWORD dw = 0;
-    for (list<DbgProcThreadInfo>::const_iterator it = mProcDbgger->m_vThreadMap.begin() ; it != mProcDbgger->m_vThreadMap.end() ; it++, dw++)
+    if (dwSerial >= mProcDbgger->m_vThreadMap.size())
     {
-        if (dwSerial == dw || dwSerial == it->m_dwThreadId)
-        {
-            mProcDbgger->m_dwCurrentThreadId = it->m_dwThreadId;
-            reply.mShow = FormatA("切换至%d号线程成功，当前线程%x", dw, it->m_dwThreadId);
-            return reply;
-        }
+        reply.mShow = "未找到需要切换的线程";
+    } else {
+        mProcDbgger->mCurrentThread = mProcDbgger->m_vThreadMap[(int)dwSerial];
+        reply.mShow = FormatA("切换至0x%04x号线程成功，当前线程%x", dwSerial, mProcDbgger->mCurrentThread.m_dwThreadId);
     }
-    reply.mShow = "未找到需要切换的线程";
     return reply;
 }
 
@@ -831,29 +826,35 @@ CtrlReply CProcCmd::OnCmdLm(const mstring &param, const CmdUserParam *pParam)
 
 CtrlReply CProcCmd::OnCmdTs(const mstring &param, const CmdUserParam *pParam)
 {
-    list<ThreadInformation> threadSet = mProcDbgger->GetCurrentThreadSet();
+    vector<DbgProcThreadInfo> threadSet = mProcDbgger->GetThreadCache();
 
     PrintFormater pf;
-    pf << "线程ID" << "启动时间" << "状态" << "启动位置" << line_end;
-    for (list<ThreadInformation>::const_iterator it = threadSet.begin() ; it != threadSet.end() ; it++)
+    pf << "序号" <<"线程id" << "启动时间" << "状态" << "启动位置" << line_end;
+    int index = 0;
+    for (vector<DbgProcThreadInfo>::const_iterator it = threadSet.begin() ; it != threadSet.end() ; it++, index++)
     {
-        string a = FormatA("0x%08x", it->m_dwThreadId);
+        string a = FormatA("0x%04x", index);
+        string b = FormatA("0x%08x", it->m_dwThreadId);
+        string c = it->mStartTimeStr;
+        string d = "正常运行";
 
-        SYSTEMTIME time = {0};
-        FileTimeToSystemTime(&(it->m_vCreateTime), &time);
-        string b = FormatA(
-            "%04d-%02d-%02d %02d:%02d:%02d %03d ",
-            time.wYear,
-            time.wMonth,
-            time.wDay,
-            time.wHour,
-            time.wMinute,
-            time.wSecond,
-            time.wMilliseconds
-            );
-        string c = "正常运行";
-        string d = FormatA("0x%08x %hs", it->m_dwStartAddr, CDbgCommon::GetSymFromAddr((DWORD64)it->m_dwStartAddr).c_str());
-        pf << a << b << c << d << line_end;
+        DbgModuleInfo module = mProcDbgger->GetModuleFromAddr((DWORD64)it->m_dwStartAddr);
+        mstring symbol = CDbgCommon::GetSymFromAddr((DWORD64)it->m_dwStartAddr);
+        mstring tmp = symbol;
+
+        if (tmp.empty())
+        {
+            mstring dllName = module.m_strDllName;
+            size_t pos = dllName.rfind(".");
+            if (mstring::npos != pos)
+            {
+                dllName = dllName.substr(0, pos);
+            }
+            tmp = FormatA("%hs!0x%x", dllName.c_str(), it->m_dwStartAddr - module.m_dwBaseOfImage);
+        }
+
+        string e = FormatA("0x%08x %hs", (DWORD)it->m_dwStartAddr, tmp.c_str());
+        pf << a << b << c << d << e << line_end;
     }
 
     CtrlReply result;

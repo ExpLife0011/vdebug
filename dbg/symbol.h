@@ -64,7 +64,6 @@ struct CTaskLoadSymbol
     DWORD64 m_dwBaseOfModule;   //IN
 
     DbgModuleInfo m_ModuleInfo; //OUT
-    //CCmdBase *m_pCmdEngine;     //OUT
 };
 
 struct CTaskSymbolFromAddr
@@ -188,7 +187,7 @@ protected:
 protected:
     SymbolLoadInfo GetLoadInfoByAddr(DWORD64 addr) const;
     //符号是否已经被加载
-    bool IsSymbolLoaded(DWORD64 addr) const;
+    bool IsSymbolLoaded(const mstring &dllName, DWORD64 addr) const;
     //重新加载指定模块
     bool ReloadModule(const mstring &wstrDll, DWORD64 dwBaseOfModule);
     //卸载指定模块符号

@@ -1,5 +1,6 @@
 #include <Windows.h>
 #include <DbgHelp.h>
+#include <time.h>
 #include "minidump.h"
 #include "symbol.h"
 #include "DbgCommon.h"
@@ -70,6 +71,12 @@ bool CMiniDumpHlpr::LoadSystemInfo() {
     return true;
 }
 
+mstring CMiniDumpHlpr::GetVersionStr(const VS_FIXEDFILEINFO &version) const {
+    DWORD dwVerMS = version.dwProductVersionMS;  
+    DWORD dwVerLS = version.dwProductVersionLS;
+    return FormatA("%d.%d.%d.%d", (dwVerMS >> 16), (dwVerMS & 0xFFFF), (dwVerLS >> 16), (dwVerLS & 0xFFFF));
+}
+
 bool CMiniDumpHlpr::LoadModuleSet() {
     DWORD dwStreamSize = 0;
     LPVOID pStream = GetSpecStream(ModuleListStream, dwStreamSize);
@@ -92,6 +99,22 @@ bool CMiniDumpHlpr::LoadModuleSet() {
         info.m_strModulePath.append(WtoA(ustring(pStr->Buffer, pStr->Length / sizeof(WCHAR))));
         info.m_dwTimeStamp = pModule->TimeDateStamp;
         info.m_strModuleName = PathFindFileNameA(info.m_strModulePath.c_str());
+        info.mVersion = GetVersionStr(pModule->VersionInfo);
+        info.m_dwTimeStamp = pModule->TimeDateStamp;
+
+        time_t t2 = info.m_dwTimeStamp;
+        tm m2 = {0};
+        localtime_s(&m2, &t2);
+        info.mTimeStr = FormatA(
+            "%04d-%02d-%02d %02d:%02d:%02d",
+            m2.tm_year + 1900,
+            m2.tm_mon + 1,
+            m2.tm_mday,
+            m2.tm_hour,
+            m2.tm_min,
+            m2.tm_sec
+            );
+        info.mVersion = GetVersionStr(pModule->VersionInfo);
         m_vModuleSet.push_back(info);
     }
     return true;
@@ -184,16 +207,21 @@ bool CMiniDumpHlpr::LoadSymbolFromImage(const mstring &image, DWORD64 baseAddr) 
     CTaskLoadSymbol loadInfo;
     loadInfo.m_dwBaseOfModule = baseAddr;
     loadInfo.m_hImgaeFile = CreateFileA(image.c_str(), GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL);
+    HandleAutoClose abc(loadInfo.m_hImgaeFile);
+
+    if (loadInfo.m_hImgaeFile == NULL || INVALID_HANDLE_VALUE == loadInfo.m_hImgaeFile)
+    {
+        int dd = 123;
+    }
     task.m_dwSize = sizeof(CSymbolTaskHeader) + sizeof(CTaskLoadSymbol);
     task.m_pParam = &loadInfo;
     task.m_eTaskType = em_task_loadsym;
 
     CSymbolHlpr::GetInst()->SendTask(&task);
-    return true;
+    return (TRUE == task.m_bSucc);
 }
 
 bool CMiniDumpHlpr::LoadSymbol(DWORD64 baseAddr) {
-    bool loadSucc = false;
     for (list<DumpModuleInfo>::iterator it = m_vModuleSet.begin() ; it != m_vModuleSet.end() ; it++)
     {
         if (it->m_dwBaseAddr == baseAddr)
@@ -233,13 +261,12 @@ bool CMiniDumpHlpr::LoadSymbol(DWORD64 baseAddr) {
             }
             */
             PVOID ptr = DisableWow64Red();
-            LoadSymbolFromImage(module.m_strModulePath, module.m_dwBaseAddr);
+            it->mLoadSymbol = LoadSymbolFromImage(module.m_strModulePath, module.m_dwBaseAddr);
             RevertWow64Red(ptr);
-            loadSucc = true;
-            break;
+            return (TRUE == it->mLoadSymbol);
         }
     }
-    return loadSucc;
+    return false;
 }
 
 void CMiniDumpHlpr::LoadAllSymbol() {
@@ -341,6 +368,12 @@ DumpModuleInfo CMiniDumpHlpr::GetModuleFromAddr(DWORD64 addr) const {
 mstring CMiniDumpHlpr::GetDumpSymbol(DWORD64 addr) {
     DumpModuleInfo module  = GetModuleFromAddr(addr);
 
+    if (module.m_strModuleName.empty())
+    {
+        dp(L"dll losed,addr:%d", (DWORD)addr);
+        return "";
+    }
+
     if (module.m_dwBaseAddr == 0)
     {
         return "";
@@ -357,32 +390,59 @@ mstring CMiniDumpHlpr::GetDumpSymbol(DWORD64 addr) {
         }
     }
 
+    mstring symbol;
     if (loadSucc)
     {
-        return CDbgCommon::GetSymFromAddr(addr);
+        symbol = CDbgCommon::GetSymFromAddr(addr);
     }
 
-    mstring dll = module.m_strModuleName;
-    size_t pos = dll.rfind(".");
-    if (pos != mstring::npos)
+    if (symbol.empty())
     {
-        dll = dll.substr(0, pos);
-    }
+        mstring dll = module.m_strModuleName;
+        if (dll.empty())
+        {
+            int dd = 123;
+        }
 
-    return FormatA("%hs!0x%x", dll.c_str(), addr - module.m_dwBaseAddr);
+        size_t pos = dll.rfind(".");
+        if (pos != mstring::npos)
+        {
+            dll = dll.substr(0, pos);
+        }
+
+        symbol = FormatA("%hs!0x%x", dll.c_str(), addr - module.m_dwBaseAddr);
+    }
+    return symbol;
 }
 
-bool CMiniDumpHlpr::GetCallStack()
+DumpThreadInfo CMiniDumpHlpr::GetThreadByTid(int tid) const {
+    for (list<DumpThreadInfo>::const_iterator it = m_vThreadSet.begin() ; it != m_vThreadSet.end() ; it++)
+    {
+        if (tid == it->m_dwThreadId)
+        {
+            return *it;
+        }
+    }
+    return DumpThreadInfo();
+}
+
+list<STACKFRAME64> CMiniDumpHlpr::GetStackFrame(int tid)
 {
     LoadAllSymbol();
+    DumpThreadInfo threadInfo = GetThreadByTid(tid);
+
+    if (threadInfo.m_dwThreadId == 0)
+    {
+        return list<STACKFRAME64>();
+    }
 
     STACKFRAME64 frame = {0};
     DWORD machineType = IMAGE_FILE_MACHINE_I386;
-    frame.AddrPC.Offset = mCurThread.m_context.m_dwCip;
+    frame.AddrPC.Offset = threadInfo.m_context.m_dwCip;
     frame.AddrPC.Mode = AddrModeFlat;
-    frame.AddrFrame.Offset = mCurThread.m_context.m_dwCbp;
+    frame.AddrFrame.Offset = threadInfo.m_context.m_dwCbp;
     frame.AddrFrame.Mode = AddrModeFlat;
-    frame.AddrStack.Offset = mCurThread.m_context.m_dwCsp;
+    frame.AddrStack.Offset = threadInfo.m_context.m_dwCsp;
     frame.AddrStack.Mode = AddrModeFlat;
 
     CTaskStackWalkInfo info;
@@ -396,7 +456,11 @@ bool CMiniDumpHlpr::GetCallStack()
     header.m_eTaskType = em_task_stackwalk;
     header.m_pParam = &info;
     CSymbolHlpr::GetInst()->SendTask(&header);
-    return true;
+    return info.m_FrameSet;
+}
+
+list<STACKFRAME64> CMiniDumpHlpr::GetCurrentStackFrame() {
+    return GetStackFrame(mCurThread.m_dwThreadId);
 }
 
 DumpException CMiniDumpHlpr::GetException() {
