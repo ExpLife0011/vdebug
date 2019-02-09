@@ -119,7 +119,7 @@ bool CSymbolHlpr::IsSymbolLoaded(const mstring &dllName, DWORD64 addr) const
 
     if (info.ModuleName[0])
     {
-        ErrMessage(L"该地址的模块已经被加载:%ls", info.ModuleName[0]);
+        ErrMessage(L"该地址的模块已经被加载:%ls", info.ModuleName);
     }
     return false;
 }

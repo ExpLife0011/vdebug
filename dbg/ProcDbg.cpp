@@ -60,7 +60,8 @@ void CProcDbgger::GuCmdCallback()
 {
     HANDLE hThread = GetInstance()->GetCurrentThread().m_hThread;
     TITAN_ENGINE_CONTEXT_t context = GetInstance()->GetThreadContext(hThread);
-    mstring strSymbol = CDbgCommon::GetSymFromAddr((DWORD64)context.cip);
+    DbgModuleInfo module = GetInstance()->GetModuleFromAddr((DWORD64)context.cip);
+    mstring strSymbol = CDbgCommon::GetSymFromAddr((DWORD64)context.cip, module.m_strDllName, module.m_dwBaseOfImage);
 
     Value result;
     result["addr"] = FormatA("0x%08x", (DWORD)context.cip);
@@ -554,7 +555,9 @@ void CProcDbgger::OnProgramException(EXCEPTION_DEBUG_INFO* ExceptionData) {
     pf << "关联异常" << FormatA("0x%08x", ExceptionData->ExceptionRecord.ExceptionRecord) << line_end;
 
     void *addr = ExceptionData->ExceptionRecord.ExceptionAddress;
-    mstring symbol = CDbgCommon::GetSymFromAddr((DWORD64)addr);
+
+    DbgModuleInfo module = GetInstance()->GetModuleFromAddr((DWORD64)addr);
+    mstring symbol = CDbgCommon::GetSymFromAddr((DWORD64)addr, module.m_strDllName, module.m_dwBaseOfImage);
     pf << "异常地址" << FormatA("0x%08x %hs", (DWORD)addr, symbol.c_str()) << line_end;
 
     GetInstance()->m_eDbggerStat = em_dbg_status_free;
@@ -606,7 +609,9 @@ bool CProcDbgger::DisassWithSize(DWORD64 dwAddr, DWORD64 dwSize, CtrlReply &resu
 {
     CDisasmParser Disasm(GetDbgProc());
     vector<DisasmInfo> vDisasmSet;
-    mstring str = CDbgCommon::GetSymFromAddr(dwAddr);
+
+    DbgModuleInfo module = GetInstance()->GetModuleFromAddr(dwAddr);
+    mstring str = CDbgCommon::GetSymFromAddr(dwAddr, module.m_strDllName, module.m_dwBaseOfImage);
     str += ":";
 
     result.mShow = str + "\n";
@@ -632,7 +637,8 @@ bool CProcDbgger::DisassWithAddr(DWORD64 dwStartAddr, DWORD64 dwEndAddr, CtrlRep
 
     DWORD64 dwSize = (dwEndAddr - dwStartAddr + 16);
     CDisasmParser Disasm(GetDbgProc());
-    mstring str = CDbgCommon::GetSymFromAddr(dwStartAddr);
+    DbgModuleInfo module = GetModuleFromAddr(dwStartAddr);
+    mstring str = CDbgCommon::GetSymFromAddr(dwStartAddr, module.m_strDllName, module.m_dwBaseOfImage);
     str += ":";
     result.mShow = str + "\n";
 
@@ -658,7 +664,8 @@ bool CProcDbgger::DisassUntilRet(DWORD64 dwStartAddr, CtrlReply &result) const
 {
     CDisasmParser Disasm(GetDbgProc());
     vector<DisasmInfo> disasmSet;
-    mstring str = CDbgCommon::GetSymFromAddr(dwStartAddr);
+    DbgModuleInfo module = GetModuleFromAddr(dwStartAddr);
+    mstring str = CDbgCommon::GetSymFromAddr(dwStartAddr, module.m_strDllName, module.m_dwBaseOfImage);
     str += ":";
     result.mShow = str + "\n";
 

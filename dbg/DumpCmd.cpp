@@ -1,5 +1,6 @@
 #include "DumpCmd.h"
 #include "minidump.h"
+#include "DbgCommon.h"
 
 CDumpCmd::CDumpCmd() {
 }
@@ -117,7 +118,9 @@ CtrlReply CDumpCmd::OnCmdKv(const std::mstring &cmd, const CmdUserParam *pParam)
         single.mParam1 = FormatA("%08x", it->Params[1]);
         single.mParam2 = FormatA("%08x", it->Params[2]);
         single.mParam3 = FormatA("%08x", it->Params[3]);
-        single.mFunction = FormatA("%hs", CMiniDumpHlpr::GetInst()->GetDumpSymbol((DWORD64)it->AddrPC.Offset).c_str());
+
+        DumpModuleInfo module = CMiniDumpHlpr::GetInst()->GetModuleFromAddr((DWORD64)it->AddrPC.Offset);
+        single.mFunction = FormatA("%hs", CDbgCommon::GetSymFromAddr((DWORD64)it->AddrPC.Offset, module.m_strModuleName, module.m_dwBaseAddr).c_str());
         callSet.mCallStack.push_back(single);
 
         pf << single.mAddr << single.mReturn << single.mParam0 << single.mParam1 << single.mParam2 << single.mParam3 << single.mFunction << line_end;
@@ -149,21 +152,38 @@ CtrlReply CDumpCmd::OnCmdDa(const std::mstring &cmd, const CmdUserParam *pParam)
 }
 
 CtrlReply CDumpCmd::OnCmdReg(const std::mstring &cmd, const CmdUserParam *pParam) {
-    list<DumpThreadInfo> threadSet = CMiniDumpHlpr::GetInst()->GetThreadSet();
+    DumpThreadInfo curThread = CMiniDumpHlpr::GetInst()->GetCurThread();
 
-    CtrlReply reply;
-    return reply;
+    CONTEXTx64 *pContext = curThread.m_context.mFullContext;
+    DumpModuleInfo module = CMiniDumpHlpr::GetInst()->GetModuleFromAddr(pContext->Rip);
+    mstring symbol = CDbgCommon::GetSymFromAddr((DWORD64)pContext->Rip, module.m_strModuleName, module.m_dwBaseAddr);;
+
+    CtrlReply result;
+    PrintFormater pf;
+    pf << FormatA("eax=0x%08x", (DWORD)pContext->Rax) << FormatA("ebx=0x%08x", (DWORD)pContext->Rbx);
+    pf << FormatA("ecx=0x%08x", (DWORD)pContext->Rcx) << FormatA("edx=0x%08x", (DWORD)pContext->Rdx) << line_end;
+
+    pf << FormatA("esi=0x%08x", (DWORD)pContext->Rsi) << FormatA("edi=0x%08x", (DWORD)pContext->Rdi);
+    pf << FormatA("eip=0x%08x", (DWORD)pContext->Rip) << FormatA("esp=0x%08x", (DWORD)pContext->Rsp) << line_end;
+
+    pf << FormatA("ebp=0x%08x", (DWORD)pContext->Rbp) << space << space << space << line_end;
+    result.mShow = pf.GetResult();
+    pf.Reset();
+
+    pf << FormatA("当前指令位置 0x%08x %hs", (DWORD)pContext->Rip, symbol.c_str()) << line_end;
+    result.mShow += pf.GetResult();
+    return result;
 }
 
 CtrlReply CDumpCmd::OnCmdTs(const std::mstring &cmd, const CmdUserParam *pParam) {
-    list<DumpThreadInfo> threadSet = CMiniDumpHlpr::GetInst()->GetThreadSet();
+    vector<DumpThreadInfo> threadSet = CMiniDumpHlpr::GetInst()->GetThreadSet();
 
     PrintFormater pf;
     pf << "序号" << "线程ID" << "teb" << "代码位置" << line_end;
-    for (list<DumpThreadInfo>::const_iterator it = threadSet.begin() ; it != threadSet.end() ; it++)
+    for (vector<DumpThreadInfo>::const_iterator it = threadSet.begin() ; it != threadSet.end() ; it++)
     {
         string a = FormatA("0x%02x", it->mIndex);
-        string b = FormatA("0x%08x", it->m_dwThreadId);
+        string b = FormatA("0x%08x(%d)", it->m_dwThreadId, it->m_dwThreadId);
         string c = FormatA("0x%08x", (DWORD)it->m_dwTeb);
         string d = FormatA("0x%08x %hs", (DWORD)it->m_context.m_dwCip, it->mCipSymbol.c_str());
         pf << a << b << c << d << line_end;
@@ -174,8 +194,23 @@ CtrlReply CDumpCmd::OnCmdTs(const std::mstring &cmd, const CmdUserParam *pParam)
     return result;
 }
 
-CtrlReply CDumpCmd::OnCmdTc(const std::mstring &cmd, const CmdUserParam *pParam) {
+CtrlReply CDumpCmd::OnCmdTc(const std::mstring &param, const CmdUserParam *pParam) {
+    mstring str(param);
+    str.trim();
+
+    DWORD64 dwSerial = 0;
+    GetNumFromStr(str, dwSerial);
+
     CtrlReply reply;
+    vector<DumpThreadInfo> threadSet = CMiniDumpHlpr::GetInst()->GetThreadSet();
+    if (dwSerial >= threadSet.size())
+    {
+        reply.mShow = "未找到需要切换的线程";
+    } else {
+        CMiniDumpHlpr::GetInst()->SetCurThread(threadSet[(int)dwSerial].m_dwThreadId);
+        DWORD tid = (DWORD)threadSet[(DWORD)dwSerial].m_dwThreadId;
+        reply.mShow = FormatA("切换至0x%04x号线程成功，当前线程0x%08x(%d)\n", (DWORD)dwSerial, tid, tid);
+    }
     return reply;
 }
 

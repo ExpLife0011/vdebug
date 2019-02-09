@@ -73,7 +73,8 @@ mstring DumpDbgProxy::GetExceptionDesc(const DumpException &exception) const {
     }
 
     DWORD64 addr = exception.mExceptionAddress;
-    mstring symbol = CMiniDumpHlpr::GetInst()->GetDumpSymbol(addr);
+    DumpModuleInfo module = CMiniDumpHlpr::GetInst()->GetModuleFromAddr(addr); 
+    mstring symbol = CDbgCommon::GetSymFromAddr(addr, module.m_strModuleName, module.m_dwBaseAddr);
     pf << "Òì³£µØÖ·" << FormatA("0x%08x %hs", (DWORD)addr, symbol.c_str()) << line_end;
     return (result + pf.GetResult());
 }

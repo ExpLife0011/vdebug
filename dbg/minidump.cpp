@@ -26,6 +26,22 @@ bool CMiniDumpHlpr::WriteDump(const mstring &strFilePath) const
     return true;
 }
 
+bool CMiniDumpHlpr::ResetStat() {
+    CSymbolHlpr::GetInst()->UnloadAll();
+
+    m_vModuleSet.clear();
+    for (vector<DumpThreadInfo>::iterator it = m_vThreadSet.begin() ; it != m_vThreadSet.end() ; it++)
+    {
+        delete it->m_context.mFullContext;
+    }
+    m_vThreadSet.clear();
+    m_vMemory.clear();
+    mException = DumpException();
+    mSystemInfo = DumpSystemInfo();
+    mCurThread = DumpThreadInfo();
+    return true;
+}
+
 bool CMiniDumpHlpr::LodeDump(const mstring &strFilePath)
 {
     m_pDumpFile = MappingFileA(strFilePath.c_str(), FALSE, 0);
@@ -35,12 +51,14 @@ bool CMiniDumpHlpr::LodeDump(const mstring &strFilePath)
         return false;
     }
 
+    ResetStat();
     bool stat = true;
     stat &= LoadSystemInfo();
     stat &= LoadMemorySet();
     stat &= LoadModuleSet();
     stat &= LoadThreadSet();
     LoadException();
+    LoadAllSymbol();
     return stat;
 }
 
@@ -149,10 +167,14 @@ bool CMiniDumpHlpr::LoadThreadSet() {
         info.m_context.m_dwCsi = pContext->Rsi;
         info.m_context.m_dwCsp = pContext->Rsp;
         info.m_context.m_dwCip = pContext->Rip;
+        info.m_context.mFullContext = new CONTEXTx64();
+        memcpy(info.m_context.mFullContext, pContext, sizeof(CONTEXTx64));
         info.m_stack = stack;
         info.m_dwThreadId = pThread->ThreadId;
         info.m_dwTeb = pThread->Teb;
-        info.mCipSymbol = GetDumpSymbol(info.m_context.m_dwCip);
+
+        DumpModuleInfo module = GetModuleFromAddr(info.m_context.m_dwCip);
+        info.mCipSymbol = CDbgCommon::GetSymFromAddr(info.m_context.m_dwCip, module.m_strModuleName, module.m_dwBaseAddr);
         m_vThreadSet.push_back(info);
     }
     mCurThread = *m_vThreadSet.begin();
@@ -291,7 +313,7 @@ list<DumpModuleInfo> CMiniDumpHlpr::GetModuleSet() const
     return m_vModuleSet;
 }
 
-list<DumpThreadInfo> CMiniDumpHlpr::GetThreadSet() const
+vector<DumpThreadInfo> CMiniDumpHlpr::GetThreadSet() const
 {
     return m_vThreadSet;
 }
@@ -365,58 +387,13 @@ DumpModuleInfo CMiniDumpHlpr::GetModuleFromAddr(DWORD64 addr) const {
     return DumpModuleInfo();
 }
 
-mstring CMiniDumpHlpr::GetDumpSymbol(DWORD64 addr) {
+bool CMiniDumpHlpr::LoadSymbolByAddr(DWORD64 addr) {
     DumpModuleInfo module  = GetModuleFromAddr(addr);
-
-    if (module.m_strModuleName.empty())
-    {
-        dp(L"dll losed,addr:%d", (DWORD)addr);
-        return "";
-    }
-
-    if (module.m_dwBaseAddr == 0)
-    {
-        return "";
-    }
-
-    bool loadSucc = false;
-    if (module.mLoadSymbol == TRUE)
-    {
-        loadSucc = true;
-    } else {
-        if (module.mLoadFaild != TRUE)
-        {
-            loadSucc = LoadSymbol(module.m_dwBaseAddr);
-        }
-    }
-
-    mstring symbol;
-    if (loadSucc)
-    {
-        symbol = CDbgCommon::GetSymFromAddr(addr);
-    }
-
-    if (symbol.empty())
-    {
-        mstring dll = module.m_strModuleName;
-        if (dll.empty())
-        {
-            int dd = 123;
-        }
-
-        size_t pos = dll.rfind(".");
-        if (pos != mstring::npos)
-        {
-            dll = dll.substr(0, pos);
-        }
-
-        symbol = FormatA("%hs!0x%x", dll.c_str(), addr - module.m_dwBaseAddr);
-    }
-    return symbol;
+    return LoadSymbol(module.m_dwBaseAddr);
 }
 
 DumpThreadInfo CMiniDumpHlpr::GetThreadByTid(int tid) const {
-    for (list<DumpThreadInfo>::const_iterator it = m_vThreadSet.begin() ; it != m_vThreadSet.end() ; it++)
+    for (vector<DumpThreadInfo>::const_iterator it = m_vThreadSet.begin() ; it != m_vThreadSet.end() ; it++)
     {
         if (tid == it->m_dwThreadId)
         {
@@ -466,15 +443,15 @@ list<STACKFRAME64> CMiniDumpHlpr::GetCurrentStackFrame() {
 DumpException CMiniDumpHlpr::GetException() {
     if (mException.mSymbol.empty())
     {
-        mException.mSymbol = GetDumpSymbol(mException.mExceptionAddress);
-        int dd = 123;
+        DumpModuleInfo module = GetModuleFromAddr(mException.mExceptionAddress);
+        mException.mSymbol = CDbgCommon::GetSymFromAddr(mException.mExceptionAddress, module.m_strModuleName, module.m_dwBaseAddr);
     }
     
     return mException;
 }
 
 bool CMiniDumpHlpr::SetCurThread(DWORD tid) {
-    for (list<DumpThreadInfo>::const_iterator it = m_vThreadSet.begin() ; it != m_vThreadSet.end() ; it++)
+    for (vector<DumpThreadInfo>::const_iterator it = m_vThreadSet.begin() ; it != m_vThreadSet.end() ; it++)
     {
         if (it->m_dwThreadId == tid)
         {

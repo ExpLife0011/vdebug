@@ -429,7 +429,8 @@ CtrlReply CProcCmd::OnCmdReg(const mstring &cmdParam, const CmdUserParam *pParam
 {
     RegisterContent ctx;
     ctx.mContext = mProcDbgger->GetCurrentContext();
-    ctx.mCipStr = CDbgCommon::GetSymFromAddr((DWORD64)ctx.mContext.cip);
+    DbgModuleInfo module = mProcDbgger->GetModuleFromAddr((DWORD64)ctx.mContext.cip);
+    ctx.mCipStr = CDbgCommon::GetSymFromAddr((DWORD64)ctx.mContext.cip, module.m_strDllName, module.m_dwBaseOfImage);;
 
     CtrlReply result;
     result.mResult = EncodeCmdRegister(ctx);
@@ -772,7 +773,9 @@ CtrlReply CProcCmd::OnCmdKv(const mstring &cmdParam, const CmdUserParam *pParam)
         single.mParam1 = FormatA("%08x", it->Params[1]);
         single.mParam2 = FormatA("%08x", it->Params[2]);
         single.mParam3 = FormatA("%08x", it->Params[3]);
-        single.mFunction = FormatA("%hs", CDbgCommon::GetSymFromAddr((DWORD64)it->AddrPC.Offset).c_str());
+
+        DbgModuleInfo module = mProcDbgger->GetModuleFromAddr((DWORD64)it->AddrPC.Offset);
+        single.mFunction = FormatA("%hs", CDbgCommon::GetSymFromAddr((DWORD64)it->AddrPC.Offset, module.m_strDllName, module.m_dwBaseOfImage).c_str());
         callSet.mCallStack.push_back(single);
 
         pf << single.mAddr << single.mReturn << single.mParam0 << single.mParam1 << single.mParam2 << single.mParam3 << single.mFunction << line_end;
@@ -797,7 +800,7 @@ CtrlReply CProcCmd::OnCmdTc(const mstring &param, const CmdUserParam *pParam)
         reply.mShow = "未找到需要切换的线程";
     } else {
         mProcDbgger->mCurrentThread = mProcDbgger->m_vThreadMap[(int)dwSerial];
-        reply.mShow = FormatA("切换至0x%04x号线程成功，当前线程%x", dwSerial, mProcDbgger->mCurrentThread.m_dwThreadId);
+        reply.mShow = FormatA("切换至0x%04x号线程成功，当前线程0x%x\n", (DWORD)dwSerial, mProcDbgger->mCurrentThread.m_dwThreadId);
     }
     return reply;
 }
@@ -834,24 +837,13 @@ CtrlReply CProcCmd::OnCmdTs(const mstring &param, const CmdUserParam *pParam)
     for (vector<DbgProcThreadInfo>::const_iterator it = threadSet.begin() ; it != threadSet.end() ; it++, index++)
     {
         string a = FormatA("0x%04x", index);
-        string b = FormatA("0x%08x", it->m_dwThreadId);
+        string b = FormatA("0x%08x(%d)", it->m_dwThreadId, it->m_dwThreadId);
         string c = it->mStartTimeStr;
         string d = "正常运行";
 
         DbgModuleInfo module = mProcDbgger->GetModuleFromAddr((DWORD64)it->m_dwStartAddr);
-        mstring symbol = CDbgCommon::GetSymFromAddr((DWORD64)it->m_dwStartAddr);
+        mstring symbol = CDbgCommon::GetSymFromAddr((DWORD64)it->m_dwStartAddr, module.m_strDllName, module.m_dwBaseOfImage);
         mstring tmp = symbol;
-
-        if (tmp.empty())
-        {
-            mstring dllName = module.m_strDllName;
-            size_t pos = dllName.rfind(".");
-            if (mstring::npos != pos)
-            {
-                dllName = dllName.substr(0, pos);
-            }
-            tmp = FormatA("%hs!0x%x", dllName.c_str(), it->m_dwStartAddr - module.m_dwBaseOfImage);
-        }
 
         string e = FormatA("0x%08x %hs", (DWORD)it->m_dwStartAddr, tmp.c_str());
         pf << a << b << c << d << e << line_end;

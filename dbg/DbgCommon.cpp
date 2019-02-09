@@ -110,7 +110,7 @@ std::mstring CDbgCommon::GetExceptionDesc(DWORD code) {
     return exceptionDesc;
 }
 
-std::mstring CDbgCommon::GetSymFromAddr(DWORD64 dwAddr) {
+std::mstring CDbgCommon::GetSymFromAddr(DWORD64 dwAddr, const mstring &dllName, DWORD64 moduleBase) {
     CTaskSymbolFromAddr task;
     task.mAddr = (DWORD64)dwAddr;
     CSymbolTaskHeader header;
@@ -123,7 +123,14 @@ std::mstring CDbgCommon::GetSymFromAddr(DWORD64 dwAddr) {
 
     if (header.m_bSucc != TRUE)
     {
-        return "";
+        mstring tmp = dllName;
+        size_t pos = tmp.rfind('.');
+
+        if (mstring::npos != pos)
+        {
+            tmp = tmp.substr(0, pos);
+        }
+        return FormatA("%hs!0x%x", tmp.c_str(), (DWORD)(dwAddr - moduleBase));
     }
 
     mstring str = task.mDllName;

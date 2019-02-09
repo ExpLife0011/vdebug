@@ -3,6 +3,7 @@
 #include <Windows.h>
 #include <DbgHelp.h>
 #include <list>
+#include <vector>
 #include <ComStatic/ComStatic.h>
 #include <ComLib/ComLib.h>
 
@@ -151,6 +152,11 @@ struct DumpContext
     DWORD64 m_dwCsi;
     DWORD64 m_dwCbp;
     DWORD64 m_dwCip;
+    CONTEXTx64 *mFullContext;
+
+    DumpContext() {
+        memset(this, 0x00, sizeof(DumpContext));
+    }
 };
 
 struct DumpModuleInfo
@@ -251,7 +257,7 @@ public:
     bool WriteDump(const mstring &strFilePath) const;
     bool LodeDump(const mstring &strFilePath);
     list<DumpModuleInfo> GetModuleSet() const;
-    list<DumpThreadInfo> GetThreadSet() const;
+    vector<DumpThreadInfo> GetThreadSet() const;
     DumpThreadInfo GetCurThread() const;
     list<DumpMemoryInfo> GetMemoryInfo() const;
     DumpSystemInfo GetSystemInfo() const;
@@ -261,7 +267,9 @@ public:
     list<STACKFRAME64> GetStackFrame(int tid);
     list<STACKFRAME64> GetCurrentStackFrame();
     DumpThreadInfo GetThreadByTid(int tid) const;
-    std::mstring GetDumpSymbol(DWORD64 addr);
+    //获取dump符号信息，dump和普通的进程调试不同，dump可能需要获取本地没有的pe文件的符号，需要特殊处理
+    DumpModuleInfo GetModuleFromAddr(DWORD64 addr) const;
+    bool LoadSymbolByAddr(DWORD64 addr);
 
 protected:
     bool LoadSystemInfo();
@@ -269,19 +277,18 @@ protected:
     bool LoadThreadSet();
     bool LoadMemorySet();
     bool LoadException();
-    bool LoadSymbol(DWORD64 baseAddr);
     bool LoadSymbolFromImage(const mstring &image, DWORD64 baseAddr) const;
     void LoadAllSymbol();
+    bool LoadSymbol(DWORD64 baseAddr);
     static DWORD64 CALLBACK GetModuelBaseFromAddr(HANDLE hProcess, DWORD64 dwAddr);
     static BOOL CALLBACK ReadDumpMemoryProc64(HANDLE hProcess, DWORD64 lpBaseAddress, PVOID lpBuffer, DWORD nSize, LPDWORD lpNumberOfBytesRead);
     LPVOID GetSpecStream(MINIDUMP_STREAM_TYPE eType, DWORD &dwStreamSize) const;
-    //获取dump符号信息，dump和普通的进程调试不同，dump可能需要获取本地没有的pe文件的符号，需要特殊处理
-    DumpModuleInfo GetModuleFromAddr(DWORD64 addr) const;
     mstring GetVersionStr(const VS_FIXEDFILEINFO &version) const;
+    bool ResetStat();
 
 protected:
     list<DumpModuleInfo> m_vModuleSet;
-    list<DumpThreadInfo> m_vThreadSet;
+    vector<DumpThreadInfo> m_vThreadSet;
     list<DumpMemoryInfo> m_vMemory;
     DumpException mException;
     DumpSystemInfo mSystemInfo;

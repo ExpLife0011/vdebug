@@ -101,7 +101,9 @@ BOOL CBreakPointMgr::SetBreakPoint(DWORD64 dwAddr, const CmdUserParam *pUserCont
     {
         BreakPointInfo point;
         point.mBpAddr = dwAddr;
-        point.mSymbol = CDbgCommon::GetSymFromAddr(dwAddr);
+
+        DbgModuleInfo module = CProcDbgger::GetInstance()->GetModuleFromAddr(dwAddr);
+        point.mSymbol = CDbgCommon::GetSymFromAddr(dwAddr, module.m_strDllName, module.m_dwBaseOfImage);
         point.mSerial = msSerial++;
         point.mBpType = em_breakpoint_int3;
 
