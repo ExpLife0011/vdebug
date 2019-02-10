@@ -28,7 +28,6 @@ std::mstring __stdcall GetProcPathByPid(IN DWORD dwPid);
 std::mstring __stdcall GetFilePathFromHandle(HANDLE hFile);
 
 std::mstring __stdcall GetStdErrorStr(DWORD dwErr = GetLastError());
-std::wstring __stdcall RegGetStrValueExW(HKEY hKey, LPCWSTR wszSubKey, LPCWSTR wszValue);
 
 struct ThreadInformation
 {

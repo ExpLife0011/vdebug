@@ -158,43 +158,6 @@ mstring __stdcall GetStdErrorStr
     return strMsg;
 }
 
-std::wstring __stdcall RegGetStrValueExW(HKEY hKey, LPCWSTR wszSubKey, LPCWSTR wszValue)
-{
-    if (!wszSubKey || !wszValue)
-    {
-        return L"";
-    }
-    DWORD dwLength = 0;
-    LPVOID pBuf = NULL;
-    DWORD dwType = 0;
-    SHGetValueW(
-        hKey,
-        wszSubKey,
-        wszValue,
-        &dwType,
-        (LPVOID)pBuf,
-        &dwLength
-        );
-    if (REG_SZ != dwType || !dwLength)
-    {
-        return L"";
-    }
-    dwLength += 2;
-    pBuf = new BYTE[dwLength];
-    memset(pBuf, 0x00, dwLength);
-    SHGetValueW(
-        hKey,
-        wszSubKey,
-        wszValue,
-        NULL,
-        pBuf,
-        &dwLength
-        );
-    std::wstring wstrRes = (LPCWSTR)pBuf;
-    delete []pBuf;
-    return wstrRes;
-}
-
 // 注意，此函数的第二个参数很畸形，如果在本函数内声明 PACL* 并且释放的话，则安全描述符失效
 // 为了应对此问题，需要调用方提供 PACL* 并在调用完此函数后自行释放内存
 static BOOL WINAPI _SecGenerateLowSD(SECURITY_DESCRIPTOR* pSecDesc, PACL* pDacl)

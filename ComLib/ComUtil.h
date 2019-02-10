@@ -75,6 +75,9 @@ DWORD __stdcall RegGetDWORDFromRegW(HKEY hKey, LPCWSTR subKey, LPCWSTR value, DW
 BOOL __stdcall RegSetDWORDValueA(HKEY hKey, LPCSTR szSubKey, LPCSTR szValue, DWORD dwData);
 BOOL __stdcall RegSetDWORDValueW(HKEY hKey, LPCWSTR wszSubKey, LPCWSTR wszValue, DWORD dwData);
 BOOL __stdcall RegSetStrValueW(HKEY hKey, LPCWSTR wszSubKey, LPCWSTR wszValue, LPCWSTR wszData);
+BOOL __stdcall RegSetStrValueA(HKEY hKey, LPCSTR szSubKey, LPCSTR szValue, LPCSTR szData);
+std::ustring __stdcall RegGetStrValueExW(HKEY hKey, LPCWSTR wszSubKey, LPCWSTR wszValue);
+std::mstring __stdcall RegGetStrValueExA(HKEY hKey, LPCSTR szSubKey, LPCSTR szValue);
 
 typedef BOOL (__stdcall* pfnRegValueHandlerA)(LPCSTR, void*);
 typedef BOOL (__stdcall* pfnRegValueHandlerW)(LPCWSTR, void*);

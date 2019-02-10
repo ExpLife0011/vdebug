@@ -1,13 +1,6 @@
 #ifndef DBGCTRL_DBGCTRL_H_H_
 #define DBGCTRL_DBGCTRL_H_H_
 
-enum DbggerStatus
-{
-    em_dbg_status_init,
-    em_dbg_status_busy,
-    em_dbg_status_free
-};
-
 #if _WIN64 || WIN64
     #ifdef _DEBUG
         #pragma comment(lib, "../Debug/DbgCtrl64.lib")

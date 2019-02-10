@@ -27,14 +27,6 @@ public:
     virtual CtrlReply DispatchSpecDbgger(DbggerType type, const CtrlRequest &request);
     virtual HDbgCtrl RegisterDbgEvent(const std::mstring &dbgEvent, pfnDbgEventProc pfn, void *param);
     virtual bool SetActivity(DbggerType type);
-    /*
-    virtual ~DbgServiceBase() {};
-    virtual bool InitDbgService(const std::mstring &unique) = 0;
-    virtual std::mstring DispatchCurDbgger(const CtrlRequest &request) = 0;
-    virtual std::mstring DispatchSpecDbgger(DbggerType type, CtrlRequest &request) = 0;
-    virtual HDbgCtrl RegisterDbgEvent(const std::mstring &dbgEvent, pfnDbgEventProc pfn, void *param) = 0;
-    virtual bool SetActivity(DbggerType type) = 0;
-    */
 
 private:
     std::mstring GetSpecChannel(DbggerType type) const;

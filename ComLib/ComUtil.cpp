@@ -1492,6 +1492,60 @@ BOOL __stdcall RegSetStrValueW(HKEY hKey, LPCWSTR wszSubKey, LPCWSTR wszValue, L
         ));
 }
 
+BOOL __stdcall RegSetStrValueA(HKEY hKey, LPCSTR szSubKey, LPCSTR szValue, LPCSTR szData) {
+    return (ERROR_SUCCESS == SHSetValueA(
+        hKey,
+        szSubKey,
+        szValue,
+        REG_SZ,
+        szData,
+        (lstrlenA(szData) + 1)
+        ));
+}
+
+std::ustring __stdcall RegGetStrValueExW(HKEY hKey, LPCWSTR wszSubKey, LPCWSTR wszValue)
+{
+    if (!wszSubKey || !wszValue)
+    {
+        return L"";
+    }
+    DWORD dwLength = 0;
+    LPVOID pBuf = NULL;
+    DWORD dwType = 0;
+    SHGetValueW(
+        hKey,
+        wszSubKey,
+        wszValue,
+        &dwType,
+        (LPVOID)pBuf,
+        &dwLength
+        );
+    if (REG_SZ != dwType || !dwLength)
+    {
+        return L"";
+    }
+    dwLength += 2;
+    pBuf = new BYTE[dwLength];
+    memset(pBuf, 0x00, dwLength);
+    SHGetValueW(
+        hKey,
+        wszSubKey,
+        wszValue,
+        NULL,
+        pBuf,
+        &dwLength
+        );
+    std::ustring wstrRes = (LPCWSTR)pBuf;
+    delete []pBuf;
+    return wstrRes;
+}
+
+std::mstring __stdcall RegGetStrValueExA(HKEY hKey, LPCSTR szSubKey, LPCSTR szValue) {
+    ustring wstr = RegGetStrValueExW(hKey, AtoW(szSubKey).c_str(), AtoW(szValue).c_str());
+
+    return WtoA(wstr);
+}
+
 void test()
 {
     int offset = (PhpoCurrentDirectory | PhpoWow64);

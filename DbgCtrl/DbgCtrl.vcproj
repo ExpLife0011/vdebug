@@ -198,6 +198,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\DbgStat.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\dllmain.cpp"
 				>
 			</File>
@@ -229,6 +233,10 @@
 			</File>
 			<File
 				RelativePath=".\DbgService.h"
+				>
+			</File>
+			<File
+				RelativePath=".\DbgStat.h"
 				>
 			</File>
 		</Filter>

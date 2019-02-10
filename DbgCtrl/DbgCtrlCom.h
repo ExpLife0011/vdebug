@@ -10,6 +10,13 @@ enum DbggerType {
     em_dbg_dump64
 };
 
+enum DbggerStatus
+{
+    em_dbg_status_init,
+    em_dbg_status_busy,
+    em_dbg_status_free
+};
+
 typedef long HDbgCtrl;
 
 #ifndef DBGCTRL_EXPORTS
