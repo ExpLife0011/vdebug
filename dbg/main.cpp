@@ -4,6 +4,7 @@
 #include <ComStatic/ComStatic.h>
 #include <ComLib/ComLib.h>
 #include <runner/runner.h>
+#include <DbgCtrl/DbgStat.h>
 #include "ProcDbgProxy.h"
 #include "DumpDbgProxy.h"
 #include "symbol.h"
@@ -88,6 +89,7 @@ int WINAPI WinMain(HINSTANCE hT, HINSTANCE hP, LPSTR szCmdLine, int iShow)
     size_t pos = cmd.rfind('_');
     mstring unique = cmd.substr(pos + 1, cmd.size() - pos - 1);
 
+    CDbgStatMgr::GetInst()->InitStatMgr(unique);
     ProcDbgProxy::GetInstance()->InitProcDbgProxy(unique.c_str());
     DumpDbgProxy::GetInstance()->InitDumpDbgProxy(unique.c_str());
 #ifdef _DEBUG

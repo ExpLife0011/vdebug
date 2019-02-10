@@ -486,7 +486,15 @@ void CProcDbgger::OnSystemBreakpoint(void* ExceptionData)
         return;
     }
 
+    DbgStat stat;
+    stat.mDbggerType = em_dbg_proc86;
+    stat.mDbggerStatus = em_dbg_status_free;
+    stat.mCurTid = dwId;
+    CDbgStatMgr::GetInst()->ReportDbgStatus(stat);
     GetInstance()->Wait();
+
+    stat.mDbggerStatus = em_dbg_status_busy;
+    CDbgStatMgr::GetInst()->ReportDbgStatus(stat);
 }
 
 bool CProcDbgger::LoadModuleInfo(HANDLE hFile, DWORD64 dwBaseOfModule)
@@ -566,7 +574,16 @@ void CProcDbgger::OnProgramException(EXCEPTION_DEBUG_INFO* ExceptionData) {
     eventInfo.mContent["tid"] = (int)((DEBUG_EVENT*)GetDebugData())->dwThreadId;
     mstring package = MakeEvent(eventInfo);
     MsgSend(CHANNEL_PROC_SERVER, package.c_str());
+
+    DbgStat stat;
+    stat.mDbggerType = em_dbg_proc86;
+    stat.mDbggerStatus = em_dbg_status_free;
+    stat.mCurTid = (int)((DEBUG_EVENT*)GetDebugData())->dwThreadId;
+    CDbgStatMgr::GetInst()->ReportDbgStatus(stat);
     GetInstance()->Wait();
+
+    stat.mDbggerStatus = em_dbg_status_busy;
+    CDbgStatMgr::GetInst()->ReportDbgStatus(stat);
 }
 
 void CProcDbgger::OnException(EXCEPTION_DEBUG_INFO* ExceptionData)

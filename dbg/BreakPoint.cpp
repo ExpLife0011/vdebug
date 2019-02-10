@@ -1,11 +1,8 @@
-#include "BreakPoint.h"
-//#include "common.h"
-//#include "MainView.h"
-#include "ProcDbg.h"
-//#include <SyntaxHlpr/SyntaxView.h>
-//#include <SyntaxHlpr/SyntaxParser.h>
+#include <Windows.h>
 #include <ComLib/ComLib.h>
 #include <mq/mq.h>
+#include "BreakPoint.h"
+#include "ProcDbg.h"
 #include "DbgCommon.h"
 
 DWORD CBreakPointMgr::msSerial = 0;
@@ -41,6 +38,12 @@ void CBreakPointMgr::Int3BpCallback()
         eventInfo.mShow = FormatA("触发用户断点 %hs %hs\n", result["addr"].asString().c_str(), bp.mSymbol.c_str());
 
         MsgSend(CHANNEL_PROC_SERVER, MakeEvent(eventInfo).c_str());
+
+        DbgStat stat;
+        stat.mDbggerType = em_dbg_proc86;
+        stat.mDbggerStatus = em_dbg_status_free;
+        stat.mCurTid = (int)((DEBUG_EVENT*)GetDebugData())->dwThreadId;
+        CDbgStatMgr::GetInst()->ReportDbgStatus(stat);
         CProcDbgger::GetInstance()->Wait();
     } else {
     }

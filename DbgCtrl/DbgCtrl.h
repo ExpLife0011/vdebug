@@ -19,4 +19,5 @@
 #include "DbgClient.h"
 #include "DbgCtrlCom.h"
 #include "DbgProtocol.h"
+#include "DbgStat.h"
 #endif //DBGCTRL_DBGCTRL_H_H_

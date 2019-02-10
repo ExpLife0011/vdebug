@@ -99,7 +99,7 @@ void CDbgStatMgr::UnRegisterStatusNotify(HDbgStatus index) {
 void CDbgStatMgr::OnDispatchStat() {
     mstring desc = RegGetStrValueExA(HKEY_LOCAL_MACHINE, mCachePath.c_str(), "desc");
 
-    if (desc != mStatDesc)
+    if (!desc.empty() && desc != mStatDesc)
     {
         DbgStat stat = ParserStatDesc(desc);
         for (list<DbgStatRegisterInfo>::const_iterator it = mRegisterCache.begin() ; it != mRegisterCache.end() ; it++)
