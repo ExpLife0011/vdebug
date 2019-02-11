@@ -30,7 +30,7 @@ bool CClientLogic::InitClient(unsigned short port) {
     m_tpool = GetThreadPool(1, 4);
 
     static int s_magic = 0xff23;
-    srand(GetTickCount() + s_magic++);
+    srand(GetTickCount() + s_magic++ + GetCurrentProcessId());
     m_clientUnique = FormatA(
         "%d_%04x%04x",
         GetCurrentProcessId(),
