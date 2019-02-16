@@ -4,7 +4,7 @@
 #include <vector>
 #include <list>
 #include <map>
-#include "mstring.h"
+#include <ComStatic/ComStatic.h>
 
 using namespace std;
 

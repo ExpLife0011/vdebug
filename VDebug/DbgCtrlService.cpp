@@ -40,6 +40,18 @@ bool DbgCtrlService::BreakDbgProcInCtrlService() const {
     return true;
 }
 
+void DbgCtrlService::DbgStatusNotifyProc(const DbgStat &status, void *param) {
+    int ddd = 123;
+    GetInstance()->m_stat = status.mDbggerStatus;
+    if (status.mDbggerStatus == em_dbg_status_init) {
+        SetCmdNotify(em_dbg_status_init, "初始状态");
+    } else if (status.mDbggerStatus == em_dbg_status_free) {
+        SetCmdNotify(em_dbg_status_free, FormatA("线程 %d >>", status.mCurTid));
+    } else if (status.mDbggerStatus == em_dbg_status_busy) {
+        SetCmdNotify(em_dbg_status_busy, "运行中");
+    }
+}
+
 bool DbgCtrlService::InitCtrlService() {
 #ifdef _DEBUG
     m_unique = UNIQUE_DEBUG;
@@ -56,6 +68,8 @@ bool DbgCtrlService::InitCtrlService() {
 
     m_pCtrlService = DbgServiceBase::GetInstance();
     m_pCtrlService->InitDbgService(m_unique.c_str());
+    CDbgStatMgr::GetInst()->InitStatMgr(m_unique);
+    CDbgStatMgr::GetInst()->RegisterStatusNotify(DbgStatusNotifyProc, NULL);
     CreateEventA(NULL, FALSE, FALSE, FormatA(SERVICE_EVENT, m_unique.c_str()).c_str());
 
 #ifdef _DEBUG
@@ -78,7 +92,6 @@ bool DbgCtrlService::InitCtrlService() {
     m_pCtrlService->RegisterDbgEvent(DBG_EVENT_MODULE_LOAD, OnModuleLoad, this);
     m_pCtrlService->RegisterDbgEvent(DBG_EVENT_MODULE_UNLOAD, OnModuleUnLoad, this);
     m_pCtrlService->RegisterDbgEvent(DBG_EVENT_PROC_CHANGED, OnProcChanged, this);
-    m_pCtrlService->RegisterDbgEvent(DBG_EVENT_DBG_PROC_RUNNING, OnDbgProcRunning, this);
     m_pCtrlService->RegisterDbgEvent(DBG_EVENT_DETACH, OnDetachDbgger, this);
     m_pCtrlService->RegisterDbgEvent(DBG_EVENT_EXCEPTION, OnProgramException, this);
     return true;
@@ -199,7 +212,6 @@ bool DbgCtrlService::DetachProc() {
     CtrlRequest ctrl;
     ctrl.mCmd = DBG_CTRL_DETACH;
     m_pCtrlService->DispatchCurDbgger(ctrl);
-    SetCmdNotify(em_dbg_status_init, "初始状态");
     return true;
 }
 
@@ -212,8 +224,6 @@ bool DbgCtrlService::OpenDump(const std::mstring &path) const {
     AppendToSyntaxView(d.mLabel, d.mShow);
 
     int tid = d.mResult["tid"].asInt();
-    GetInstance()->m_stat = em_dbg_status_free;
-    SetCmdNotify(GetInstance()->m_stat, FormatA("线程 %d >>", tid));
     return (0 == d.mStatus);
 }
 
@@ -240,18 +250,11 @@ void DbgCtrlService::OnProcCreate(const EventInfo &eventInfo, void *param) {
 
 void DbgCtrlService::OnSystemBreakpoint(const EventInfo &eventInfo, void *param) {
     AppendToSyntaxView(eventInfo.mLabel, eventInfo.mShow);
-
-    int tid = eventInfo.mContent["tid"].asInt();
-    GetInstance()->m_stat = em_dbg_status_free;
-    SetCmdNotify(GetInstance()->m_stat, FormatA("线程 %d >>", tid));
 }
 
 void DbgCtrlService::OnUserBreakpoint(const EventInfo &eventInfo, void *param) {
     AppendToSyntaxView(eventInfo.mLabel, eventInfo.mShow);
 
-    int tid = eventInfo.mContent["tid"].asInt();
-    GetInstance()->m_stat = em_dbg_status_free;
-    SetCmdNotify(GetInstance()->m_stat, FormatA("线程 %d >>", tid));
     CtrlReply result = GetInstance()->RunCmdInCtrlService("r");
     AppendToSyntaxView(result.mLabel, result.mShow);
 }
@@ -269,23 +272,12 @@ void DbgCtrlService::OnModuleLoad(const EventInfo &eventInfo, void *param) {
 void DbgCtrlService::OnModuleUnLoad(const EventInfo &eventInfo, void *param) {
 }
 
-void DbgCtrlService::OnDbgProcRunning(const EventInfo &eventInfo, void *param) {
-    GetInstance()->m_stat = em_dbg_status_busy;
-    SetCmdNotify(GetInstance()->m_stat, "运行中");
-}
-
 void DbgCtrlService::OnDetachDbgger(const EventInfo &eventInfo, void *param) {
     AppendToSyntaxView(eventInfo.mLabel, eventInfo.mShow);
-    GetInstance()->m_stat = em_dbg_status_init;
-    SetCmdNotify(GetInstance()->m_stat, "初始状态");
 }
 
 void DbgCtrlService::OnProgramException(const EventInfo &eventInfo, void *param) {
     AppendToSyntaxView(eventInfo.mLabel, eventInfo.mShow);
-    GetInstance()->m_stat = em_dbg_status_free;
-
-    int tid = eventInfo.mContent["tid"].asInt();
-    SetCmdNotify(GetInstance()->m_stat, FormatA("线程 %d >>", tid));
 }
 
 void DbgCtrlService::OnProcChanged(const EventInfo &eventInfo, void *param) {

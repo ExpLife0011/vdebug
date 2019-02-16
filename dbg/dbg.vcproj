@@ -645,6 +645,26 @@
 				>
 			</File>
 		</Filter>
+		<Filter
+			Name="ProcParser"
+			>
+			<File
+				RelativePath=".\ProcParser.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\ProcParser.h"
+				>
+			</File>
+			<File
+				RelativePath=".\ProcPrinter.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\ProcPrinter.h"
+				>
+			</File>
+		</Filter>
 	</Files>
 	<Globals>
 	</Globals>

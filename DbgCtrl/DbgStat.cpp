@@ -22,8 +22,14 @@ BOOL CDbgStatMgr::InitStatMgr(const std::mstring &unique) {
     mUnique = unique;
     mCachePath = FormatA("%hs\\%hs", REG_VDEBUG_STATUS, unique.c_str());
     mstring eventName = FormatA("Global\\%hs_StatusNotify", unique.c_str());
-    mNotifyEvent = CreateLowsdEvent(FALSE, FALSE, eventName.c_str());
 
+    mNotifyEvent = OpenEventA(EVENT_ALL_ACCESS, FALSE, eventName.c_str());
+
+    if (mNotifyEvent == NULL)
+    {
+        mNotifyEvent = CreateLowsdEvent(FALSE, FALSE, eventName.c_str());
+    }
+    dp(L"event:%p", mNotifyEvent);
     return TRUE;
 }
 
@@ -49,7 +55,7 @@ BOOL CDbgStatMgr::ReportDbgStatus(const DbgStat &status) {
         HKEY_LOCAL_MACHINE,
         mCachePath.c_str(),
         "stamp",
-        desc.c_str()
+        time.c_str()
         );
     SetEvent(mNotifyEvent);
     return TRUE;
@@ -114,6 +120,6 @@ DWORD CDbgStatMgr::NotifyThread(LPVOID pParam) {
     while (TRUE) {
         GetInst()->OnDispatchStat();
 
-        WaitForSingleObject(GetInst()->mNotifyEvent, 5000);
+        WaitForSingleObject(GetInst()->mNotifyEvent, 1000 * 10);
     }
 }

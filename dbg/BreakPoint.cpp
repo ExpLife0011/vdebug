@@ -45,6 +45,8 @@ void CBreakPointMgr::Int3BpCallback()
         stat.mCurTid = (int)((DEBUG_EVENT*)GetDebugData())->dwThreadId;
         CDbgStatMgr::GetInst()->ReportDbgStatus(stat);
         CProcDbgger::GetInstance()->Wait();
+        stat.mDbggerStatus = em_dbg_status_busy;
+        CDbgStatMgr::GetInst()->ReportDbgStatus(stat);
     } else {
     }
 }

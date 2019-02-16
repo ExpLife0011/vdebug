@@ -1,7 +1,6 @@
 #include <Windows.h>
 #include <list>
 #include "ProcParser.h"
-#include "StrUtil.h"
 
 class CParserException
 {
@@ -618,7 +617,7 @@ bool CProcParser::IsProcStr(const mstring &str) const {
 }
 
 #include <Shlwapi.h>
-#include <gdlib/gdutil.h>
+#include <ComLib/ComLib.h>
 
 void TestProc() {
     CProcParser *ptr = CProcParser::GetInst();
@@ -628,10 +627,10 @@ void TestProc() {
     GetModuleFileNameA(NULL, path, 256);
     PathAppendA(path, "..\\test.txt");
 
-    PFILE_MAPPING_STRUCT pMapping = GdFileMappingFileA(path, FALSE, 1024 * 1024 * 8);
+    PFILE_MAPPING_STRUCT pMapping = MappingFileA(path, FALSE, 1024 * 1024 * 8);
 
     vector<ProcDesc> set1;
     ptr->ParserModuleProc("kernel32.dll", (const char *)pMapping->lpView, set1);
 
-    GdFileCloseFileMapping(pMapping);
+    CloseFileMapping(pMapping);
 }

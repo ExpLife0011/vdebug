@@ -39,13 +39,14 @@ private:
     static void WINAPI OnProcExit(const EventInfo &eventInfo, void *param);
     static void WINAPI OnModuleLoad(const EventInfo &eventInfo, void *param);
     static void WINAPI OnModuleUnLoad(const EventInfo &eventInfo, void *param);
-    static void WINAPI OnDbgProcRunning(const EventInfo &eventInfo, void *param);
     static void WINAPI OnDetachDbgger(const EventInfo &eventInfo, void *param);
     static void WINAPI OnProgramException(const EventInfo &eventInfo, void *param);
 
     //Proc changed
     static void WINAPI OnProcChanged(const EventInfo &eventInfo, void *param);
 
+    //Dbg Status
+    static void __stdcall DbgStatusNotifyProc(const DbgStat &status, void *param);
 private:
     void RunProcInUser(LPCSTR image, LPCSTR cmd, DWORD session);
 private:

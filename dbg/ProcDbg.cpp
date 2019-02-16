@@ -43,12 +43,20 @@ VOID CProcDbgger::Wait()
 {
     DWORD dwId = ((DEBUG_EVENT*)GetDebugData())->dwThreadId;
     m_eDbggerStat = em_dbg_status_free;
+
+    DbgStat stat;
+    stat.mDbggerType = em_dbg_proc86;
+    stat.mCurTid = dwId;
+    stat.mDbggerStatus = em_dbg_status_free;
+    CDbgStatMgr::GetInst()->ReportDbgStatus(stat);
+
+    ResetEvent(m_hRunNotify);
     WaitForSingleObject(m_hRunNotify, INFINITE);
 
+    stat.mDbggerStatus = em_dbg_status_busy;
+    CDbgStatMgr::GetInst()->ReportDbgStatus(stat);
+
     m_eDbggerStat = em_dbg_status_busy;
-    EventInfo eventInfo;
-    eventInfo.mEvent = DBG_EVENT_DBG_PROC_RUNNING;
-    MsgSend(CHANNEL_PROC_SERVER, MakeEvent(eventInfo).c_str());
 }
 
 void CProcDbgger::Run()
@@ -404,6 +412,10 @@ void CProcDbgger::OnDetachDbgger()
     eventInfo.mShow = "进程已脱离调试器";
     MsgSend(CHANNEL_PROC_SERVER, MakeEvent(eventInfo).c_str());
 
+    DbgStat stat;
+    stat.mDbggerStatus = em_dbg_status_init;
+    CDbgStatMgr::GetInst()->ReportDbgStatus(stat);
+
     m_eDbggerStat = em_dbg_status_init;
 }
 
@@ -486,15 +498,7 @@ void CProcDbgger::OnSystemBreakpoint(void* ExceptionData)
         return;
     }
 
-    DbgStat stat;
-    stat.mDbggerType = em_dbg_proc86;
-    stat.mDbggerStatus = em_dbg_status_free;
-    stat.mCurTid = dwId;
-    CDbgStatMgr::GetInst()->ReportDbgStatus(stat);
     GetInstance()->Wait();
-
-    stat.mDbggerStatus = em_dbg_status_busy;
-    CDbgStatMgr::GetInst()->ReportDbgStatus(stat);
 }
 
 bool CProcDbgger::LoadModuleInfo(HANDLE hFile, DWORD64 dwBaseOfModule)
@@ -575,15 +579,7 @@ void CProcDbgger::OnProgramException(EXCEPTION_DEBUG_INFO* ExceptionData) {
     mstring package = MakeEvent(eventInfo);
     MsgSend(CHANNEL_PROC_SERVER, package.c_str());
 
-    DbgStat stat;
-    stat.mDbggerType = em_dbg_proc86;
-    stat.mDbggerStatus = em_dbg_status_free;
-    stat.mCurTid = (int)((DEBUG_EVENT*)GetDebugData())->dwThreadId;
-    CDbgStatMgr::GetInst()->ReportDbgStatus(stat);
     GetInstance()->Wait();
-
-    stat.mDbggerStatus = em_dbg_status_busy;
-    CDbgStatMgr::GetInst()->ReportDbgStatus(stat);
 }
 
 void CProcDbgger::OnException(EXCEPTION_DEBUG_INFO* ExceptionData)
