@@ -30,7 +30,7 @@ mstring CProcPrinter::GetStructStrByAddr(LPVOID startAddr, const StructDesc *des
 }
 
 mstring CProcPrinter::GetStructStr(const StructDesc *desc) const {
-    return "";
+    return GetStructStrInternal(desc);
 }
 
 //生成节点层次结构
@@ -60,9 +60,8 @@ PrinterNode *CProcPrinter::GetNodeStruct(const StructDesc *desc) const {
         enumSet.pop_front();
         tmp1.mNode->mSubSize = tmp1.mDesc->mMemberSet.size();
 
-        int i = 0;
         PrinterNode *lastNode = NULL;
-        for (; i != tmp1.mDesc->mMemberSet.size() ; i++)
+        for (i = 0 ; i != tmp1.mDesc->mMemberSet.size() ; i++)
         {
             PrintEnumInfo tmp2;
             tmp2.mDesc = tmp1.mDesc->mMemberSet[i];
@@ -83,41 +82,36 @@ PrinterNode *CProcPrinter::GetNodeStruct(const StructDesc *desc) const {
     return root;
 }
 
-void CProcPrinter::FillLineAndRow(PrinterNode *root) const {
-    list<PrinterNode *> enumSet;
-    root->mLine = 0;
-    root->mRow = 0;
-    enumSet.push_back(root);
-
-    while (!enumSet.empty()) {
-        PrinterNode *ptr = enumSet.front();
-        enumSet.pop_front();
-
-        if (ptr->mLastBrotherNode == NULL)
+void CProcPrinter::FillLineAndRow(PrinterNode *ptr, vector<PrinterNode *> &result, int &line) const {
+    if (ptr->mLastBrotherNode != NULL)
+    {
+        ptr->mRow = ptr->mLastBrotherNode->mRow;
+    } else {
+        if (ptr->mParent != NULL)
         {
-            if (ptr->mParent != NULL)
-            {
-                ptr->mLine = ptr->mParent->mLine + 1;
-                ptr->mRow = ptr->mParent->mRow + 1;
-            }
-        } else {
-            ptr->mLine = ptr->mLastBrotherNode->mLine + 1;
-            ptr->mRow = ptr->mLastBrotherNode->mRow;
+            ptr->mRow = ptr->mParent->mRow + 1;
         }
+    }
+    ptr->mLine = line++;
+    result.push_back(ptr);
 
-        for (list<PrinterNode *>::const_iterator it = ptr->mSubNodes.begin() ; it != ptr->mSubNodes.end() ; it++)
-        {
-            enumSet.push_back(*it);
-        }
+    for (list<PrinterNode *>::iterator it = ptr->mSubNodes.begin() ; it != ptr->mSubNodes.end() ; it++)
+    {
+        PrinterNode *ptr2 = *it;
+        FillLineAndRow(ptr2, result, line);
     }
 }
 
 mstring CProcPrinter::GetStructStrInternal(const StructDesc *desc) const {
-    if (desc->mType != TYPE_STRUCT)
+    if (desc->mType != STRUCT_TYPE_STRUCT)
     {
         return "";
     }
 
     PrinterNode *root = GetNodeStruct(desc);
+    vector<PrinterNode *> lineSet;
+    int line = 0;
+
+    FillLineAndRow(root, lineSet, line);
     return "";
 }

@@ -99,6 +99,7 @@ public:
         vector<ProcDesc> &procSet
         );
 
+    StructDesc *FindStructFromName(const mstring &name) const;
 private:
     list<NodeStr> SplitNodeStr(const mstring &procStr) const;
     NodeStr ParserProcNode(const mstring &procStr, size_t startPos, size_t curPos, size_t &endPos) const;
@@ -115,7 +116,6 @@ private:
     void InsertBaseType(int type, const mstring &nameSet, int length, const mstring &fmt);
     bool LinkPtr(const mstring &nameSet, const mstring &linked);
     bool InsertVoidPtr(const mstring &nameSet);
-    StructDesc *FindStructFromName(const mstring &name) const;
     void ClearParamStr(mstring &str) const;
     StructDesc *ParserParamStr(const mstring &str, mstring &name) const;
     StructDesc *CreatePtrStruct() const;

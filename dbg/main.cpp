@@ -47,8 +47,30 @@ static void _TestProc() {
     ProcMonitor::GetInstance()->RegisterListener(new TestProcMon());
 }
 
+extern void TestProc();
+
 int WINAPI WinMain(HINSTANCE hT, HINSTANCE hP, LPSTR szCmdLine, int iShow)
 {
+    char path[256];
+    GetModuleFileNameA(NULL, path, 256);
+#if WIN64 || _WIN64
+    PathAppendA(path, "..\\..\\ComLib64.dll");
+    LoadLibraryA(path);
+    PathAppendA(path, "..\\mq64.dll");
+    LoadLibraryA(path);
+    PathAppendA(path, "..\\DbgCtrl64.dll");
+    LoadLibraryA(path);
+#else
+    PathAppendA(path, "..\\..\\ComLib32.dll");
+    LoadLibraryA(path);
+    PathAppendA(path, "..\\mq32.dll");
+    LoadLibraryA(path);
+    PathAppendA(path, "..\\DbgCtrl32.dll");
+    LoadLibraryA(path);
+#endif
+    TestProc();
+    return 0;
+
     int count = 0;
     LPWSTR *args = CommandLineToArgvW(GetCommandLineW(), &count);
 
@@ -68,23 +90,6 @@ int WINAPI WinMain(HINSTANCE hT, HINSTANCE hP, LPSTR szCmdLine, int iShow)
     WSADATA wsaData;
     WSAStartup(MAKEWORD(2, 2), &wsaData);
 
-    char path[256];
-    GetModuleFileNameA(NULL, path, 256);
-#if WIN64 || _WIN64
-    PathAppendA(path, "..\\..\\ComLib64.dll");
-    LoadLibraryA(path);
-    PathAppendA(path, "..\\mq64.dll");
-    LoadLibraryA(path);
-    PathAppendA(path, "..\\DbgCtrl64.dll");
-    LoadLibraryA(path);
-#else
-    PathAppendA(path, "..\\..\\ComLib32.dll");
-    LoadLibraryA(path);
-    PathAppendA(path, "..\\mq32.dll");
-    LoadLibraryA(path);
-    PathAppendA(path, "..\\DbgCtrl32.dll");
-    LoadLibraryA(path);
-#endif
     CSymbolHlpr::GetInst()->InitSymbol("SRV*F:\\mysymbol*http://msdl.microsoft.com/download/symbols/", GetCurrentProcess());
     size_t pos = cmd.rfind('_');
     mstring unique = cmd.substr(pos + 1, cmd.size() - pos - 1);

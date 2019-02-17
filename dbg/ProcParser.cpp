@@ -618,6 +618,7 @@ bool CProcParser::IsProcStr(const mstring &str) const {
 
 #include <Shlwapi.h>
 #include <ComLib/ComLib.h>
+#include "ProcPrinter.h"
 
 void TestProc() {
     CProcParser *ptr = CProcParser::GetInst();
@@ -631,6 +632,9 @@ void TestProc() {
 
     vector<ProcDesc> set1;
     ptr->ParserModuleProc("kernel32.dll", (const char *)pMapping->lpView, set1);
+    StructDesc *pDesc = ptr->FindStructFromName("WNDCLASSEXW");
+
+    mstring strStruct = CProcPrinter::GetInst()->GetStructStr(pDesc);
 
     CloseFileMapping(pMapping);
 }
