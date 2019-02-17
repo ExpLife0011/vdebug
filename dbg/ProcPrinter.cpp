@@ -46,37 +46,49 @@ PrinterNode *CProcPrinter::GetNodeStruct(const StructDesc *desc) const {
         }
     };
 
-    int lineCount = 0;
     list<PrintEnumInfo> enumSet;
     PrintEnumInfo tmp;
     tmp.mDesc = desc;
     tmp.mNode = root;
-    root->mLine = lineCount;
     enumSet.push_back(tmp);
 
     int i = 0;
     while (!enumSet.empty()) {
         PrintEnumInfo tmp1 = enumSet.front();
         enumSet.pop_front();
-        tmp1.mNode->mSubSize = tmp1.mDesc->mMemberSet.size();
 
-        PrinterNode *lastNode = NULL;
-        for (i = 0 ; i != tmp1.mDesc->mMemberSet.size() ; i++)
+        if (tmp1.mDesc->mType == STRUCT_TYPE_STRUCT)
         {
-            PrintEnumInfo tmp2;
-            tmp2.mDesc = tmp1.mDesc->mMemberSet[i];
-            tmp2.mNode = new PrinterNode();
-            tmp2.mNode->mParent = tmp1.mNode;
-            tmp1.mNode->mSubNodes.push_back(tmp2.mNode);
-            tmp2.mNode->mName = tmp1.mDesc->mMemberName[i];
+            tmp1.mNode->mSubSize = tmp1.mDesc->mMemberSet.size();
 
-            if (lastNode != NULL)
+            PrinterNode *lastNode = NULL;
+            for (i = 0 ; i != tmp1.mDesc->mMemberSet.size() ; i++)
             {
-                lastNode->mNextBrotherNode = tmp2.mNode;
-                tmp2.mNode->mLastBrotherNode = lastNode;
+                PrintEnumInfo tmp2;
+                tmp2.mDesc = tmp1.mDesc->mMemberSet[i];
+                tmp2.mNode = new PrinterNode();
+                tmp2.mNode->mParent = tmp1.mNode;
+                tmp1.mNode->mSubNodes.push_back(tmp2.mNode);
+                tmp2.mNode->mName = tmp1.mDesc->mMemberName[i];
+
+                if (lastNode != NULL)
+                {
+                    lastNode->mNextBrotherNode = tmp2.mNode;
+                    tmp2.mNode->mLastBrotherNode = lastNode;
+                }
+                lastNode = tmp2.mNode;
+                enumSet.push_back(tmp2);
             }
-            lastNode = tmp2.mNode;
-            enumSet.push_back(tmp2);
+        } else if ((tmp1.mDesc->mType == STRUCT_TYPE_PTR) && (tmp1.mDesc->mUnknownType == false))
+        {
+            PrintEnumInfo tmp3;
+            tmp3.mDesc = tmp1.mDesc->mPtr;
+            tmp3.mNode = new PrinterNode();
+            tmp3.mNode->mParent = tmp1.mNode;
+            tmp1.mNode->mSubNodes.push_back(tmp3.mNode);
+            tmp3.mNode->mName = tmp3.mDesc->mNameSet.front();
+
+            enumSet.push_back(tmp3);
         }
     }
     return root;

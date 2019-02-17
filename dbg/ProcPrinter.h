@@ -26,10 +26,11 @@ struct PrinterNode {
 /*
 kernel32!CreateFileW:
 0x1122aabb  lpFilePath(LPCWSTR) = "c:\\abcdef\\2.txt"
-0x12343434  lpSecurityAttributes(LPSECURITY_ATTRIBUTES)
-              ©¸---0x12343410 nLength(DWORD) = 0x12341234
-              ©¸---0x12343414 lpSecurityDescriptor(LPVOID) = 0xaabb1234
-              ©¸---0x12343418 bInheritHandle(BOOL) = FALSE
+0x12343434  lpSecurityAttributes(LPSECURITY_ATTRIBUTES) = 0x1122abcd
+              ©¸---0x12343410  SECURITY_ATTRIBUTES0x12343410
+                                ©¸---0x12343410  nLength(DWORD) = 0x12341234
+                                ©¸---0x12343414  lpSecurityDescriptor(LPVOID) = 0xaabb1234
+                                ©¸---0x12343418  bInheritHandle(BOOL) = FALSE
 0x1323aabb  dwShareMode(DWORD) = 0x1122aabb
 */
 class CProcPrinter {
