@@ -47,8 +47,8 @@ public:
     mstring GetStructStr(const StructDesc *desc) const;
 
 private:
-    PrinterNode *GetNodeStruct(const StructDesc *desc) const;
+    PrinterNode *GetNodeStruct(const StructDesc *desc, LPVOID baseAddr) const;
     void FillLineAndRow(PrinterNode *root, vector<PrinterNode *> &result, int &line) const;
-    mstring GetStructStrInternal(const StructDesc *desc) const;
+    mstring GetStructStrInternal(const StructDesc *desc, LPVOID baseAddr) const;
 };
 #endif //PROCPRINTER_PARSER_H_H_

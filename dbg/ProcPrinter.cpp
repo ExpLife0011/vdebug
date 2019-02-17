@@ -1,3 +1,5 @@
+#include <Windows.h>
+#include <ComLib/ComLib.h>
 #include "ProcPrinter.h"
 #include "ProcParser.h"
 
@@ -30,11 +32,11 @@ mstring CProcPrinter::GetStructStrByAddr(LPVOID startAddr, const StructDesc *des
 }
 
 mstring CProcPrinter::GetStructStr(const StructDesc *desc) const {
-    return GetStructStrInternal(desc);
+    return GetStructStrInternal(desc, NULL);
 }
 
 //生成节点层次结构
-PrinterNode *CProcPrinter::GetNodeStruct(const StructDesc *desc) const {
+PrinterNode *CProcPrinter::GetNodeStruct(const StructDesc *desc, LPVOID baseAddr) const {
     PrinterNode *root = new PrinterNode();
     struct PrintEnumInfo {
         PrinterNode *mNode;
@@ -50,6 +52,7 @@ PrinterNode *CProcPrinter::GetNodeStruct(const StructDesc *desc) const {
     PrintEnumInfo tmp;
     tmp.mDesc = desc;
     tmp.mNode = root;
+    bool withOffset = (baseAddr == NULL);
     enumSet.push_back(tmp);
 
     int i = 0;
@@ -69,7 +72,11 @@ PrinterNode *CProcPrinter::GetNodeStruct(const StructDesc *desc) const {
                 tmp2.mNode = new PrinterNode();
                 tmp2.mNode->mParent = tmp1.mNode;
                 tmp1.mNode->mSubNodes.push_back(tmp2.mNode);
-                tmp2.mNode->mName = tmp1.mDesc->mMemberName[i];
+
+                if (withOffset)
+                {
+                    tmp2.mNode->mName = FormatA("0x%04x  %hs", tmp1.mDesc->mMemberOffset[i], tmp1.mDesc->mMemberName[i].c_str());
+                }
 
                 if (lastNode != NULL)
                 {
@@ -86,8 +93,11 @@ PrinterNode *CProcPrinter::GetNodeStruct(const StructDesc *desc) const {
             tmp3.mNode = new PrinterNode();
             tmp3.mNode->mParent = tmp1.mNode;
             tmp1.mNode->mSubNodes.push_back(tmp3.mNode);
-            tmp3.mNode->mName = tmp3.mDesc->mNameSet.front();
 
+            if (withOffset)
+            {
+                tmp3.mNode->mName = FormatA("0x0000  %hs", tmp3.mDesc->mNameSet.front().c_str());
+            }
             enumSet.push_back(tmp3);
         }
     }
@@ -114,16 +124,21 @@ void CProcPrinter::FillLineAndRow(PrinterNode *ptr, vector<PrinterNode *> &resul
     }
 }
 
-mstring CProcPrinter::GetStructStrInternal(const StructDesc *desc) const {
+mstring CProcPrinter::GetStructStrInternal(const StructDesc *desc, LPVOID baseAddr) const {
     if (desc->mType != STRUCT_TYPE_STRUCT)
     {
         return "";
     }
 
-    PrinterNode *root = GetNodeStruct(desc);
+    PrinterNode *root = GetNodeStruct(desc, baseAddr);
     vector<PrinterNode *> lineSet;
     int line = 0;
 
     FillLineAndRow(root, lineSet, line);
+
+    for (vector<PrinterNode *>::const_iterator it = lineSet.begin() ; it != lineSet.end() ; it++)
+    {
+        dp(L"%hs", (*it)->mName.c_str());
+    }
     return "";
 }

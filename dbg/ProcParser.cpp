@@ -464,7 +464,7 @@ StructDesc *CProcParser::ParserStructName(const mstring &content, map<mstring, S
     pStruct->mNameSet.push_back(name);
 
     pStruct->mType = STRUCT_TYPE_STRUCT;
-    pStructPtr->mType = STRUCT_TYPE_PTR;
+    pStructPtr = CreatePtrStruct();
     pStructPtr->mPtr = pStruct;
 
     size_t pos1 = content.rfind('}');
@@ -533,6 +533,7 @@ bool CProcParser::ParserStructParam(const mstring &content, StructDesc *ptr) con
         ptr->mMemberSet.push_back(pDesc);
         ptr->mMemberName.push_back(name);
         ptr->mMemberOffset.push_back(offset);
+        ptr->mLength += pDesc->mLength;
         offset += pDesc->mLength;
     }
     return true;
