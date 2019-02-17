@@ -279,7 +279,7 @@ StructDesc *CProcParser::CreatePtrStruct() const {
     return ptr;
 }
 
-StructDesc *CProcParser::ParserParamStr(const mstring &str, mstring &name) const {
+StructDesc *CProcParser::ParserParamStr(const mstring &str, mstring &type, mstring &name) const {
     mstring content = str;
     ClearParamStr(content);
 
@@ -360,6 +360,7 @@ StructDesc *CProcParser::ParserParamStr(const mstring &str, mstring &name) const
         }
         name = tmpName;
     }
+    type = tmpType;
     return pStruct;
 }
 
@@ -426,12 +427,8 @@ ProcDesc CProcParser::ParserSingleProc(const mstring &dllName, const NodeStr &no
                 mstring tmp = *it;
                 ClearParamStr(tmp);
 
-                mstring showName;
-                StructDesc *pDesc = ParserParamStr(tmp, showName);
-
                 ParamDesc param;
-                param.mParamName = showName;
-                param.mStruct = pDesc;
+                param.mStruct = ParserParamStr(tmp, param.mParamType, param.mParamName);
                 proc.mParam.push_back(param);
             }
             break;
@@ -527,10 +524,11 @@ bool CProcParser::ParserStructParam(const mstring &content, StructDesc *ptr) con
             continue;
         }
 
-        mstring name;
-        StructDesc *pDesc = ParserParamStr(tmp, name);
+        mstring type, name;
+        StructDesc *pDesc = ParserParamStr(tmp, type, name);
 
         ptr->mMemberSet.push_back(pDesc);
+        ptr->mMemberType.push_back(type);
         ptr->mMemberName.push_back(name);
         ptr->mMemberOffset.push_back(offset);
         ptr->mLength += pDesc->mLength;
@@ -633,9 +631,8 @@ void TestProc() {
 
     vector<ProcDesc> set1;
     ptr->ParserModuleProc("kernel32.dll", (const char *)pMapping->lpView, set1);
-    StructDesc *pDesc = ptr->FindStructFromName("WNDCLASSEXW");
 
-    mstring strStruct = CProcPrinter::GetInst()->GetStructStr(pDesc);
+    mstring strStruct = CProcPrinter::GetInst()->GetStructStr("WNDCLASSEXW");
     OutputDebugStringA("\n");
     OutputDebugStringA(strStruct.c_str());
     CloseFileMapping(pMapping);

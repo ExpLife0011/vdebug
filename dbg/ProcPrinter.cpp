@@ -31,12 +31,19 @@ mstring CProcPrinter::GetStructStrByAddr(LPVOID startAddr, const StructDesc *des
     return "";
 }
 
-mstring CProcPrinter::GetStructStr(const StructDesc *desc) const {
-    return GetStructStrInternal(desc, NULL);
+mstring CProcPrinter::GetStructStr(const mstring &name) const {
+    return GetStructStrInternal(name, NULL);
 }
 
 //生成节点层次结构
-PrinterNode *CProcPrinter::GetNodeStruct(const StructDesc *desc, LPVOID baseAddr) const {
+PrinterNode *CProcPrinter::GetNodeStruct(const mstring &name, LPVOID baseAddr) const {
+    StructDesc *desc = CProcParser::GetInst()->FindStructFromName(name);
+    if (NULL == desc)
+    {
+        return NULL;
+    }
+    
+
     PrinterNode *root = new PrinterNode();
     struct PrintEnumInfo {
         PrinterNode *mNode;
@@ -76,7 +83,7 @@ PrinterNode *CProcPrinter::GetNodeStruct(const StructDesc *desc, LPVOID baseAddr
 
                 if (withOffset)
                 {
-                    tmp2.mNode->mName = FormatA("0x%04x %hs", tmp1.mDesc->mMemberOffset[i], tmp1.mDesc->mMemberName[i].c_str());
+                    tmp2.mNode->mName = FormatA("0x%04x %hs %hs", tmp1.mDesc->mMemberOffset[i], tmp1.mDesc->mMemberType[i].c_str(), tmp1.mDesc->mMemberName[i].c_str());
                 }
 
                 if (lastNode != NULL)
@@ -159,13 +166,8 @@ kernel32!CreateFileW:
                                 └---0x12343418  bInheritHandle(BOOL) = FALSE
 0x1323aabb  dwShareMode(DWORD) = 0x1122aabb
 */
-mstring CProcPrinter::GetStructStrInternal(const StructDesc *desc, LPVOID baseAddr) const {
-    if (desc->mType != STRUCT_TYPE_STRUCT)
-    {
-        return "";
-    }
-
-    PrinterNode *root = GetNodeStruct(desc, baseAddr);
+mstring CProcPrinter::GetStructStrInternal(const mstring &name, LPVOID baseAddr) const {
+    PrinterNode *root = GetNodeStruct(name, baseAddr);
     vector<PrinterNode *> lineSet;
     int line = 0;
 

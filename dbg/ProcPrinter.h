@@ -44,12 +44,12 @@ public:
     mstring GetProcStr(const ProcDesc &desc) const;
 
     mstring GetStructStrByAddr(LPVOID startAddr, const StructDesc *desc) const;
-    mstring GetStructStr(const StructDesc *desc) const;
+    mstring GetStructStr(const mstring &name) const;
 
 private:
-    PrinterNode *GetNodeStruct(const StructDesc *desc, LPVOID baseAddr) const;
+    PrinterNode *GetNodeStruct(const mstring &name, LPVOID baseAddr) const;
     void FillLineAndRow(PrinterNode *root, vector<PrinterNode *> &result, int &line) const;
-    mstring GetStructStrInternal(const StructDesc *desc, LPVOID baseAddr) const;
+    mstring GetStructStrInternal(const mstring &name, LPVOID baseAddr) const;
     void LinkDetachedNode(const vector<PrinterNode *> &nodeSet, vector<mstring> &strSet) const;
 };
 #endif //PROCPRINTER_PARSER_H_H_

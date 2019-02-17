@@ -24,6 +24,7 @@ struct StructDesc {
 
     //struct members
     vector<StructDesc *> mMemberSet;//member array
+    vector<mstring> mMemberType;    //member type
     vector<mstring> mMemberName;    //member name
     vector<int> mMemberOffset;      //membet offset
 
@@ -55,6 +56,7 @@ enum ProcCallType {
 };
 
 struct ParamDesc {
+    mstring mParamType;     //param type
     mstring mParamName;     //param name
     StructDesc *mStruct;    //param struct desc
 };
@@ -117,7 +119,7 @@ private:
     bool LinkPtr(const mstring &nameSet, const mstring &linked);
     bool InsertVoidPtr(const mstring &nameSet);
     void ClearParamStr(mstring &str) const;
-    StructDesc *ParserParamStr(const mstring &str, mstring &name) const;
+    StructDesc *ParserParamStr(const mstring &str, mstring &type, mstring &name) const;
     StructDesc *CreatePtrStruct() const;
 
 private:
