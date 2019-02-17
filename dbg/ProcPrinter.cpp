@@ -52,6 +52,7 @@ PrinterNode *CProcPrinter::GetNodeStruct(const StructDesc *desc, LPVOID baseAddr
     PrintEnumInfo tmp;
     tmp.mDesc = desc;
     tmp.mNode = root;
+    root->mName = desc->mNameSet.front();
     bool withOffset = (baseAddr == NULL);
     enumSet.push_back(tmp);
 
@@ -75,7 +76,7 @@ PrinterNode *CProcPrinter::GetNodeStruct(const StructDesc *desc, LPVOID baseAddr
 
                 if (withOffset)
                 {
-                    tmp2.mNode->mName = FormatA("0x%04x  %hs", tmp1.mDesc->mMemberOffset[i], tmp1.mDesc->mMemberName[i].c_str());
+                    tmp2.mNode->mName = FormatA("0x%04x %hs", tmp1.mDesc->mMemberOffset[i], tmp1.mDesc->mMemberName[i].c_str());
                 }
 
                 if (lastNode != NULL)
@@ -96,7 +97,7 @@ PrinterNode *CProcPrinter::GetNodeStruct(const StructDesc *desc, LPVOID baseAddr
 
             if (withOffset)
             {
-                tmp3.mNode->mName = FormatA("0x0000  %hs", tmp3.mDesc->mNameSet.front().c_str());
+                tmp3.mNode->mName = FormatA("0x0000 %hs", tmp3.mDesc->mNameSet.front().c_str());
             }
             enumSet.push_back(tmp3);
         }
@@ -124,6 +125,40 @@ void CProcPrinter::FillLineAndRow(PrinterNode *ptr, vector<PrinterNode *> &resul
     }
 }
 
+void CProcPrinter::LinkDetachedNode(const vector<PrinterNode *> &nodeSet, vector<mstring> &strSet) const {
+    for (size_t i = 0 ; i < strSet.size() ; i++)
+    {
+        PrinterNode *ptr = nodeSet[i + 1];
+
+        if (ptr->mLastBrotherNode && (ptr->mLastBrotherNode->mLine + 1) < ptr->mLine)
+        {
+            for (int j = ptr->mLastBrotherNode->mLine ; j < ptr->mLine - 1 ; j++)
+            {
+                mstring last = strSet[i];
+                size_t pos1 = last.find("©¸");
+                if (mstring::npos == pos1)
+                {
+                    pos1 = last.find("©À");
+                }
+
+                mstring dd = strSet[j];
+                dd.replace(pos1, 1, "©¦");
+                strSet[j] = dd;
+            }
+        }
+    }
+}
+
+/*
+kernel32!CreateFileW:
+0x1122aabb  lpFilePath(LPCWSTR) = "c:\\abcdef\\2.txt"
+0x12343434  lpSecurityAttributes(LPSECURITY_ATTRIBUTES) = 0x1122abcd
+              ©¸---0x12343410  SECURITY_ATTRIBUTES0x12343410
+                                ©¸---0x12343410  nLength(DWORD) = 0x12341234
+                                ©¸---0x12343414  lpSecurityDescriptor(LPVOID) = 0xaabb1234
+                                ©¸---0x12343418  bInheritHandle(BOOL) = FALSE
+0x1323aabb  dwShareMode(DWORD) = 0x1122aabb
+*/
 mstring CProcPrinter::GetStructStrInternal(const StructDesc *desc, LPVOID baseAddr) const {
     if (desc->mType != STRUCT_TYPE_STRUCT)
     {
@@ -136,9 +171,49 @@ mstring CProcPrinter::GetStructStrInternal(const StructDesc *desc, LPVOID baseAd
 
     FillLineAndRow(root, lineSet, line);
 
+    mstring result;
+    int offset = 0;
+    bool withOffset = (baseAddr == NULL);
+
+    if (withOffset)
+    {
+        offset = lstrlenA("©¸©¤0x1122");
+    }
+    
+    bool first = true;
+    vector<mstring> strSet;
     for (vector<PrinterNode *>::const_iterator it = lineSet.begin() ; it != lineSet.end() ; it++)
     {
-        dp(L"%hs", (*it)->mName.c_str());
+        PrinterNode *ptr = *it;
+        if (first)
+        {
+            first = false;
+            continue;
+        }
+
+        int curOffset = (ptr->mRow - 1) * offset;
+        mstring dd;
+        for (int i = 0 ; i < curOffset ; i++)
+        {
+            dd += " ";
+        }
+
+        if (ptr->mNextBrotherNode)
+        {
+            dd += "©À©¤";
+        } else {
+            dd += "©¸©¤";
+        }
+
+        dd += ptr->mName;
+        strSet.push_back(dd);
     }
-    return "";
+
+    LinkDetachedNode(lineSet, strSet);
+    result = (lineSet.front()->mName + ":\n");
+    for (vector<mstring>::const_iterator ij = strSet.begin() ; ij != strSet.end() ; ij++)
+    {
+        result += (*ij + "\n");
+    }
+    return result;
 }

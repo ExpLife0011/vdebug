@@ -636,6 +636,7 @@ void TestProc() {
     StructDesc *pDesc = ptr->FindStructFromName("WNDCLASSEXW");
 
     mstring strStruct = CProcPrinter::GetInst()->GetStructStr(pDesc);
-
+    OutputDebugStringA("\n");
+    OutputDebugStringA(strStruct.c_str());
     CloseFileMapping(pMapping);
 }
