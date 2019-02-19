@@ -4,23 +4,22 @@
 #include <vector>
 #include <list>
 #include <map>
-#include <ComStatic/ComStatic.h>
+#include <set>
+#include "mstring.h"
 
 using namespace std;
 
 #define STRUCT_TYPE_BASETYPE    0   //base type eg:int32 int64 char ...
 #define STRUCT_TYPE_STRUCT      1   //struct contains some members.
 #define STRUCT_TYPE_PTR         2   //struct ptr
-#define STRUCT_TYPE_STR         3   //str array type
+
+typedef mstring (__stdcall *pfnFormatProc)(LPVOID ptr, int length);
 
 struct StructDesc {
     DWORD mType;                    //type 0:single var 1:struct 2:ptr
-    list<mstring> mNameSet;         //class name set
-    mstring mFormat;                //format rule eg: %d, %hs, %ls
+    set<mstring> mNameSet;          //class name set
+    pfnFormatProc mPfnFormat;       //format rule eg: %d, %hs, %ls
     int mLength;                    //var length
-
-    //single var
-    mstring mContent;               //var content
 
     //struct members
     vector<StructDesc *> mMemberSet;//member array
@@ -33,18 +32,33 @@ struct StructDesc {
     int mSize;                      //array size
     bool mUnknownType;              //unknow type LPVOID void *;
 
-    //str array
-    StructDesc *mStrPtr;            //str
-    int mStrType;                   //0:multibyte str 1:unicode str
+    bool IsStr(bool &isUnicode) const {
+        if (mType == STRUCT_TYPE_PTR)
+        {
+            if (mUnknownType == true)
+            {
+                return false;
+            }
+
+            if (mPtr->mNameSet.end() != mPtr->mNameSet.find("CHAR"))
+            {
+                isUnicode = false;
+                return true;
+            } else if (mPtr->mNameSet.end() != mPtr->mNameSet.find("WCHAR")){
+                isUnicode = true;
+                return true;
+            }
+        }
+        return false;
+    }
 
     StructDesc() {
         mType = STRUCT_TYPE_BASETYPE;
         mLength = 0;
         mPtr = NULL;
-        mStrPtr = NULL;
-        mStrType = 0;
         mUnknownType = false;
         mSize = 0;
+        mPfnFormat = NULL;
     }
 };
 
@@ -115,13 +129,24 @@ private:
     map<mstring, StructDesc *> ParserSingleStruct(const mstring &dllName, const NodeStr &node) const;
     StructDesc *ParserStructName(const mstring &content, map<mstring, StructDesc *> &out) const;
     bool ParserStructParam(const mstring &content, StructDesc *ptr) const;
-    void InsertBaseType(int type, const mstring &nameSet, int length, const mstring &fmt);
+    void InsertBaseType(int type, const mstring &nameSet, int length, pfnFormatProc pfn);
     bool LinkPtr(const mstring &nameSet, const mstring &linked);
     bool InsertVoidPtr(const mstring &nameSet);
     void ClearParamStr(mstring &str) const;
     StructDesc *ParserParamStr(const mstring &str, mstring &type, mstring &name) const;
     StructDesc *CreatePtrStruct() const;
 
+private:
+    static mstring __stdcall BoolenFormater(LPVOID ptr, int length);
+    static mstring __stdcall ByteFormater(LPVOID ptr, int length);
+    static mstring __stdcall CharFormater(LPVOID ptr, int length);
+    static mstring __stdcall WordFormater(LPVOID ptr, int length);
+    static mstring __stdcall BOOLFormater(LPVOID ptr, int length);
+    static mstring __stdcall WcharFormater(LPVOID ptr, int length);
+    static mstring __stdcall In32Formater(LPVOID ptr, int length);
+    static mstring __stdcall Uint32Formater(LPVOID ptr, int length);
+    static mstring __stdcall Int64Foramter(LPVOID ptr, int length);
+    static mstring __stdcall PtrFormater(LPVOID ptr, int length);
 private:
     list<ModuleDesc> mModuleSet;
     map<mstring, StructDesc *> mStructMap;

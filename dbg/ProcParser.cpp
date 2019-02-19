@@ -1,6 +1,7 @@
 #include <Windows.h>
 #include <list>
 #include "ProcParser.h"
+#include "StrUtil.h"
 
 class CParserException
 {
@@ -32,16 +33,16 @@ CProcParser *CProcParser::GetInst() {
     return s_ptr;
 }
 
-void CProcParser::InsertBaseType(int type, const mstring &nameSet, int length, const mstring &fmt) {
+void CProcParser::InsertBaseType(int type, const mstring &nameSet, int length, pfnFormatProc pfn) {
     StructDesc *newPtr = new StructDesc();
     newPtr->mType = type;
     newPtr->mLength = length;
-    newPtr->mFormat = fmt;
+    newPtr->mPfnFormat = pfn;
 
     list<mstring> nameArray = SplitStrA(nameSet, ";");
     for (list<mstring>::const_iterator it = nameArray.begin() ; it != nameArray.end() ; it++)
     {
-        newPtr->mNameSet.push_back(*it);
+        newPtr->mNameSet.insert(*it);
         mStructMap[*it] = newPtr;
     }
 }
@@ -50,13 +51,13 @@ bool CProcParser::InsertVoidPtr(const mstring &nameSet) {
     StructDesc *newPtr = new StructDesc();
     newPtr->mType = STRUCT_TYPE_PTR;
     newPtr->mUnknownType = true;
-    newPtr->mFormat = "%p";
     newPtr->mLength = sizeof(void *);
+    newPtr->mPfnFormat = PtrFormater;
 
     list<mstring> nameArray = SplitStrA(nameSet, ";");
     for (list<mstring>::const_iterator it = nameArray.begin() ; it != nameArray.end() ; it++)
     {
-        newPtr->mNameSet.push_back(*it);
+        newPtr->mNameSet.insert(*it);
         mStructMap[*it] = newPtr;
     }
     return true;
@@ -72,35 +73,95 @@ bool CProcParser::LinkPtr(const mstring &nameSet, const mstring &linked) {
 
     StructDesc *newPtr = new StructDesc();
     newPtr->mType = STRUCT_TYPE_PTR;
+    newPtr->mLength = sizeof(void *);
+    newPtr->mPfnFormat = PtrFormater;
     StructDesc *ptr = it->second;
     list<mstring> nameArry = SplitStrA(nameSet, ";");
     for (list<mstring>::const_iterator it = nameArry.begin() ; it != nameArry.end() ; it++)
     {
-        newPtr->mNameSet.push_back(*it);
+        newPtr->mNameSet.insert(*it);
         newPtr->mPtr = ptr;
         mStructMap[*it] = newPtr;
     }
     return true;
 }
 
+mstring CProcParser::BoolenFormater(LPVOID ptr, int length) {
+    bool t = *(bool *)ptr;
+    if (t)
+    {
+        return "true";
+    }
+    return "false";
+}
+
+mstring CProcParser::ByteFormater(LPVOID ptr, int length) {
+    int t = *(byte *)ptr;
+    return FormatA("0x%02x(%d)", t, t);
+}
+
+mstring CProcParser::CharFormater(LPVOID ptr, int length) {
+    char c = *(char *)ptr;
+    return FormatA("%c", c);
+}
+
+mstring CProcParser::WordFormater(LPVOID ptr, int length) {
+    int t = *((WORD *)ptr);
+    return FormatA("0x%04x(%d)", t, t);
+}
+
+mstring CProcParser::BOOLFormater(LPVOID ptr, int length) {
+    BOOL b = *((BOOL *)ptr);
+    if (b)
+    {
+        return "TRUE";
+    }
+    return "FALSE";
+}
+
+mstring CProcParser::WcharFormater(LPVOID ptr, int length) {
+    WCHAR w = *((WCHAR *)ptr);
+    WCHAR s[2] = {w, 0};
+    return FormatA("%ls", s);
+}
+
+mstring CProcParser::In32Formater(LPVOID ptr, int length) {
+    int d = *((int *)ptr);
+    return FormatA("0x%08x(%d)", d, d);
+}
+
+mstring CProcParser::Uint32Formater(LPVOID ptr, int length) {
+    UINT32 d = *((UINT32 *)ptr);
+    return FormatA("0x%08x(%u)", d, d);
+}
+
+mstring CProcParser::Int64Foramter(LPVOID ptr, int length) {
+    UINT64 d = *((UINT64 *)ptr);
+    return FormatA("0x%016x(%I64d)", d, d);
+}
+
+mstring CProcParser::PtrFormater(LPVOID ptr, int length) {
+    LPVOID p = *((int **)ptr);
+    return FormatA("0x%p", p);
+}
+
 void CProcParser::InitParser() {
     //1 byte
-    InsertBaseType(STRUCT_TYPE_BASETYPE, "bool;boolean;byte;unsigned char;UCHAR;INT8;BYTE;__int8", 1, "%d");
-    InsertBaseType(STRUCT_TYPE_BASETYPE, "char;CHAR", 1, "%c");
+    InsertBaseType(STRUCT_TYPE_BASETYPE, "bool;boolean", 1, BoolenFormater);
+    InsertBaseType(STRUCT_TYPE_BASETYPE, "byte;INT8;BYTE;__int8;unsigned char;UCHAR", 1, ByteFormater);
+    InsertBaseType(STRUCT_TYPE_BASETYPE, "char;CHAR", 1, CharFormater);
 
     //2 byte
-    InsertBaseType(STRUCT_TYPE_BASETYPE, "WORD;ATOM;unsigned short;USHORT;UINT16;uint16_t;short;int16_t;INT16;__int16;BOOL", 2, "%d");
-    InsertBaseType(STRUCT_TYPE_BASETYPE, "WCHAR;wchar_t", 2, "%c");
+    InsertBaseType(STRUCT_TYPE_BASETYPE, "WORD;ATOM;unsigned short;USHORT;UINT16;uint16_t;short;int16_t;INT16;__int16", 2, WordFormater);
+    InsertBaseType(STRUCT_TYPE_BASETYPE, "BOOLEN;BOOL", 2, BOOLFormater);
+    InsertBaseType(STRUCT_TYPE_BASETYPE, "WCHAR;wchar_t", 2, WcharFormater);
 
     //4 byte
-    InsertBaseType(STRUCT_TYPE_BASETYPE, "unsigned int;UINT;uint32_t;UINT32;int;INT32;__int32;DWORD", 4, "%d");
+    InsertBaseType(STRUCT_TYPE_BASETYPE, "int;INT32;__int32", 4, In32Formater);
+    InsertBaseType(STRUCT_TYPE_BASETYPE, "unsigned int;UINT;uint32_t;UINT32;DWORD", 4, Uint32Formater);
 
     //8 bytes
-    InsertBaseType(STRUCT_TYPE_BASETYPE, "__int64;INT64;ULONGLONG;LONGLONG;UINT64;int64_t", 8, "%I64d");
-
-    //str
-    InsertBaseType(STRUCT_TYPE_STR, "const char*;char*;LPCSTR;PSTR;LPSTR", sizeof(void*), "%hs");
-    InsertBaseType(STRUCT_TYPE_STR, "const wchar_t*;wchar_t*;LPCWSTR;PWSTR;LPWSTR", sizeof(void*), "%ls");
+    InsertBaseType(STRUCT_TYPE_BASETYPE, "__int64;INT64;ULONGLONG;LONGLONG;UINT64;int64_t", 8, Int64Foramter);
 
     //void ptr
     InsertVoidPtr("void*;LPVOID;PVOID;HANDLE;HKEY;HWINSTA;HWND;HMENU;HINSTANCE;WNDPROC;HICON;HCURSOR;HBRUSH;HOOKPROC;LPTHREAD_START_ROUTINE");
@@ -109,6 +170,8 @@ void CProcParser::InitParser() {
     LinkPtr("LPBYTE;PBYTE;LPCBYTE;PINT8;LPINT8", "byte");
     LinkPtr("LPDWORD;PDWORD;PINT;PINT32;SIZE_T;size_t;ULONG_PTR;LONG_PTR;LSTATUS", "DWORD");
     LinkPtr("PWORD;LPWORD;PINT16;LPINT16", "WORD");
+    LinkPtr("LPCSTR;PSTR;LPSTR", "char");
+    LinkPtr("LPCWSTR;PWSTR;LPWSTR", "WCHAR");
 }
 
 CProcParser::CProcParser() {
@@ -273,9 +336,8 @@ void CProcParser::ClearParamStr(mstring &str) const {
 StructDesc *CProcParser::CreatePtrStruct() const {
     StructDesc *ptr = new StructDesc();
     ptr->mType = STRUCT_TYPE_PTR;
-    ptr->mFormat = "%p";
     ptr->mLength = sizeof(void *);
-
+    ptr->mPfnFormat = PtrFormater;
     return ptr;
 }
 
@@ -360,7 +422,17 @@ StructDesc *CProcParser::ParserParamStr(const mstring &str, mstring &type, mstri
         }
         name = tmpName;
     }
-    type = tmpType;
+
+    name = tmpName;
+    if (name.empty())
+    {
+        type = str;
+        type.trim();
+    } else {
+        size_t pos3 = str.rfind(name);
+        type = str.substr(0, pos3);
+        type.trim();
+    }
     return pStruct;
 }
 
@@ -458,7 +530,7 @@ StructDesc *CProcParser::ParserStructName(const mstring &content, map<mstring, S
     StructDesc *pStruct = new StructDesc();
     StructDesc *pStructPtr = new StructDesc();
     out[name] = pStruct;
-    pStruct->mNameSet.push_back(name);
+    pStruct->mNameSet.insert(name);
 
     pStruct->mType = STRUCT_TYPE_STRUCT;
     pStructPtr = CreatePtrStruct();
@@ -487,10 +559,11 @@ StructDesc *CProcParser::ParserStructName(const mstring &content, map<mstring, S
                 tmp.erase(0, 1);
                 tmp.trim();
                 out[tmp] = pStructPtr;
-                pStructPtr->mNameSet.push_back(tmp);
+                pStructPtr->mNameSet.insert(tmp);
             } else {
+                tmp.trim();
                 out[tmp] = pStruct;
-                pStruct->mNameSet.push_back(tmp);
+                pStruct->mNameSet.insert(tmp);
             }
         }
     }
@@ -616,8 +689,37 @@ bool CProcParser::IsProcStr(const mstring &str) const {
 }
 
 #include <Shlwapi.h>
-#include <ComLib/ComLib.h>
+#include <gdlib/gdutil.h>
 #include "ProcPrinter.h"
+
+typedef struct Test5 {
+    int b1;
+    int b2;
+}*PTest5;
+
+typedef struct Test1 {
+    int test1a;
+    PTest5 pTest5;
+    LPCSTR test1b;
+}*PTest1;
+
+struct Test0 {
+    UINT        cbSize;
+    PTest1      test1;
+    UINT        style;
+    PTest1      test4;
+    WNDPROC     lpfnWndProc;
+    int         cbClsExtra;
+    int         cbWndExtra;
+    Test5       mTest5;
+    HINSTANCE   hInstance;
+    HICON       hIcon;
+    HCURSOR     hCursor;
+    HBRUSH      hbrBackground;
+    LPCWSTR     lpszMenuName;
+    LPCWSTR     lpszClassName;
+    HICON       hIconSm;
+};
 
 void TestProc() {
     CProcParser *ptr = CProcParser::GetInst();
@@ -627,13 +729,32 @@ void TestProc() {
     GetModuleFileNameA(NULL, path, 256);
     PathAppendA(path, "..\\test.txt");
 
-    PFILE_MAPPING_STRUCT pMapping = MappingFileA(path, FALSE, 1024 * 1024 * 8);
+    PFILE_MAPPING_STRUCT pMapping = GdFileMappingFileA(path, FALSE, 1024 * 1024 * 8);
 
     vector<ProcDesc> set1;
     ptr->ParserModuleProc("kernel32.dll", (const char *)pMapping->lpView, set1);
 
-    mstring strStruct = CProcPrinter::GetInst()->GetStructStr("WNDCLASSEXW");
+    Test5 test5 = {0};
+    test5.b1 = 9;
+    test5.b2 = 11;
+
+    Test1 test1 = {0};
+    test1.test1a = 2;
+    test1.test1b = "aaaa";
+    test1.pTest5 = &test5;
+
+    Test1 test3 = {0};
+    test3.test1a = 7;
+    test3.test1b = "cccc";
+
+    Test0 test2 = {0};
+    test2.cbSize = -1;
+    test2.test1 = &test1;
+    test2.test4 = &test3;
+    test2.lpszClassName = L"111";
+    test2.lpszMenuName = L"bbb";
+    mstring strStruct = CProcPrinter::GetInst()->GetStructStrByAddr("Test0", (LPVOID)&test2);
     OutputDebugStringA("\n");
     OutputDebugStringA(strStruct.c_str());
-    CloseFileMapping(pMapping);
+    GdFileCloseFileMapping(pMapping);
 }

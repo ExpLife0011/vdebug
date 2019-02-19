@@ -6,9 +6,14 @@
 using namespace std;
 
 PrintFormater::PrintFormater() {
+    m_space = 2;
 }
 
 PrintFormater::~PrintFormater() {
+}
+
+void PrintFormater::SetSpaceCount(int count) {
+    m_space = count;
 }
 
 bool PrintFormater::Reset() {
@@ -59,6 +64,17 @@ bool PrintFormater::EndSession() {
 
 mstring PrintFormater::GetResult() {
     mstring result;
+    vector<mstring> resultSet = GetResultSet();
+    for (vector<mstring>::const_iterator it = resultSet.begin() ; it != resultSet.end() ; it++)
+    {
+        result += *it;
+        result += "\r\n";
+    }
+    return result;
+}
+
+vector<mstring> PrintFormater::GetResultSet() {
+    vector<mstring> result;
 
     int nodeSize = (int)m_matrix2[0].size();
     int lineSize = (int)m_matrix2.size();
@@ -89,6 +105,7 @@ mstring PrintFormater::GetResult() {
     result.clear();
     for (i = 0 ; i < lineSize ; i++)
     {
+        mstring tmp;
         for (j = 0 ; j < nodeSize ; j++)
         {
             string node = m_matrix2[i][j];
@@ -103,20 +120,20 @@ mstring PrintFormater::GetResult() {
                     }
                 }
 
-                result += node;
+                tmp += node;
             } else {
-                result += node;
+                tmp += node;
             }
 
             if (j != (nodeSize - 1))
             {
-                for (int k = 0 ; k < ms_space ; k++)
+                for (int k = 0 ; k < m_space ; k++)
                 {
-                    result += " ";
+                    tmp += " ";
                 }
             }
         }
-        result += "\r\n";
+        result.push_back(tmp);
     }
     return result;
 }

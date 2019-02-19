@@ -24,11 +24,13 @@ public:
     PrintFormater &operator << (PrintFormatStat stat);
     bool EndSession();
     std::mstring GetResult();
+    std::vector<std::mstring> GetResultSet();
+    void SetSpaceCount(int count);
 
 private:
     std::vector<int> m_rule;
     std::vector<std::mstring> m_matrix1;
     std::vector<std::vector<std::mstring>> m_matrix2;
-    static const int ms_space = 2;
+    int m_space;
 };
 #endif
