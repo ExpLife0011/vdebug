@@ -1,39 +1,20 @@
 #include <Windows.h>
 #include <list>
-#include "ProcParser.h"
+#include "DescParser.h"
 #include "StrUtil.h"
+#include "deelx.h"
 
-class CParserException
-{
-public:
-    CParserException(const mstring &errMsg)
-    {
-        mErrMsg = errMsg;
-    }
-
-    virtual ~CParserException()
-    {}
-
-    const char *GetErrorMsg() const
-    {
-        return mErrMsg.c_str();
-    }
-
-private:
-    mstring mErrMsg;
-};
-
-CProcParser *CProcParser::GetInst() {
-    static CProcParser *s_ptr = NULL;
+CDescParser *CDescParser::GetInst() {
+    static CDescParser *s_ptr = NULL;
 
     if (NULL == s_ptr)
     {
-        s_ptr = new CProcParser();
+        s_ptr = new CDescParser();
     }
     return s_ptr;
 }
 
-void CProcParser::InsertBaseType(int type, const mstring &nameSet, int length, pfnFormatProc pfn) {
+void CDescParser::InsertBaseType(int type, const mstring &nameSet, int length, pfnFormatProc pfn) {
     StructDesc *newPtr = new StructDesc();
     newPtr->mType = type;
     newPtr->mLength = length;
@@ -47,7 +28,7 @@ void CProcParser::InsertBaseType(int type, const mstring &nameSet, int length, p
     }
 }
 
-bool CProcParser::InsertVoidPtr(const mstring &nameSet) {
+bool CDescParser::InsertVoidPtr(const mstring &nameSet) {
     StructDesc *newPtr = new StructDesc();
     newPtr->mType = STRUCT_TYPE_PTR;
     newPtr->mUnknownType = true;
@@ -63,7 +44,7 @@ bool CProcParser::InsertVoidPtr(const mstring &nameSet) {
     return true;
 }
 
-bool CProcParser::LinkPtr(const mstring &nameSet, const mstring &linked) {
+bool CDescParser::LinkPtr(const mstring &nameSet, const mstring &linked) {
     map<mstring, StructDesc *>::const_iterator it = mStructMap.find(linked);
 
     if (it == mStructMap.end())
@@ -86,7 +67,7 @@ bool CProcParser::LinkPtr(const mstring &nameSet, const mstring &linked) {
     return true;
 }
 
-mstring CProcParser::BoolenFormater(LPVOID ptr, int length) {
+mstring CDescParser::BoolenFormater(LPVOID ptr, int length) {
     bool t = *(bool *)ptr;
     if (t)
     {
@@ -95,22 +76,22 @@ mstring CProcParser::BoolenFormater(LPVOID ptr, int length) {
     return "false";
 }
 
-mstring CProcParser::ByteFormater(LPVOID ptr, int length) {
+mstring CDescParser::ByteFormater(LPVOID ptr, int length) {
     int t = *(byte *)ptr;
     return FormatA("0x%02x(%d)", t, t);
 }
 
-mstring CProcParser::CharFormater(LPVOID ptr, int length) {
+mstring CDescParser::CharFormater(LPVOID ptr, int length) {
     char c = *(char *)ptr;
     return FormatA("%c", c);
 }
 
-mstring CProcParser::WordFormater(LPVOID ptr, int length) {
+mstring CDescParser::WordFormater(LPVOID ptr, int length) {
     int t = *((WORD *)ptr);
     return FormatA("0x%04x(%d)", t, t);
 }
 
-mstring CProcParser::BOOLFormater(LPVOID ptr, int length) {
+mstring CDescParser::BOOLFormater(LPVOID ptr, int length) {
     BOOL b = *((BOOL *)ptr);
     if (b)
     {
@@ -119,33 +100,33 @@ mstring CProcParser::BOOLFormater(LPVOID ptr, int length) {
     return "FALSE";
 }
 
-mstring CProcParser::WcharFormater(LPVOID ptr, int length) {
+mstring CDescParser::WcharFormater(LPVOID ptr, int length) {
     WCHAR w = *((WCHAR *)ptr);
     WCHAR s[2] = {w, 0};
     return FormatA("%ls", s);
 }
 
-mstring CProcParser::In32Formater(LPVOID ptr, int length) {
+mstring CDescParser::In32Formater(LPVOID ptr, int length) {
     int d = *((int *)ptr);
     return FormatA("0x%08x(%d)", d, d);
 }
 
-mstring CProcParser::Uint32Formater(LPVOID ptr, int length) {
+mstring CDescParser::Uint32Formater(LPVOID ptr, int length) {
     UINT32 d = *((UINT32 *)ptr);
     return FormatA("0x%08x(%u)", d, d);
 }
 
-mstring CProcParser::Int64Foramter(LPVOID ptr, int length) {
+mstring CDescParser::Int64Foramter(LPVOID ptr, int length) {
     UINT64 d = *((UINT64 *)ptr);
     return FormatA("0x%016x(%I64d)", d, d);
 }
 
-mstring CProcParser::PtrFormater(LPVOID ptr, int length) {
+mstring CDescParser::PtrFormater(LPVOID ptr, int length) {
     LPVOID p = *((int **)ptr);
     return FormatA("0x%p", p);
 }
 
-void CProcParser::InitParser() {
+void CDescParser::InitParser() {
     //1 byte
     InsertBaseType(STRUCT_TYPE_BASETYPE, "bool;boolean", 1, BoolenFormater);
     InsertBaseType(STRUCT_TYPE_BASETYPE, "byte;INT8;BYTE;__int8;unsigned char;UCHAR", 1, ByteFormater);
@@ -174,13 +155,13 @@ void CProcParser::InitParser() {
     LinkPtr("LPCWSTR;PWSTR;LPWSTR", "WCHAR");
 }
 
-CProcParser::CProcParser() {
+CDescParser::CDescParser() {
 }
 
-CProcParser::~CProcParser() {
+CDescParser::~CDescParser() {
 }
 
-NodeStr CProcParser::ParserStructNode(const mstring &procStr, size_t startPos, size_t curPos, size_t &endPos) const {
+NodeStr CDescParser::ParserStructNode(const mstring &procStr, size_t startPos, size_t curPos, size_t &endPos) const {
     const int len1 = lstrlenA("struct");
     list<char> charStack;
     bool stat = false;
@@ -232,13 +213,13 @@ NodeStr CProcParser::ParserStructNode(const mstring &procStr, size_t startPos, s
         }
     }
     NodeStr node;
-    node.mType = TYPE_STRUCT;
+    node.mType = STR_TYPE_STRUCT;
     node.mContent = procStr.substr(startPos, j - startPos);
     endPos = j + 1;
     return node;
 }
 
-bool CProcParser::IsPartOpt(char c) const {
+bool CDescParser::IsPartOpt(char c) const {
     if (c == '\n' || c == '\t' || c == ' ')
     {
         return true;
@@ -246,7 +227,7 @@ bool CProcParser::IsPartOpt(char c) const {
     return false;
 }
 
-NodeStr CProcParser::ParserProcNode(const mstring &procStr, size_t startPos, size_t curPos, size_t &endPos) const {
+NodeStr CDescParser::ParserProcNode(const mstring &procStr, size_t startPos, size_t curPos, size_t &endPos) const {
     size_t i = 0;
     size_t j = 0;
     list<char> charStack;
@@ -280,7 +261,7 @@ NodeStr CProcParser::ParserProcNode(const mstring &procStr, size_t startPos, siz
                 }
 
                 NodeStr newNode;
-                newNode.mType = TYPE_FUNCTION;
+                newNode.mType = STR_TYPE_FUNCTION;
                 newNode.mContent = procStr.substr(startPos, endPos - startPos);
                 return newNode;
             }
@@ -289,7 +270,7 @@ NodeStr CProcParser::ParserProcNode(const mstring &procStr, size_t startPos, siz
     throw(new CParserException("error5"));
 }
 
-list<NodeStr> CProcParser::SplitNodeStr(const mstring &procStr) const {
+list<NodeStr> CDescParser::SplitNodeStr(const mstring &procStr) const {
     size_t startPos = 0;
     int type = -1;
     list<NodeStr> nodeSet;
@@ -318,7 +299,7 @@ list<NodeStr> CProcParser::SplitNodeStr(const mstring &procStr) const {
     return nodeSet;
 }
 
-void CProcParser::ClearParamStr(mstring &str) const {
+void CDescParser::ClearParamStr(mstring &str) const {
     const char *clearStr[] = {
         " const", "const ", " CONST", "CONST ",
         "__in_opt", "__inout_opt", "__out_opt", "__out_bcount_opt", "_bcount", "_opt",
@@ -333,7 +314,7 @@ void CProcParser::ClearParamStr(mstring &str) const {
     str.trim();
 }
 
-StructDesc *CProcParser::CreatePtrStruct() const {
+StructDesc *CDescParser::CreatePtrStruct() const {
     StructDesc *ptr = new StructDesc();
     ptr->mType = STRUCT_TYPE_PTR;
     ptr->mLength = sizeof(void *);
@@ -341,7 +322,7 @@ StructDesc *CProcParser::CreatePtrStruct() const {
     return ptr;
 }
 
-StructDesc *CProcParser::ParserParamStr(const mstring &str, mstring &type, mstring &name) const {
+StructDesc *CDescParser::ParserParamStr(const mstring &str, mstring &type, mstring &name) const {
     mstring content = str;
     ClearParamStr(content);
 
@@ -436,8 +417,8 @@ StructDesc *CProcParser::ParserParamStr(const mstring &str, mstring &type, mstri
     return pStruct;
 }
 
-ProcDesc CProcParser::ParserSingleProc(const mstring &dllName, const NodeStr &node) const {
-    ProcDesc proc;
+FunDesc CDescParser::ParserSingleProc(const mstring &dllName, const NodeStr &node) const {
+    FunDesc proc;
     mstring procStr = node.mContent;
     procStr.trim();
 
@@ -514,7 +495,7 @@ ProcDesc CProcParser::ParserSingleProc(const mstring &dllName, const NodeStr &no
     return proc;
 }
 
-StructDesc *CProcParser::ParserStructName(const mstring &content, map<mstring, StructDesc *> &out) const {
+StructDesc *CDescParser::ParserStructName(const mstring &content, map<mstring, StructDesc *> &out) const {
     size_t curPos = -1;
     curPos = content.find("struct");
     if (mstring::npos == curPos)
@@ -570,7 +551,7 @@ StructDesc *CProcParser::ParserStructName(const mstring &content, map<mstring, S
     return pStruct;
 }
 
-StructDesc *CProcParser::FindStructFromName(const mstring &name) const {
+StructDesc *CDescParser::FindStructFromName(const mstring &name) const {
     map<mstring, StructDesc *>::const_iterator it = mStructMap.find(name);
 
     if (it == mStructMap.end())
@@ -580,7 +561,7 @@ StructDesc *CProcParser::FindStructFromName(const mstring &name) const {
     return it->second;
 }
 
-bool CProcParser::ParserStructParam(const mstring &content, StructDesc *ptr) const {
+bool CDescParser::ParserStructParam(const mstring &content, StructDesc *ptr) const {
     size_t pos1 = content.find('{');
     size_t pos2 = content.rfind('}');
 
@@ -610,7 +591,7 @@ bool CProcParser::ParserStructParam(const mstring &content, StructDesc *ptr) con
     return true;
 }
 
-map<mstring, StructDesc *> CProcParser::ParserSingleStruct(const mstring &dllName, const NodeStr &node) const {
+map<mstring, StructDesc *> CDescParser::ParserSingleStruct(const mstring &dllName, const NodeStr &node) const {
     size_t curPos = -1;
     mstring content = node.mContent;
     content.trim();
@@ -624,12 +605,14 @@ map<mstring, StructDesc *> CProcParser::ParserSingleStruct(const mstring &dllNam
     return structSet;
 }
 
-bool CProcParser::ParserModuleProc(
+bool CDescParser::ParserModuleProc(
     const mstring &dllName,
-    const mstring &procStr,
-    vector<ProcDesc> &procSet
+    const mstring &content,
+    vector<FunDesc> &procSet
     )
 {
+    mstring procStr = content;
+    ParserPreProcess(procStr);
     list<NodeStr> nodeSet;
 
     try {
@@ -637,13 +620,13 @@ bool CProcParser::ParserModuleProc(
 
         for (list<NodeStr>::const_iterator it = nodeSet.begin() ; it != nodeSet.end() ; it++)
         {
-            if (it->mType == TYPE_STRUCT)
+            if (it->mType == STR_TYPE_STRUCT)
             {
                 map<mstring, StructDesc *> tmp = ParserSingleStruct(dllName, *it);
                 mStructMap.insert(tmp.begin(), tmp.end());
-            } else if (it->mType == TYPE_FUNCTION)
+            } else if (it->mType == STR_TYPE_FUNCTION)
             {
-                ProcDesc proc = ParserSingleProc(dllName, *it);
+                FunDesc proc = ParserSingleProc(dllName, *it);
                 procSet.push_back(proc);
             }
         }
@@ -653,22 +636,19 @@ bool CProcParser::ParserModuleProc(
     return true;
 }
 
-void CProcParser::ParserPreProcess(mstring &str) const {
+void CDescParser::ParserPreProcess(mstring &str) const {
     str.trim();
     mstring tmp;
     bool spaceFlag = false;
-    for (size_t i = 0 ; i < str.size() ; i++)
-    {
+    for (size_t i = 0 ; i < str.size() ; i++) {
         char cur = str[i];
         if (str[i] == '\t')
         {
             cur = ' ';
         }
 
-        if (cur == ' ')
-        {
-            if (spaceFlag)
-            {
+        if (cur == ' ') {
+            if (spaceFlag) {
                 continue;
             } else {
                 spaceFlag = true;
@@ -678,19 +658,50 @@ void CProcParser::ParserPreProcess(mstring &str) const {
         }
         tmp += cur;
     }
+
+    //delete node block
+    while (true) {
+        size_t pos1 = tmp.find("/*");
+        size_t pos2 = tmp.find("//");
+
+        size_t pos3 = min(pos1, pos2);
+        if (pos3 == mstring::npos)
+        {
+            break;
+        }
+
+        size_t pos4  = -1;
+        if (pos3 == pos1) {
+            pos4 = tmp.find("*/", pos3 + 2);
+
+            if (mstring::npos != pos4)
+            {
+                tmp.erase(pos1, pos4 + 2 - pos1);
+            }
+        } else if (pos3 == pos2) {
+            pos4 = tmp.find("\n", pos2 + 2);
+            if (mstring::npos != pos4)
+            {
+                tmp.erase(pos2, pos4 + 1 - pos2);
+            } else {
+                tmp.erase(pos2, tmp.size() - pos2);
+            }
+        }
+    }
+    str = tmp.trim();
 }
 
-bool CProcParser::IsStructStr(const mstring &str) const {
+bool CDescParser::IsStructStr(const mstring &str) const {
     return true;
 }
 
-bool CProcParser::IsProcStr(const mstring &str) const {
+bool CDescParser::IsProcStr(const mstring &str) const {
     return true;
 }
 
 #include <Shlwapi.h>
 #include <gdlib/gdutil.h>
-#include "ProcPrinter.h"
+#include "DescPrinter.h"
 
 typedef struct Test5 {
     int b1;
@@ -722,7 +733,7 @@ struct Test0 {
 };
 
 void TestProc() {
-    CProcParser *ptr = CProcParser::GetInst();
+    CDescParser *ptr = CDescParser::GetInst();
     ptr->InitParser();
 
     char path[256] = {0};
@@ -731,7 +742,7 @@ void TestProc() {
 
     PFILE_MAPPING_STRUCT pMapping = GdFileMappingFileA(path, FALSE, 1024 * 1024 * 8);
 
-    vector<ProcDesc> set1;
+    vector<FunDesc> set1;
     ptr->ParserModuleProc("kernel32.dll", (const char *)pMapping->lpView, set1);
 
     Test5 test5 = {0};
@@ -753,7 +764,7 @@ void TestProc() {
     test2.test4 = &test3;
     test2.lpszClassName = L"111";
     test2.lpszMenuName = L"bbb";
-    mstring strStruct = CProcPrinter::GetInst()->GetStructStrByAddr("Test0", (LPVOID)&test2);
+    mstring strStruct = CDescPrinter::GetInst()->GetStructStrByAddr("Test0", NULL);
     OutputDebugStringA("\n");
     OutputDebugStringA(strStruct.c_str());
     GdFileCloseFileMapping(pMapping);

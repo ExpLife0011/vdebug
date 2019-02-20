@@ -9,6 +9,26 @@
 
 using namespace std;
 
+class CParserException
+{
+public:
+    CParserException(const mstring &errMsg)
+    {
+        mErrMsg = errMsg;
+    }
+
+    virtual ~CParserException()
+    {}
+
+    const char *GetErrorMsg() const
+    {
+        return mErrMsg.c_str();
+    }
+
+private:
+    mstring mErrMsg;
+};
+
 #define STRUCT_TYPE_BASETYPE    0   //base type eg:int32 int64 char ...
 #define STRUCT_TYPE_STRUCT      1   //struct contains some members.
 #define STRUCT_TYPE_PTR         2   //struct ptr
@@ -76,10 +96,10 @@ struct ParamDesc {
 };
 
 struct ReturnDesc {
-    StructDesc *mStruct;    //return content
+    StructDesc *mStruct;        //return content
 };
 
-struct ProcDesc {
+struct FunDesc {
     mstring mDllName;           //module name
     mstring mProcName;          //proc name
     ProcCallType mCallType;     //call type
@@ -87,8 +107,8 @@ struct ProcDesc {
     ReturnDesc mReturn;         //return desc
 };
 
-#define TYPE_STRUCT         0
-#define TYPE_FUNCTION       1
+#define STR_TYPE_STRUCT         0
+#define STR_TYPE_FUNCTION       1
 struct NodeStr {
     int mType;
     mstring mContent;
@@ -96,26 +116,27 @@ struct NodeStr {
 
 struct ModuleDesc {
     mstring mModuleName;
-    vector<StructDesc> mStructSet;
-    vector<ProcDesc> mProcSet;
+    vector<StructDesc *> mStructSet;
+    vector<FunDesc *> mProcSet;
 };
 
-class CProcParser {
+class CDescParser {
 public:
-    static CProcParser *GetInst();
+    static CDescParser *GetInst();
     void InitParser();
 private:
-    CProcParser();
-    virtual ~CProcParser();
+    CDescParser();
+    virtual ~CDescParser();
 
 public:
     bool ParserModuleProc(
         const mstring &dllName,
         const mstring &procStr,
-        vector<ProcDesc> &procSet
+        vector<FunDesc> &procSet
         );
 
     StructDesc *FindStructFromName(const mstring &name) const;
+    FunDesc *GetProcFromName(const mstring &dllName, const mstring &procName) const;
 private:
     list<NodeStr> SplitNodeStr(const mstring &procStr) const;
     NodeStr ParserProcNode(const mstring &procStr, size_t startPos, size_t curPos, size_t &endPos) const;
@@ -124,7 +145,7 @@ private:
     bool IsStructStr(const mstring &str) const;
     bool IsProcStr(const mstring &str) const;
     bool IsPartOpt(char c) const;
-    ProcDesc ParserSingleProc(const mstring &dllName, const NodeStr &node) const;
+    FunDesc ParserSingleProc(const mstring &dllName, const NodeStr &node) const;
     StructDesc GetStructFormName(const mstring &dllName, const mstring &structName) const;
     map<mstring, StructDesc *> ParserSingleStruct(const mstring &dllName, const NodeStr &node) const;
     StructDesc *ParserStructName(const mstring &content, map<mstring, StructDesc *> &out) const;

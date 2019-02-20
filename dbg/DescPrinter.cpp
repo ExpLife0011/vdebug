@@ -1,46 +1,46 @@
 #include <Windows.h>
 #include "mstring.h"
-#include "ProcPrinter.h"
-#include "ProcParser.h"
+#include "DescPrinter.h"
+#include "DescParser.h"
 #include "StrUtil.h"
 
-CProcPrinter::CProcPrinter() {
+CDescPrinter::CDescPrinter() {
 }
 
-CProcPrinter::~CProcPrinter() {
+CDescPrinter::~CDescPrinter() {
 }
 
-CProcPrinter *CProcPrinter::GetInst() {
-    static CProcPrinter *s_ptr = NULL;
+CDescPrinter *CDescPrinter::GetInst() {
+    static CDescPrinter *s_ptr = NULL;
 
     if (NULL == s_ptr)
     {
-        s_ptr = new CProcPrinter();
+        s_ptr = new CDescPrinter();
     }
     return s_ptr;
 }
 
-mstring CProcPrinter::GetProcStrByAddr(const mstring &name, LPVOID stackAddr) const {
+mstring CDescPrinter::GetProcStrByAddr(const mstring &name, LPVOID stackAddr) const {
     return "";
 }
 
-mstring CProcPrinter::GetProcStr(const mstring &name) const {
+mstring CDescPrinter::GetProcStr(const mstring &name) const {
     return "";
 }
 
-mstring CProcPrinter::GetStructStrByAddr(const mstring &name, LPVOID startAddr) const {
+mstring CDescPrinter::GetStructStrByAddr(const mstring &name, LPVOID startAddr) const {
     return GetStructStrInternal(name, startAddr);
 }
 
-mstring CProcPrinter::GetStructStr(const mstring &name) const {
+mstring CDescPrinter::GetStructStr(const mstring &name) const {
     return GetStructStrInternal(name, NULL);
 }
 
-bool IsValidaAddr(LPVOID addr) {
+bool CDescPrinter::IsValidAddr(LPVOID addr) const {
     return (ULONGLONG)addr > 0xffff;
 }
 
-void CProcPrinter::StructHandler(PrintEnumInfo &tmp1, list<PrintEnumInfo> &enumSet, bool withOffset) const {
+void CDescPrinter::StructHandler(PrintEnumInfo &tmp1, list<PrintEnumInfo> &enumSet, bool withOffset) const {
     tmp1.mNode->mSubSize = tmp1.mDesc->mMemberSet.size();
 
     PrinterNode *lastNode = NULL;
@@ -70,7 +70,7 @@ void CProcPrinter::StructHandler(PrintEnumInfo &tmp1, list<PrintEnumInfo> &enumS
                 char *pStr = *((char **)tmp2.mBaseAddr);
                 if (!pStr)
                 {
-                    tmp2.mNode->mContent = "读取地址内容错误";
+                    tmp2.mNode->mContent = "读取字符串内容错误";
                 } else {
                     if (isUnicode)
                     {
@@ -83,7 +83,7 @@ void CProcPrinter::StructHandler(PrintEnumInfo &tmp1, list<PrintEnumInfo> &enumS
             } else {
                 if (tmp2.mDesc->mType != STRUCT_TYPE_STRUCT)
                 {
-                    if (IsValidaAddr(tmp2.mBaseAddr))
+                    if (IsValidAddr(tmp2.mBaseAddr))
                     {
                         tmp2.mNode->mContent = tmp2.mDesc->mPfnFormat(tmp2.mBaseAddr, tmp2.mDesc->mLength);
                     } else {
@@ -108,8 +108,8 @@ void CProcPrinter::StructHandler(PrintEnumInfo &tmp1, list<PrintEnumInfo> &enumS
 }
 
 //生成节点层次结构
-PrinterNode *CProcPrinter::GetNodeStruct(const mstring &name, LPVOID baseAddr) const {
-    StructDesc *desc = CProcParser::GetInst()->FindStructFromName(name);
+PrinterNode *CDescPrinter::GetNodeStruct(const mstring &name, LPVOID baseAddr) const {
+    StructDesc *desc = CDescParser::GetInst()->FindStructFromName(name);
     if (NULL == desc)
     {
         return NULL;
@@ -137,21 +137,22 @@ PrinterNode *CProcPrinter::GetNodeStruct(const mstring &name, LPVOID baseAddr) c
             StructHandler(tmp1, enumSet, withOffset);
         } else if ((tmp1.mDesc->mType == STRUCT_TYPE_PTR) && (tmp1.mDesc->mUnknownType == false))
         {
+            if (tmp1.mDesc->mPtr->mType != STRUCT_TYPE_STRUCT) {
+                continue;
+            }
+
             PrintEnumInfo tmp3;
             tmp3.mDesc = tmp1.mDesc->mPtr;
             tmp3.mNode = new PrinterNode();
             tmp3.mParent = tmp1.mParent;
 
-            if (NULL == tmp1.mBaseAddr)
-            {
-                tmp3.mNode->mParent = tmp3.mParent;
-                tmp3.mNode->mContent = "读取地址内容错误";
+            if (withOffset) {
+                StructHandler(tmp3, enumSet, withOffset);
             } else {
-                char *pStr = *((char **)tmp1.mBaseAddr);
-                tmp3.mBaseAddr = pStr;
-
-                if (tmp3.mDesc->mType == STRUCT_TYPE_STRUCT)
+                if (IsValidAddr(tmp1.mBaseAddr))
                 {
+                    char *pStr = *((char **)tmp1.mBaseAddr);
+                    tmp3.mBaseAddr = pStr;
                     StructHandler(tmp3, enumSet, withOffset);
                 }
             }
@@ -160,7 +161,7 @@ PrinterNode *CProcPrinter::GetNodeStruct(const mstring &name, LPVOID baseAddr) c
     return root;
 }
 
-void CProcPrinter::FillLineAndRow(PrinterNode *ptr, vector<PrinterNode *> &result, int &line) const {
+void CDescPrinter::FillLineAndRow(PrinterNode *ptr, vector<PrinterNode *> &result, int &line) const {
     if (ptr->mLastBrotherNode != NULL)
     {
         ptr->mRow = ptr->mLastBrotherNode->mRow;
@@ -181,7 +182,7 @@ void CProcPrinter::FillLineAndRow(PrinterNode *ptr, vector<PrinterNode *> &resul
     }
 }
 
-void CProcPrinter::LinkDetachedNode(const vector<PrinterNode *> &nodeSet, vector<mstring> &strSet) const {
+void CDescPrinter::LinkDetachedNode(const vector<PrinterNode *> &nodeSet, vector<mstring> &strSet) const {
     for (size_t i = 0 ; i < strSet.size() ; i++)
     {
         PrinterNode *ptr = nodeSet[i + 1];
@@ -205,7 +206,7 @@ void CProcPrinter::LinkDetachedNode(const vector<PrinterNode *> &nodeSet, vector
     }
 }
 
-mstring CProcPrinter::GetStructStrInternal(const mstring &name, LPVOID baseAddr) const {
+mstring CDescPrinter::GetStructStrInternal(const mstring &name, LPVOID baseAddr) const {
     PrinterNode *root = GetNodeStruct(name, baseAddr);
     vector<PrinterNode *> lineSet;
     int line = 0;

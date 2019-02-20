@@ -1,7 +1,7 @@
 #ifndef PROCPRINTER_PARSER_H_H_
 #define PROCPRINTER_PARSER_H_H_
 #include <Windows.h>
-#include "ProcParser.h"
+#include "DescParser.h"
 
 struct PrinterNode {
     mstring mOffset;
@@ -21,14 +21,17 @@ struct PrinterNode {
 
     PrinterNode() {
         mSubSize = 0;
-        mParent = mLastBrotherNode = mNextBrotherNode = NULL;
+        mParent = NULL;
+        mLastBrotherNode = NULL;
+        mNextBrotherNode = NULL;
         mLine = 0;
         mRow = 0;
     }
 };
 
 struct PrintEnumInfo {
-    //加入mParent字段是为了处理结构体指针,结构体成员直接指向结构体指针而非再增加一个对象节点
+    //加入mParent字段是为了处理结构体指针.
+    //结构体成员直接指向结构体指针而非再增加一个对象节点
     PrinterNode *mParent;
     PrinterNode *mNode;
     const StructDesc *mDesc;
@@ -41,23 +44,37 @@ struct PrintEnumInfo {
         mBaseAddr = NULL;
     }
 };
+
 /*
-kernel32!CreateFileW:
-0x1122aabb  lpFilePath(LPCWSTR) = "c:\\abcdef\\2.txt"
-0x12343434  lpSecurityAttributes(LPSECURITY_ATTRIBUTES) = 0x1122abcd
-              └---0x12343410  SECURITY_ATTRIBUTES0x12343410
-                                └---0x12343410  nLength(DWORD) = 0x12341234
-                                └---0x12343414  lpSecurityDescriptor(LPVOID) = 0xaabb1234
-                                └---0x12343418  bInheritHandle(BOOL) = FALSE
-0x1323aabb  dwShareMode(DWORD) = 0x1122aabb
+print with addr
+Test0:
+├─0x0113f358 UINT cbSize 0xffffffff(4294967295)
+├─0x0113f35c PTest1 test1 0x0113F3B4
+│             ├─0x0113f3b4 int test1a 0x00000002(2)
+│             ├─0x0113f3b8 PTest5 pTest5 0x0113F3C8
+│             │             ├─0x0113f3c8 int b1 0x00000009(9)
+│             │             └─0x0113f3cc int b2 0x0000000b(11)
+│             └─0x0113f3bc LPCSTR test1b aaaa
+└─0x0113f360 UINT style 0x00000000(0)
+
+print desc only
+Test0:
+├─0x00 UINT cbSize
+├─0x04 PTest1 test1
+│       ├─0x00 int test1a
+│       ├─0x04 PTest5 pTest5
+│       │       ├─0x00 int b1
+│       │       └─0x04 int b2
+│       └─0x08 LPCSTR test1b
+└─0x08 UINT style
 */
-class CProcPrinter {
+class CDescPrinter {
 private:
-    CProcPrinter();
-    virtual ~CProcPrinter();
+    CDescPrinter();
+    virtual ~CDescPrinter();
 
 public:
-    static CProcPrinter *GetInst();
+    static CDescPrinter *GetInst();
     mstring GetProcStrByAddr(const mstring &name, LPVOID stackAddr) const;
     mstring GetProcStr(const mstring &name) const;
 
@@ -69,5 +86,6 @@ private:
     void FillLineAndRow(PrinterNode *root, vector<PrinterNode *> &result, int &line) const;
     mstring GetStructStrInternal(const mstring &name, LPVOID baseAddr) const;
     void LinkDetachedNode(const vector<PrinterNode *> &nodeSet, vector<mstring> &strSet) const;
+    bool IsValidAddr(LPVOID addr) const;
 };
 #endif //PROCPRINTER_PARSER_H_H_
