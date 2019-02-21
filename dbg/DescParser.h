@@ -37,9 +37,12 @@ typedef mstring (__stdcall *pfnFormatProc)(LPVOID ptr, int length);
 
 struct StructDesc {
     DWORD mType;                    //type 0:single var 1:struct 2:ptr
-    set<mstring> mNameSet;          //class name set
-    pfnFormatProc mPfnFormat;       //format rule eg: %d, %hs, %ls
+    mstring mTypeName;              //type name
+    DWORD mCheckSum;                //check sum
+
+    //base variable
     int mLength;                    //var length
+    mstring mFormat;                //format rule eg: %d, %hs, %ls
 
     //struct members
     vector<StructDesc *> mMemberSet;//member array
@@ -49,22 +52,33 @@ struct StructDesc {
 
     //ptr or array
     StructDesc *mPtr;               //ptr
+    int mLinkCount;                 //ptr count 多级指针计数
+    StructDesc *mPtrEnd;            //ptr end   多级指针的最后一级类型，用于加载展开
     int mSize;                      //array size
-    bool mUnknownType;              //unknow type LPVOID void *;
+    bool mUnknownType;              //unknow type LPVOID void *
+    mstring mEndType;               //end type, cache used
 
     bool IsStr(bool &isUnicode) const {
         if (mType == STRUCT_TYPE_PTR)
         {
+            static set<mstring> sCharSet;
+            static set<mstring> sWCharSet;
+
+            if (sCharSet.empty()){
+                sCharSet.insert("char"), sCharSet.insert("CHAR");
+                sWCharSet.insert("WCHAR"), sWCharSet.insert("wchar_t");
+            }
+
             if (mUnknownType == true)
             {
                 return false;
             }
 
-            if (mPtr->mNameSet.end() != mPtr->mNameSet.find("CHAR"))
+            if (sCharSet.end() != sCharSet.find(mPtr->mTypeName))
             {
                 isUnicode = false;
                 return true;
-            } else if (mPtr->mNameSet.end() != mPtr->mNameSet.find("WCHAR")){
+            } else if (sWCharSet.end() != sWCharSet.find(mPtr->mTypeName)){
                 isUnicode = true;
                 return true;
             }
@@ -78,7 +92,9 @@ struct StructDesc {
         mPtr = NULL;
         mUnknownType = false;
         mSize = 0;
-        mPfnFormat = NULL;
+        mLinkCount = 0;
+        mPtrEnd = NULL;
+        mCheckSum = 0;
     }
 };
 
@@ -134,9 +150,6 @@ public:
         const mstring &procStr,
         vector<FunDesc> &procSet
         );
-
-    StructDesc *FindStructFromName(const mstring &name) const;
-    FunDesc *GetProcFromName(const mstring &dllName, const mstring &procName) const;
 private:
     list<NodeStr> SplitNodeStr(const mstring &procStr) const;
     NodeStr ParserProcNode(const mstring &procStr, size_t startPos, size_t curPos, size_t &endPos) const;
@@ -150,26 +163,8 @@ private:
     map<mstring, StructDesc *> ParserSingleStruct(const mstring &dllName, const NodeStr &node) const;
     StructDesc *ParserStructName(const mstring &content, map<mstring, StructDesc *> &out) const;
     bool ParserStructParam(const mstring &content, StructDesc *ptr) const;
-    void InsertBaseType(int type, const mstring &nameSet, int length, pfnFormatProc pfn);
-    bool LinkPtr(const mstring &nameSet, const mstring &linked);
-    bool InsertVoidPtr(const mstring &nameSet);
     void ClearParamStr(mstring &str) const;
     StructDesc *ParserParamStr(const mstring &str, mstring &type, mstring &name) const;
-    StructDesc *CreatePtrStruct() const;
-
 private:
-    static mstring __stdcall BoolenFormater(LPVOID ptr, int length);
-    static mstring __stdcall ByteFormater(LPVOID ptr, int length);
-    static mstring __stdcall CharFormater(LPVOID ptr, int length);
-    static mstring __stdcall WordFormater(LPVOID ptr, int length);
-    static mstring __stdcall BOOLFormater(LPVOID ptr, int length);
-    static mstring __stdcall WcharFormater(LPVOID ptr, int length);
-    static mstring __stdcall In32Formater(LPVOID ptr, int length);
-    static mstring __stdcall Uint32Formater(LPVOID ptr, int length);
-    static mstring __stdcall Int64Foramter(LPVOID ptr, int length);
-    static mstring __stdcall PtrFormater(LPVOID ptr, int length);
-private:
-    list<ModuleDesc> mModuleSet;
-    map<mstring, StructDesc *> mStructMap;
 };
 #endif //PROCPARSER_DPSERV_H_H_

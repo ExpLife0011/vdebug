@@ -2,6 +2,7 @@
 #include "mstring.h"
 #include "DescPrinter.h"
 #include "DescParser.h"
+#include "DescCache.h"
 #include "StrUtil.h"
 
 CDescPrinter::CDescPrinter() {
@@ -85,7 +86,7 @@ void CDescPrinter::StructHandler(PrintEnumInfo &tmp1, list<PrintEnumInfo> &enumS
                 {
                     if (IsValidAddr(tmp2.mBaseAddr))
                     {
-                        tmp2.mNode->mContent = tmp2.mDesc->mPfnFormat(tmp2.mBaseAddr, tmp2.mDesc->mLength);
+                         tmp2.mNode->mContent = CDescCache::GetInst()->GetFormatStr(tmp2.mDesc->mFormat, (const char *)tmp2.mBaseAddr, tmp2.mDesc->mLength);
                     } else {
                         tmp2.mNode->mContent = "读取地址内容错误";
                     }
@@ -109,7 +110,7 @@ void CDescPrinter::StructHandler(PrintEnumInfo &tmp1, list<PrintEnumInfo> &enumS
 
 //生成节点层次结构
 PrinterNode *CDescPrinter::GetNodeStruct(const mstring &name, LPVOID baseAddr) const {
-    StructDesc *desc = CDescParser::GetInst()->FindStructFromName(name);
+    StructDesc *desc = CDescCache::GetInst()->GetStructByName(name);
     if (NULL == desc)
     {
         return NULL;

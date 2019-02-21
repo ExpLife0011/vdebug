@@ -1,6 +1,8 @@
 #include <Windows.h>
 #include <list>
+#include <gdlib/gdcrc32.h>
 #include "DescParser.h"
+#include "DescCache.h"
 #include "StrUtil.h"
 #include "deelx.h"
 
@@ -14,145 +16,7 @@ CDescParser *CDescParser::GetInst() {
     return s_ptr;
 }
 
-void CDescParser::InsertBaseType(int type, const mstring &nameSet, int length, pfnFormatProc pfn) {
-    StructDesc *newPtr = new StructDesc();
-    newPtr->mType = type;
-    newPtr->mLength = length;
-    newPtr->mPfnFormat = pfn;
-
-    list<mstring> nameArray = SplitStrA(nameSet, ";");
-    for (list<mstring>::const_iterator it = nameArray.begin() ; it != nameArray.end() ; it++)
-    {
-        newPtr->mNameSet.insert(*it);
-        mStructMap[*it] = newPtr;
-    }
-}
-
-bool CDescParser::InsertVoidPtr(const mstring &nameSet) {
-    StructDesc *newPtr = new StructDesc();
-    newPtr->mType = STRUCT_TYPE_PTR;
-    newPtr->mUnknownType = true;
-    newPtr->mLength = sizeof(void *);
-    newPtr->mPfnFormat = PtrFormater;
-
-    list<mstring> nameArray = SplitStrA(nameSet, ";");
-    for (list<mstring>::const_iterator it = nameArray.begin() ; it != nameArray.end() ; it++)
-    {
-        newPtr->mNameSet.insert(*it);
-        mStructMap[*it] = newPtr;
-    }
-    return true;
-}
-
-bool CDescParser::LinkPtr(const mstring &nameSet, const mstring &linked) {
-    map<mstring, StructDesc *>::const_iterator it = mStructMap.find(linked);
-
-    if (it == mStructMap.end())
-    {
-        return false;
-    }
-
-    StructDesc *newPtr = new StructDesc();
-    newPtr->mType = STRUCT_TYPE_PTR;
-    newPtr->mLength = sizeof(void *);
-    newPtr->mPfnFormat = PtrFormater;
-    StructDesc *ptr = it->second;
-    list<mstring> nameArry = SplitStrA(nameSet, ";");
-    for (list<mstring>::const_iterator it = nameArry.begin() ; it != nameArry.end() ; it++)
-    {
-        newPtr->mNameSet.insert(*it);
-        newPtr->mPtr = ptr;
-        mStructMap[*it] = newPtr;
-    }
-    return true;
-}
-
-mstring CDescParser::BoolenFormater(LPVOID ptr, int length) {
-    bool t = *(bool *)ptr;
-    if (t)
-    {
-        return "true";
-    }
-    return "false";
-}
-
-mstring CDescParser::ByteFormater(LPVOID ptr, int length) {
-    int t = *(byte *)ptr;
-    return FormatA("0x%02x(%d)", t, t);
-}
-
-mstring CDescParser::CharFormater(LPVOID ptr, int length) {
-    char c = *(char *)ptr;
-    return FormatA("%c", c);
-}
-
-mstring CDescParser::WordFormater(LPVOID ptr, int length) {
-    int t = *((WORD *)ptr);
-    return FormatA("0x%04x(%d)", t, t);
-}
-
-mstring CDescParser::BOOLFormater(LPVOID ptr, int length) {
-    BOOL b = *((BOOL *)ptr);
-    if (b)
-    {
-        return "TRUE";
-    }
-    return "FALSE";
-}
-
-mstring CDescParser::WcharFormater(LPVOID ptr, int length) {
-    WCHAR w = *((WCHAR *)ptr);
-    WCHAR s[2] = {w, 0};
-    return FormatA("%ls", s);
-}
-
-mstring CDescParser::In32Formater(LPVOID ptr, int length) {
-    int d = *((int *)ptr);
-    return FormatA("0x%08x(%d)", d, d);
-}
-
-mstring CDescParser::Uint32Formater(LPVOID ptr, int length) {
-    UINT32 d = *((UINT32 *)ptr);
-    return FormatA("0x%08x(%u)", d, d);
-}
-
-mstring CDescParser::Int64Foramter(LPVOID ptr, int length) {
-    UINT64 d = *((UINT64 *)ptr);
-    return FormatA("0x%016x(%I64d)", d, d);
-}
-
-mstring CDescParser::PtrFormater(LPVOID ptr, int length) {
-    LPVOID p = *((int **)ptr);
-    return FormatA("0x%p", p);
-}
-
 void CDescParser::InitParser() {
-    //1 byte
-    InsertBaseType(STRUCT_TYPE_BASETYPE, "bool;boolean", 1, BoolenFormater);
-    InsertBaseType(STRUCT_TYPE_BASETYPE, "byte;INT8;BYTE;__int8;unsigned char;UCHAR", 1, ByteFormater);
-    InsertBaseType(STRUCT_TYPE_BASETYPE, "char;CHAR", 1, CharFormater);
-
-    //2 byte
-    InsertBaseType(STRUCT_TYPE_BASETYPE, "WORD;ATOM;unsigned short;USHORT;UINT16;uint16_t;short;int16_t;INT16;__int16", 2, WordFormater);
-    InsertBaseType(STRUCT_TYPE_BASETYPE, "BOOLEN;BOOL", 2, BOOLFormater);
-    InsertBaseType(STRUCT_TYPE_BASETYPE, "WCHAR;wchar_t", 2, WcharFormater);
-
-    //4 byte
-    InsertBaseType(STRUCT_TYPE_BASETYPE, "int;INT32;__int32", 4, In32Formater);
-    InsertBaseType(STRUCT_TYPE_BASETYPE, "unsigned int;UINT;uint32_t;UINT32;DWORD", 4, Uint32Formater);
-
-    //8 bytes
-    InsertBaseType(STRUCT_TYPE_BASETYPE, "__int64;INT64;ULONGLONG;LONGLONG;UINT64;int64_t", 8, Int64Foramter);
-
-    //void ptr
-    InsertVoidPtr("void*;LPVOID;PVOID;HANDLE;HKEY;HWINSTA;HWND;HMENU;HINSTANCE;WNDPROC;HICON;HCURSOR;HBRUSH;HOOKPROC;LPTHREAD_START_ROUTINE");
-
-    //ptr
-    LinkPtr("LPBYTE;PBYTE;LPCBYTE;PINT8;LPINT8", "byte");
-    LinkPtr("LPDWORD;PDWORD;PINT;PINT32;SIZE_T;size_t;ULONG_PTR;LONG_PTR;LSTATUS", "DWORD");
-    LinkPtr("PWORD;LPWORD;PINT16;LPINT16", "WORD");
-    LinkPtr("LPCSTR;PSTR;LPSTR", "char");
-    LinkPtr("LPCWSTR;PWSTR;LPWSTR", "WCHAR");
 }
 
 CDescParser::CDescParser() {
@@ -314,14 +178,6 @@ void CDescParser::ClearParamStr(mstring &str) const {
     str.trim();
 }
 
-StructDesc *CDescParser::CreatePtrStruct() const {
-    StructDesc *ptr = new StructDesc();
-    ptr->mType = STRUCT_TYPE_PTR;
-    ptr->mLength = sizeof(void *);
-    ptr->mPfnFormat = PtrFormater;
-    return ptr;
-}
-
 StructDesc *CDescParser::ParserParamStr(const mstring &str, mstring &type, mstring &name) const {
     mstring content = str;
     ClearParamStr(content);
@@ -366,23 +222,9 @@ StructDesc *CDescParser::ParserParamStr(const mstring &str, mstring &type, mstri
         tmpName = content.substr(pos2 + 1, content.size() - pos2 - 1);
         tmpType.trim();
         tmpName.trim();
-
-        StructDesc *pStructCache = FindStructFromName(tmpType);
-        if (pStructCache == NULL)
-        {
-            throw(new CParserException(FormatA("未识别的参数类型 %hs", content.c_str())));
-        }
-
         name = tmpName;
-        StructDesc *root = CreatePtrStruct();
-        StructDesc *lastPtr = root;
-        for (i = 0 ; i < count - 1 ; i++) {
-            StructDesc *tmp = CreatePtrStruct();
-            lastPtr->mPtr = tmp;
-            lastPtr = tmp;
-        }
-        lastPtr->mPtr = pStructCache;
-        pStruct = root;
+        
+        pStruct = CDescCache::GetInst()->GetLinkDescByType(count, name);
     } else {
         size_t pos1 = content.find(' ');
 
@@ -396,11 +238,7 @@ StructDesc *CDescParser::ParserParamStr(const mstring &str, mstring &type, mstri
             tmpName.trim();
         }
 
-        pStruct = FindStructFromName(tmpType);
-        if (pStruct == NULL)
-        {
-            throw(new CParserException(FormatA("未识别的参数类型 %hs", content.c_str())));
-        }
+        pStruct = CDescCache::GetInst()->GetStructByName(tmpType);
         name = tmpName;
     }
 
@@ -438,7 +276,7 @@ FunDesc CDescParser::ParserSingleProc(const mstring &dllName, const NodeStr &nod
             mstring str1 = procStr.substr(lastPos, i - lastPos);
             str1.trim();
 
-            StructDesc *pDesc = FindStructFromName(str1);
+            StructDesc *pDesc = CDescCache::GetInst()->GetStructByName(str1);
             if (!pDesc)
             {
                 throw (new CParserException(FormatA("未识别的返回类型 %hs", str1.c_str())));
@@ -503,19 +341,28 @@ StructDesc *CDescParser::ParserStructName(const mstring &content, map<mstring, S
         throw(new CParserException("struct parser err1"));
     }
 
+    //struct名称不一定存在，先根据内容生成一个临时的
+    //这样如果录入相同的struct，临时名也也一样，不会重复录入
+    ULONG crc32 = std_crc32(content.c_str(), content.size());
+    mstring tmpName = FormatA("struct_%u", crc32);
+    StructDesc *pNewStruct = new StructDesc();
+    pNewStruct->mTypeName = tmpName;
+    pNewStruct->mType = STRUCT_TYPE_STRUCT;
+    out[tmpName] = pNewStruct;
+
     curPos += lstrlenA("struct");
     size_t startPos = content.find('{', curPos);
 
     mstring name = content.substr(curPos, startPos - curPos);
     name.trim();
-    StructDesc *pStruct = new StructDesc();
-    StructDesc *pStructPtr = new StructDesc();
-    out[name] = pStruct;
-    pStruct->mNameSet.insert(name);
 
-    pStruct->mType = STRUCT_TYPE_STRUCT;
-    pStructPtr = CreatePtrStruct();
-    pStructPtr->mPtr = pStruct;
+    if (!name.empty())
+    {
+        StructDesc *pNewStruct = new StructDesc();
+        pNewStruct->mTypeName = name;
+        pNewStruct->mType = STRUCT_TYPE_STRUCT;
+        out[name] = pNewStruct;
+    }
 
     size_t pos1 = content.rfind('}');
     if (content.size() > pos1 + 1)
@@ -537,28 +384,28 @@ StructDesc *CDescParser::ParserStructName(const mstring &content, map<mstring, S
             //暂不考虑多级指针
             if (tmp[0] == '*')
             {
-                tmp.erase(0, 1);
+                int j = 0;
+                while (tmp[j] == '*') {
+                    j++;
+                }
+
+                tmp.erase(0, j);
                 tmp.trim();
-                out[tmp] = pStructPtr;
-                pStructPtr->mNameSet.insert(tmp);
+
+                StructDesc *ppDesc = CDescCache::GetInst()->GetLinkDescByDesc(j, pNewStruct);
+                ppDesc->mTypeName = tmp;
+                out[tmp] = ppDesc;
             } else {
                 tmp.trim();
-                out[tmp] = pStruct;
-                pStruct->mNameSet.insert(tmp);
+                pNewStruct = new StructDesc();
+                pNewStruct->mType = STRUCT_TYPE_STRUCT;
+                pNewStruct->mTypeName = tmp;
+
+                out[tmp] = pNewStruct;
             }
         }
     }
-    return pStruct;
-}
-
-StructDesc *CDescParser::FindStructFromName(const mstring &name) const {
-    map<mstring, StructDesc *>::const_iterator it = mStructMap.find(name);
-
-    if (it == mStructMap.end())
-    {
-        return NULL;
-    }
-    return it->second;
+    return pNewStruct;
 }
 
 bool CDescParser::ParserStructParam(const mstring &content, StructDesc *ptr) const {
@@ -598,10 +445,26 @@ map<mstring, StructDesc *> CDescParser::ParserSingleStruct(const mstring &dllNam
 
     map<mstring, StructDesc *> structSet;
     //parser struct name
-    StructDesc *newPtr = ParserStructName(content, structSet);
+    ParserStructName(content, structSet);
 
     //parser struct param
-    ParserStructParam(content, newPtr);
+    StructDesc tmpStruct;
+    ParserStructParam(content, &tmpStruct);
+
+    for (map<mstring, StructDesc *>::iterator it = structSet.begin() ; it != structSet.end() ; it++)
+    {
+        StructDesc *ptr = it->second;
+        if (ptr->mType != STRUCT_TYPE_STRUCT)
+        {
+            continue;
+        }
+
+        ptr->mMemberSet = tmpStruct.mMemberSet;
+        ptr->mMemberName = tmpStruct.mMemberName;
+        ptr->mMemberOffset = tmpStruct.mMemberOffset;
+        ptr->mMemberType = tmpStruct.mMemberType;
+        ptr->mLength = tmpStruct.mLength;
+    }
     return structSet;
 }
 
@@ -623,7 +486,11 @@ bool CDescParser::ParserModuleProc(
             if (it->mType == STR_TYPE_STRUCT)
             {
                 map<mstring, StructDesc *> tmp = ParserSingleStruct(dllName, *it);
-                mStructMap.insert(tmp.begin(), tmp.end());
+
+                for (map<mstring, StructDesc *>::const_iterator it = tmp.begin() ; it != tmp.end() ; it++)
+                {
+                    CDescCache::GetInst()->InsertStruct(it->second);
+                }
             } else if (it->mType == STR_TYPE_FUNCTION)
             {
                 FunDesc proc = ParserSingleProc(dllName, *it);
@@ -702,17 +569,18 @@ bool CDescParser::IsProcStr(const mstring &str) const {
 #include <Shlwapi.h>
 #include <gdlib/gdutil.h>
 #include "DescPrinter.h"
+#include "DescCache.h"
 
 typedef struct Test5 {
     int b1;
     int b2;
 }*PTest5;
 
-typedef struct Test1 {
+typedef struct {
     int test1a;
     PTest5 pTest5;
     LPCSTR test1b;
-}*PTest1;
+}*PTest1, Test1;
 
 struct Test0 {
     UINT        cbSize;
@@ -733,8 +601,12 @@ struct Test0 {
 };
 
 void TestProc() {
+    CDescCache::GetInst()->InitDescCache();
     CDescParser *ptr = CDescParser::GetInst();
     ptr->InitParser();
+
+    int tt1 = 123;
+    mstring uuu = CDescCache::GetInst()->GetFormatStr("%x(%d)[%d]", (const char *)&tt1, 4);
 
     char path[256] = {0};
     GetModuleFileNameA(NULL, path, 256);
@@ -762,9 +634,11 @@ void TestProc() {
     test2.cbSize = -1;
     test2.test1 = &test1;
     test2.test4 = &test3;
+    test2.mTest5.b1 = 1;
+    test2.mTest5.b2 = 5;
     test2.lpszClassName = L"111";
     test2.lpszMenuName = L"bbb";
-    mstring strStruct = CDescPrinter::GetInst()->GetStructStrByAddr("Test0", NULL);
+    mstring strStruct = CDescPrinter::GetInst()->GetStructStrByAddr("Test0", &test2);
     OutputDebugStringA("\n");
     OutputDebugStringA(strStruct.c_str());
     GdFileCloseFileMapping(pMapping);
