@@ -224,7 +224,7 @@ StructDesc *CDescParser::ParserParamStr(const mstring &str, mstring &type, mstri
         tmpName.trim();
         name = tmpName;
         
-        pStruct = CDescCache::GetInst()->GetLinkDescByType(count, name);
+        pStruct = CDescCache::GetInst()->GetLinkDescByType(count, tmpType);
     } else {
         size_t pos1 = content.find(' ');
 
@@ -255,8 +255,8 @@ StructDesc *CDescParser::ParserParamStr(const mstring &str, mstring &type, mstri
     return pStruct;
 }
 
-FunDesc CDescParser::ParserSingleProc(const mstring &dllName, const NodeStr &node) const {
-    FunDesc proc;
+FunDesc *CDescParser::ParserSingleProc(const mstring &dllName, const NodeStr &node) const {
+    FunDesc *proc = new FunDesc();
     mstring procStr = node.mContent;
     procStr.trim();
 
@@ -281,7 +281,9 @@ FunDesc CDescParser::ParserSingleProc(const mstring &dllName, const NodeStr &nod
             {
                 throw (new CParserException(FormatA("未识别的返回类型 %hs", str1.c_str())));
             }
-            proc.mReturn.mStruct = pDesc;
+
+            proc->mReturn.mReturnType = str1;
+            proc->mReturn.mStruct = pDesc;
             mode++;
             lastPos = i;
         } else if (1 == mode)
@@ -303,7 +305,7 @@ FunDesc CDescParser::ParserSingleProc(const mstring &dllName, const NodeStr &nod
                 }
                 mstring procName = procStr.substr(j, i - j);
                 procName.trim();
-                proc.mProcName = procName;
+                proc->mProcName = procName;
                 mode++;
                 lastPos = i;
             }
@@ -320,7 +322,7 @@ FunDesc CDescParser::ParserSingleProc(const mstring &dllName, const NodeStr &nod
 
                 ParamDesc param;
                 param.mStruct = ParserParamStr(tmp, param.mParamType, param.mParamName);
-                proc.mParam.push_back(param);
+                proc->mParam.push_back(param);
             }
             break;
         }
@@ -493,8 +495,8 @@ bool CDescParser::ParserModuleProc(
                 }
             } else if (it->mType == STR_TYPE_FUNCTION)
             {
-                FunDesc proc = ParserSingleProc(dllName, *it);
-                procSet.push_back(proc);
+                FunDesc *proc = ParserSingleProc(dllName, *it);
+                CDescCache::GetInst()->InsertFun(proc);
             }
         }
     } catch (const CParserException &e) {
@@ -638,8 +640,10 @@ void TestProc() {
     test2.mTest5.b2 = 5;
     test2.lpszClassName = L"111";
     test2.lpszMenuName = L"bbb";
-    mstring strStruct = CDescPrinter::GetInst()->GetStructStrByAddr("Test0", &test2);
+    mstring strStruct = "Test0\n";
+    strStruct += CDescPrinter::GetInst()->GetStructStrByName("Test0", &test2, 0);
+    mstring strFunction = CDescPrinter::GetInst()->GetProcStrByName("", "TestFunction", 0);
     OutputDebugStringA("\n");
-    OutputDebugStringA(strStruct.c_str());
+    OutputDebugStringA(strFunction.c_str());
     GdFileCloseFileMapping(pMapping);
 }

@@ -15,7 +15,7 @@ public:
     bool InsertStruct(StructDesc *structDesc);
     bool InsertFun(FunDesc *funDesc);
     StructDesc *GetStructByName(const mstring &name) const;
-    FunDesc *GetFunByName(const mstring &dll, const mstring &fun) const;
+    list<FunDesc *> GetFunByName(const mstring &dll, const mstring &fun) const;
     StructDesc *GetLinkDescByType(int level, const mstring &linkName) const;
     StructDesc *GetLinkDescByDesc(int level, StructDesc *desc) const;
     StructDesc *CreatePtrStruct() const;
@@ -29,18 +29,23 @@ private:
     mstring StructToString(const StructDesc *desc) const;
     StructDesc *StringToStruct(const mstring &str) const;
 
+    mstring FunctionToString(const FunDesc *desc) const;
+    FunDesc *StringToFunction(const mstring &str) const;
+
     void InsertBaseType(int type, const mstring &nameSet, int length, const mstring &fmt);
     bool InsertVoidPtr(const mstring &nameSet);
     bool LinkPtr(const mstring &nameSet, const mstring &linked);
 
-    bool LoadDescFromDb();
-    bool UpdateDescToDb(DWORD checkSum, const mstring &str);
+    bool LoadStructFromDb();
+    bool LoadFunctionFromDb();
+    bool UpdateStructToDb(DWORD checkSum, const mstring &str);
+    bool UpdateFunctionToDb(DWORD checkSum, const mstring &str);
 
     DWORD GetStructUnique(StructDesc *desc) const;
     DWORD GetFunctionUnique(FunDesc *desc) const;
 private:
     mstring mDbPath;
     map<mstring, StructDesc *> mStructCache;
-    map<mstring, FunDesc *> mFunCache;
+    map<mstring, list<FunDesc *>> mFunSetByFunction;
 };
 #endif //DESCCACHE_H_H_H_

@@ -86,6 +86,14 @@ struct StructDesc {
         return false;
     }
 
+    bool IsStructPtr() const {
+        if (mType == STRUCT_TYPE_PTR && mPtrEnd->mType == STRUCT_TYPE_STRUCT)
+        {
+            return true;
+        }
+        return false;
+    }
+
     StructDesc() {
         mType = STRUCT_TYPE_BASETYPE;
         mLength = 0;
@@ -109,18 +117,35 @@ struct ParamDesc {
     mstring mParamType;     //param type
     mstring mParamName;     //param name
     StructDesc *mStruct;    //param struct desc
+
+    ParamDesc() {
+        mStruct = NULL;
+    }
 };
 
 struct ReturnDesc {
+    mstring mReturnType;
     StructDesc *mStruct;        //return content
+
+    ReturnDesc() {
+        mStruct = NULL;
+    }
 };
 
 struct FunDesc {
     mstring mDllName;           //module name
     mstring mProcName;          //proc name
+    mstring mProcDef;           //proc def for show
+
+    DWORD mCheckSum;            //check sum
     ProcCallType mCallType;     //call type
     vector<ParamDesc> mParam;   //param array
     ReturnDesc mReturn;         //return desc
+
+    FunDesc() {
+        mCheckSum = 0;
+        mCallType = em_call_std;
+    }
 };
 
 #define STR_TYPE_STRUCT         0
@@ -158,7 +183,7 @@ private:
     bool IsStructStr(const mstring &str) const;
     bool IsProcStr(const mstring &str) const;
     bool IsPartOpt(char c) const;
-    FunDesc ParserSingleProc(const mstring &dllName, const NodeStr &node) const;
+    FunDesc *ParserSingleProc(const mstring &dllName, const NodeStr &node) const;
     StructDesc GetStructFormName(const mstring &dllName, const mstring &structName) const;
     map<mstring, StructDesc *> ParserSingleStruct(const mstring &dllName, const NodeStr &node) const;
     StructDesc *ParserStructName(const mstring &content, map<mstring, StructDesc *> &out) const;

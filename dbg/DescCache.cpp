@@ -74,7 +74,7 @@ bool CDescCache::LinkPtr(const mstring &nameSet, const mstring &linked) {
     return true;
 }
 
-bool CDescCache::LoadDescFromDb() {
+bool CDescCache::LoadStructFromDb() {
     SqliteOperator opt(mDbPath);
     SqliteResult result = opt.Select("select content from tStructDesc");
 
@@ -119,10 +119,35 @@ bool CDescCache::LoadDescFromDb() {
     return true;
 }
 
-bool CDescCache::UpdateDescToDb(DWORD checkSum, const mstring &str) {
+bool CDescCache::LoadFunctionFromDb() {
+    SqliteOperator opt(mDbPath);
+    SqliteResult result = opt.Select("select content from tStructDesc");
+
+    for (SqliteIterator it = result.begin() ; it != result.end() ; ++it)
+    {
+        FunDesc *desc = StringToFunction(it.GetValue("content"));
+        mstring d = FormatA("%hs!%hs", desc->mDllName.c_str(), desc->mProcName.c_str());
+        mFunSetByFunction[desc->mProcName].push_back(desc);
+    }
+    return true;
+}
+
+bool CDescCache::UpdateStructToDb(DWORD checkSum, const mstring &str) {
     SqliteOperator opt(mDbPath);
     mstring sql = FormatA(
         "replace into tStructDesc(id, content, time)values(%u, '%hs', '%hs')",
+        checkSum,
+        str.c_str(),
+        "2018-11-11 11:22:33 456"
+        );
+    opt.Exec(sql);
+    return true;
+}
+
+bool CDescCache::UpdateFunctionToDb(DWORD checkSum, const mstring &str) {
+    SqliteOperator opt(mDbPath);
+    mstring sql = FormatA(
+        "replace into tFunctionDesc(id, content, time)values(%u, '%hs', '%hs')",
         checkSum,
         str.c_str(),
         "2018-11-11 11:22:33 456"
@@ -139,6 +164,7 @@ bool CDescCache::InitDescCache() {
 
     SqliteOperator opt(mDbPath);
     opt.Exec("create table if not exists tStructDesc (id BIGINT PRIMARY KEY, content TEXT, time CHAR(32))");
+    opt.Exec("create table if not exists tFunctionDesc (id BIGINT PRIMARY KEY, content TEXT, time CHAR(32))");
 
     //1 byte
     InsertBaseType(STRUCT_TYPE_BASETYPE, "bool;boolean", 1, "0x%x(%d)");
@@ -167,7 +193,8 @@ bool CDescCache::InitDescCache() {
     LinkPtr("LPCSTR;PSTR;LPSTR", "char");
     LinkPtr("LPCWSTR;PWSTR;LPWSTR", "WCHAR");
 
-    LoadDescFromDb();
+    LoadStructFromDb();
+    LoadFunctionFromDb();
     return true;
 }
 
@@ -176,13 +203,17 @@ bool CDescCache::InsertStruct(StructDesc *desc) {
     desc->mCheckSum = std_crc32(str.c_str(), str.size());
     mStructCache[desc->mTypeName] = desc;
 
-    UpdateDescToDb(desc->mCheckSum, str);
+    UpdateStructToDb(desc->mCheckSum, str);
     return true;
 }
 
 bool CDescCache::InsertFun(FunDesc *funDesc) {
     mstring d = FormatA("%hs!%hs", funDesc->mDllName.c_str(), funDesc->mProcName.c_str());
-    mFunCache[d] = funDesc;
+    mstring str = FunctionToString(funDesc);
+    funDesc->mCheckSum = std_crc32(str.c_str(), str.size());
+    mFunSetByFunction[funDesc->mProcName].push_back(funDesc);
+
+    UpdateFunctionToDb(funDesc->mCheckSum, str);
     return true;
 }
 
@@ -196,8 +227,27 @@ StructDesc *CDescCache::GetStructByName(const mstring &name) const {
     return it->second;
 }
 
-FunDesc *CDescCache::GetFunByName(const mstring &dll, const mstring &fun) const {
-    return NULL;
+list<FunDesc *> CDescCache::GetFunByName(const mstring &dll, const mstring &fun) const {
+    map<mstring, list<FunDesc *>>::const_iterator it = mFunSetByFunction.find(fun);
+    if (mFunSetByFunction.end() == it)
+    {
+        return list<FunDesc *>();
+    }
+
+    if (dll.empty() && dll == "*")
+    {
+        return it->second;
+    }
+
+    list<FunDesc *> result;
+    for (list<FunDesc *>::const_iterator ij = it->second.begin() ; ij != it->second.end() ; ij++)
+    {
+        if ((*ij)->mDllName == dll)
+        {
+            result.push_back(*ij);
+        }
+    }
+    return result;
 }
 
 StructDesc *CDescCache::CreatePtrStruct() const {
@@ -373,3 +423,44 @@ StructDesc *CDescCache::StringToStruct(const mstring &str) const {
     return desc;
 }
 
+mstring CDescCache::FunctionToString(const FunDesc *desc) const {
+    Value content;
+    content["module"] = desc->mDllName;
+    content["procName"] = desc->mProcName;
+    content["callType"] = (int)desc->mCallType;
+
+    Value paramSet(arrayValue);
+    for (vector<ParamDesc>::const_iterator it = desc->mParam.begin() ; it != desc->mParam.end() ; it++)
+    {
+        Value param;
+        param["paramType"] = it->mParamType;
+        param["paramName"] = it->mParamName;
+        paramSet.append(param);
+    }
+    content["paramSet"] = paramSet;
+    content["returnType"] = desc->mReturn.mReturnType;
+    return FastWriter().write(content);
+}
+
+FunDesc *CDescCache::StringToFunction(const mstring &str) const {
+    Value content;
+    Reader().parse(str, content);
+
+    FunDesc *ptr = new FunDesc();
+    ptr->mDllName = content["module"].asString();
+    ptr->mProcName = content["procName"].asString();
+    ptr->mCallType = (ProcCallType)content["callType"].asInt();
+
+    Value paramSet = content["paramSet"];
+    for (size_t i = 0 ; i != paramSet.size() ; i++)
+    {
+        Value p = paramSet[i];
+        ParamDesc param;
+        param.mParamType = p["paramType"].asString();
+        param.mParamName = p["paramName"].asString();
+        param.mStruct = GetStructByName(param.mParamType);
+    }
+    ptr->mReturn.mReturnType = content["returnType"].asString();
+    ptr->mReturn.mStruct = GetStructByName(ptr->mReturn.mReturnType);
+    return ptr;
+}

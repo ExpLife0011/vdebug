@@ -75,17 +75,17 @@ private:
 
 public:
     static CDescPrinter *GetInst();
-    mstring GetProcStrByAddr(const mstring &name, LPVOID stackAddr) const;
-    mstring GetProcStr(const mstring &name) const;
-
-    mstring GetStructStrByAddr(const mstring &name, LPVOID startAddr) const;
-    mstring GetStructStr(const mstring &name) const;
+    mstring GetProcStrByName(const mstring &module, const mstring &procName, LPVOID stackAddr = 0) const;
+    mstring GetStructStrByName(const mstring &name, LPVOID startAddr = 0, int startOffset = 0) const;
+    mstring GetStructStrByDesc(const StructDesc *desc, LPVOID startAddr = 0, int startOffset = 0) const;
 private:
     void StructHandler(PrintEnumInfo &tmp1, list<PrintEnumInfo> &enumSet, bool withOffset) const;
-    PrinterNode *GetNodeStruct(const mstring &name, LPVOID baseAddr) const;
+    PrinterNode *GetNodeStruct(const StructDesc *desc, LPVOID baseAddr) const;
     void FillLineAndRow(PrinterNode *root, vector<PrinterNode *> &result, int &line) const;
-    mstring GetStructStrInternal(const mstring &name, LPVOID baseAddr) const;
+    mstring GetStructStrInternal(const StructDesc *desc, LPVOID baseAddr, int startOffset = 0) const;
     void LinkDetachedNode(const vector<PrinterNode *> &nodeSet, vector<mstring> &strSet) const;
     bool IsValidAddr(LPVOID addr) const;
+
+    mstring GetFunctionStrInternal(const mstring &dll, const mstring &procName, LPVOID stackAddr) const;
 };
 #endif //PROCPRINTER_PARSER_H_H_

@@ -21,20 +21,28 @@ CDescPrinter *CDescPrinter::GetInst() {
     return s_ptr;
 }
 
-mstring CDescPrinter::GetProcStrByAddr(const mstring &name, LPVOID stackAddr) const {
-    return "";
+mstring CDescPrinter::GetProcStrByName(const mstring &module, const mstring &procName, LPVOID stackAddr) const {
+    list<FunDesc *>funDesc = CDescCache::GetInst()->GetFunByName(module, procName);
+
+    if (funDesc.empty())
+    {
+        return "";
+    }
+    return GetFunctionStrInternal(module, procName, stackAddr);
 }
 
-mstring CDescPrinter::GetProcStr(const mstring &name) const {
-    return "";
+mstring CDescPrinter::GetStructStrByName(const mstring &name, LPVOID startAddr, int startOffset) const {
+    StructDesc *desc = CDescCache::GetInst()->GetStructByName(name);
+    if (NULL == desc)
+    {
+        return "";
+    }
+
+    return GetStructStrInternal(desc, startAddr, startOffset);
 }
 
-mstring CDescPrinter::GetStructStrByAddr(const mstring &name, LPVOID startAddr) const {
-    return GetStructStrInternal(name, startAddr);
-}
-
-mstring CDescPrinter::GetStructStr(const mstring &name) const {
-    return GetStructStrInternal(name, NULL);
+mstring CDescPrinter::GetStructStrByDesc(const StructDesc *desc, LPVOID startAddr, int startOffset) const {
+    return GetStructStrInternal(desc, startAddr, startOffset);
 }
 
 bool CDescPrinter::IsValidAddr(LPVOID addr) const {
@@ -109,8 +117,7 @@ void CDescPrinter::StructHandler(PrintEnumInfo &tmp1, list<PrintEnumInfo> &enumS
 }
 
 //生成节点层次结构
-PrinterNode *CDescPrinter::GetNodeStruct(const mstring &name, LPVOID baseAddr) const {
-    StructDesc *desc = CDescCache::GetInst()->GetStructByName(name);
+PrinterNode *CDescPrinter::GetNodeStruct(const StructDesc *desc, LPVOID baseAddr) const {
     if (NULL == desc)
     {
         return NULL;
@@ -124,7 +131,7 @@ PrinterNode *CDescPrinter::GetNodeStruct(const mstring &name, LPVOID baseAddr) c
     tmp.mNode = root;
     tmp.mBaseAddr = baseAddr;
 
-    root->mName = name;
+    root->mName = desc->mTypeName;
     bool withOffset = (baseAddr == NULL);
     enumSet.push_back(tmp);
 
@@ -207,8 +214,8 @@ void CDescPrinter::LinkDetachedNode(const vector<PrinterNode *> &nodeSet, vector
     }
 }
 
-mstring CDescPrinter::GetStructStrInternal(const mstring &name, LPVOID baseAddr) const {
-    PrinterNode *root = GetNodeStruct(name, baseAddr);
+mstring CDescPrinter::GetStructStrInternal(const StructDesc *desc, LPVOID baseAddr, int startOffset) const {
+    PrinterNode *root = GetNodeStruct(desc, baseAddr);
     vector<PrinterNode *> lineSet;
     int line = 0;
 
@@ -245,7 +252,7 @@ mstring CDescPrinter::GetStructStrInternal(const mstring &name, LPVOID baseAddr)
 
         int curOffset = (ptr->mRow - 1) * offset;
         mstring dd;
-        for (int j = 0 ; j < curOffset ; j++)
+        for (int j = 0 ; j < curOffset + startOffset ; j++)
         {
             dd += " ";
         }
@@ -261,10 +268,53 @@ mstring CDescPrinter::GetStructStrInternal(const mstring &name, LPVOID baseAddr)
     }
 
     LinkDetachedNode(lineSet, fmtSet);
-    result = (lineSet.front()->mName + ":\n");
+
+    //result = (lineSet.front()->mName + ":\n");
     for (vector<mstring>::const_iterator ij = fmtSet.begin() ; ij != fmtSet.end() ; ij++)
     {
         result += (*ij + "\n");
     }
+    return result;
+}
+
+/*
+KernelBase!CreateProcessW:
+参数列表
+param0 LPCTSTR lpApplicationName
+param1 LPCTSTR lpProcName
+param2 LPCTSTR Test3
+        └----0x1234aa00 nLength(INT) = 1234
+        └----0x1234aa10 lpSecurityDescriptor(LPVOID) = 0x11ff1234
+返回类型
+DWORD
+*/
+mstring CDescPrinter::GetFunctionStrInternal(const mstring &dll, const mstring &procName, LPVOID stackAddr) const {
+    list<FunDesc *> funSet = CDescCache::GetInst()->GetFunByName(dll, procName);
+
+    if (funSet.empty())
+    {
+        return "";
+    }
+
+    bool structOnly = (NULL == stackAddr);
+    FunDesc *procDesc = funSet.front();
+
+    mstring result = FormatA("%hs!%hs:\n", procDesc->mDllName.c_str(), procDesc->mProcName.c_str());
+    result += "参数列表\n";
+    for (size_t i = 0 ; i != procDesc->mParam.size() ; i++)
+    {
+        if (structOnly)
+        {
+            ParamDesc param = procDesc->mParam[i];
+            result += FormatA("param%d %hs %hs\n", i, param.mParamType.c_str(), param.mParamName.c_str());
+            if (param.mStruct->mType == STRUCT_TYPE_STRUCT || param.mStruct->IsStructPtr())
+            {
+                result += GetStructStrByDesc(param.mStruct, 0, lstrlenA("param0 ") + 1);
+            }
+        }
+    }
+
+    result += "返回类型\n";
+    result += (procDesc->mReturn.mReturnType + "\n");
     return result;
 }
