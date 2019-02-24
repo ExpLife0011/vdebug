@@ -5,7 +5,7 @@
 #include <list>
 #include <map>
 #include <set>
-#include "mstring.h"
+#include <ComStatic/ComStatic.h>
 
 using namespace std;
 
@@ -39,9 +39,9 @@ struct StructDesc {
     DWORD mType;                    //type 0:single var 1:struct 2:ptr
     mstring mTypeName;              //type name
     DWORD mCheckSum;                //check sum
+    int mLength;                    //var length
 
     //base variable
-    int mLength;                    //var length
     mstring mFormat;                //format rule eg: %d, %hs, %ls
 
     //struct members

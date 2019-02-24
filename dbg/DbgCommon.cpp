@@ -110,6 +110,24 @@ std::mstring CDbgCommon::GetExceptionDesc(DWORD code) {
     return exceptionDesc;
 }
 
+std::mstring CDbgCommon::GetProcSymFromAddr(DWORD64 dwAddr, const mstring &dllName, DWORD64 moduleBase) {
+    CTaskSymbolFromAddr task;
+    task.mAddr = (DWORD64)dwAddr;
+    CSymbolTaskHeader header;
+    header.m_dwSize = sizeof(CTaskSymbolFromAddr) + sizeof(CSymbolTaskHeader);
+    header.m_eTaskType = em_task_strfromaddr;
+
+    task.mAddr = dwAddr;
+    header.m_pParam = &task;
+    CSymbolHlpr::GetInst()->SendTask(&header);
+
+    if (!header.m_bSucc)
+    {
+        return "";
+    }
+    return task.mSymbol;
+}
+
 std::mstring CDbgCommon::GetSymFromAddr(DWORD64 dwAddr, const mstring &dllName, DWORD64 moduleBase) {
     CTaskSymbolFromAddr task;
     task.mAddr = (DWORD64)dwAddr;
@@ -121,7 +139,7 @@ std::mstring CDbgCommon::GetSymFromAddr(DWORD64 dwAddr, const mstring &dllName, 
     header.m_pParam = &task;
     CSymbolHlpr::GetInst()->SendTask(&header);
 
-    if (header.m_bSucc != TRUE)
+    if (!header.m_bSucc)
     {
         mstring tmp = dllName;
         size_t pos = tmp.rfind('.');
@@ -133,7 +151,7 @@ std::mstring CDbgCommon::GetSymFromAddr(DWORD64 dwAddr, const mstring &dllName, 
         return FormatA("%hs!0x%x", tmp.c_str(), (DWORD)(dwAddr - moduleBase));
     }
 
-    mstring str = task.mDllName;
+    mstring str = dllName;
     size_t pos = str.rfind('.');
     if (mstring::npos != pos)
     {

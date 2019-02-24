@@ -35,6 +35,7 @@ private:
     CtrlReply OnCmdTs(const mstring &cmd, const CmdUserParam *pParam);
     CtrlReply OnCmdTc(const mstring &cmd, const CmdUserParam *pParam);
     CtrlReply OnCmdLm(const mstring &cmd, const CmdUserParam *pParam);
+    CtrlReply OnCmdPf(const mstring &cmd, const CmdUserParam *pParam);
     CtrlReply OnCmdHelp(const mstring &param, const CmdUserParam *pParam);
 
     static void __cdecl GuCmdCallback();

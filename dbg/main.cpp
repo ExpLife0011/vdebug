@@ -9,6 +9,8 @@
 #include "DumpDbgProxy.h"
 #include "symbol.h"
 #include "procmon.h"
+#include "DescCache.h"
+#include "DescParser.h"
 
 using namespace std;
 
@@ -68,8 +70,8 @@ int WINAPI WinMain(HINSTANCE hT, HINSTANCE hP, LPSTR szCmdLine, int iShow)
     PathAppendA(path, "..\\DbgCtrl32.dll");
     LoadLibraryA(path);
 #endif
-    TestProc();
-    return 0;
+    //TestProc();
+    //return 0;
 
     int count = 0;
     LPWSTR *args = CommandLineToArgvW(GetCommandLineW(), &count);
@@ -90,6 +92,8 @@ int WINAPI WinMain(HINSTANCE hT, HINSTANCE hP, LPSTR szCmdLine, int iShow)
     WSADATA wsaData;
     WSAStartup(MAKEWORD(2, 2), &wsaData);
 
+    CDescCache::GetInst()->InitDescCache();
+    CDescParser::GetInst()->InitParser();
     CSymbolHlpr::GetInst()->InitSymbol("SRV*F:\\mysymbol*http://msdl.microsoft.com/download/symbols/", GetCurrentProcess());
     size_t pos = cmd.rfind('_');
     mstring unique = cmd.substr(pos + 1, cmd.size() - pos - 1);

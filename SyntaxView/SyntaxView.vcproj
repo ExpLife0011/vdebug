@@ -617,6 +617,10 @@
 			Name="lexers"
 			>
 			<File
+				RelativePath=".\lexers\LexCPP.cxx"
+				>
+			</File>
+			<File
 				RelativePath=".\LexVdebug.cpp"
 				>
 			</File>

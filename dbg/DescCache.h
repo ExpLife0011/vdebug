@@ -2,9 +2,9 @@
 #define DESCCACHE_H_H_H_
 #include <Windows.h>
 #include <map>
+#include <ComLib/ComLib.h>
+#include <ComStatic/ComStatic.h>
 #include "DescParser.h"
-#include "mstring.h"
-#include "SqliteOperator.h"
 
 using namespace std;
 
@@ -43,7 +43,10 @@ private:
 
     DWORD GetStructUnique(StructDesc *desc) const;
     DWORD GetFunctionUnique(FunDesc *desc) const;
+    static DWORD __stdcall ImportThread(LPVOID pParam);
+
 private:
+    DWORD mLastUpdateId;
     mstring mDbPath;
     map<mstring, StructDesc *> mStructCache;
     map<mstring, list<FunDesc *>> mFunSetByFunction;

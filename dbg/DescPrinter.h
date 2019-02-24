@@ -76,6 +76,7 @@ private:
 public:
     static CDescPrinter *GetInst();
     mstring GetProcStrByName(const mstring &module, const mstring &procName, LPVOID stackAddr = 0) const;
+    mstring GetProcStrByDesc(const FunDesc *desc, LPVOID stackAddr = 0) const;
     mstring GetStructStrByName(const mstring &name, LPVOID startAddr = 0, int startOffset = 0) const;
     mstring GetStructStrByDesc(const StructDesc *desc, LPVOID startAddr = 0, int startOffset = 0) const;
 private:
@@ -86,6 +87,6 @@ private:
     void LinkDetachedNode(const vector<PrinterNode *> &nodeSet, vector<mstring> &strSet) const;
     bool IsValidAddr(LPVOID addr) const;
 
-    mstring GetFunctionStrInternal(const mstring &dll, const mstring &procName, LPVOID stackAddr) const;
+    mstring GetFunctionStrInternal(const FunDesc *procDesc, LPVOID stackAddr) const;
 };
 #endif //PROCPRINTER_PARSER_H_H_

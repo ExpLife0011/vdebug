@@ -1,9 +1,8 @@
 #include <Windows.h>
 #include <Shlwapi.h>
-#include <gdlib/gdcrc32.h>
-#include <gdlib/json/json.h>
+#include <ComLib/ComLib.h>
+#include <ComStatic/StrUtil.h>
 #include "DescCache.h"
-#include "StrUtil.h"
 
 using namespace std;
 using namespace Json;
@@ -85,12 +84,16 @@ bool CDescCache::LoadStructFromDb() {
         cache[desc->mTypeName] = desc;
     }
 
-    for (map<mstring, StructDesc *>::const_iterator it = cache.begin() ; it != cache.end() ; it++)
+    list<StructDesc *> structSet;
+    map<mstring, StructDesc *>::const_iterator it;
+    for (it = cache.begin() ; it != cache.end() ; it++)
     {
         StructDesc *ptr = it->second;
 
+        //填充指针长度
         if (ptr->mType == STRUCT_TYPE_PTR)
         {
+            ptr->mLength = sizeof(void *);
             map<mstring, StructDesc *>::const_iterator ij = cache.find(ptr->mEndType);
             StructDesc *lastPtr = ptr;
             for (int i = 0 ; i < ptr->mLinkCount - 1 ; i++)
@@ -103,16 +106,45 @@ bool CDescCache::LoadStructFromDb() {
             ptr->mPtrEnd = ij->second;
         } else if (ptr->mType == STRUCT_TYPE_STRUCT)
         {
-            for (vector<mstring>::iterator it2 = ptr->mMemberType.begin() ; it2 != ptr->mMemberType.end() ; it2++)
+            structSet.push_back(ptr);
+        }
+    }
+
+    //计算结构体长度和成员偏移,因为可能会出现结构体之间互相依赖
+    //的问题，需要循环逐级进行结构体成员数据的填充
+    while (!structSet.empty()) {
+        int countStart = structSet.size();
+        for (list<StructDesc *>::iterator ik = structSet.begin() ; ik != structSet.end() ;)
+        {
+            StructDesc *tmp = *ik;
+            if (!tmp->mLength)
             {
-                map<mstring, StructDesc *>::const_iterator ij2 = mStructCache.find(*it2);
-                if (ij2 == mStructCache.end())
+                int offset1 = 0;
+                size_t s = 0;
+                for (s = 0 ; s < tmp->mMemberSet.size() ; s++)
                 {
-                    ij2 = cache.find(*it2);
+                    StructDesc *tmp2 = tmp->mMemberSet[s];
+                    if (!tmp2->mLength)
+                    {
+                        break;
+                    }
+                    tmp->mMemberOffset[s] = offset1;
+                    offset1 += tmp2->mLength;
                 }
 
-                ptr->mMemberSet.push_back(ij2->second);
+                if (s == tmp->mMemberSet.size())
+                {
+                    tmp->mLength = offset1;
+                    ik = structSet.erase(ik);
+                } else {
+                    ik++;
+                }
             }
+        }
+
+        if (countStart == structSet.size())
+        {
+            throw new CParserException("struct依赖序存在问题");
         }
     }
     mStructCache.insert(cache.begin(), cache.end());
@@ -135,10 +167,10 @@ bool CDescCache::LoadFunctionFromDb() {
 bool CDescCache::UpdateStructToDb(DWORD checkSum, const mstring &str) {
     SqliteOperator opt(mDbPath);
     mstring sql = FormatA(
-        "replace into tStructDesc(id, content, time)values(%u, '%hs', '%hs')",
-        checkSum,
+        "replace into tStructDesc(content, time, checksum)values('%hs', '%hs', %u)",
         str.c_str(),
-        "2018-11-11 11:22:33 456"
+        "2018-11-11 11:22:33 456",
+        checkSum
         );
     opt.Exec(sql);
     return true;
@@ -147,10 +179,10 @@ bool CDescCache::UpdateStructToDb(DWORD checkSum, const mstring &str) {
 bool CDescCache::UpdateFunctionToDb(DWORD checkSum, const mstring &str) {
     SqliteOperator opt(mDbPath);
     mstring sql = FormatA(
-        "replace into tFunctionDesc(id, content, time)values(%u, '%hs', '%hs')",
-        checkSum,
+        "replace into tFunctionDesc(content, time, checksum)values('%hs', '%hs', %u)",
         str.c_str(),
-        "2018-11-11 11:22:33 456"
+        "2018-11-11 11:22:33 456",
+        checkSum
         );
     opt.Exec(sql);
     return true;
@@ -159,12 +191,12 @@ bool CDescCache::UpdateFunctionToDb(DWORD checkSum, const mstring &str) {
 bool CDescCache::InitDescCache() {
     char dbPath[256] = {0};
     GetModuleFileNameA(NULL, dbPath, 256);
-    PathAppendA(dbPath, "..\\db\\DescDb.db");
+    PathAppendA(dbPath, "..\\..\\db\\DescDb.db");
     mDbPath = dbPath;
 
     SqliteOperator opt(mDbPath);
-    opt.Exec("create table if not exists tStructDesc (id BIGINT PRIMARY KEY, content TEXT, time CHAR(32))");
-    opt.Exec("create table if not exists tFunctionDesc (id BIGINT PRIMARY KEY, content TEXT, time CHAR(32))");
+    opt.Exec("create table if not exists tStructDesc (id INTEGER PRIMARY KEY, content TEXT, checksum BIGINT, time CHAR(32))");
+    opt.Exec("create table if not exists tFunctionDesc (id INTEGER PRIMARY KEY, content TEXT, checksum BIGINT, time CHAR(32))");
 
     //1 byte
     InsertBaseType(STRUCT_TYPE_BASETYPE, "bool;boolean", 1, "0x%x(%d)");
@@ -200,7 +232,7 @@ bool CDescCache::InitDescCache() {
 
 bool CDescCache::InsertStruct(StructDesc *desc) {
     mstring str = StructToString(desc);
-    desc->mCheckSum = std_crc32(str.c_str(), str.size());
+    desc->mCheckSum = crc32(str.c_str(), str.size(), 0xffee1122);
     mStructCache[desc->mTypeName] = desc;
 
     UpdateStructToDb(desc->mCheckSum, str);
@@ -210,7 +242,7 @@ bool CDescCache::InsertStruct(StructDesc *desc) {
 bool CDescCache::InsertFun(FunDesc *funDesc) {
     mstring d = FormatA("%hs!%hs", funDesc->mDllName.c_str(), funDesc->mProcName.c_str());
     mstring str = FunctionToString(funDesc);
-    funDesc->mCheckSum = std_crc32(str.c_str(), str.size());
+    funDesc->mCheckSum = crc32(str.c_str(), str.size(), 0xffee1122);
     mFunSetByFunction[funDesc->mProcName].push_back(funDesc);
 
     UpdateFunctionToDb(funDesc->mCheckSum, str);
@@ -350,6 +382,7 @@ StructDesc *CDescCache::GetLinkDescByDesc(int level, StructDesc *desc) const {
 }
 
 CDescCache::CDescCache() {
+    mLastUpdateId = 0;
 }
 
 CDescCache::~CDescCache() {
@@ -378,7 +411,6 @@ mstring CDescCache::StructToString(const StructDesc *desc) const {
             Value single;
             single["memberType"] = desc->mMemberSet[i]->mTypeName;
             single["memberName"] = desc->mMemberName[i];
-            single["memberOffset"] = desc->mMemberOffset[i];
             members.append(single);
         }
         content["memberSet"] = members;
@@ -417,7 +449,6 @@ StructDesc *CDescCache::StringToStruct(const mstring &str) const {
             Value single = memberSet[i];
             desc->mMemberType.push_back(single["memberType"].asString());
             desc->mMemberName.push_back(single["memberName"].asString());
-            desc->mMemberOffset.push_back(single["memberOffset"].asInt());
         }
     }
     return desc;
@@ -463,4 +494,18 @@ FunDesc *CDescCache::StringToFunction(const mstring &str) const {
     ptr->mReturn.mReturnType = content["returnType"].asString();
     ptr->mReturn.mStruct = GetStructByName(ptr->mReturn.mReturnType);
     return ptr;
+}
+
+DWORD CDescCache::ImportThread(LPVOID pParam) {
+    HKEY notifyKey = NULL;
+    HANDLE hNotifyEvent = CreateEventA(NULL, FALSE, FALSE, NULL);
+    RegCreateKeyA(HKEY_LOCAL_MACHINE, REG_VDEBUG_DESC, &notifyKey);
+    RegNotifyChangeKeyValue(notifyKey, FALSE, REG_NOTIFY_CHANGE_LAST_SET, hNotifyEvent, TRUE);
+
+    while (true) {
+        WaitForSingleObject(hNotifyEvent, 1000 * 10);
+    }
+    CloseHandle(hNotifyEvent);
+    RegCloseKey(notifyKey);
+    return 0;
 }

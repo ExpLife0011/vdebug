@@ -4,6 +4,7 @@
 #include "memory.h"
 #include "BreakPoint.h"
 #include "DbgCommon.h"
+#include "DescPrinter.h"
 
 CProcCmd *CProcCmd::GetInst() {
     static CProcCmd *s_ptr = NULL;
@@ -112,6 +113,9 @@ CtrlReply CProcCmd::OnCommand(const mstring &cmd, const mstring &cmdParam, const
     else if (cmd == "sc")
     {
         return OnCmdScript(cmdParam, pParam);
+    } else if (cmd == "pf")
+    {
+        return OnCmdPf(cmdParam, pParam);
     }
     else if (cmd == "help" || cmd == "h")
     {
@@ -472,7 +476,7 @@ CtrlReply CProcCmd::OnCmdHelp(const mstring &param, const CmdUserParam *pParam)
         result.mShow += "tc  切换到指定的线程\n";
         result.mShow += "ts  打印所有的线程信息\n";
         result.mShow += "lm  打印所有的模块信息\n";
-        result.mShow += "cs  清空页面信息\n";
+        result.mShow += "cls 清空页面信息\n";
         result.mShow += "u   反汇编指定的地址或者api\n";
         result.mShow += "ub  向上反汇编指定的地址或者api\n";
         result.mShow += "uf  反汇编指定的函数\n";
@@ -483,6 +487,7 @@ CtrlReply CProcCmd::OnCmdHelp(const mstring &param, const CmdUserParam *pParam)
         result.mShow += "dd  按32整形打印指定内存地址的数据\n";
         result.mShow += "du  按宽字符串打印指定内存地址的数据\n";
         result.mShow += "r   打印或者修改当前线程的寄存器值\n";
+        result.mShow += "pf  输出函数类型\n";
         result.mShow += "sc  运行指定的脚本\n";
     } else if (strParam == "bp")
     {
@@ -824,6 +829,45 @@ CtrlReply CProcCmd::OnCmdLm(const mstring &param, const CmdUserParam *pParam)
 
     CtrlReply result;
     result.mShow = pf.GetResult();
+    return result;
+}
+
+CtrlReply CProcCmd::OnCmdPf(const mstring &param, const CmdUserParam *pParam) {
+    CtrlReply result;
+    TITAN_ENGINE_CONTEXT_t ctx = mProcDbgger->GetCurrentContext();
+    DbgModuleInfo module = mProcDbgger->GetModuleFromAddr(ctx.cip);
+
+    mstring pp = param;
+    if (pp.startwith("-s") || pp.startwith("/s")) {
+        mstring fun = pp.substr(2, pp.size() - 2);
+        fun.trim();
+
+        if (fun.empty())
+        {
+            result.mShow = "没有函数信息";
+        } else {
+            result.mShow = CDescPrinter::GetInst()->GetProcStrByName("", fun);
+        }
+    } else {
+        mstring proc = CDbgCommon::GetProcSymFromAddr(ctx.cip, module.m_strDllName, module.m_dwBaseOfImage);
+        if (proc.empty()) {
+            result.mShow = FormatA("未识别的函数地址 0x%08x\n", ctx.cip);
+        } else {
+            if (mstring::npos != proc.find("+0x"))
+            {
+                result.mShow = FormatA("当前cip未处于函数起始位置 %hs 0x%08x\n", proc.c_str(), ctx.cip);
+            } else {
+                mstring procStr = CDescPrinter::GetInst()->GetProcStrByName(module.m_strDllName, proc, (LPVOID)((const char *)ctx.csp + 4));
+
+                if (procStr.empty())
+                {
+                    result.mShow = FormatA("调试器中不存在%hs模块%hs的信息\n", module.m_strDllName.c_str(), proc.c_str());
+                } else {
+                    result.mShow = procStr;
+                }
+            }
+        }
+    }
     return result;
 }
 

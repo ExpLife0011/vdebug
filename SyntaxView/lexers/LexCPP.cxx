@@ -31,7 +31,6 @@
 #include "OptionSet.h"
 #include "SparseState.h"
 #include "SubStyles.h"
-#include "../common.h"
 
 #ifdef SCI_NAMESPACE
 using namespace Scintilla;
@@ -639,7 +638,6 @@ struct After {
 };
 
 void SCI_METHOD LexerCPP::Lex(unsigned int startPos, int length, int initStyle, IDocument *pAccess) {
-    dp(L"a:%d b:%d c:%d", startPos, length, initStyle);
 	LexAccessor styler(pAccess);
 
 	CharacterSet setOKBeforeRE(CharacterSet::setNone, "([{=,:;!%^&*|?~+-");

@@ -646,22 +646,30 @@
 			</File>
 		</Filter>
 		<Filter
-			Name="ProcParser"
+			Name="DescParser"
 			>
 			<File
-				RelativePath=".\ProcParser.cpp"
+				RelativePath=".\DescCache.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\ProcParser.h"
+				RelativePath=".\DescCache.h"
 				>
 			</File>
 			<File
-				RelativePath=".\ProcPrinter.cpp"
+				RelativePath=".\DescParser.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\ProcPrinter.h"
+				RelativePath=".\DescParser.h"
+				>
+			</File>
+			<File
+				RelativePath=".\DescPrinter.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\DescPrinter.h"
 				>
 			</File>
 		</Filter>

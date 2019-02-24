@@ -1,10 +1,8 @@
 #include <Windows.h>
 #include <list>
-#include <gdlib/gdcrc32.h>
+#include <ComLib/ComLib.h>
 #include "DescParser.h"
 #include "DescCache.h"
-#include "StrUtil.h"
-#include "deelx.h"
 
 CDescParser *CDescParser::GetInst() {
     static CDescParser *s_ptr = NULL;
@@ -345,8 +343,8 @@ StructDesc *CDescParser::ParserStructName(const mstring &content, map<mstring, S
 
     //struct名称不一定存在，先根据内容生成一个临时的
     //这样如果录入相同的struct，临时名也也一样，不会重复录入
-    ULONG crc32 = std_crc32(content.c_str(), content.size());
-    mstring tmpName = FormatA("struct_%u", crc32);
+    ULONG dd = crc32(content.c_str(), content.size(), 0xffffffff);
+    mstring tmpName = FormatA("struct_%u", dd);
     StructDesc *pNewStruct = new StructDesc();
     pNewStruct->mTypeName = tmpName;
     pNewStruct->mType = STRUCT_TYPE_STRUCT;
@@ -569,7 +567,6 @@ bool CDescParser::IsProcStr(const mstring &str) const {
 }
 
 #include <Shlwapi.h>
-#include <gdlib/gdutil.h>
 #include "DescPrinter.h"
 #include "DescCache.h"
 
@@ -614,7 +611,7 @@ void TestProc() {
     GetModuleFileNameA(NULL, path, 256);
     PathAppendA(path, "..\\test.txt");
 
-    PFILE_MAPPING_STRUCT pMapping = GdFileMappingFileA(path, FALSE, 1024 * 1024 * 8);
+    PFILE_MAPPING_STRUCT pMapping = MappingFileA(path, FALSE, 1024 * 1024 * 8);
 
     vector<FunDesc> set1;
     ptr->ParserModuleProc("kernel32.dll", (const char *)pMapping->lpView, set1);
@@ -645,5 +642,5 @@ void TestProc() {
     mstring strFunction = CDescPrinter::GetInst()->GetProcStrByName("", "TestFunction", 0);
     OutputDebugStringA("\n");
     OutputDebugStringA(strFunction.c_str());
-    GdFileCloseFileMapping(pMapping);
+    CloseFileMapping(pMapping);
 }

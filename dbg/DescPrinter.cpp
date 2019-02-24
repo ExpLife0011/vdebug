@@ -1,9 +1,8 @@
 #include <Windows.h>
-#include "mstring.h"
+#include <ComStatic/ComStatic.h>
 #include "DescPrinter.h"
 #include "DescParser.h"
 #include "DescCache.h"
-#include "StrUtil.h"
 
 CDescPrinter::CDescPrinter() {
 }
@@ -28,7 +27,17 @@ mstring CDescPrinter::GetProcStrByName(const mstring &module, const mstring &pro
     {
         return "";
     }
-    return GetFunctionStrInternal(module, procName, stackAddr);
+
+    mstring result;
+    for (list<FunDesc *>::const_iterator it = funDesc.begin() ; it != funDesc.end() ; it++)
+    {
+        result += GetFunctionStrInternal(*it, stackAddr);
+    }
+    return result;
+}
+
+mstring CDescPrinter::GetProcStrByDesc(const FunDesc *desc, LPVOID stackAddr) const {
+    return GetFunctionStrInternal(desc, stackAddr);
 }
 
 mstring CDescPrinter::GetStructStrByName(const mstring &name, LPVOID startAddr, int startOffset) const {
@@ -288,16 +297,8 @@ param2 LPCTSTR Test3
 返回类型
 DWORD
 */
-mstring CDescPrinter::GetFunctionStrInternal(const mstring &dll, const mstring &procName, LPVOID stackAddr) const {
-    list<FunDesc *> funSet = CDescCache::GetInst()->GetFunByName(dll, procName);
-
-    if (funSet.empty())
-    {
-        return "";
-    }
-
+mstring CDescPrinter::GetFunctionStrInternal(const FunDesc *procDesc, LPVOID stackAddr) const {
     bool structOnly = (NULL == stackAddr);
-    FunDesc *procDesc = funSet.front();
 
     mstring result = FormatA("%hs!%hs:\n", procDesc->mDllName.c_str(), procDesc->mProcName.c_str());
     result += "参数列表\n";

@@ -23,11 +23,13 @@
 #define DBG_CMD_UNKNOW_ERR              (9999)
 
 #if WIN64 || _WIN64
-#define REG_VDEBUG_CACHE    "SoftWare\WOW6432Node\\vdebug\\config\\dbgport"
-#define REG_VDEBUG_STATUS   "SoftWare\WOW6432Node\\vdebug\\dbg\\status"
+#define REG_VDEBUG_CACHE    "SoftWare\\WOW6432Node\\vdebug\\config\\dbgport"
+#define REG_VDEBUG_STATUS   "SoftWare\\WOW6432Node\\vdebug\\dbg\\status"
+#define REG_VDEBUG_DESC     "SoftWare\\WOW6432Node\\vdebug\\desc"
 #else
 #define REG_VDEBUG_CACHE    "SoftWare\\vdebug\\config\\dbgport"
 #define REG_VDEBUG_STATUS   "SoftWare\\vdebug\\dbg\\status"
+#define REG_VDEBUG_DESC     "SoftWare\\vdebug\\desc"
 #endif
 
 #define UNIQUE_DEBUG    "debug"    //µ˜ ‘”√
