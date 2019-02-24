@@ -89,6 +89,19 @@ BEGIN
     EDITTEXT        IDC_EDT_OPEN_STATUS,61,71,253,14,ES_AUTOHSCROLL | ES_READONLY | NOT WS_BORDER
 END
 
+IDD_IMPORT_FUNDEF DIALOGEX 0, 0, 508, 239
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
+EXSTYLE WS_EX_OVERLAPPEDWINDOW
+CAPTION "导入函数或者结构体"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "导入函数",IDC_IMPORT_BTN_OK,392,218,50,14
+    PUSHBUTTON      "取消操作",IDC_IMPORT_BTN_CANCEL,451,218,50,14
+    COMBOBOX        IDC_IMPORT_COM_MODULE,42,5,149,30,CBS_DROPDOWN | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "模块名称",IDC_STATIC,4,6,33,8
+    DEFPUSHBUTTON   "检查语法",IDC_IMPORT_BTN_CHECK,333,218,50,14
+END
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -109,6 +122,12 @@ BEGIN
         RIGHTMARGIN, 494
         TOPMARGIN, 7
         BOTTOMMARGIN, 264
+    END
+
+    IDD_IMPORT_FUNDEF, DIALOG
+    BEGIN
+        RIGHTMARGIN, 501
+        BOTTOMMARGIN, 232
     END
 END
 #endif    // APSTUDIO_INVOKED
@@ -181,6 +200,7 @@ BEGIN
         MENUITEM "打开程序",                        IDC_CMD_OPEN
         MENUITEM "附加进程",                        IDC_CMD_ATTACH
         MENUITEM "分析dump文件",                    IDC_CMD_OPEN_DUMP
+        MENUITEM "添加函数定义",                      IDC_CMD_IMPORT_FUN
         MENUITEM "符号设置",                        IDC_CMD_SET_SYMBOL
         MENUITEM "设为默认调试器",                     ID_40024
     END

@@ -4,6 +4,7 @@
 #include <string>
 #include <map>
 #include <ComStatic/ComStatic.h>
+#include <SyntaxView/include/SciLexer.h>
 #include <SyntaxView/include/Scintilla.h>
 #include "SyntaxParser.h"
 

@@ -16,6 +16,8 @@ BOOL CWindowBase::CreateDlg(DWORD dwId, HWND hParent, BOOL bDoModule)
     else
     {
         m_hwnd = ::CreateDialogParamA(NULL, MAKEINTRESOURCEA(dwId), hParent, DlgProc, (LPARAM)this);
+        mstring dd = GetStdErrorStr();
+        int ee = 0;
     }
     return IsWindow(m_hwnd);
 }

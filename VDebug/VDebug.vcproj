@@ -44,7 +44,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="../..;./common;./Json;./view;../;./"
+				AdditionalIncludeDirectories="../..;./common;./Json;./view;../;./;./SyntaxHlpr"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -387,6 +387,14 @@
 			</File>
 			<File
 				RelativePath=".\view\CmdQueue.h"
+				>
+			</File>
+			<File
+				RelativePath=".\view\FunView.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\view\FunView.h"
 				>
 			</File>
 			<File

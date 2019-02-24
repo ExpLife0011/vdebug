@@ -9,6 +9,7 @@
 #define IDD_PROC_ATTACH                 106
 #define IDR_MAIN                        107
 #define IDD_PROC_OPEN                   108
+#define IDD_IMPORT_FUNDEF               117
 #define IDC_EDIT1                       1001
 #define IDC_EDT_COMMAND                 1001
 #define IDC_EDT_MSG                     1001
@@ -45,6 +46,11 @@
 #define IDC_OPEN_TEXT2                  1013
 #define IDC_OPEN_TEXT3                  1014
 #define IDC_OPEN_COM_HISTORY            1016
+#define IDC_IMPORT_COM_MODULE           1017
+#define IDC_IMPORT_BTN_OK               1018
+#define IDC_IMPORT_BTN_CANCEL           1019
+#define IDC_IMPORT_BTN_OK2              1020
+#define IDC_IMPORT_BTN_CHECK            1020
 #define ID_40001                        40001
 #define ID_40002                        40002
 #define ID_40003                        40003
@@ -69,14 +75,16 @@
 #define IDC_CMD_HELP                    40022
 #define IDC_CMD_ABOUT                   40023
 #define ID_40024                        40024
+#define ID_Menu                         40025
+#define IDC_CMD_IMPORT_FUN              40026
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        117
-#define _APS_NEXT_COMMAND_VALUE         40025
-#define _APS_NEXT_CONTROL_VALUE         1017
+#define _APS_NEXT_RESOURCE_VALUE        118
+#define _APS_NEXT_COMMAND_VALUE         40027
+#define _APS_NEXT_CONTROL_VALUE         1020
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

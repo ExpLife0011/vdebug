@@ -38,8 +38,6 @@ bool SyntaxView::CreateView(HWND parent, int x, int y, int cx, int cy) {
         m_param = (SCINTILLA_PTR)::SendMessage(m_hwnd, SCI_GETDIRECTPOINTER, 0, 0);
 
         SendMsg(SCI_SETCODEPAGE, 936, 0);
-        int d = SendMsg(SCI_SETLEXER, SCLEX_VDEBUG, 0);
-        dp(L"test:%d", d);
     }
     return (TRUE == IsWindow(m_hwnd));
 }

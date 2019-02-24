@@ -1,6 +1,7 @@
 #include <Windows.h>
 #include <CommCtrl.h>
 #include <ComLib/ComLib.h>
+#include <SyntaxView/include/SciLexer.h>
 #include <SyntaxHlpr/SyntaxCfg.h>
 #include <SyntaxHlpr/SyntaxView.h>
 #include <SyntaxHlpr/SyntaxParser.h>
@@ -10,6 +11,7 @@
 #include "MainView.h"
 #include "CmdQueue.h"
 #include "OpenView.h"
+#include "FunView.h"
 #include "DbgCtrlService.h"
 
 #pragma comment(lib, "comctl32.lib")
@@ -55,6 +57,7 @@ static HWND gs_hToolbar = NULL;
 static HFONT gs_hFont = NULL;
 static mstring gs_strCfgFile;
 static CProcSelectView *gs_pProcSelect = NULL;
+static CFunctionView *gsFunDefDlg = NULL;
 static PeFileOpenDlg *gs_pPeOpenView = NULL;
 static CCmdQueue *gs_pCmdQueue = NULL;
 
@@ -269,6 +272,7 @@ static void _InitSyntaxView() {
     gs_pSyntaxView = new SyntaxView();
 
     gs_pSyntaxView->CreateView(gs_hMainView, 0, 0, 100, 100);
+    gs_pSyntaxView->SendMsg(SCI_SETLEXER, SCLEX_VDEBUG, 0);
     gs_pSyntaxView->ShowMargin(false);
     gs_pSyntaxView->SetCaretColour(RGB(255, 255, 255));
 
@@ -343,6 +347,7 @@ static VOID _OnInitDialog(HWND hwnd, WPARAM wp, LPARAM lp)
     SetCmdNotify(em_dbg_status_init, "³õÊ¼×´Ì¬");
     gs_pfnCommandProc = (PWIN_PROC)SetWindowLongPtr(gs_hCommand, GWLP_WNDPROC, (LONG_PTR)_CommandProc);
     gs_pCmdQueue = new CCmdQueue();
+    gsFunDefDlg = new CFunctionView();
 
     //SetWindowPos(gs_hMainView, 0, 0, 0, 600, 160, SWP_NOMOVE | SWP_NOZORDER);
 
@@ -418,6 +423,11 @@ static VOID _OnCommand(HWND hwnd, WPARAM wp, LPARAM lp)
                 DbgCtrlService::GetInstance()->SetDebugger(em_dbg_dump86);
                 DbgCtrlService::GetInstance()->OpenDump(dump);
             }
+        }
+        break;
+    case IDC_CMD_IMPORT_FUN:
+        {
+            gsFunDefDlg->ShowFunView(hwnd);
         }
         break;
     default:

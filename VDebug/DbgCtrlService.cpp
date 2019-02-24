@@ -236,6 +236,8 @@ CtrlReply DbgCtrlService::RunCmdInCtrlService(const std::mstring &command) {
     {
         GetSyntaxView()->ClearView();
         return CtrlReply();
+    } else if (tmp == "pi")
+    {
     }
 
     CtrlRequest request;
