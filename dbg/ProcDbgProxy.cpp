@@ -6,6 +6,7 @@
 #include "ProcDbg.h"
 #include "DescParser.h"
 #include "DescPrinter.h"
+#include "DescCache.h"
 
 using namespace std;
 
@@ -191,5 +192,31 @@ CtrlReply ProcDbgProxy::DescTest(const CtrlRequest &request, void *param) {
 
 CtrlReply ProcDbgProxy::DescSave(const CtrlRequest &request, void *param) {
     CtrlReply result;
+    mstring dll = request.mContent["module"].asString();
+    mstring str = request.mContent["descStr"].asString();
+
+    list<StructDesc *> stSet;
+    list<FunDesc *> funSet;
+
+    if (!CDescParser::GetInst()->ParserModuleProc(dll, str, stSet, funSet))
+    {
+        result.mShow = FormatA("解析描述信息错误，%hs", CDescParser::GetInst()->GetErrorStr().c_str());
+    } else {
+        result.mShow = "解析数据类型成功\n";
+        list<StructDesc *>::const_iterator it;
+        list<FunDesc *>::const_iterator ij;
+
+        for (it = stSet.begin() ; it != stSet.end() ; it++)
+        {
+            CDescCache::GetInst()->InsertStructToDb(*it);
+        }
+
+        for (ij = funSet.begin() ; ij != funSet.end() ; ij++)
+        {
+            CDescCache::GetInst()->InsertFunToDb(*ij);
+            result.mShow += CDescPrinter::GetInst()->GetProcStrByDesc(*ij);
+        }
+        result.mShow += "\n数据信息录入成功\n";
+    }
     return result;
 }

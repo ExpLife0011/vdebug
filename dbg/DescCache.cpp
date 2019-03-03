@@ -113,6 +113,23 @@ bool CDescCache::LoadNewStructFromDb() {
             ptr->mPtrEnd = ij->second;
         } else if (ptr->mType == STRUCT_TYPE_STRUCT)
         {
+            //desc->mMemberType.push_back(single["memberType"].asString());
+            for (vector<mstring>::const_iterator it2 = ptr->mMemberType.begin() ; it2 != ptr->mMemberType.end() ; it2++)
+            {
+                map<mstring, StructDesc *>::const_iterator i3 = mStructCache.find(*it2);
+
+                if (i3 == mStructCache.end())
+                {
+                    i3 = cache.find(*it2);
+
+                    if (i3 == cache.end())
+                    {
+                        throw (new CParserException(FormatA("未识别的类型:%hs", it2->c_str())));
+                    }
+                }
+
+                ptr->mMemberSet.push_back(i3->second);
+            }
             structSet.push_back(ptr);
         }
     }
@@ -135,7 +152,7 @@ bool CDescCache::LoadNewStructFromDb() {
                     {
                         break;
                     }
-                    tmp->mMemberOffset[s] = offset1;
+                    tmp->mMemberOffset.push_back(offset1);
                     offset1 += tmp2->mLength;
                 }
 
@@ -476,6 +493,7 @@ StructDesc *CDescCache::StringToStruct(const mstring &str) const {
         for (size_t i = 0 ; i < memberSet.size() ; i++)
         {
             Value single = memberSet[i];
+
             desc->mMemberType.push_back(single["memberType"].asString());
             desc->mMemberName.push_back(single["memberName"].asString());
         }

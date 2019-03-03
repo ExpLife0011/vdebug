@@ -125,7 +125,7 @@ int CFunctionView::OnInitDlg(HWND hwnd, WPARAM wp, LPARAM lp) {
 int CFunctionView::OnCommand(HWND hwnd, WPARAM wp, LPARAM lp) {
     int id = LOWORD(wp);
 
-    if (id == IDC_IMPORT_BTN_CHECK)
+    if (id == IDC_IMPORT_BTN_CHECK || id == IDC_IMPORT_BTN_OK)
     {
         COMBOBOXINFO info = { sizeof(info) };
         SendMessageA(mComModule, CB_GETCOMBOBOXINFO, 0, (LPARAM)&info);
@@ -146,7 +146,14 @@ int CFunctionView::OnCommand(HWND hwnd, WPARAM wp, LPARAM lp) {
             mStatView.SetText(SCI_LABEL_DEFAULT, "没有需要分析的内容");
             return 0;
         }
-        DbgCtrlService::GetInstance()->TestDescStr(dll, str);
+
+        if (id == IDC_IMPORT_BTN_CHECK)
+        {
+            DbgCtrlService::GetInstance()->TestDescStr(dll, str);
+        } else if (id == IDC_IMPORT_BTN_OK)
+        {
+            DbgCtrlService::GetInstance()->InputDescStr(dll, str);
+        }
     }
     return 0;
 }

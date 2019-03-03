@@ -227,6 +227,13 @@ bool DbgCtrlService::TestDescStr(const mstring &dll, const mstring &str) {
 }
 
 bool DbgCtrlService::InputDescStr(const mstring &dll, const mstring &str) {
+    CtrlRequest ctrl;
+    ctrl.mCmd = DBG_CTRL_INPUT_DESC;
+    ctrl.mContent["module"] = dll;
+    ctrl.mContent["descStr"] = str;
+
+    CtrlReply d = m_pCtrlService->DispatchSpecDbgger(em_dbg_proc86, ctrl);
+    SetFunViewStat(d.mShow);
     return true;
 }
 
