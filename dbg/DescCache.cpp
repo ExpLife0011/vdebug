@@ -225,7 +225,7 @@ bool CDescCache::InitDescCache() {
 
     //4 byte
     InsertBaseType(STRUCT_TYPE_BASETYPE, "int;INT32;__int32", 4, "0x%x(%d)");
-    InsertBaseType(STRUCT_TYPE_BASETYPE, "unsigned int;UINT;uint32_t;UINT32;DWORD", 4, "0x%x(%u)");
+    InsertBaseType(STRUCT_TYPE_BASETYPE, "unsigned int;ULONG;UINT;uint32_t;UINT32;DWORD", 4, "0x%x(%u)");
 
     //8 bytes
     InsertBaseType(STRUCT_TYPE_BASETYPE, "__int64;INT64;ULONGLONG;LONGLONG;UINT64;int64_t", 8, "0x%x(%I64d)");
@@ -245,7 +245,7 @@ bool CDescCache::InitDescCache() {
     return true;
 }
 
-bool CDescCache::InsertStruct(StructDesc *desc) {
+bool CDescCache::InsertStructToDb(StructDesc *desc) {
     mstring str = StructToString(desc);
     desc->mCheckSum = crc32(str.c_str(), str.size(), 0xffee1122);
     mStructCache[desc->mTypeName] = desc;
@@ -255,7 +255,7 @@ bool CDescCache::InsertStruct(StructDesc *desc) {
     return true;
 }
 
-bool CDescCache::InsertFun(FunDesc *funDesc) {
+bool CDescCache::InsertFunToDb(FunDesc *funDesc) {
     mstring d = FormatA("%hs!%hs", funDesc->mDllName.c_str(), funDesc->mProcName.c_str());
     mstring str = FunctionToString(funDesc);
     funDesc->mCheckSum = crc32(str.c_str(), str.size(), 0xffee1122);
@@ -266,14 +266,25 @@ bool CDescCache::InsertFun(FunDesc *funDesc) {
     return true;
 }
 
+bool CDescCache::InsertStructToCache(StructDesc *structDesc) {
+    mTempCache[structDesc->mTypeName] = structDesc;
+    return true;
+}
+
 StructDesc *CDescCache::GetStructByName(const mstring &name) const {
     map<mstring, StructDesc *>::const_iterator it = mStructCache.find(name);
 
-    if (it == mStructCache.end())
+    if (it != mStructCache.end())
     {
-        return NULL;
+        return it->second;
     }
-    return it->second;
+
+    it = mTempCache.find(name);
+    if (it != mTempCache.end())
+    {
+        return it->second;
+    }
+    return NULL;
 }
 
 list<FunDesc *> CDescCache::GetFunByName(const mstring &dll, const mstring &fun) const {

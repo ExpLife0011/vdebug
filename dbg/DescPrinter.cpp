@@ -301,21 +301,24 @@ mstring CDescPrinter::GetFunctionStrInternal(const FunDesc *procDesc, LPVOID sta
     bool structOnly = (NULL == stackAddr);
 
     mstring result = FormatA("%hs!%hs:\n", procDesc->mDllName.c_str(), procDesc->mProcName.c_str());
-    result += "参数列表\n";
-    for (size_t i = 0 ; i != procDesc->mParam.size() ; i++)
+    result += "返回类型\n";
+    result += (procDesc->mReturn.mReturnType + "\n");
+
+    if (procDesc->mParam.size() > 0)
     {
-        if (structOnly)
+        result += "参数列表\n";
+        for (size_t i = 0 ; i != procDesc->mParam.size() ; i++)
         {
-            ParamDesc param = procDesc->mParam[i];
-            result += FormatA("param%d %hs %hs\n", i, param.mParamType.c_str(), param.mParamName.c_str());
-            if (param.mStruct->mType == STRUCT_TYPE_STRUCT || param.mStruct->IsStructPtr())
+            if (structOnly)
             {
-                result += GetStructStrByDesc(param.mStruct, 0, lstrlenA("param0 ") + 1);
+                ParamDesc param = procDesc->mParam[i];
+                result += FormatA("param%d %hs %hs\n", i, param.mParamType.c_str(), param.mParamName.c_str());
+                if (param.mStruct->mType == STRUCT_TYPE_STRUCT || param.mStruct->IsStructPtr())
+                {
+                    result += GetStructStrByDesc(param.mStruct, 0, lstrlenA("param0 ") + 1);
+                }
             }
         }
     }
-
-    result += "返回类型\n";
-    result += (procDesc->mReturn.mReturnType + "\n");
     return result;
 }

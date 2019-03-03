@@ -5,6 +5,7 @@
 #include "ProcDbgProxy.h"
 #include "ProcDbg.h"
 #include "DescParser.h"
+#include "DescPrinter.h"
 
 using namespace std;
 
@@ -178,16 +179,11 @@ CtrlReply ProcDbgProxy::DescTest(const CtrlRequest &request, void *param) {
         result.mShow = FormatA("解析描述信息错误，%hs", CDescParser::GetInst()->GetErrorStr().c_str());
     } else {
         result.mShow = "解析数据类型成功\n";
-        list<StructDesc *>::const_iterator it;
         list<FunDesc *>::const_iterator ij;
-        for (it = stSet.begin() ; it != stSet.end() ; it++)
-        {
-            result.mShow += FormatA("结构体:%hs\n", (*it)->mTypeName.c_str());
-        }
 
         for (ij = funSet.begin() ; ij != funSet.end() ; ij++)
         {
-            result.mShow += FormatA("函数:%hs\n", (*ij)->mProcName.c_str());
+            result.mShow += CDescPrinter::GetInst()->GetProcStrByDesc(*ij);
         }
     }
     return result;

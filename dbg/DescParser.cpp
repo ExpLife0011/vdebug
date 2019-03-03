@@ -237,7 +237,7 @@ StructDesc *CDescParser::ParserParamStr(const mstring &str, mstring &type, mstri
             tmpName.trim();
         }
 
-        pStruct = GetStructDesc(tmpType);
+        pStruct = CDescCache::GetInst()->GetStructByName(tmpType);
         if (!pStruct)
         {
             throw(new CParserException(FormatA("未识别的参数类型:%hs", tmpType.c_str())));
@@ -280,7 +280,7 @@ FunDesc *CDescParser::ParserSingleProc(const mstring &dllName, const NodeStr &no
             mstring str1 = procStr.substr(lastPos, i - lastPos);
             str1.trim();
 
-            StructDesc *pDesc = GetStructDesc(str1);
+            StructDesc *pDesc = CDescCache::GetInst()->GetStructByName(str1);
             if (!pDesc)
             {
                 throw (new CParserException(FormatA("未识别的返回类型 %hs", str1.c_str())));
@@ -480,21 +480,6 @@ map<mstring, StructDesc *> CDescParser::ParserSingleStruct(const mstring &dllNam
     return structSet;
 }
 
-StructDesc *CDescParser::GetStructDesc(const mstring &name) const {
-    StructDesc *desc = NULL;
-    if (NULL != (desc = CDescCache::GetInst()->GetStructByName(name)))
-    {
-        return desc;
-    }
-
-    map<mstring, StructDesc *>::const_iterator it = mDescCache.find(name);
-    if (it != mDescCache.end())
-    {
-        return it->second;
-    }
-    return NULL;
-}
-
 bool CDescParser::ParserModuleProc(
     const mstring &dllName,
     const mstring &content,
@@ -515,15 +500,17 @@ bool CDescParser::ParserModuleProc(
             if (it->mType == STR_TYPE_STRUCT)
             {
                 map<mstring, StructDesc *> tmp = ParserSingleStruct(dllName, *it);
-                mDescCache.insert(tmp.begin(), tmp.end());
+
 
                 for (map<mstring, StructDesc *>::const_iterator it = tmp.begin() ; it != tmp.end() ; it++)
                 {
+                    CDescCache::GetInst()->InsertStructToCache(it->second);
                     structSet.push_back(it->second);
                 }
             } else if (it->mType == STR_TYPE_FUNCTION)
             {
                 FunDesc *proc = ParserSingleProc(dllName, *it);
+                proc->mDllName = dllName;
                 procSet.push_back(proc);
             }
         }

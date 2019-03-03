@@ -87,7 +87,7 @@ struct StructDesc {
     }
 
     bool IsStructPtr() const {
-        if (mType == STRUCT_TYPE_PTR && mPtrEnd->mType == STRUCT_TYPE_STRUCT)
+        if (mType == STRUCT_TYPE_PTR && (mUnknownType == false) && mPtrEnd->mType == STRUCT_TYPE_STRUCT)
         {
             return true;
         }
@@ -193,8 +193,6 @@ private:
     void ClearParamStr(mstring &str) const;
     StructDesc *ParserParamStr(const mstring &str, mstring &type, mstring &name) const;
 
-    //同时从持久缓存和内存中查找数据
-    StructDesc *GetStructDesc(const mstring &name) const;
 private:
     //struct tmp cache for parser only.
     map<std::mstring, StructDesc *> mDescCache;
