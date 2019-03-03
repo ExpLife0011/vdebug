@@ -1,5 +1,7 @@
 #include <Windows.h>
 #include <ComLib/winsize.h>
+#include <ComLib/SyntaxDef.h>
+#include "DbgCtrlService.h"
 #include "FunView.h"
 #include "resource.h"
 
@@ -120,11 +122,45 @@ int CFunctionView::OnInitDlg(HWND hwnd, WPARAM wp, LPARAM lp) {
     return 0;
 }
 
+int CFunctionView::OnCommand(HWND hwnd, WPARAM wp, LPARAM lp) {
+    int id = LOWORD(wp);
+
+    if (id == IDC_IMPORT_BTN_CHECK)
+    {
+        COMBOBOXINFO info = { sizeof(info) };
+        SendMessageA(mComModule, CB_GETCOMBOBOXINFO, 0, (LPARAM)&info);
+
+        mstring dll = GetWindowStrA(info.hwndItem);
+        mstring str = mEditView.GetText();
+
+        dll.trim();
+        if (dll.empty())
+        {
+            mStatView.SetText(SCI_LABEL_DEFAULT, "需要填写模块名称");
+            return 0;
+        }
+
+        str.trim();
+        if (str.empty())
+        {
+            mStatView.SetText(SCI_LABEL_DEFAULT, "没有需要分析的内容");
+            return 0;
+        }
+        DbgCtrlService::GetInstance()->TestDescStr(dll, str);
+    }
+    return 0;
+}
+
 LRESULT CFunctionView::OnWindowMsg(HWND hwnd, UINT uMsg, WPARAM wp, LPARAM lp) {
     switch (uMsg) {
         case WM_INITDIALOG:
             {
                 OnInitDlg(hwnd, wp, lp);
+            }
+            break;
+        case WM_COMMAND:
+            {
+                OnCommand(hwnd, wp, lp);
             }
             break;
         case WM_CLOSE:
@@ -134,4 +170,8 @@ LRESULT CFunctionView::OnWindowMsg(HWND hwnd, UINT uMsg, WPARAM wp, LPARAM lp) {
             break;
     }
     return 0;
+}
+
+void CFunctionView::SetStatText(const mstring &text) {
+    mStatView.SetText(SCI_LABEL_DEFAULT, text);
 }

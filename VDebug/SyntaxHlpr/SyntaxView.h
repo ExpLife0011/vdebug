@@ -20,6 +20,7 @@ public:
     size_t SendMsg(UINT msg, WPARAM wp, LPARAM lp) const;
     void AppendText(const std::mstring &label, const std::mstring &text) const;
     void SetText(const std::mstring &label, const std::mstring &text) const;
+    std::mstring GetText() const;
     void ClearView();
     HWND GetWindow() {
         return m_hwnd;

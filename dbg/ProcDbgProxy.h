@@ -24,6 +24,10 @@ private:
     static CtrlReply __stdcall DetachProc(const CtrlRequest &request, void *param);
     static CtrlReply __stdcall BreakDebugger(const CtrlRequest &request, void *param);
 
+    //struct function desc ctrl
+    static CtrlReply __stdcall DescTest(const CtrlRequest &request, void *param);
+    static CtrlReply __stdcall DescSave(const CtrlRequest &request, void *param);
+
 private:
     //proc event
     virtual void OnProcChanged(HProcListener listener, const list<const ProcMonInfo *> &added, const list<DWORD> &killed);

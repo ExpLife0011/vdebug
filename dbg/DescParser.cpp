@@ -129,7 +129,8 @@ NodeStr CDescParser::ParserProcNode(const mstring &procStr, size_t startPos, siz
             }
         }
     }
-    throw(new CParserException("error5"));
+    throw(new CParserException("函数格式错误"));
+    return NodeStr();
 }
 
 list<NodeStr> CDescParser::SplitNodeStr(const mstring &procStr) const {
@@ -236,7 +237,12 @@ StructDesc *CDescParser::ParserParamStr(const mstring &str, mstring &type, mstri
             tmpName.trim();
         }
 
-        pStruct = CDescCache::GetInst()->GetStructByName(tmpType);
+        pStruct = GetStructDesc(tmpType);
+        if (!pStruct)
+        {
+            throw(new CParserException(FormatA("未识别的参数类型:%hs", tmpType.c_str())));
+        }
+
         name = tmpName;
     }
 
@@ -274,7 +280,7 @@ FunDesc *CDescParser::ParserSingleProc(const mstring &dllName, const NodeStr &no
             mstring str1 = procStr.substr(lastPos, i - lastPos);
             str1.trim();
 
-            StructDesc *pDesc = CDescCache::GetInst()->GetStructByName(str1);
+            StructDesc *pDesc = GetStructDesc(str1);
             if (!pDesc)
             {
                 throw (new CParserException(FormatA("未识别的返回类型 %hs", str1.c_str())));
@@ -319,6 +325,12 @@ FunDesc *CDescParser::ParserSingleProc(const mstring &dllName, const NodeStr &no
                 ClearParamStr(tmp);
 
                 ParamDesc param;
+
+                if (mstring::npos != tmp.find("LPSECURITY_ATTRIBUTES"))
+                {
+                    int ee = 123;
+                }
+
                 param.mStruct = ParserParamStr(tmp, param.mParamType, param.mParamName);
                 proc->mParam.push_back(param);
             }
@@ -468,10 +480,26 @@ map<mstring, StructDesc *> CDescParser::ParserSingleStruct(const mstring &dllNam
     return structSet;
 }
 
+StructDesc *CDescParser::GetStructDesc(const mstring &name) const {
+    StructDesc *desc = NULL;
+    if (NULL != (desc = CDescCache::GetInst()->GetStructByName(name)))
+    {
+        return desc;
+    }
+
+    map<mstring, StructDesc *>::const_iterator it = mDescCache.find(name);
+    if (it != mDescCache.end())
+    {
+        return it->second;
+    }
+    return NULL;
+}
+
 bool CDescParser::ParserModuleProc(
     const mstring &dllName,
     const mstring &content,
-    vector<FunDesc> &procSet
+    list<StructDesc *> &structSet,
+    list<FunDesc *> &procSet
     )
 {
     mstring procStr = content;
@@ -479,6 +507,7 @@ bool CDescParser::ParserModuleProc(
     list<NodeStr> nodeSet;
 
     try {
+        mDescCache.clear();
         nodeSet = SplitNodeStr(procStr);
 
         for (list<NodeStr>::const_iterator it = nodeSet.begin() ; it != nodeSet.end() ; it++)
@@ -486,21 +515,33 @@ bool CDescParser::ParserModuleProc(
             if (it->mType == STR_TYPE_STRUCT)
             {
                 map<mstring, StructDesc *> tmp = ParserSingleStruct(dllName, *it);
+                mDescCache.insert(tmp.begin(), tmp.end());
 
                 for (map<mstring, StructDesc *>::const_iterator it = tmp.begin() ; it != tmp.end() ; it++)
                 {
-                    CDescCache::GetInst()->InsertStruct(it->second);
+                    structSet.push_back(it->second);
                 }
             } else if (it->mType == STR_TYPE_FUNCTION)
             {
                 FunDesc *proc = ParserSingleProc(dllName, *it);
-                CDescCache::GetInst()->InsertFun(proc);
+                procSet.push_back(proc);
             }
         }
-    } catch (const CParserException &e) {
-        MessageBoxA(0, 0, e.GetErrorMsg(), 0);
+    } catch (const CParserException *e) {
+        mError = e->GetErrorMsg();
+        return false;
+    }
+
+    if (structSet.empty() && procSet.empty())
+    {
+        mError = "描述信息格式错误";
+        return false;
     }
     return true;
+}
+
+mstring CDescParser::GetErrorStr() const {
+    return mError;
 }
 
 void CDescParser::ParserPreProcess(mstring &str) const {
@@ -613,8 +654,9 @@ void TestProc() {
 
     PFILE_MAPPING_STRUCT pMapping = MappingFileA(path, FALSE, 1024 * 1024 * 8);
 
-    vector<FunDesc> set1;
-    ptr->ParserModuleProc("kernel32.dll", (const char *)pMapping->lpView, set1);
+    list<StructDesc *> set1;
+    list<FunDesc *> set2;
+    ptr->ParserModuleProc("kernel32.dll", (const char *)pMapping->lpView, set1, set2);
 
     Test5 test5 = {0};
     test5.b1 = 9;

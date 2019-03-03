@@ -4,6 +4,7 @@
 #include <mq/mq.h>
 #include "ProcDbgProxy.h"
 #include "ProcDbg.h"
+#include "DescParser.h"
 
 using namespace std;
 
@@ -44,6 +45,8 @@ bool ProcDbgProxy::InitProcDbgProxy(const char *unique) {
     m_pDbgClient->RegisterCtrlHandler(DBG_CTRL_GET_PROC, GetProcInfo, this);
     m_pDbgClient->RegisterCtrlHandler(DBG_CTRL_DETACH, DetachProc, this);
     m_pDbgClient->RegisterCtrlHandler(DBG_CTRL_BREAK, BreakDebugger, this);
+    m_pDbgClient->RegisterCtrlHandler(DBG_CTRL_TEST_DESC, DescTest, this);
+    m_pDbgClient->RegisterCtrlHandler(DBG_CTRL_INPUT_DESC, DescSave, this);
     m_pProcDbgger = CProcDbgger::GetInstance();
     m_pCmdRunner = CProcCmd::GetInst();
     m_pCmdRunner->InitProcCmd(m_pProcDbgger);
@@ -160,4 +163,37 @@ void ProcDbgProxy::OnProcChanged(HProcListener listener, const list<const ProcMo
     eventInfo.mEvent = DBG_EVENT_PROC_CHANGED;
     Reader().parse(EncodeProcMon(procSet), eventInfo.mContent);
     m_pDbgClient->ReportDbgEvent(eventInfo);
+}
+
+CtrlReply ProcDbgProxy::DescTest(const CtrlRequest &request, void *param) {
+    CtrlReply result;
+    mstring dll = request.mContent["module"].asString();
+    mstring str = request.mContent["descStr"].asString();
+
+    list<StructDesc *> stSet;
+    list<FunDesc *> funSet;
+
+    if (!CDescParser::GetInst()->ParserModuleProc(dll, str, stSet, funSet))
+    {
+        result.mShow = FormatA("解析描述信息错误，%hs", CDescParser::GetInst()->GetErrorStr().c_str());
+    } else {
+        result.mShow = "解析数据类型成功\n";
+        list<StructDesc *>::const_iterator it;
+        list<FunDesc *>::const_iterator ij;
+        for (it = stSet.begin() ; it != stSet.end() ; it++)
+        {
+            result.mShow += FormatA("结构体:%hs\n", (*it)->mTypeName.c_str());
+        }
+
+        for (ij = funSet.begin() ; ij != funSet.end() ; ij++)
+        {
+            result.mShow += FormatA("函数:%hs\n", (*ij)->mProcName.c_str());
+        }
+    }
+    return result;
+}
+
+CtrlReply ProcDbgProxy::DescSave(const CtrlRequest &request, void *param) {
+    CtrlReply result;
+    return result;
 }

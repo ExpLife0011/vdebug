@@ -36,17 +36,19 @@ private:
     bool InsertVoidPtr(const mstring &nameSet);
     bool LinkPtr(const mstring &nameSet, const mstring &linked);
 
-    bool LoadStructFromDb();
-    bool LoadFunctionFromDb();
+    bool LoadNewStructFromDb();
+    bool LoadNewFunctionFromDb();
     bool UpdateStructToDb(DWORD checkSum, const mstring &str);
     bool UpdateFunctionToDb(DWORD checkSum, const mstring &str);
+    bool UpdateTimeStamp() const;
 
     DWORD GetStructUnique(StructDesc *desc) const;
     DWORD GetFunctionUnique(FunDesc *desc) const;
     static DWORD __stdcall ImportThread(LPVOID pParam);
 
 private:
-    DWORD mLastUpdateId;
+    int mLastStructUpdateId;
+    int mLastFunctionUpdateId;
     mstring mDbPath;
     map<mstring, StructDesc *> mStructCache;
     map<mstring, list<FunDesc *>> mFunSetByFunction;

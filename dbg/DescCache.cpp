@@ -73,13 +73,20 @@ bool CDescCache::LinkPtr(const mstring &nameSet, const mstring &linked) {
     return true;
 }
 
-bool CDescCache::LoadStructFromDb() {
+bool CDescCache::LoadNewStructFromDb() {
     SqliteOperator opt(mDbPath);
-    SqliteResult result = opt.Select("select content from tStructDesc");
+    mstring sql = FormatA("select id, content from tStructDesc where id > %d", mLastStructUpdateId);
+    SqliteResult result = opt.Select(sql.c_str());
 
     map<mstring, StructDesc *> cache;
     for (SqliteIterator it = result.begin() ; it != result.end() ; ++it)
     {
+        int id = atoi(it.GetValue("id").c_str());
+        if (id > mLastStructUpdateId)
+        {
+            mLastStructUpdateId = id;
+        }
+
         StructDesc *desc = StringToStruct(it.GetValue("content"));
         cache[desc->mTypeName] = desc;
     }
@@ -151,13 +158,21 @@ bool CDescCache::LoadStructFromDb() {
     return true;
 }
 
-bool CDescCache::LoadFunctionFromDb() {
+bool CDescCache::LoadNewFunctionFromDb() {
     SqliteOperator opt(mDbPath);
-    SqliteResult result = opt.Select("select content from tStructDesc");
+    mstring sql = FormatA("select id, content from tStructDesc where id > %d", mLastFunctionUpdateId);
+    SqliteResult result = opt.Select(sql.c_str());
 
     for (SqliteIterator it = result.begin() ; it != result.end() ; ++it)
     {
         FunDesc *desc = StringToFunction(it.GetValue("content"));
+        int id = atoi(it.GetValue("id").c_str());
+
+        if (id > mLastFunctionUpdateId)
+        {
+            mLastFunctionUpdateId = id;
+        }
+
         mstring d = FormatA("%hs!%hs", desc->mDllName.c_str(), desc->mProcName.c_str());
         mFunSetByFunction[desc->mProcName].push_back(desc);
     }
@@ -225,8 +240,8 @@ bool CDescCache::InitDescCache() {
     LinkPtr("LPCSTR;PSTR;LPSTR", "char");
     LinkPtr("LPCWSTR;PWSTR;LPWSTR", "WCHAR");
 
-    LoadStructFromDb();
-    LoadFunctionFromDb();
+    LoadNewStructFromDb();
+    LoadNewFunctionFromDb();
     return true;
 }
 
@@ -236,6 +251,7 @@ bool CDescCache::InsertStruct(StructDesc *desc) {
     mStructCache[desc->mTypeName] = desc;
 
     UpdateStructToDb(desc->mCheckSum, str);
+    UpdateTimeStamp();
     return true;
 }
 
@@ -246,6 +262,7 @@ bool CDescCache::InsertFun(FunDesc *funDesc) {
     mFunSetByFunction[funDesc->mProcName].push_back(funDesc);
 
     UpdateFunctionToDb(funDesc->mCheckSum, str);
+    UpdateTimeStamp();
     return true;
 }
 
@@ -382,7 +399,8 @@ StructDesc *CDescCache::GetLinkDescByDesc(int level, StructDesc *desc) const {
 }
 
 CDescCache::CDescCache() {
-    mLastUpdateId = 0;
+    mLastStructUpdateId = 0;
+    mLastFunctionUpdateId = 0;
 }
 
 CDescCache::~CDescCache() {
@@ -496,6 +514,16 @@ FunDesc *CDescCache::StringToFunction(const mstring &str) const {
     return ptr;
 }
 
+bool CDescCache::UpdateTimeStamp() const {
+    static DWORD s_serial = 0;
+    mstring time = GetCurTimeStr1("%04d%02d%02d_%02d%02d%02d%03d");
+    mstring content = FormatA("%d_%d_%hs", GetCurrentProcessId(), s_serial++, time.c_str());
+
+    RegSetStrValueA(HKEY_LOCAL_MACHINE, REG_VDEBUG_DESC, "lastUpdate", content.c_str());
+    return true;
+
+}
+
 DWORD CDescCache::ImportThread(LPVOID pParam) {
     HKEY notifyKey = NULL;
     HANDLE hNotifyEvent = CreateEventA(NULL, FALSE, FALSE, NULL);
@@ -504,6 +532,8 @@ DWORD CDescCache::ImportThread(LPVOID pParam) {
 
     while (true) {
         WaitForSingleObject(hNotifyEvent, 1000 * 10);
+        GetInst()->LoadNewStructFromDb();
+        GetInst()->LoadNewFunctionFromDb();
     }
     CloseHandle(hNotifyEvent);
     RegCloseKey(notifyKey);
