@@ -46,34 +46,56 @@ struct FunctionDesc {
 // 1434534 + 123 * (1111 + 3344);bp;strlen("abcdef")
 struct ExpressionNode {
     ExpressNodeType mType;
+    //express content
+    mstring mContent;
 
     // for express
-    string mExpress;
+    mstring mExpress;
 
     // for function
     FunctionDesc mFunction;
 
     // for command
-    string mCommand;
+    mstring mCommand;
 };
 
 enum LogicNodeType {
-    em_logic_order,
-    em_logic_if,
-    em_logic_elseif,
-    em_logic_else,
-    em_logic_while
+    em_logic_order,     //order
+    em_logic_if,        //if
+    em_logic_elseif,    //else if
+    em_logic_end        //end node
 };
 
 struct LogicNode {
     LogicNodeType mLogicType;   //logic type
 
     LogicNode *mNext;           //logic for logic order
+
+    LogicNode *mSub;            //sub logic
+    LogicNode *mParent;         //parent logic
+
+    LogicNode *mBrotherFront;   //front brother
+    LogicNode *mBrotherNext;    //next brother
+
     LogicNode *mLeft;           //logic for right eg:if, else if, 
     LogicNode *mRight;          //logic for wrong
 
-    list<ExpressionNode> mExpressionSet;    //expression list
+    LogicNode *mEndPtr;         //end类型的指针对应的对象
 
+    list<mstring> mCommandSet;  //commmand set for parser.
+    list<ExpressionNode> mExpressionSet;    //expression list
     list<VariateDesc> mVarSet;  //var set
     list<FunctionDesc> mFunSet; //function set
+
+    LogicNode() {
+        mLogicType = em_logic_order;
+        mNext = NULL;
+        mSub = NULL;
+        mParent = NULL;
+        mLeft = NULL;
+        mRight = NULL;
+        mBrotherFront = NULL;
+        mBrotherNext = NULL;
+        mEndPtr = NULL;
+    }
 };
