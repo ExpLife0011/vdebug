@@ -5,15 +5,22 @@
 using namespace std;
 
 enum VariateType {
-    em_var_base,        //eg: int,str
-    em_var_buildin      //eg: $esp $eip
+    em_var_pending, //未决类型的
+    em_var_str,     //字符串
+    em_var_int,     //整形
+    em_var_ptr      //指针类型
 };
 
 struct VariateDesc {
     VariateType mVarType;
     int mVarLength;
-    int mVarName;
-    string mContent;
+    mstring mVarName;
+    mstring mContent;
+
+    VariateDesc () {
+        mVarType = em_var_pending;
+        mVarLength = 0;
+    }
 };
 
 //expression
@@ -81,11 +88,7 @@ struct LogicNode {
     LogicNode *mRight;          //logic for wrong
 
     LogicNode *mEndPtr;         //end类型的指针对应的对象
-
     list<mstring> mCommandSet;  //commmand set for parser.
-    list<ExpressionNode> mExpressionSet;    //expression list
-    list<VariateDesc> mVarSet;  //var set
-    list<FunctionDesc> mFunSet; //function set
 
     LogicNode() {
         mLogicType = em_logic_order;
@@ -97,5 +100,19 @@ struct LogicNode {
         mBrotherFront = NULL;
         mBrotherNext = NULL;
         mEndPtr = NULL;
+    }
+};
+
+struct ScriptCache {
+    list<ExpressionNode *> mExpressionSet;    //expression list
+    list<VariateDesc *> mVarSet;              //var set
+    list<FunctionDesc *> mFunSet;             //function set
+
+    VariateDesc *GetVarByName(const mstring &name) {
+        return NULL;
+    }
+
+    FunctionDesc *GetFunctionByName(const mstring &name) {
+        return NULL;
     }
 };

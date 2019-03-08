@@ -31,8 +31,6 @@ private:
 private:
     //½âÎö×Ö·û´®Âß¼­¿é
     LogicNode *ParserStrNode(const mstring &content) const;
-    //²éÕÒÅä¶ÔÀ¨ºÅÎ»ÖÃ
-    size_t FindNextBracket(char type1, char type2, const mstring &str, size_t startPos) const;
     //½Å±¾´®ÇåÏ´
     void CleanStr(mstring &script) const;
     bool IsPartitionOpt(char c) const;

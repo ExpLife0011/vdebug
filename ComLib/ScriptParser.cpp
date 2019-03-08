@@ -2,6 +2,7 @@
 #include "mstring.h"
 #include <set>
 #include "StrUtil.h"
+#include "ScriptHlpr.h"
 
 CScriptParser *CScriptParser::GetInst() {
     static CScriptParser *s_ptr = NULL;
@@ -233,41 +234,6 @@ void CScriptParser::CleanStr(mstring &script) const {
     script = tmp;
 }
 
-//获取配对的括号位置 eg:type1 (, type2), type1 [, type2 ]
-size_t CScriptParser::FindNextBracket(char type1, char type2, const mstring &str, size_t startPos) const {
-    list<char> stack;
-    size_t pos1 = str.find(type1, startPos);
-    size_t i = 0;
-
-    stack.push_back(type1);
-    for (i = pos1 + 1; i < str.size() ; i++)
-    {
-        char c = str[i];
-
-        if (c == type1)
-        {
-            stack.push_back(type1);
-        }
-
-        if (c == type2)
-        {
-            char c2 = stack.back();
-            if (c2 != type1)
-            {
-                throw(new CScriptParserException("括号配对失败"));
-            }
-            stack.pop_back();
-
-            if (stack.empty())
-            {
-                return i;
-            }
-        }
-    }
-    throw(new CScriptParserException("括号配对失败"));
-    return -1;
-}
-
 //返回 逻辑块根节点
 //参数 content，逻辑块字符串
 //参数 endNode，该逻辑块的下一个节点或者结束
@@ -342,7 +308,7 @@ LogicNode *CScriptParser::GetLogicNode(const mstring &content, LogicNode *logicE
             nodeIf->mLogicType = em_logic_if;
 
             pos1 = script.find('(', lastPos);
-            pos2 = FindNextBracket('(', ')', script, pos1);
+            pos2 = CScriptHlpr::FindNextBracket('(', ')', script, pos1);
             if (mstring::npos == pos2)
             {
                 throw new CScriptParserException("if括号不配对");
@@ -369,7 +335,7 @@ LogicNode *CScriptParser::GetLogicNode(const mstring &content, LogicNode *logicE
             endNode->mLogicType = em_logic_end;
 
             pos1 = script.find('{', pos2);
-            pos2 = FindNextBracket('{', '}', script, pos1);
+            pos2 = CScriptHlpr::FindNextBracket('{', '}', script, pos1);
 
             if (mstring::npos == pos1 || mstring::npos == pos2) {
                 throw (new CScriptParserException("{}匹配失败"));
@@ -391,7 +357,7 @@ LogicNode *CScriptParser::GetLogicNode(const mstring &content, LogicNode *logicE
                 }
 
                 pos1 = script.find('(', lastPos);
-                pos2 = FindNextBracket('(', ')', script, pos1);
+                pos2 = CScriptHlpr::FindNextBracket('(', ')', script, pos1);
                 if (mstring::npos == pos1 || mstring::npos == pos2)
                 {
                     throw (new CScriptParserException("{}匹配失败"));
@@ -403,7 +369,7 @@ LogicNode *CScriptParser::GetLogicNode(const mstring &content, LogicNode *logicE
                 elseIfNode->mCommandSet.push_back(lastStr);
 
                 pos1 = script.find('{', pos2);
-                pos2 = FindNextBracket('{', '}', script, pos1);
+                pos2 = CScriptHlpr::FindNextBracket('{', '}', script, pos1);
 
                 if (mstring::npos == pos1 || mstring::npos == pos2) {
                     throw (new CScriptParserException("{}匹配失败"));
