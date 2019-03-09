@@ -57,10 +57,7 @@ private:
     bool UpdateFunctionToDb(FunDesc *desc, const mstring &content) const;
     bool UpdateTimeStamp() const;
 
-    DWORD GetStructUnique(StructDesc *desc) const;
-    DWORD GetFunctionUnique(FunDesc *desc) const;
     static DWORD __stdcall ImportThread(LPVOID pParam);
-
 private:
     int mLastStructUpdateId;
     int mLastFunctionUpdateId;

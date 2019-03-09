@@ -309,9 +309,10 @@ mstring CDescPrinter::GetFunctionStrInternal(const FunDesc *procDesc, LPVOID sta
         result += "参数列表\n";
         for (size_t i = 0 ; i != procDesc->mParam.size() ; i++)
         {
+            ParamDesc param = procDesc->mParam[i];
             if (structOnly)
             {
-                ParamDesc param = procDesc->mParam[i];
+
                 result += FormatA("param%d %hs %hs\n", i, param.mParamType.c_str(), param.mParamName.c_str());
                 if (param.mStruct->mType == STRUCT_TYPE_STRUCT || param.mStruct->IsStructPtr())
                 {

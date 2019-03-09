@@ -21,7 +21,9 @@ CDescCache *CDescCache::GetInst() {
 bool CDescCache::IsStructInDb(const StructDesc *structDesc) {
     SqliteOperator opt(mDbPath);
 
-    mstring sql = FormatA("select count(1) from tStructDesc where name='%hs'", structDesc->mTypeName.c_str());
+    mstring tmp = structDesc->mTypeName;
+    tmp.makelower();
+    mstring sql = FormatA("select count(1) from tStructDesc where name='%hs'", tmp.c_str());
     SqliteResult result = opt.Select(sql);
     mstring err = opt.GetError();
     mstring dd = result.begin().GetValue("count(1)");
@@ -32,7 +34,11 @@ bool CDescCache::IsStructInDb(const StructDesc *structDesc) {
 bool CDescCache::IsFunctionInDb(const FunDesc *funDesc) {
     SqliteOperator opt(mDbPath);
 
-    mstring sql = FormatA("select count(1) from tFunctionDesc where module='%hs' and name='%hs'", funDesc->mDllName.c_str(), funDesc->mProcName.c_str());
+    mstring tmp1 = funDesc->mDllName;
+    tmp1.makelower();
+    mstring tmp2 = funDesc->mProcName;
+    tmp2.makelower();
+    mstring sql = FormatA("select count(1) from tFunctionDesc where module='%hs' and name='%hs'", tmp1.c_str(), tmp2.c_str());
     SqliteResult result = opt.Select(sql);
     mstring err = opt.GetError();
     return (result.begin().GetValue("count(1)") != "0");
@@ -48,7 +54,10 @@ void CDescCache::InsertBaseType(int type, const mstring &nameSet, int length, co
         newPtr->mLength = length;
         newPtr->mFormat = fmt;
         newPtr->mTypeName = (*it);
-        mStructCache[*it] = newPtr;
+
+        mstring tmp = *it;
+        tmp.makelower();
+        mStructCache[tmp] = newPtr;
     }
 }
 
@@ -63,13 +72,18 @@ bool CDescCache::InsertVoidPtr(const mstring &nameSet) {
         newPtr->mFormat = "0x%08x";
 
         newPtr->mTypeName = (*it);
-        mStructCache[*it] = newPtr;
+
+        mstring tmp = *it;
+        tmp.makelower();
+        mStructCache[tmp] = newPtr;
     }
     return true;
 }
 
 bool CDescCache::LinkPtr(const mstring &nameSet, const mstring &linked) {
-    map<mstring, StructDesc *>::const_iterator it = mStructCache.find(linked);
+    mstring tmp = linked;
+    tmp.makelower();
+    map<mstring, StructDesc *>::const_iterator it = mStructCache.find(tmp);
 
     if (it == mStructCache.end())
     {
@@ -90,7 +104,10 @@ bool CDescCache::LinkPtr(const mstring &nameSet, const mstring &linked) {
         newPtr->mLinkCount = 1;
         newPtr->mPtrEnd = ptrLinked;
         newPtr->mEndType = ptrLinked->mTypeName;
-        mStructCache[*ij] = newPtr;
+
+        tmp = *ij;
+        tmp.makelower();
+        mStructCache[tmp] = newPtr;
     }
     return true;
 }
@@ -138,7 +155,9 @@ bool CDescCache::LoadNewStructFromDb() {
             //desc->mMemberType.push_back(single["memberType"].asString());
             for (vector<mstring>::const_iterator it2 = ptr->mMemberType.begin() ; it2 != ptr->mMemberType.end() ; it2++)
             {
-                map<mstring, StructDesc *>::const_iterator i3 = mStructCache.find(*it2);
+                mstring tmpStr = *it2;
+                tmpStr.makelower();
+                map<mstring, StructDesc *>::const_iterator i3 = mStructCache.find(tmpStr);
 
                 if (i3 == mStructCache.end())
                 {
@@ -199,7 +218,7 @@ bool CDescCache::LoadNewStructFromDb() {
 
 bool CDescCache::LoadNewFunctionFromDb() {
     SqliteOperator opt(mDbPath);
-    mstring sql = FormatA("select id, content from tStructDesc where id > %d", mLastFunctionUpdateId);
+    mstring sql = FormatA("select id, content from tFunctionDesc where id > %d", mLastFunctionUpdateId);
     SqliteResult result = opt.Select(sql.c_str());
 
     for (SqliteIterator it = result.begin() ; it != result.end() ; ++it)
@@ -213,14 +232,18 @@ bool CDescCache::LoadNewFunctionFromDb() {
         }
 
         mstring d = FormatA("%hs!%hs", desc->mDllName.c_str(), desc->mProcName.c_str());
-        mFunSetByFunction[desc->mProcName].push_back(desc);
+        mstring tmp = desc->mDllName;
+        tmp.makelower();
+        mFunSetByFunction[tmp].push_back(desc);
     }
     return true;
 }
 
 bool CDescCache::UpdateStructToDb(const StructDesc *desc, const mstring &content) const {
     SqliteOperator opt(mDbPath);
-    SqliteResult result = opt.Select(FormatA("select count(1) from tStructDesc where name='%hs'", desc->mTypeName.c_str()));
+    mstring tmp = desc->mTypeName;
+    tmp.makelower();
+    SqliteResult result = opt.Select(FormatA("select count(1) from tStructDesc where name='%hs'", tmp.c_str()));
 
     int count = atoi(result.begin().GetValue("count(1)").c_str());
     mstring curTime = GetCurTimeStr1(TIME_FORMAT1);
@@ -228,7 +251,7 @@ bool CDescCache::UpdateStructToDb(const StructDesc *desc, const mstring &content
     {
         opt.Insert(
             FormatA("insert into tStructDesc(name, content, checksum, time)values('%hs', '%hs', %u, '%hs')",
-            desc->mTypeName.c_str(),
+            tmp.c_str(),
             content.c_str(),
             desc->mCheckSum,
             curTime.c_str())
@@ -240,7 +263,7 @@ bool CDescCache::UpdateStructToDb(const StructDesc *desc, const mstring &content
             desc->mCheckSum,
             content.c_str(),
             curTime.c_str(),
-            desc->mTypeName.c_str())
+            tmp.c_str())
             );
     }
     return true;
@@ -248,7 +271,12 @@ bool CDescCache::UpdateStructToDb(const StructDesc *desc, const mstring &content
 
 bool CDescCache::UpdateFunctionToDb(FunDesc *desc, const mstring &content) const {
     SqliteOperator opt(mDbPath);
-    SqliteResult result = opt.Select(FormatA("select count(1) from tFunctionDesc where module='%hs' and name='%hs'", desc->mDllName.c_str(), desc->mProcName.c_str()));
+    mstring tmp1 = desc->mDllName;
+    tmp1.makelower();
+    mstring tmp2 = desc->mProcName;
+    tmp2.makelower();
+
+    SqliteResult result = opt.Select(FormatA("select count(1) from tFunctionDesc where module='%hs' and name='%hs'", tmp1.c_str(), tmp2.c_str()));
 
     int count = atoi(result.begin().GetValue("count(1)").c_str());
     mstring curTime = GetCurTimeStr1(TIME_FORMAT1);
@@ -256,8 +284,8 @@ bool CDescCache::UpdateFunctionToDb(FunDesc *desc, const mstring &content) const
     {
         opt.Insert(
             FormatA("insert into tFunctionDesc(module, name, content, checksum, time)values('%hs', '%hs', '%hs', %u, '%hs')",
-            desc->mDllName.c_str(),
-            desc->mProcName.c_str(),
+            tmp1.c_str(),
+            tmp2.c_str(),
             content.c_str(),
             desc->mCheckSum,
             curTime.c_str())
@@ -269,8 +297,8 @@ bool CDescCache::UpdateFunctionToDb(FunDesc *desc, const mstring &content) const
             desc->mCheckSum,
             content.c_str(),
             curTime.c_str(),
-            desc->mDllName.c_str(),
-            desc->mProcName.c_str())
+            tmp1.c_str(),
+            tmp2.c_str())
             );
     }
     return true;
@@ -321,7 +349,10 @@ bool CDescCache::InitDescCache() {
 bool CDescCache::InsertStructToDb(StructDesc *desc) {
     mstring str = StructToString(desc);
     desc->mCheckSum = crc32(str.c_str(), str.size(), 0xffee1122);
-    mStructCache[desc->mTypeName] = desc;
+
+    mstring tmp = desc->mTypeName;
+    tmp.makelower();
+    mStructCache[tmp] = desc;
 
     UpdateStructToDb(desc, str);
     UpdateTimeStamp();
@@ -332,7 +363,9 @@ bool CDescCache::InsertFunToDb(FunDesc *funDesc) {
     mstring d = FormatA("%hs!%hs", funDesc->mDllName.c_str(), funDesc->mProcName.c_str());
     mstring str = FunctionToString(funDesc);
     funDesc->mCheckSum = crc32(str.c_str(), str.size(), 0xffee1122);
-    mFunSetByFunction[funDesc->mProcName].push_back(funDesc);
+    mstring tmp = funDesc->mDllName;
+    tmp.makelower();
+    mFunSetByFunction[tmp].push_back(funDesc);
 
     UpdateFunctionToDb(funDesc, str);
     UpdateTimeStamp();
@@ -349,7 +382,9 @@ void CDescCache::ClearTempCache() {
 }
 
 StructDesc *CDescCache::GetStructByName(const mstring &name) const {
-    map<mstring, StructDesc *>::const_iterator it = mStructCache.find(name);
+    mstring tmp = name;
+    tmp.makelower();
+    map<mstring, StructDesc *>::const_iterator it = mStructCache.find(tmp);
 
     if (it != mStructCache.end())
     {
@@ -365,7 +400,11 @@ StructDesc *CDescCache::GetStructByName(const mstring &name) const {
 }
 
 list<FunDesc *> CDescCache::GetFunByName(const mstring &dll, const mstring &fun) const {
-    map<mstring, list<FunDesc *>>::const_iterator it = mFunSetByFunction.find(fun);
+    mstring tmp1 = dll;
+    tmp1.makelower();
+    mstring tmp2 = fun;
+    tmp2.makelower();
+    map<mstring, list<FunDesc *>>::const_iterator it = mFunSetByFunction.find(tmp1);
     if (mFunSetByFunction.end() == it)
     {
         return list<FunDesc *>();
@@ -379,7 +418,10 @@ list<FunDesc *> CDescCache::GetFunByName(const mstring &dll, const mstring &fun)
     list<FunDesc *> result;
     for (list<FunDesc *>::const_iterator ij = it->second.begin() ; ij != it->second.end() ; ij++)
     {
-        if ((*ij)->mDllName == dll)
+        mstring tmp3 = (*ij)->mDllName;
+        tmp3.makelower();
+
+        if (tmp3 == dll)
         {
             result.push_back(*ij);
         }
@@ -597,6 +639,7 @@ FunDesc *CDescCache::StringToFunction(const mstring &str) const {
         param.mParamType = p["paramType"].asString();
         param.mParamName = p["paramName"].asString();
         param.mStruct = GetStructByName(param.mParamType);
+        ptr->mParam.push_back(param);
     }
     ptr->mReturn.mReturnType = content["returnType"].asString();
     ptr->mReturn.mStruct = GetStructByName(ptr->mReturn.mReturnType);
