@@ -150,6 +150,7 @@ int __stdcall GetIntFromJson(const Json::Value &json, const std::mstring &name);
 std::ustring __stdcall GetWindowStrW(HWND hwnd);
 std::mstring __stdcall GetWindowStrA(HWND hwnd);
 
+#define TIME_FORMAT1    ("%04d-%02d-%02d %02d:%02d:%02d %03d")
 static std::mstring __stdcall GetCurTimeStr1(const char *fmt) {
     SYSTEMTIME time;
     GetLocalTime(&time);

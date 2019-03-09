@@ -643,3 +643,7 @@ VOID SetInputStat() {
 VOID SetFunViewStat(const mstring &text) {
     gsFunDefDlg->SetStatText(text);
 }
+
+VOID NotifyFunCover() {
+    gsFunDefDlg->NotifyFunCover();
+}

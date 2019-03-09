@@ -187,6 +187,25 @@ CtrlReply ProcDbgProxy::DescTest(const CtrlRequest &request, void *param) {
             result.mShow += CDescPrinter::GetInst()->GetProcStrByDesc(*ij);
         }
     }
+
+    result.mShow += "\n";
+    for (list<StructDesc *>::const_iterator it = stSet.begin() ; it != stSet.end() ; it++)
+    {
+        if (CDescCache::GetInst()->IsStructInDb(*it))
+        {
+            StructDesc *p1 = *it;
+            result.mShow += FormatA("调试器中已存在%hs结构的信息\n", p1->mTypeName.c_str());
+        }
+    }
+
+    for (list<FunDesc *>::const_iterator ij = funSet.begin() ; ij != funSet.end() ; ij++)
+    {
+        if (CDescCache::GetInst()->IsFunctionInDb(*ij))
+        {
+            FunDesc *p2 = *ij;
+            result.mShow += FormatA("调试器中已存在%hs模块%hs函数信息\n", p2->mDllName.c_str(), p2->mProcName.c_str());
+        }
+    }
     return result;
 }
 
@@ -194,6 +213,7 @@ CtrlReply ProcDbgProxy::DescSave(const CtrlRequest &request, void *param) {
     CtrlReply result;
     mstring dll = request.mContent["module"].asString();
     mstring str = request.mContent["descStr"].asString();
+    int cover = request.mContent["cover"].asInt();
 
     list<StructDesc *> stSet;
     list<FunDesc *> funSet;
@@ -206,6 +226,37 @@ CtrlReply ProcDbgProxy::DescSave(const CtrlRequest &request, void *param) {
         list<StructDesc *>::const_iterator it;
         list<FunDesc *>::const_iterator ij;
 
+        bool dataInDb = false;
+        result.mShow += "\n";
+        for (list<StructDesc *>::const_iterator it = stSet.begin() ; it != stSet.end() ; it++)
+        {
+            if (CDescCache::GetInst()->IsStructInDb(*it))
+            {
+                dataInDb = true;
+                StructDesc *p1 = *it;
+                result.mShow += FormatA("调试器中已存在%hs结构的信息\n", p1->mTypeName.c_str());
+            }
+        }
+
+        for (list<FunDesc *>::const_iterator ij = funSet.begin() ; ij != funSet.end() ; ij++)
+        {
+            if (CDescCache::GetInst()->IsFunctionInDb(*ij))
+            {
+                dataInDb = true;
+                FunDesc *p2 = *ij;
+                result.mShow += FormatA("调试器中已存在%hs模块%hs函数信息\n", p2->mDllName.c_str(), p2->mProcName.c_str());
+            }
+        }
+
+        if (dataInDb && cover)
+        {
+            result.mShow += "强制覆盖保存数据";
+        } else if (dataInDb && !cover) {
+            result.mShow += "数据库中已存在相关数据,本次保存失败";
+            result.mResult["needCover"] = 1;
+            return result;
+        }
+
         for (it = stSet.begin() ; it != stSet.end() ; it++)
         {
             CDescCache::GetInst()->InsertStructToDb(*it);
@@ -216,7 +267,6 @@ CtrlReply ProcDbgProxy::DescSave(const CtrlRequest &request, void *param) {
             CDescCache::GetInst()->InsertFunToDb(*ij);
             result.mShow += CDescPrinter::GetInst()->GetProcStrByDesc(*ij);
         }
-        result.mShow += "\n数据信息录入成功\n";
     }
     return result;
 }

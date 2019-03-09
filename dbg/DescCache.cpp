@@ -17,6 +17,28 @@ CDescCache *CDescCache::GetInst() {
     return s_ptr;
 }
 
+//结构描述是否在db存储中,因为部分仅在db缓存中
+bool CDescCache::IsStructInDb(const StructDesc *structDesc) {
+    SqliteOperator opt(mDbPath);
+
+    mstring sql = FormatA("select count(1) from tStructDesc where name='%hs'", structDesc->mTypeName.c_str());
+    SqliteResult result = opt.Select(sql);
+    mstring err = opt.GetError();
+    mstring dd = result.begin().GetValue("count(1)");
+    return (result.begin().GetValue("count(1)") != "0");
+}
+
+//函数描述是否在db存储中
+bool CDescCache::IsFunctionInDb(const FunDesc *funDesc) {
+    SqliteOperator opt(mDbPath);
+
+    mstring sql = FormatA("select count(1) from tFunctionDesc where module='%hs' and name='%hs'", funDesc->mDllName.c_str(), funDesc->mProcName.c_str());
+    SqliteResult result = opt.Select(sql);
+    mstring err = opt.GetError();
+    return (result.begin().GetValue("count(1)") != "0");
+}
+
+
 void CDescCache::InsertBaseType(int type, const mstring &nameSet, int length, const mstring &fmt) {
     list<mstring> nameArray = SplitStrA(nameSet, ";");
     for (list<mstring>::const_iterator it = nameArray.begin() ; it != nameArray.end() ; it++)
@@ -196,27 +218,61 @@ bool CDescCache::LoadNewFunctionFromDb() {
     return true;
 }
 
-bool CDescCache::UpdateStructToDb(DWORD checkSum, const mstring &str) {
+bool CDescCache::UpdateStructToDb(const StructDesc *desc, const mstring &content) const {
     SqliteOperator opt(mDbPath);
-    mstring sql = FormatA(
-        "replace into tStructDesc(content, time, checksum)values('%hs', '%hs', %u)",
-        str.c_str(),
-        "2018-11-11 11:22:33 456",
-        checkSum
-        );
-    opt.Exec(sql);
+    SqliteResult result = opt.Select(FormatA("select count(1) from tStructDesc where name='%hs'", desc->mTypeName.c_str()));
+
+    int count = atoi(result.begin().GetValue("count(1)").c_str());
+    mstring curTime = GetCurTimeStr1(TIME_FORMAT1);
+    if (0 == count)
+    {
+        opt.Insert(
+            FormatA("insert into tStructDesc(name, content, checksum, time)values('%hs', '%hs', %u, '%hs')",
+            desc->mTypeName.c_str(),
+            content.c_str(),
+            desc->mCheckSum,
+            curTime.c_str())
+            );
+    } else {
+        opt.Update(
+            FormatA(
+            "update tStructDesc set checksum=%u, content='%hs', time='%hs' where name='%hs'",
+            desc->mCheckSum,
+            content.c_str(),
+            curTime.c_str(),
+            desc->mTypeName.c_str())
+            );
+    }
     return true;
 }
 
-bool CDescCache::UpdateFunctionToDb(DWORD checkSum, const mstring &str) {
+bool CDescCache::UpdateFunctionToDb(FunDesc *desc, const mstring &content) const {
     SqliteOperator opt(mDbPath);
-    mstring sql = FormatA(
-        "replace into tFunctionDesc(content, time, checksum)values('%hs', '%hs', %u)",
-        str.c_str(),
-        "2018-11-11 11:22:33 456",
-        checkSum
-        );
-    opt.Exec(sql);
+    SqliteResult result = opt.Select(FormatA("select count(1) from tFunctionDesc where module='%hs' and name='%hs'", desc->mDllName.c_str(), desc->mProcName.c_str()));
+
+    int count = atoi(result.begin().GetValue("count(1)").c_str());
+    mstring curTime = GetCurTimeStr1(TIME_FORMAT1);
+    if (0 == count)
+    {
+        opt.Insert(
+            FormatA("insert into tFunctionDesc(module, name, content, checksum, time)values('%hs', '%hs', '%hs', %u, '%hs')",
+            desc->mDllName.c_str(),
+            desc->mProcName.c_str(),
+            content.c_str(),
+            desc->mCheckSum,
+            curTime.c_str())
+            );
+    } else {
+        opt.Update(
+            FormatA(
+            "update tFunctionDesc set checksum=%u, content='%hs', time='%hs' where module='%hs' and name='%hs'",
+            desc->mCheckSum,
+            content.c_str(),
+            curTime.c_str(),
+            desc->mDllName.c_str(),
+            desc->mProcName.c_str())
+            );
+    }
     return true;
 }
 
@@ -227,8 +283,8 @@ bool CDescCache::InitDescCache() {
     mDbPath = dbPath;
 
     SqliteOperator opt(mDbPath);
-    opt.Exec("create table if not exists tStructDesc (id INTEGER PRIMARY KEY, content TEXT, checksum BIGINT, time CHAR(32))");
-    opt.Exec("create table if not exists tFunctionDesc (id INTEGER PRIMARY KEY, content TEXT, checksum BIGINT, time CHAR(32))");
+    opt.Exec("create table if not exists tStructDesc (id INTEGER PRIMARY KEY, name TEXT, content TEXT, checksum BIGINT, time CHAR(32))");
+    opt.Exec("create table if not exists tFunctionDesc (id INTEGER PRIMARY KEY, module TEXT, name TEXT,content TEXT, checksum BIGINT, time CHAR(32))");
 
     //1 byte
     InsertBaseType(STRUCT_TYPE_BASETYPE, "bool;boolean", 1, "0x%x(%d)");
@@ -267,7 +323,7 @@ bool CDescCache::InsertStructToDb(StructDesc *desc) {
     desc->mCheckSum = crc32(str.c_str(), str.size(), 0xffee1122);
     mStructCache[desc->mTypeName] = desc;
 
-    UpdateStructToDb(desc->mCheckSum, str);
+    UpdateStructToDb(desc, str);
     UpdateTimeStamp();
     return true;
 }
@@ -278,7 +334,7 @@ bool CDescCache::InsertFunToDb(FunDesc *funDesc) {
     funDesc->mCheckSum = crc32(str.c_str(), str.size(), 0xffee1122);
     mFunSetByFunction[funDesc->mProcName].push_back(funDesc);
 
-    UpdateFunctionToDb(funDesc->mCheckSum, str);
+    UpdateFunctionToDb(funDesc, str);
     UpdateTimeStamp();
     return true;
 }
@@ -286,6 +342,10 @@ bool CDescCache::InsertFunToDb(FunDesc *funDesc) {
 bool CDescCache::InsertStructToCache(StructDesc *structDesc) {
     mTempCache[structDesc->mTypeName] = structDesc;
     return true;
+}
+
+void CDescCache::ClearTempCache() {
+    mTempCache.clear();
 }
 
 StructDesc *CDescCache::GetStructByName(const mstring &name) const {

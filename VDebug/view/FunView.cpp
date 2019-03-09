@@ -152,7 +152,7 @@ int CFunctionView::OnCommand(HWND hwnd, WPARAM wp, LPARAM lp) {
             DbgCtrlService::GetInstance()->TestDescStr(dll, str);
         } else if (id == IDC_IMPORT_BTN_OK)
         {
-            DbgCtrlService::GetInstance()->InputDescStr(dll, str);
+            DbgCtrlService::GetInstance()->InputDescStr(dll, str, false);
         }
     }
     return 0;
@@ -181,4 +181,21 @@ LRESULT CFunctionView::OnWindowMsg(HWND hwnd, UINT uMsg, WPARAM wp, LPARAM lp) {
 
 void CFunctionView::SetStatText(const mstring &text) {
     mStatView.SetText(SCI_LABEL_DEFAULT, text);
+}
+
+void CFunctionView::NotifyFunCover() {
+    if (IDYES == MessageBoxA(
+        m_hwnd,
+        "需要保存的信息和本地缓存中的数据有冲突，是否覆盖保存？",
+        "数据冲突",
+        MB_YESNO | MB_SETFOREGROUND | MB_ICONWARNING
+        ))
+    {
+        COMBOBOXINFO info = { sizeof(info) };
+        SendMessageA(mComModule, CB_GETCOMBOBOXINFO, 0, (LPARAM)&info);
+
+        mstring dll = GetWindowStrA(info.hwndItem);
+        mstring str = mEditView.GetText();
+        DbgCtrlService::GetInstance()->InputDescStr(dll, str, true);
+    }
 }

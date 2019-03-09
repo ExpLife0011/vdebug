@@ -12,4 +12,5 @@ SyntaxView *GetSyntaxView();
 VOID SetCmdNotify(DbggerStatus status, const mstring &strShowMsg);
 VOID SetInputStat();
 VOID SetFunViewStat(const std::mstring &text);
+VOID NotifyFunCover();
 #endif

@@ -492,7 +492,7 @@ bool CDescParser::ParserModuleProc(
     list<NodeStr> nodeSet;
 
     try {
-        mDescCache.clear();
+        CDescCache::GetInst()->ClearTempCache();
         nodeSet = SplitNodeStr(procStr);
 
         for (list<NodeStr>::const_iterator it = nodeSet.begin() ; it != nodeSet.end() ; it++)
@@ -500,8 +500,6 @@ bool CDescParser::ParserModuleProc(
             if (it->mType == STR_TYPE_STRUCT)
             {
                 map<mstring, StructDesc *> tmp = ParserSingleStruct(dllName, *it);
-
-
                 for (map<mstring, StructDesc *>::const_iterator it = tmp.begin() ; it != tmp.end() ; it++)
                 {
                     CDescCache::GetInst()->InsertStructToCache(it->second);

@@ -12,6 +12,7 @@ public:
     void ShowFunView(HWND parent);
     void SetStatText(const std::mstring &text);
     void AppendStatText(const std::mstring &text);
+    void NotifyFunCover();
     void CloseFunView();
 private:
     void UsingCppStyle();

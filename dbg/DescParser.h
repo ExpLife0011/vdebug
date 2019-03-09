@@ -194,8 +194,6 @@ private:
     StructDesc *ParserParamStr(const mstring &str, mstring &type, mstring &name) const;
 
 private:
-    //struct tmp cache for parser only.
-    map<std::mstring, StructDesc *> mDescCache;
     std::mstring mError;
 };
 #endif //PROCPARSER_DPSERV_H_H_
