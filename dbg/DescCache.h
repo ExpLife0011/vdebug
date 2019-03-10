@@ -34,7 +34,7 @@ public:
     StructDesc *GetLinkDescByDesc(int level, StructDesc *desc) const;
     StructDesc *CreatePtrStruct() const;
     //获取格式化完成的结果
-    mstring GetFormatStr(const mstring &fmt, const char *ptr, int length) const;
+    //mstring GetFormatStr(const mstring &fmt, const char *ptr, int length) const;
 
 private:
     CDescCache();

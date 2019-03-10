@@ -2,6 +2,7 @@
 #define PROCPRINTER_PARSER_H_H_
 #include <Windows.h>
 #include "DescParser.h"
+#include "MemoryBase.h"
 
 struct PrinterNode {
     mstring mOffset;
@@ -75,10 +76,13 @@ private:
 
 public:
     static CDescPrinter *GetInst();
+    void SetMemoryReader(CMemoryBase *reader);
     mstring GetProcStrByName(const mstring &module, const mstring &procName, LPVOID stackAddr = 0) const;
     mstring GetProcStrByDesc(const FunDesc *desc, LPVOID stackAddr = 0) const;
     mstring GetStructStrByName(const mstring &name, LPVOID startAddr = 0, int startOffset = 0) const;
     mstring GetStructStrByDesc(const StructDesc *desc, LPVOID startAddr = 0, int startOffset = 0) const;
+    //获取格式化完成的结果
+    mstring GetFormatStr(const mstring &fmt, const char *ptr, int length) const;
 private:
     void StructHandler(PrintEnumInfo &tmp1, list<PrintEnumInfo> &enumSet, bool withOffset) const;
     PrinterNode *GetNodeStruct(const StructDesc *desc, LPVOID baseAddr) const;
@@ -88,5 +92,7 @@ private:
     bool IsValidAddr(LPVOID addr) const;
 
     mstring GetFunctionStrInternal(const FunDesc *procDesc, LPVOID stackAddr) const;
+private:
+    CMemoryBase *mReader;
 };
 #endif //PROCPRINTER_PARSER_H_H_

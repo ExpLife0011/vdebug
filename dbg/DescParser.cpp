@@ -631,7 +631,7 @@ void TestProc() {
     ptr->InitParser();
 
     int tt1 = 123;
-    mstring uuu = CDescCache::GetInst()->GetFormatStr("%x(%d)[%d]", (const char *)&tt1, 4);
+    mstring uuu = CDescPrinter::GetInst()->GetFormatStr("%x(%d)[%d]", (const char *)&tt1, 4);
 
     char path[256] = {0};
     GetModuleFileNameA(NULL, path, 256);

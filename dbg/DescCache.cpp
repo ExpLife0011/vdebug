@@ -127,7 +127,9 @@ bool CDescCache::LoadNewStructFromDb() {
         }
 
         StructDesc *desc = StringToStruct(it.GetValue("content"));
-        cache[desc->mTypeName] = desc;
+        mstring tmp = desc->mTypeName;
+        tmp.makelower();
+        cache[tmp] = desc;
     }
 
     list<StructDesc *> structSet;
@@ -140,7 +142,9 @@ bool CDescCache::LoadNewStructFromDb() {
         if (ptr->mType == STRUCT_TYPE_PTR)
         {
             ptr->mLength = sizeof(void *);
-            map<mstring, StructDesc *>::const_iterator ij = cache.find(ptr->mEndType);
+            mstring tmp2 = ptr->mEndType;
+            tmp2.makelower();
+            map<mstring, StructDesc *>::const_iterator ij = cache.find(tmp2);
             StructDesc *lastPtr = ptr;
             for (int i = 0 ; i < ptr->mLinkCount - 1 ; i++)
             {
@@ -161,7 +165,7 @@ bool CDescCache::LoadNewStructFromDb() {
 
                 if (i3 == mStructCache.end())
                 {
-                    i3 = cache.find(*it2);
+                    i3 = cache.find(tmpStr);
 
                     if (i3 == cache.end())
                     {
@@ -435,71 +439,6 @@ StructDesc *CDescCache::CreatePtrStruct() const {
     ptr->mLength = sizeof(void *);
     ptr->mFormat = "0x%08x";
     return ptr;
-}
-
-mstring CDescCache::GetFormatStr(const mstring &fmt, const char *ptr, int length) const {
-    int paramCount = 0;
-
-    vector<mstring> fmtSet;
-    size_t lastPos = 0;
-    size_t curPos = 0;
-    curPos = fmt.find('%');
-    if (curPos != mstring::npos)
-    {
-        curPos = fmt.find('%', curPos + 1);
-    }
-
-    if (curPos != mstring::npos)
-    {
-        do
-        {
-            fmtSet.push_back(fmt.substr(lastPos, curPos - lastPos));
-            lastPos = curPos;
-            curPos = curPos + 1;
-
-            curPos = fmt.find('%', curPos);
-        } while (curPos != mstring::npos);
-
-        if (fmt.size() > lastPos)
-        {
-            fmtSet.push_back(fmt.substr(lastPos, fmt.size() - lastPos));
-        }
-    } else {
-        fmtSet.push_back(fmt);
-    }
-
-    mstring result;
-    size_t i = 0;
-    if (length == 1)
-    {
-        byte d = *(byte *)ptr;
-        for (i = 0 ; i < fmtSet.size() ; i++)
-        {
-            result += FormatA(fmtSet[i].c_str(), d);
-        }
-    } else if (length == 2)
-    {
-        unsigned short d = *(unsigned short *)ptr;
-        for (i = 0 ; i < fmtSet.size() ; i++)
-        {
-            result += FormatA(fmtSet[i].c_str(), d);
-        }
-    } else if (length == 4)
-    {
-        unsigned int d = *(unsigned int *)ptr;
-        for (i = 0 ; i < fmtSet.size() ; i++)
-        {
-            result += FormatA(fmtSet[i].c_str(), d);
-        }
-    } else if (length == 8)
-    {
-        ULONGLONG d = *(ULONGLONG *)ptr;
-        for (i = 0 ; i < fmtSet.size() ; i++)
-        {
-            result += FormatA(fmtSet[i].c_str(), d);
-        }
-    }
-    return result;
 }
 
 StructDesc *CDescCache::GetLinkDescByType(int level, const mstring &linkName) const {
