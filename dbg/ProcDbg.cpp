@@ -52,6 +52,8 @@ VOID CProcDbgger::Wait()
 
     ResetEvent(m_hRunNotify);
     WaitForSingleObject(m_hRunNotify, INFINITE);
+    //重置当前线程
+    GetInstance()->mCurThreadSet = false;
 
     stat.mDbggerStatus = em_dbg_status_busy;
     CDbgStatMgr::GetInst()->ReportDbgStatus(stat);
@@ -111,6 +113,7 @@ BOOL CProcDbgger::Connect(LPCSTR target, LPVOID pParam)
         m_vDbgProcInfo.m_strCurrentDir.clear();
     }
     m_vDbgProcInfo.m_pfn = CustomBreakPoint;
+    mCurThreadSet = false;
     CloseHandle(CreateThread(NULL, 0, DebugThread, NULL, 0, NULL));
     return TRUE;
 }
@@ -120,6 +123,7 @@ BOOL CProcDbgger::Connect(DWORD dwPid)
     InitEngine();
     m_vDbgProcInfo.m_eType = em_dbgproc_attach;
     m_vDbgProcInfo.m_dwPid = dwPid;
+    mCurThreadSet = false;
     CloseHandle(CreateThread(NULL, 0, DebugThread, NULL, 0, NULL));
     return TRUE;
 }
@@ -228,7 +232,12 @@ DEBUG_EVENT *CProcDbgger::GetDebugProcData()
 
 TITAN_ENGINE_CONTEXT_t CProcDbgger::GetCurrentContext()
 {
-    return GetThreadContext(GetCurrentThread().m_hThread);
+    if (mCurThreadSet) {
+        return GetThreadContext(mCurrentThread.m_hThread);
+    } else {
+        DWORD tid = GetDebugProcData()->dwThreadId;
+        return GetThreadContext(GetThreadById(tid).m_hThread);
+    }
 }
 
 TITAN_ENGINE_CONTEXT_t CProcDbgger::GetThreadContext(HANDLE hThread)
@@ -240,7 +249,13 @@ TITAN_ENGINE_CONTEXT_t CProcDbgger::GetThreadContext(HANDLE hThread)
 
 DbgProcThreadInfo CProcDbgger::GetCurrentThread()
 {
-    return mCurrentThread;
+    if (mCurThreadSet)
+    {
+        return mCurrentThread;
+    }  else {
+        DWORD tid = GetDebugProcData()->dwThreadId;
+        return GetThreadById(tid);
+    }
 }
 
 DbgProcThreadInfo CProcDbgger::GetThreadById(DWORD dwId) const
@@ -727,6 +742,7 @@ list<STACKFRAME64> CProcDbgger::GetStackFrame(const mstring &wstrParam)
     const int iMaxWalks = 1024;
     HANDLE hCurrentThread = GetInstance()->GetCurrentThread().m_hThread;
     CONTEXT context = {0};
+
     context.ContextFlags = CONTEXT_FULL;
     ::GetThreadContext(hCurrentThread, &context);
     STACKFRAME64 frame = {0};

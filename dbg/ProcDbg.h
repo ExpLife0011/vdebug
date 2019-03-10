@@ -95,14 +95,15 @@ public:
     virtual BOOL Connect(DWORD dwPid);
     virtual BOOL DisConnect();
     virtual BOOL IsConnect();
+
     virtual TITAN_ENGINE_CONTEXT_t GetCurrentContext();
-    TITAN_ENGINE_CONTEXT_t GetThreadContext(HANDLE hThread);
     VOID Wait();
     void Run();
     void RunExitProc();
+    bool SwitchThread(DWORD serial);                        //切换当前线程
     DbgModuleInfo GetModuleFromAddr(DWORD64 dwAddr) const;
     HANDLE GetDbgProc() const;
-    DWORD GetCurDbgProcId() const;
+    //DWORD GetCurDbgProcId() const;
     DbgProcThreadInfo GetCurrentThread();
     DbgProcThreadInfo GetThreadById(DWORD dwId) const;
     DbggerStatus GetDbggerStatus();
@@ -110,8 +111,10 @@ public:
     vector<DbgProcThreadInfo> GetThreadCache() const;
     list<ThreadInformation> GetCurrentThreadSet() const;
     list<DbgModuleInfo> GetDllSet() const;
+    DWORD GetCurDbgProcId() const;
 
 protected:
+    TITAN_ENGINE_CONTEXT_t GetThreadContext(HANDLE hThread);
     void PushThread(const DbgProcThreadInfo &newThread);
     static list<ThreadInformation> msCurThreadSet;
     static void __cdecl ThreadEnumCallBack(THREAD_ITEM_DATA *threadData);
@@ -155,7 +158,11 @@ protected:
     list<DbgModuleInfo> mDllSet;
     DWORD m_dwCurDebugProc;
     DbgProcInfo m_vDbgProcInfo;
+
+    //当期设置的线程，只有手动通过ts命令切换该字段才有效，每次程序运行重置该变量
+    bool mCurThreadSet;
     DbgProcThreadInfo mCurrentThread;
+
     DbggerStatus m_eDbggerStat;
     HANDLE m_hRunNotify;
     static const DWORD ms_dwDefDisasmSize = 128;

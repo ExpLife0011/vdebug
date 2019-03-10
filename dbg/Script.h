@@ -7,13 +7,6 @@
 #include <ComLib/ComLib.h>
 #include "DbgBase.h"
 
-extern "C"
-{
-#include "lua/lua.h"
-#include "lua/lauxlib.h"
-#include "lua/lualib.h"
-};
-
 using namespace std;
 
 enum ScriptOperator
@@ -85,22 +78,22 @@ protected:
     mstring GetScriptPath(LPCSTR script) const;
 
     /*lua脚本*/
-static void CmdNotifyCallback(LPVOID pUserParam, LPVOID pContext);
+//static void CmdNotifyCallback(LPVOID pUserParam, LPVOID pContext);
 
-static void ScriptEnvInit(lua_State *pLuaStat);
+//static void ScriptEnvInit(lua_State *pLuaStat);
 
-static DWORD WINAPI ScriptExecThread(LPVOID pParam);
+//static DWORD WINAPI ScriptExecThread(LPVOID pParam);
 
     /*提供给lua脚本使用的函数*/
-static int DbgRunCmd(lua_State *pLuaStat);
+//static int DbgRunCmd(lua_State *pLuaStat);
 
-static int DbgPrintMsg(lua_State *pLuaState);
+//static int DbgPrintMsg(lua_State *pLuaState);
 
-static int DbgPrintErr(lua_State *pLuaState);
+//static int DbgPrintErr(lua_State *pLuaState);
 
-static int DbgReadStr(lua_State *pLuaState);
+//static int DbgReadStr(lua_State *pLuaState);
 
-static int DbgReadInt32(lua_State *pLuaState);
+//static int DbgReadInt32(lua_State *pLuaState);
 
 protected:
     pfnReadMemoryProc m_pfnReadProc;
