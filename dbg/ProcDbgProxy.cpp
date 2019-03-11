@@ -4,6 +4,9 @@
 #include <mq/mq.h>
 #include "ProcDbgProxy.h"
 #include "ProcDbg.h"
+#include "DescParser.h"
+#include "DescPrinter.h"
+#include "DescCache.h"
 
 using namespace std;
 
@@ -44,6 +47,8 @@ bool ProcDbgProxy::InitProcDbgProxy(const char *unique) {
     m_pDbgClient->RegisterCtrlHandler(DBG_CTRL_GET_PROC, GetProcInfo, this);
     m_pDbgClient->RegisterCtrlHandler(DBG_CTRL_DETACH, DetachProc, this);
     m_pDbgClient->RegisterCtrlHandler(DBG_CTRL_BREAK, BreakDebugger, this);
+    m_pDbgClient->RegisterCtrlHandler(DBG_CTRL_TEST_DESC, DescTest, this);
+    m_pDbgClient->RegisterCtrlHandler(DBG_CTRL_INPUT_DESC, DescSave, this);
     m_pProcDbgger = CProcDbgger::GetInstance();
     m_pCmdRunner = CProcCmd::GetInst();
     m_pCmdRunner->InitProcCmd(m_pProcDbgger);
@@ -160,4 +165,108 @@ void ProcDbgProxy::OnProcChanged(HProcListener listener, const list<const ProcMo
     eventInfo.mEvent = DBG_EVENT_PROC_CHANGED;
     Reader().parse(EncodeProcMon(procSet), eventInfo.mContent);
     m_pDbgClient->ReportDbgEvent(eventInfo);
+}
+
+CtrlReply ProcDbgProxy::DescTest(const CtrlRequest &request, void *param) {
+    CtrlReply result;
+    mstring dll = request.mContent["module"].asString();
+    mstring str = request.mContent["descStr"].asString();
+
+    list<StructDesc *> stSet;
+    list<FunDesc *> funSet;
+
+    if (!CDescParser::GetInst()->ParserModuleProc(dll, str, stSet, funSet))
+    {
+        result.mShow = FormatA("解析描述信息错误，%hs", CDescParser::GetInst()->GetErrorStr().c_str());
+    } else {
+        result.mShow = "解析数据类型成功\n";
+        list<FunDesc *>::const_iterator ij;
+
+        for (ij = funSet.begin() ; ij != funSet.end() ; ij++)
+        {
+            result.mShow += CDescPrinter::GetInst()->GetProcStrByDesc(*ij);
+        }
+    }
+
+    result.mShow += "\n";
+    for (list<StructDesc *>::const_iterator it = stSet.begin() ; it != stSet.end() ; it++)
+    {
+        if (CDescCache::GetInst()->IsStructInDb(*it))
+        {
+            StructDesc *p1 = *it;
+            result.mShow += FormatA("调试器中已存在%hs结构的信息\n", p1->mTypeName.c_str());
+        }
+    }
+
+    for (list<FunDesc *>::const_iterator ij = funSet.begin() ; ij != funSet.end() ; ij++)
+    {
+        if (CDescCache::GetInst()->IsFunctionInDb(*ij))
+        {
+            FunDesc *p2 = *ij;
+            result.mShow += FormatA("调试器中已存在%hs模块%hs函数信息\n", p2->mDllName.c_str(), p2->mProcName.c_str());
+        }
+    }
+    return result;
+}
+
+CtrlReply ProcDbgProxy::DescSave(const CtrlRequest &request, void *param) {
+    CtrlReply result;
+    mstring dll = request.mContent["module"].asString();
+    mstring str = request.mContent["descStr"].asString();
+    int cover = request.mContent["cover"].asInt();
+
+    list<StructDesc *> stSet;
+    list<FunDesc *> funSet;
+
+    if (!CDescParser::GetInst()->ParserModuleProc(dll, str, stSet, funSet))
+    {
+        result.mShow = FormatA("解析描述信息错误，%hs", CDescParser::GetInst()->GetErrorStr().c_str());
+    } else {
+        result.mShow = "解析数据类型成功\n";
+        list<StructDesc *>::const_iterator it;
+        list<FunDesc *>::const_iterator ij;
+
+        bool dataInDb = false;
+        result.mShow += "\n";
+        for (list<StructDesc *>::const_iterator it = stSet.begin() ; it != stSet.end() ; it++)
+        {
+            if (CDescCache::GetInst()->IsStructInDb(*it))
+            {
+                dataInDb = true;
+                StructDesc *p1 = *it;
+                result.mShow += FormatA("调试器中已存在%hs结构的信息\n", p1->mTypeName.c_str());
+            }
+        }
+
+        for (list<FunDesc *>::const_iterator ij = funSet.begin() ; ij != funSet.end() ; ij++)
+        {
+            if (CDescCache::GetInst()->IsFunctionInDb(*ij))
+            {
+                dataInDb = true;
+                FunDesc *p2 = *ij;
+                result.mShow += FormatA("调试器中已存在%hs模块%hs函数信息\n", p2->mDllName.c_str(), p2->mProcName.c_str());
+            }
+        }
+
+        if (dataInDb && cover)
+        {
+            result.mShow += "强制覆盖保存数据";
+        } else if (dataInDb && !cover) {
+            result.mShow += "数据库中已存在相关数据,本次保存失败";
+            result.mResult["needCover"] = 1;
+            return result;
+        }
+
+        for (it = stSet.begin() ; it != stSet.end() ; it++)
+        {
+            CDescCache::GetInst()->InsertStructToDb(*it);
+        }
+
+        for (ij = funSet.begin() ; ij != funSet.end() ; ij++)
+        {
+            CDescCache::GetInst()->InsertFunToDb(*ij);
+            result.mShow += CDescPrinter::GetInst()->GetProcStrByDesc(*ij);
+        }
+    }
+    return result;
 }

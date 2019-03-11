@@ -58,6 +58,10 @@
 #define DBG_CTRL_DUMP_PROC           "DumpProc"
 //中断调试器
 #define DBG_CTRL_BREAK               "BreakDebugger"
+
+//函数类型录入
+#define DBG_CTRL_TEST_DESC           "DescTest"
+#define DBG_CTRL_INPUT_DESC          "DescSave"
 /*********************调试控制指令结束******************************/
 
 /*********************调试事件开始**********************************/

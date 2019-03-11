@@ -10,10 +10,14 @@ public:
     virtual ~CFunctionView();
 
     void ShowFunView(HWND parent);
+    void SetStatText(const std::mstring &text);
+    void AppendStatText(const std::mstring &text);
+    void NotifyFunCover();
     void CloseFunView();
 private:
     void UsingCppStyle();
     int OnInitDlg(HWND hwnd, WPARAM wp, LPARAM lp);
+    int OnCommand(HWND hwnd, WPARAM wp, LPARAM lp);
 
 private:
     virtual LRESULT OnWindowMsg(HWND hwnd, UINT uMsg, WPARAM wp, LPARAM lp);

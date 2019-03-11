@@ -87,7 +87,7 @@ struct StructDesc {
     }
 
     bool IsStructPtr() const {
-        if (mType == STRUCT_TYPE_PTR && mPtrEnd->mType == STRUCT_TYPE_STRUCT)
+        if (mType == STRUCT_TYPE_PTR && (mUnknownType == false) && mPtrEnd->mType == STRUCT_TYPE_STRUCT)
         {
             return true;
         }
@@ -173,8 +173,10 @@ public:
     bool ParserModuleProc(
         const mstring &dllName,
         const mstring &procStr,
-        vector<FunDesc> &procSet
+        list<StructDesc *> &structSet,
+        list<FunDesc *> &procSet
         );
+    std::mstring GetErrorStr() const;
 private:
     list<NodeStr> SplitNodeStr(const mstring &procStr) const;
     NodeStr ParserProcNode(const mstring &procStr, size_t startPos, size_t curPos, size_t &endPos) const;
@@ -190,6 +192,8 @@ private:
     bool ParserStructParam(const mstring &content, StructDesc *ptr) const;
     void ClearParamStr(mstring &str) const;
     StructDesc *ParserParamStr(const mstring &str, mstring &type, mstring &name) const;
+
 private:
+    std::mstring mError;
 };
 #endif //PROCPARSER_DPSERV_H_H_

@@ -24,7 +24,6 @@ void CBreakPointMgr::Int3BpCallback()
         {
             return;
         }
-        
 
         Value result;
         result["addr"] = FormatA("0x%08x", (DWORD)bp.mBpAddr);

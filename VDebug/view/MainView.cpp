@@ -639,3 +639,11 @@ VOID ShowMainView()
 VOID SetInputStat() {
     SetFocus(gs_hCommand);
 }
+
+VOID SetFunViewStat(const mstring &text) {
+    gsFunDefDlg->SetStatText(text);
+}
+
+VOID NotifyFunCover() {
+    gsFunDefDlg->NotifyFunCover();
+}

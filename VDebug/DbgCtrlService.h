@@ -20,6 +20,9 @@ public:
     bool AttachProc(DWORD pid);
     bool DetachProc();
 
+    bool TestDescStr(const std::mstring &dll, const std::mstring &str);
+    bool InputDescStr(const std::mstring &dll, const std::mstring &str, bool cover = false);
+
     bool OpenDump(const std::mstring &path) const;
     CtrlReply RunCmdInCtrlService(const std::mstring &cmd);
 

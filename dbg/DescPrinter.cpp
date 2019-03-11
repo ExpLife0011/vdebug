@@ -5,6 +5,7 @@
 #include "DescCache.h"
 
 CDescPrinter::CDescPrinter() {
+    mReader = NULL;
 }
 
 CDescPrinter::~CDescPrinter() {
@@ -18,6 +19,10 @@ CDescPrinter *CDescPrinter::GetInst() {
         s_ptr = new CDescPrinter();
     }
     return s_ptr;
+}
+
+void CDescPrinter::SetMemoryReader(CMemoryBase *reader) {
+    mReader = reader;
 }
 
 mstring CDescPrinter::GetProcStrByName(const mstring &module, const mstring &procName, LPVOID stackAddr) const {
@@ -85,16 +90,18 @@ void CDescPrinter::StructHandler(PrintEnumInfo &tmp1, list<PrintEnumInfo> &enumS
             bool isUnicode = false;
             if (tmp2.mDesc->mType == STRUCT_TYPE_PTR && tmp2.mDesc->IsStr(isUnicode))
             {
-                char *pStr = *((char **)tmp2.mBaseAddr);
+                char *pStr = NULL;
+                DWORD dw = 0;
+                mReader->MemoryReadSafe((DWORD64)tmp2.mBaseAddr, (char *)&pStr, sizeof(void *), &dw);
                 if (!pStr)
                 {
                     tmp2.mNode->mContent = "读取字符串内容错误";
                 } else {
                     if (isUnicode)
                     {
-                        tmp2.mNode->mContent = FormatA("%ls", pStr);
+                        tmp2.mNode->mContent = WtoA(mReader->MemoryReadStrUnicode((DWORD64)pStr));
                     } else {
-                        tmp2.mNode->mContent = FormatA("%hs", pStr);
+                        tmp2.mNode->mContent = mReader->MemoryReadStrGbk((DWORD64)pStr);
                     }
                 }
                 next = false;
@@ -103,7 +110,12 @@ void CDescPrinter::StructHandler(PrintEnumInfo &tmp1, list<PrintEnumInfo> &enumS
                 {
                     if (IsValidAddr(tmp2.mBaseAddr))
                     {
-                         tmp2.mNode->mContent = CDescCache::GetInst()->GetFormatStr(tmp2.mDesc->mFormat, (const char *)tmp2.mBaseAddr, tmp2.mDesc->mLength);
+                        MemoryAlloc<char> alloc;
+                        char *buffer = alloc.GetMemory(tmp2.mDesc->mLength);
+                        DWORD dw2 = 0;
+                        mReader->MemoryReadSafe((DWORD64)tmp2.mBaseAddr, buffer, tmp2.mDesc->mLength, &dw2);
+
+                        tmp2.mNode->mContent = GetFormatStr(tmp2.mDesc->mFormat, buffer, tmp2.mDesc->mLength);
                     } else {
                         tmp2.mNode->mContent = "读取地址内容错误";
                     }
@@ -154,6 +166,7 @@ PrinterNode *CDescPrinter::GetNodeStruct(const StructDesc *desc, LPVOID baseAddr
             StructHandler(tmp1, enumSet, withOffset);
         } else if ((tmp1.mDesc->mType == STRUCT_TYPE_PTR) && (tmp1.mDesc->mUnknownType == false))
         {
+            //多级指针此处有问题
             if (tmp1.mDesc->mPtr->mType != STRUCT_TYPE_STRUCT) {
                 continue;
             }
@@ -168,8 +181,10 @@ PrinterNode *CDescPrinter::GetNodeStruct(const StructDesc *desc, LPVOID baseAddr
             } else {
                 if (IsValidAddr(tmp1.mBaseAddr))
                 {
-                    char *pStr = *((char **)tmp1.mBaseAddr);
-                    tmp3.mBaseAddr = pStr;
+                    DWORD dw = 0;
+                    char *nextPtr = NULL;
+                    mReader->MemoryReadSafe((DWORD64)tmp1.mBaseAddr, (char *)&nextPtr, sizeof(void *), &dw);
+                    tmp3.mBaseAddr = nextPtr;
                     StructHandler(tmp3, enumSet, withOffset);
                 }
             }
@@ -286,6 +301,71 @@ mstring CDescPrinter::GetStructStrInternal(const StructDesc *desc, LPVOID baseAd
     return result;
 }
 
+mstring CDescPrinter::GetFormatStr(const mstring &fmt, const char *ptr, int length) const {
+    int paramCount = 0;
+
+    vector<mstring> fmtSet;
+    size_t lastPos = 0;
+    size_t curPos = 0;
+    curPos = fmt.find('%');
+    if (curPos != mstring::npos)
+    {
+        curPos = fmt.find('%', curPos + 1);
+    }
+
+    if (curPos != mstring::npos)
+    {
+        do
+        {
+            fmtSet.push_back(fmt.substr(lastPos, curPos - lastPos));
+            lastPos = curPos;
+            curPos = curPos + 1;
+
+            curPos = fmt.find('%', curPos);
+        } while (curPos != mstring::npos);
+
+        if (fmt.size() > lastPos)
+        {
+            fmtSet.push_back(fmt.substr(lastPos, fmt.size() - lastPos));
+        }
+    } else {
+        fmtSet.push_back(fmt);
+    }
+
+    mstring result;
+    size_t i = 0;
+    if (length == 1)
+    {
+        byte d = *(byte *)ptr;
+        for (i = 0 ; i < fmtSet.size() ; i++)
+        {
+            result += FormatA(fmtSet[i].c_str(), d);
+        }
+    } else if (length == 2)
+    {
+        unsigned short d = *(unsigned short *)ptr;
+        for (i = 0 ; i < fmtSet.size() ; i++)
+        {
+            result += FormatA(fmtSet[i].c_str(), d);
+        }
+    } else if (length == 4)
+    {
+        unsigned int d = *(unsigned int *)ptr;
+        for (i = 0 ; i < fmtSet.size() ; i++)
+        {
+            result += FormatA(fmtSet[i].c_str(), d);
+        }
+    } else if (length == 8)
+    {
+        ULONGLONG d = *(ULONGLONG *)ptr;
+        for (i = 0 ; i < fmtSet.size() ; i++)
+        {
+            result += FormatA(fmtSet[i].c_str(), d);
+        }
+    }
+    return result;
+}
+
 /*
 KernelBase!CreateProcessW:
 参数列表
@@ -301,21 +381,63 @@ mstring CDescPrinter::GetFunctionStrInternal(const FunDesc *procDesc, LPVOID sta
     bool structOnly = (NULL == stackAddr);
 
     mstring result = FormatA("%hs!%hs:\n", procDesc->mDllName.c_str(), procDesc->mProcName.c_str());
-    result += "参数列表\n";
-    for (size_t i = 0 ; i != procDesc->mParam.size() ; i++)
+    result += "返回类型\n";
+    result += (procDesc->mReturn.mReturnType + "\n");
+
+    int offset1 = lstrlenA("param0 ") + 1;
+    int offset2 = lstrlenA("0x1234abcd ") + 1;
+    if (procDesc->mParam.size() > 0)
     {
-        if (structOnly)
+        result += "参数列表\n";
+        const char *curAddr = (const char *)stackAddr;
+        for (size_t i = 0 ; i != procDesc->mParam.size() ; i++)
         {
             ParamDesc param = procDesc->mParam[i];
-            result += FormatA("param%d %hs %hs\n", i, param.mParamType.c_str(), param.mParamName.c_str());
-            if (param.mStruct->mType == STRUCT_TYPE_STRUCT || param.mStruct->IsStructPtr())
+            if (structOnly)
             {
-                result += GetStructStrByDesc(param.mStruct, 0, lstrlenA("param0 ") + 1);
+                result += FormatA("param%d %hs %hs\n", i, param.mParamType.c_str(), param.mParamName.c_str());
+                if (param.mStruct->mType == STRUCT_TYPE_STRUCT || param.mStruct->IsStructPtr())
+                {
+                    result += GetStructStrByDesc(param.mStruct, 0, offset1);
+                }
+            } else {
+                mstring content;
+                if (param.mStruct->mType == STRUCT_TYPE_STRUCT || param.mStruct->IsStructPtr())
+                {
+                    result += FormatA("0x%08x %hs %hs\n", curAddr, param.mParamType.c_str(), param.mParamName.c_str());
+                    content = GetStructStrByDesc(param.mStruct, (LPVOID)curAddr, offset2);
+                    result += content;
+                } else {
+                    bool isUnicode = false;
+                    if (param.mStruct->mType == STRUCT_TYPE_PTR && param.mStruct->IsStr(isUnicode))
+                    {
+                        char *pStr = NULL;
+                        DWORD dw = 0;
+                        mReader->MemoryReadSafe((DWORD64)curAddr, (char *)&pStr, sizeof(void *), &dw);
+                        if (!pStr)
+                        {
+                            content = "读取字符串内容错误";
+                        } else {
+                            if (isUnicode)
+                            {
+                                content = WtoA(mReader->MemoryReadStrUnicode((DWORD64)pStr));
+                            } else {
+                                content = mReader->MemoryReadStrGbk((DWORD64)pStr);
+                            }
+                        }
+                    } else {
+                        MemoryAlloc<char> alloc;
+                        char *buffer = alloc.GetMemory(param.mStruct->mLength);
+                        DWORD dw;
+                        mReader->MemoryReadSafe((DWORD64)curAddr, buffer, param.mStruct->mLength, &dw);
+
+                        content = GetFormatStr(param.mStruct->mFormat, buffer, param.mStruct->mLength);
+                    }
+                    result += FormatA("0x%08x %hs %hs %hs\n", curAddr, param.mParamType.c_str(), param.mParamName.c_str(), content.c_str());
+                }
+                curAddr += param.mStruct->mLength;
             }
         }
     }
-
-    result += "返回类型\n";
-    result += (procDesc->mReturn.mReturnType + "\n");
     return result;
 }

@@ -215,6 +215,40 @@ bool DbgCtrlService::DetachProc() {
     return true;
 }
 
+bool DbgCtrlService::TestDescStr(const mstring &dll, const mstring &str) {
+    CtrlRequest ctrl;
+    ctrl.mCmd = DBG_CTRL_TEST_DESC;
+    ctrl.mContent["module"] = dll;
+    ctrl.mContent["descStr"] = str;
+
+    CtrlReply d = m_pCtrlService->DispatchSpecDbgger(em_dbg_proc86, ctrl);
+    SetFunViewStat(d.mShow);
+    return true;
+}
+
+bool DbgCtrlService::InputDescStr(const mstring &dll, const mstring &str, bool cover) {
+    CtrlRequest ctrl;
+    ctrl.mCmd = DBG_CTRL_INPUT_DESC;
+    ctrl.mContent["module"] = dll;
+    ctrl.mContent["descStr"] = str;
+
+    if (cover)
+    {
+        ctrl.mContent["cover"] = 1;
+    } else {
+        ctrl.mContent["cover"] = 0;
+    }
+    CtrlReply d = m_pCtrlService->DispatchSpecDbgger(em_dbg_proc86, ctrl);
+
+    SetFunViewStat(d.mShow);
+    //需要强制保存
+    if (d.mResult["needCover"].asInt())
+    {
+        NotifyFunCover();
+    }
+    return true;
+}
+
 bool DbgCtrlService::OpenDump(const std::mstring &path) const {
     CtrlRequest ctrl;
     ctrl.mCmd = DBG_CTRL_OPEN_DUMP;

@@ -153,3 +153,13 @@ void SyntaxView::SetText(const std::mstring &label, const std::mstring &text) co
     SendMsg(SCI_SETTEXT, 0, (LPARAM)text.c_str());
     SendMsg(SCI_SETREADONLY, 1, 0);
 }
+
+mstring SyntaxView::GetText() const {
+    int length = SendMsg(SCI_GETLENGTH, 0, 0);
+
+    MemoryAlloc<char> alloc;
+    char *ptr = alloc.GetMemory(length + 1);
+    ptr[length] = 0;
+    SendMsg(SCI_GETTEXT, length + 1, (LPARAM)ptr);
+    return ptr;
+}

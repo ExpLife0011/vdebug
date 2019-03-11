@@ -1,5 +1,7 @@
 #include <Windows.h>
 #include <ComLib/winsize.h>
+#include <ComLib/SyntaxDef.h>
+#include "DbgCtrlService.h"
 #include "FunView.h"
 #include "resource.h"
 
@@ -35,8 +37,8 @@ void CFunctionView::UsingCppStyle() {
         "union unsigned using virtual volatile while";
     const char* szKeywords2=
         "bool char float int long short void wchar_t";
-    mEditView.SendMsg(SCI_STYLESETSIZE, STYLE_DEFAULT,10);
-    mEditView.SendMsg(SCI_STYLECLEARALL, 0, 0);
+
+    //mEditView.SendMsg(SCI_STYLECLEARALL, 0, 0);
     mEditView.SendMsg(SCI_SETLEXER, SCLEX_CPP, 0);
     mEditView.SendMsg(SCI_SETKEYWORDS, 0, (sptr_t)szKeywords1);
     mEditView.SendMsg(SCI_SETKEYWORDS, 1, (sptr_t)szKeywords2);
@@ -55,8 +57,9 @@ void CFunctionView::UsingCppStyle() {
     mEditView.SendMsg(SCI_SETCARETLINEBACK, 0xb0ffff, 0);
     mEditView.SendMsg(SCI_SETTABWIDTH, 4, 0);
     mEditView.SendMsg(SCI_SETMARGINTYPEN, SC_MARGIN_NUMBER, 1);
+
     mEditView.SetFont("Lucida Console");
-    mEditView.SendMsg(SCI_STYLESETSIZE, STYLE_DEFAULT, 5);
+    mEditView.SendMsg(SCI_STYLESETSIZE, STYLE_DEFAULT, 10);
     mEditView.ShowMargin(false);
 
     mStatView.SetFont("Lucida Console");
@@ -90,19 +93,18 @@ int CFunctionView::OnInitDlg(HWND hwnd, WPARAM wp, LPARAM lp) {
 
     int w = right1 - left1;
     int hight = (bottom1 - top1);
-    int h1 = (hight / 10 * 7);
-    int h2 = (hight / 10 * 3 - 5);
+    int w1 = (int)(w * 0.5);
+    int w2 = w - w1 - 5;
 
-    mEditView.CreateView(hwnd, left1, top1, w, h1);
+    mEditView.CreateView(hwnd, left1, top1, w1, hight);
     int d = mEditView.SendMsg(SCI_SETLEXER, SCLEX_CPP, 0);
-    int top2 = top1 + h1 + 5;
-    int left2 = left1;
-    mStatView.CreateView(hwnd, left1, top2, w, h2);
+    int left2 = left1 + w1 + 5;
+    mStatView.CreateView(hwnd, left2, top1, w2, hight);
 
     CTL_PARAMS arry[] = {
         {0, mComModule, 0, 0, 1, 0},
-        {0, mEditView.GetWindow(), 0, 0, 1, (float)h1 / (float)(h1 + h2)},
-        {0, mStatView.GetWindow(), 0, (float)h1 / (float)(h1 + h2), 1, (float)h2 / (float)(h1 + h2)},
+        {0, mEditView.GetWindow(), 0, 0, (float)w1 / float(w1 + w2), 1},
+        {0, mStatView.GetWindow(), (float)w1 / float(w1 + w2), 0, (float)w2 / float(w1 + w2), 1},
         {0, mBtnCheck, 1, 1, 0, 0},
         {0, mBtnOk, 1, 1, 0, 0},
         {0, mBtnCancel, 1, 1, 0, 0}
@@ -120,11 +122,52 @@ int CFunctionView::OnInitDlg(HWND hwnd, WPARAM wp, LPARAM lp) {
     return 0;
 }
 
+int CFunctionView::OnCommand(HWND hwnd, WPARAM wp, LPARAM lp) {
+    int id = LOWORD(wp);
+
+    if (id == IDC_IMPORT_BTN_CHECK || id == IDC_IMPORT_BTN_OK)
+    {
+        COMBOBOXINFO info = { sizeof(info) };
+        SendMessageA(mComModule, CB_GETCOMBOBOXINFO, 0, (LPARAM)&info);
+
+        mstring dll = GetWindowStrA(info.hwndItem);
+        mstring str = mEditView.GetText();
+
+        dll.trim();
+        if (dll.empty())
+        {
+            mStatView.SetText(SCI_LABEL_DEFAULT, "需要填写模块名称");
+            return 0;
+        }
+
+        str.trim();
+        if (str.empty())
+        {
+            mStatView.SetText(SCI_LABEL_DEFAULT, "没有需要分析的内容");
+            return 0;
+        }
+
+        if (id == IDC_IMPORT_BTN_CHECK)
+        {
+            DbgCtrlService::GetInstance()->TestDescStr(dll, str);
+        } else if (id == IDC_IMPORT_BTN_OK)
+        {
+            DbgCtrlService::GetInstance()->InputDescStr(dll, str, false);
+        }
+    }
+    return 0;
+}
+
 LRESULT CFunctionView::OnWindowMsg(HWND hwnd, UINT uMsg, WPARAM wp, LPARAM lp) {
     switch (uMsg) {
         case WM_INITDIALOG:
             {
                 OnInitDlg(hwnd, wp, lp);
+            }
+            break;
+        case WM_COMMAND:
+            {
+                OnCommand(hwnd, wp, lp);
             }
             break;
         case WM_CLOSE:
@@ -134,4 +177,25 @@ LRESULT CFunctionView::OnWindowMsg(HWND hwnd, UINT uMsg, WPARAM wp, LPARAM lp) {
             break;
     }
     return 0;
+}
+
+void CFunctionView::SetStatText(const mstring &text) {
+    mStatView.SetText(SCI_LABEL_DEFAULT, text);
+}
+
+void CFunctionView::NotifyFunCover() {
+    if (IDYES == MessageBoxA(
+        m_hwnd,
+        "需要保存的信息和本地缓存中的数据有冲突，是否覆盖保存？",
+        "数据冲突",
+        MB_YESNO | MB_SETFOREGROUND | MB_ICONWARNING
+        ))
+    {
+        COMBOBOXINFO info = { sizeof(info) };
+        SendMessageA(mComModule, CB_GETCOMBOBOXINFO, 0, (LPARAM)&info);
+
+        mstring dll = GetWindowStrA(info.hwndItem);
+        mstring str = mEditView.GetText();
+        DbgCtrlService::GetInstance()->InputDescStr(dll, str, true);
+    }
 }

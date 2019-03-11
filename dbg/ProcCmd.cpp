@@ -857,6 +857,8 @@ CtrlReply CProcCmd::OnCmdPf(const mstring &param, const CmdUserParam *pParam) {
             {
                 result.mShow = FormatA("当前cip未处于函数起始位置 %hs 0x%08x\n", proc.c_str(), ctx.cip);
             } else {
+                CMemoryProc reader(CProcDbgger::GetInstance()->GetDbgProc());
+                CDescPrinter::GetInst()->SetMemoryReader(&reader);
                 mstring procStr = CDescPrinter::GetInst()->GetProcStrByName(module.m_strDllName, proc, (LPVOID)((const char *)ctx.csp + 4));
 
                 if (procStr.empty())
