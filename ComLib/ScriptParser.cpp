@@ -3,6 +3,7 @@
 #include <set>
 #include "StrUtil.h"
 #include "ScriptHlpr.h"
+#include "ScriptExpression.h"
 
 CScriptParser *CScriptParser::GetInst() {
     static CScriptParser *s_ptr = NULL;
@@ -12,6 +13,10 @@ CScriptParser *CScriptParser::GetInst() {
         s_ptr = new CScriptParser();
     }
     return s_ptr;
+}
+
+void CScriptParser::init() {
+    CScriptExpReader::GetInst()->InitReader();
 }
 
 void CScriptParser::NodeFold(LogicNode *root) const {
@@ -91,8 +96,44 @@ bool CScriptParser::parser(const mstring &script) {
     CleanStr(tmp);
     tmp.trim();
 
-    LogicNode *root = GetLogicNode(tmp, NULL);
+    LogicNode *endNode = new LogicNode();
+    endNode->mLogicType = em_logic_end;
+    LogicNode *root = GetLogicNode(tmp, endNode);
     AllNodeFold(root);
+
+    LogicNode *it = root;
+    CScriptExpReader::GetInst()->SetCache(&mScriptCache);
+
+    //run script
+    VariateDesc *desc = NULL;
+    while (true) {
+        if (it->mLogicType == em_logic_if || it->mLogicType == em_logic_elseif)
+        {
+            desc = CScriptExpReader::GetInst()->ParserExpression(*(it->mCommandSet.begin()));
+            if (desc->mVarType != em_var_int)
+            {
+                throw (new CScriptParserException("ifÓï¾äÖ´ÐÐ´íÎó"));
+                break;
+            }
+
+            if (desc->mIntValue == 1)
+            {
+                it = it->mLeft;
+            } else {
+                it = it->mRight;
+            }
+        } else if (it->mLogicType == em_logic_order)
+        {
+            for (list<mstring>::const_iterator ij = it->mCommandSet.begin() ; ij != it->mCommandSet.end() ; ij++)
+            {
+                CScriptExpReader::GetInst()->ParserExpression(*ij);
+            }
+            it = it->mNext;
+        } else if (it->mLogicType == em_logic_end)
+        {
+            break;
+        }
+    }
     return true;
 }
 
@@ -176,8 +217,8 @@ void CScriptParser::CleanStr(mstring &script) const {
                 throw (new CScriptParserException("×Ö·û´®¸ñÊ½´íÎó"));
                 return;
             }
-            i = t + 1;
             tmp += script.substr(i, t - i + 1);
+            i = t + 1;
             continue;
         }
 
@@ -202,7 +243,10 @@ void CScriptParser::CleanStr(mstring &script) const {
         sOpt.insert('-'), sOpt.insert('*'), sOpt.insert('/');
         sOpt.insert('['), sOpt.insert(']'), sOpt.insert('.');
         sOpt.insert('!'), sOpt.insert('='), sOpt.insert(';');
-        sOpt.insert('{'), sOpt.insert('}');
+        sOpt.insert('{'), sOpt.insert('}'), sOpt.insert('>');
+        sOpt.insert('='), sOpt.insert('%'), sOpt.insert('^');
+        sOpt.insert('!'), sOpt.insert('<'), sOpt.insert('|');
+        sOpt.insert(',');
     }
 
     tmp.clear();
@@ -213,6 +257,7 @@ void CScriptParser::CleanStr(mstring &script) const {
 
         if (c == '"') {
             j = script.find('"', i + 1);
+            tmp += script.substr(i, j - i + 1);
             i = j + 1;
             continue;
         }
@@ -389,7 +434,7 @@ LogicNode *CScriptParser::GetLogicNode(const mstring &content, LogicNode *logicE
 
             if (0 == strncmp(script.c_str() + lastPos, "else{", strlen("else{"))) {
                 pos1 = script.find('{', lastPos);
-                pos2 = script.find('}', pos1 + 1);
+                pos2 = CScriptHlpr::FindNextBracket('{', '}', script, pos1);
 
                 if (mstring::npos == pos1 || mstring::npos == pos2) {
                     throw (new CScriptParserException("{}Æ¥ÅäÊ§°Ü"));
@@ -397,7 +442,6 @@ LogicNode *CScriptParser::GetLogicNode(const mstring &content, LogicNode *logicE
 
                 lastStr = script.substr(pos1 + 1, pos2 - pos1 - 1);
                 LogicNode *elseSubNode = GetLogicNode(lastStr, endNode);
-                elseSubNode->mLogicType = em_logic_order;
                 lastNode->mRight = elseSubNode;
                 lastPos = pos2 + 1;
             }

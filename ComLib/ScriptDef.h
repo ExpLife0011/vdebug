@@ -1,25 +1,41 @@
 #pragma once
+#include <Windows.h>
 #include <list>
 #include <string>
 
 using namespace std;
 
 enum VariateType {
-    em_var_pending, //未决类型的
-    em_var_str,     //字符串
-    em_var_int,     //整形
-    em_var_ptr      //指针类型
+    em_var_pending,     //未决类型的
+    em_var_str_gbk,     //多字节字符串
+    em_var_str_unicode, //宽字符串
+    em_var_int,         //整形64位
+    em_var_ptr          //指针类型
 };
 
 struct VariateDesc {
     VariateType mVarType;
     int mVarLength;
     mstring mVarName;
-    mstring mContent;
+
+    mstring mStrValue;      //gbk/unicode
+    DWORD64 mIntValue;      //Int64
+    LPVOID mPtrValue;       //ptr value
+
+    VariateDesc &operator=(const VariateDesc &other) {
+        mVarType = other.mVarType;
+        mVarLength = other.mVarLength;
+        mStrValue = other.mStrValue;
+        mIntValue = other.mIntValue;
+        mPtrValue = other.mPtrValue;
+        return *this;
+    }
 
     VariateDesc () {
         mVarType = em_var_pending;
         mVarLength = 0;
+        mIntValue = 0;
+        mPtrValue = NULL;
     }
 };
 

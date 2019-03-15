@@ -43,6 +43,8 @@ private:
     //Node½ÚµãÕÛµþ
     void NodeFold(LogicNode *root) const;
 
+private:
     list<VariateDesc> mGlobalVar;
     list<FunctionDesc> mGlobalFun;
+    ScriptCache mScriptCache;
 };
