@@ -33,6 +33,8 @@ private:
     LogicNode *ParserStrNode(const mstring &content) const;
     //脚本串清洗
     void CleanStr(mstring &script) const;
+    //将字符串以变量形式存储，防止对解析形成干扰
+    void ParserStrVar(mstring &script) const;
     bool IsPartitionOpt(char c) const;
     //返回 逻辑块根节点
     //参数 content，逻辑块字符串

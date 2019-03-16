@@ -1,8 +1,11 @@
 #include "ScriptHlpr.h"
 #include <list>
 #include "ScriptParser.h"
+#include "StrUtil.h"
 
 using namespace std;
+
+unsigned int CScriptHlpr::msVarSerial = 0;
 
 //获取配对的括号位置 eg:type1 (, type2), type1 [, type2 ]
 size_t CScriptHlpr::FindNextBracket(char type1, char type2, const mstring &str, size_t startPos) {
@@ -37,4 +40,8 @@ size_t CScriptHlpr::FindNextBracket(char type1, char type2, const mstring &str, 
     }
     throw(new CScriptParserException("括号配对失败"));
     return -1;
+}
+
+mstring CScriptHlpr::GetTempVarName() {
+    return FormatA("@var_%d", msVarSerial++);
 }

@@ -1,7 +1,9 @@
 #pragma once
 #include <Windows.h>
 #include <list>
+#include <map>
 #include <string>
+#include "StrUtil.h"
 
 using namespace std;
 
@@ -10,7 +12,8 @@ enum VariateType {
     em_var_str_gbk,     //多字节字符串
     em_var_str_unicode, //宽字符串
     em_var_int,         //整形64位
-    em_var_ptr          //指针类型
+    em_var_ptr,         //指针类型
+    em_var_double       //浮点型数据
 };
 
 struct VariateDesc {
@@ -36,6 +39,28 @@ struct VariateDesc {
         mVarLength = 0;
         mIntValue = 0;
         mPtrValue = NULL;
+    }
+
+    mstring toString() {
+        mstring str;
+        switch (mVarType) {
+            case em_var_int:
+                str += FormatA("var %hs, type int, value %llu", mVarName.c_str(), mIntValue);
+                break;
+            case em_var_str_gbk:
+            case em_var_str_unicode:
+                str += FormatA("var %hs, type str, value %hs", mVarName.c_str(), mStrValue.c_str());
+                break;
+            case em_var_ptr:
+                str += FormatA("var %hs, type ptr, value %p", mVarName.c_str(), mPtrValue);
+                break;
+            case em_var_pending:
+                str += FormatA("var %hs, type pending", mVarName.c_str());
+                break;
+            default:
+                break;
+        }
+        return str;
     }
 };
 
@@ -63,23 +88,13 @@ enum ExpressNodeType {
 struct FunctionDesc {
     bool mInternal;
     string mFunName;
-    list<VariateDesc> mParamSet;
-};
+    list<VariateDesc *> mParamSet;
+    VariateDesc *mReturn;
 
-// 1434534 + 123 * (1111 + 3344);bp;strlen("abcdef")
-struct ExpressionNode {
-    ExpressNodeType mType;
-    //express content
-    mstring mContent;
-
-    // for express
-    mstring mExpress;
-
-    // for function
-    FunctionDesc mFunction;
-
-    // for command
-    mstring mCommand;
+    FunctionDesc() {
+        mInternal = true;
+        mReturn = NULL;
+    }
 };
 
 enum LogicNodeType {
@@ -120,15 +135,19 @@ struct LogicNode {
 };
 
 struct ScriptCache {
-    list<ExpressionNode *> mExpressionSet;    //expression list
-    list<VariateDesc *> mVarSet;              //var set
-    list<FunctionDesc *> mFunSet;             //function set
+    map<mstring, VariateDesc *> mVarSet;              //var set
 
     VariateDesc *GetVarByName(const mstring &name) {
+        map<mstring, VariateDesc *>::const_iterator it = mVarSet.find(name);
+
+        if (it != mVarSet.end())
+        {
+            return it->second;
+        }
         return NULL;
     }
 
-    FunctionDesc *GetFunctionByName(const mstring &name) {
-        return NULL;
+    void InsertVar(VariateDesc *desc) {
+        mVarSet[desc->mVarName] = desc;
     }
 };

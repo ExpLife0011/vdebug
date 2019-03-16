@@ -53,11 +53,12 @@ private:
     void AddVar(VariateDesc *desc);
     VariateDesc *GetVarByName(const mstring &name) const;
     VariateDesc *ParserStr(const mstring &str);
-    mstring GetTempVarName() const;
     size_t GetParamResult(vector<ScriptData> &nodeSet, size_t index);
     VariateDesc *GetDataDesc(const mstring &str);
+    //计算表达式中的函数
+    void ParserProc(mstring &script);
     //获取字符串中的函数集合
-    list<ScriptProc> GetProcSet(const mstring &express) const;
+    vector<ScriptProc> GetProcSet(const mstring &express) const;
 
     //模式识别
     bool IsOperator(const mstring &script, size_t pos, mstring &opt) const;
@@ -89,6 +90,11 @@ private:
 
     //internal proc
     static VariateDesc *ProcStrStartWithA(vector<VariateDesc *> &paramSet);
+    static VariateDesc *ProcStrStartWithW(vector<VariateDesc *> &paramSet);
+    static VariateDesc *ProcStrSubStrA(vector<VariateDesc *> &paramSet);
+    static VariateDesc *ProcStrSubStrW(vector<VariateDesc *> &paramSet);
+    static VariateDesc *ProcStrCatA(vector<VariateDesc *> &paramSet);
+    static VariateDesc *ProcStrCatW(vector<VariateDesc *> &paramSet);
     static VariateDesc *ProcRunCommand(vector<VariateDesc *> &paramSet);
 
 private:

@@ -4,6 +4,7 @@
 #include "StrUtil.h"
 #include "ScriptHlpr.h"
 #include "ScriptExpression.h"
+#include <gdlib/hlog.h>
 
 CScriptParser *CScriptParser::GetInst() {
     static CScriptParser *s_ptr = NULL;
@@ -17,6 +18,7 @@ CScriptParser *CScriptParser::GetInst() {
 
 void CScriptParser::init() {
     CScriptExpReader::GetInst()->InitReader();
+    CScriptExpReader::GetInst()->SetCache(&mScriptCache);
 }
 
 void CScriptParser::NodeFold(LogicNode *root) const {
@@ -134,6 +136,17 @@ bool CScriptParser::parser(const mstring &script) {
             break;
         }
     }
+
+    for (map<mstring, VariateDesc *>::const_iterator i2 = mScriptCache.mVarSet.begin() ; i2 != mScriptCache.mVarSet.end() ; i2++)
+    {
+        mstring name = i2->first;
+        if (name.startwith("@var_"))
+        {
+            continue;
+        }
+
+        HLOG_PRINTA(i2->second->toString().c_str());
+    }
     return true;
 }
 
@@ -141,6 +154,55 @@ CScriptParser::CScriptParser() {
 }
 
 CScriptParser::~CScriptParser() {
+}
+
+void CScriptParser::ParserStrVar(mstring &script) const {
+    size_t pos1 = 0, pos2 = 0;
+    size_t lastPos = 0;
+    bool unicode = false;
+    while (true) {
+        pos1 = script.find('"', lastPos);
+        if (pos1 == mstring::npos)
+        {
+            break;
+        }
+
+        if (pos1 > 0 && script[pos1 - 1] == 'L')
+        {
+            unicode = true;
+        }
+        pos2 = script.find('"', pos1 + 1);
+        if (pos2 == mstring::npos)
+        {
+            throw(new CScriptParserException("\"·ûºÅÆ¥ÅäÊ§°Ü"));
+            return;
+        }
+
+        //ºöÂÔ×ªÒå×Ö·û
+        while (true) {
+            if (pos2 > 0 && script[pos2 - 1] != '\\')
+            {
+                break;
+            }
+
+            pos2 = script.find('"', pos2 + 1);
+            if (pos2 == mstring::npos)
+            {
+                throw(new CScriptParserException("\"·ûºÅÆ¥ÅäÊ§°Ü"));
+                return;
+            }
+        }
+
+        mstring content = script.substr(pos1 + 1, pos2 - pos1 - 1);
+        VariateDesc *desc = NULL;
+        if (unicode) {
+            desc = CScriptExpReader::GetInst()->GetUnicodeDesc(content);
+        } else {
+            desc = CScriptExpReader::GetInst()->GetGbkDesc(content);
+        }
+        script.replace(pos1, pos2 - pos1 + 1, desc->mVarName);
+        lastPos = pos1 + desc->mVarName.size();
+    }
 }
 
 bool CScriptParser::IsPartitionOpt(char c) const {
@@ -203,6 +265,7 @@ void CScriptParser::CleanStr(mstring &script) const {
         }
     }
 
+    ParserStrVar(script);
     //È¥³ý¶àÓàµÄ¿Õ¸ñºÍ·Ö¸ô·û
     size_t i = 0;
     mstring tmp;
@@ -210,18 +273,6 @@ void CScriptParser::CleanStr(mstring &script) const {
     for (i = 0 ; i < script.size() ;)
     {
         char c = script[i];
-        if (c == '"') {
-            size_t t = script.find('"', i + 1);
-            if (mstring::npos == t)
-            {
-                throw (new CScriptParserException("×Ö·û´®¸ñÊ½´íÎó"));
-                return;
-            }
-            tmp += script.substr(i, t - i + 1);
-            i = t + 1;
-            continue;
-        }
-
         if (c == '\r' || c == '\n' || c == '\t' || c == ' '){
             if (flag1){
             } else {
@@ -254,14 +305,6 @@ void CScriptParser::CleanStr(mstring &script) const {
     size_t j = 0;
     for (i = 0 ; i < script.size() ;) {
         char c = script[i];
-
-        if (c == '"') {
-            j = script.find('"', i + 1);
-            tmp += script.substr(i, j - i + 1);
-            i = j + 1;
-            continue;
-        }
-
         if (sOpt.end() != sOpt.find(c)) {
             tmp.trimright();
             tmp += c;

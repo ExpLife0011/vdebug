@@ -23,34 +23,16 @@ void CScriptExpReader::SetCache(ScriptCache *cache) {
 }
 
 void CScriptExpReader::AddVar(VariateDesc *desc) {
-    mCache->mVarSet.push_back(desc);
+    mCache->InsertVar(desc);
 }
 
 VariateDesc *CScriptExpReader::GetVarByName(const mstring &name) const {
-    for (list<VariateDesc *>::const_iterator it = mCache->mVarSet.begin() ; it != mCache->mVarSet.end() ; it++)
-    {
-        VariateDesc *ptr = *it;
-        if (ptr->mVarName == name)
-        {
-            return ptr;
-        }
-    }
-
-    map<mstring, VariateDesc *>::const_iterator ij = mTempVarSet.find(name);
-    if (ij != mTempVarSet.end())
-    {
-        return ij->second;
-    }
-    return NULL;
+    return mCache->GetVarByName(name);
 }
 
 VariateDesc *CScriptExpReader::ParserExpression(const mstring &expression) {
     mTempVarSet.clear();
     return ParserStr(expression);
-}
-
-mstring CScriptExpReader::GetTempVarName() const {
-    return FormatA("@var_%d", msVarSerial++);
 }
 
 //变量或者数字判定可能会重合，优先数字判定
@@ -126,41 +108,43 @@ bool CScriptExpReader::RegisterProc(
 
 VariateDesc *CScriptExpReader::GetGbkDesc(const mstring &str) {
     VariateDesc *desc = new VariateDesc();
-    desc->mVarName = GetTempVarName();
+    desc->mVarName = CScriptHlpr::GetTempVarName();
     desc->mVarType = em_var_str_gbk;
     desc->mStrValue = str;
+    desc->mStrValue.repsub("\\\"", "\"");
 
-    mTempVarSet[desc->mVarName] = desc;
+    AddVar(desc);
     return desc;
 }
 
 VariateDesc *CScriptExpReader::GetUnicodeDesc(const mstring &str) {
     VariateDesc *desc = new VariateDesc();
-    desc->mVarName = GetTempVarName();
+    desc->mVarName = CScriptHlpr::GetTempVarName();
     desc->mVarType = em_var_str_unicode;
     desc->mStrValue = str;
+    desc->mStrValue.repsub("\\\"", "\"");
 
-    mTempVarSet[desc->mVarName] = desc;
+    AddVar(desc);
     return desc;
 }
 
 VariateDesc *CScriptExpReader::GetIntDesc(DWORD64 d) {
     VariateDesc *desc = new VariateDesc();
-    desc->mVarName = GetTempVarName();
+    desc->mVarName = CScriptHlpr::GetTempVarName();
     desc->mVarType = em_var_int;
     desc->mIntValue = d;
     desc->mVarLength = sizeof(DWORD64);
 
-    mTempVarSet[desc->mVarName] = desc;
+    AddVar(desc);
     return desc;
 }
 
 VariateDesc *CScriptExpReader::GetPendingDesc() {
     VariateDesc *desc = new VariateDesc();
-    desc->mVarName = GetTempVarName();
+    desc->mVarName = CScriptHlpr::GetTempVarName();
     desc->mVarType = em_var_pending;
 
-    mTempVarSet[desc->mVarName] = desc;
+    AddVar(desc);
     return desc;
 }
 
@@ -172,6 +156,21 @@ VariateDesc *CScriptExpReader::CallInternalProc(const mstring &procName, vector<
         return NULL;
     }
 
+    ProcRegisterInfo *ptr = it->second;
+    if (param.size() != ptr->mParamType.size())
+    {
+        throw (new CScriptParserException(FormatA("函数 %hs 参数数量不匹配", procName.c_str())));
+        return NULL;
+    }
+
+    for (size_t i = 0 ; i != param.size() ; i++)
+    {
+        if (param[i]->mVarType != ptr->mParamType[i])
+        {
+            throw (new CScriptParserException(FormatA("函数 %hs 参数类型不匹配", procName.c_str())));
+            return NULL;
+        }
+    }
     return it->second->mProcInternal(param);
 }
 
@@ -194,6 +193,94 @@ VariateDesc *CScriptExpReader::ProcStrStartWithA(vector<VariateDesc *> &paramSet
     return GetInst()->GetIntDesc(b);
 }
 
+VariateDesc *CScriptExpReader::ProcStrStartWithW(vector<VariateDesc *> &paramSet) {
+    if (paramSet.size() != 2) {
+        throw(new CScriptParserException("Call StrStartWithError，param Err1"));
+        return NULL;
+    }
+
+    if ((paramSet[0]->mVarType != em_var_str_unicode) || (paramSet[1]->mVarType != em_var_str_unicode))
+    {
+        throw(new CScriptParserException("Call StrStartWithError，param Err2"));
+        return NULL;
+    }
+
+    mstring str1 = paramSet[0]->mStrValue;
+    mstring str2 = paramSet[1]->mStrValue;
+
+    DWORD64 b = str1.startwith(str2.c_str());
+    return GetInst()->GetIntDesc(b);
+}
+
+VariateDesc *CScriptExpReader::ProcStrSubStrA(vector<VariateDesc *> &paramSet) {
+    if (paramSet.size() != 3) {
+        throw(new CScriptParserException("调用StrSubStrA参数数量不匹配"));
+        return NULL;
+    }
+
+    if ((paramSet[0]->mVarType != em_var_str_gbk) || (paramSet[1]->mVarType != em_var_int) || (paramSet[2]->mVarType != em_var_int))
+    {
+        throw(new CScriptParserException("调用StrSubStrA参数类型不匹配"));
+        return NULL;
+    }
+
+    mstring str = paramSet[0]->mStrValue;
+    DWORD64 pos1 = paramSet[1]->mIntValue;
+    DWORD64 count = paramSet[2]->mIntValue;
+    mstring sub = str.substr((size_t)pos1, (size_t)count);
+    return GetInst()->GetGbkDesc(sub);
+}
+
+VariateDesc *CScriptExpReader::ProcStrSubStrW(vector<VariateDesc *> &paramSet) {
+    if (paramSet.size() != 3) {
+        throw(new CScriptParserException("调用StrSubStrW参数数量不匹配"));
+        return NULL;
+    }
+
+    if ((paramSet[0]->mVarType != em_var_str_unicode) || (paramSet[1]->mVarType != em_var_int) || (paramSet[2]->mVarType != em_var_int))
+    {
+        throw(new CScriptParserException("调用StrSubStrW参数类型不匹配"));
+        return NULL;
+    }
+
+    mstring str = paramSet[0]->mStrValue;
+    size_t pos1 = (size_t)paramSet[1]->mIntValue;
+    size_t count = (size_t)paramSet[2]->mIntValue;
+    mstring sub = str.substr(pos1, count);
+    return GetInst()->GetUnicodeDesc(sub);
+}
+
+VariateDesc *CScriptExpReader::ProcStrCatA(vector<VariateDesc *> &paramSet) {
+    if (paramSet.size() != 2) {
+        throw(new CScriptParserException("调用StrCatA参数数量不匹配"));
+        return NULL;
+    }
+
+    if ((paramSet[0]->mVarType != em_var_str_gbk) || (paramSet[1]->mVarType != em_var_str_gbk))
+    {
+        throw(new CScriptParserException("调用StrCatA参数类型不匹配"));
+        return NULL;
+    }
+
+    mstring sub = paramSet[0]->mStrValue + paramSet[1]->mStrValue;
+    return GetInst()->GetGbkDesc(sub);
+}
+
+VariateDesc *CScriptExpReader::ProcStrCatW(vector<VariateDesc *> &paramSet) {
+    if (paramSet.size() != 3) {
+        throw(new CScriptParserException("调用StrCatW参数数量不匹配"));
+        return NULL;
+    }
+
+    if ((paramSet[0]->mVarType != em_var_str_unicode) || (paramSet[1]->mVarType != em_var_str_unicode))
+    {
+        throw(new CScriptParserException("调用StrCatW参数类型不匹配"));
+        return NULL;
+    }
+    mstring sub = paramSet[0]->mStrValue + paramSet[1]->mStrValue;
+    return GetInst()->GetUnicodeDesc(sub);
+}
+
 VariateDesc *CScriptExpReader::ProcRunCommand(vector<VariateDesc *> &paramSet) {
     VariateDesc *ret = new VariateDesc();
     ret->mVarType = em_var_int;
@@ -211,10 +298,10 @@ BOOL CScriptExpReader::GetNumFromStr(const mstring &strNumber, DWORD64 &dwResult
     return StrToInt64ExA(str.c_str(), STIF_SUPPORT_HEX, (LONGLONG *)&dwResult);
 }
 
-list<CScriptExpReader::ScriptProc> CScriptExpReader::GetProcSet(const mstring &express) const {
-    const char *rule = "^\\w+\\(.+\\)$";
+vector<CScriptExpReader::ScriptProc> CScriptExpReader::GetProcSet(const mstring &express) const {
+    const char *rule = "\\w+\\(.+\\)";
 
-    list<ScriptProc> result;
+    vector<ScriptProc> result;
     CRegexpT<char> regex;
     regex.Compile(rule);
     size_t lastPos = 0;
@@ -744,13 +831,48 @@ VariateDesc *CScriptExpReader::ProcessSimpleStr(const mstring &expression) {
     return ProcessScriptNode(nodeSet);
 }
 
+void CScriptExpReader::ParserProc(mstring &script) {
+    vector<ScriptProc> procSet = GetProcSet(script);
+    vector<VariateDesc *> resultSet;
+
+    if (procSet.empty())
+    {
+        return;
+    }
+
+    for (vector<ScriptProc>::const_iterator it = procSet.begin() ; it != procSet.end() ; it++)
+    {
+        mstring funName, paramStr;
+        size_t pos1 = 0, pos2 = 0;
+        pos1 = it->mProcStr.find('(');
+        pos2 = CScriptHlpr::FindNextBracket('(', ')', it->mProcStr, pos1);
+        funName = it->mProcStr.substr(0, pos1);
+
+        paramStr = it->mProcStr.substr(pos1 + 1, pos2 - pos1 - 1);
+        list<mstring> paramStrList = SplitStrA(paramStr, ",");
+
+        vector<VariateDesc *> paramSet;
+        for (list<mstring>::const_iterator ij = paramStrList.begin() ; ij != paramStrList.end() ; ij++)
+        {
+            paramSet.push_back(GetDataDesc(*ij));
+        }
+        VariateDesc *result = CallInternalProc(funName, paramSet);
+        resultSet.push_back(result);
+    }
+
+    for (int i = (int)procSet.size() - 1 ; i >= 0 ; i--)
+    {
+        script.replace(procSet[i].mStartPos, procSet[i].mEndPos - procSet[i].mStartPos, resultSet[i]->mVarName);
+    }
+}
+
 VariateDesc *CScriptExpReader::ParserStr(const mstring &str) {
     mstring strCopy = str;
     size_t pos1 = 0, pos2 = 0;
     VariateDesc *desc = NULL;
     if (str.empty())
     {
-        return desc;
+        return GetPendingDesc();
     }
 
     mstring lastStr;
@@ -771,7 +893,9 @@ VariateDesc *CScriptExpReader::ParserStr(const mstring &str) {
         desc->mVarName = name;
         AddVar(desc);
     } else {
-        //先计算表达式中的函数,因为函数可能和括号冲突
+        //先计算表达式中的函数,可能和后面的解析冲突
+        ParserProc(strCopy);
+
         //消除括号
         size_t lastPos = 0;
         while (true) {
@@ -784,7 +908,7 @@ VariateDesc *CScriptExpReader::ParserStr(const mstring &str) {
             pos2 = CScriptHlpr::FindNextBracket('(', ')', strCopy, pos1);
             lastStr = strCopy.substr(pos1 + 1, pos2 - pos1 - 1);
             VariateDesc *desc = ParserStr(lastStr);
-            desc->mVarName = GetTempVarName();
+            desc->mVarName = CScriptHlpr::GetTempVarName();
             mTempVarSet[desc->mVarName] = desc;
             strCopy.replace(pos1, pos2 - pos1 + 1, desc->mVarName);
         }
@@ -805,7 +929,7 @@ VariateDesc *CScriptExpReader::ParserStr(const mstring &str) {
             }
             lastStr = strCopy.substr(pos1 + 1, pos2 - pos1 - 1);
             VariateDesc *desc = ParserStr(lastStr);
-            desc->mVarName = GetTempVarName();
+            desc->mVarName = CScriptHlpr::GetTempVarName();
             mTempVarSet[desc->mVarName] = desc;
             strCopy.replace(pos1, pos2 - pos1 + 1, desc->mVarName);
         }
@@ -835,7 +959,9 @@ VariateDesc *CScriptExpReader::ParserStr(const mstring &str) {
     return desc;
 }
 
-CScriptExpReader::CScriptExpReader() {}
+CScriptExpReader::CScriptExpReader() {
+    mCache = NULL;
+}
 
 CScriptExpReader::~CScriptExpReader() {}
 
@@ -894,7 +1020,35 @@ void CScriptExpReader::InitReader() {
 
     vector<VariateType> paramType;
     paramType.push_back(em_var_str_gbk);
+    paramType.push_back(em_var_str_gbk);
     RegisterProc("StrStartWithA", em_var_int, paramType, ProcStrStartWithA);
+
+    paramType.clear();
+    paramType.push_back(em_var_str_unicode);
+    paramType.push_back(em_var_str_unicode);
+    RegisterProc("StrStartWithW", em_var_int, paramType, ProcStrStartWithW);
+
+    paramType.clear();
+    paramType.push_back(em_var_str_gbk);
+    paramType.push_back(em_var_int);
+    paramType.push_back(em_var_int);
+    RegisterProc("StrSubStrA", em_var_int, paramType, ProcStrSubStrA);
+
+    paramType.clear();
+    paramType.push_back(em_var_str_unicode);
+    paramType.push_back(em_var_int);
+    paramType.push_back(em_var_int);
+    RegisterProc("StrSubStrW", em_var_int, paramType, ProcStrSubStrW);
+
+    paramType.clear();
+    paramType.push_back(em_var_str_gbk);
+    paramType.push_back(em_var_str_gbk);
+    RegisterProc("StrCatA", em_var_str_gbk, paramType, ProcStrCatA);
+
+    paramType.clear();
+    paramType.push_back(em_var_str_unicode);
+    paramType.push_back(em_var_str_unicode);
+    RegisterProc("StrCatW", em_var_str_unicode, paramType, ProcStrCatW);
 
     paramType.clear();
     paramType.push_back(em_var_str_gbk);
