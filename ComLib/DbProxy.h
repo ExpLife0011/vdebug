@@ -1,6 +1,6 @@
 #ifndef DBPROXY_STATIC_H_H_
 #define DBPROXY_STATIC_H_H_
-#include <ComStatic/mstring.h>
+#include <ComLib/mstring.h>
 #include "SqliteOperator.h"
 #include "LibDef.h"
 

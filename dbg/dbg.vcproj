@@ -421,6 +421,42 @@
 				>
 			</File>
 		</Filter>
+		<Filter
+			Name="ScriptEngine"
+			>
+			<File
+				RelativePath=".\ScriptEngine\ScriptCompiler.h"
+				>
+			</File>
+			<File
+				RelativePath=".\ScriptEngine\ScriptDef.h"
+				>
+			</File>
+			<File
+				RelativePath=".\ScriptEngine\ScriptExpression.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\ScriptEngine\ScriptExpression.h"
+				>
+			</File>
+			<File
+				RelativePath=".\ScriptEngine\ScriptHlpr.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\ScriptEngine\ScriptHlpr.h"
+				>
+			</File>
+			<File
+				RelativePath=".\ScriptEngine\ScriptParser.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\ScriptEngine\ScriptParser.h"
+				>
+			</File>
+		</Filter>
 	</Files>
 	<Globals>
 	</Globals>

@@ -4,7 +4,7 @@
 #include <CommCtrl.h>
 #include <set>
 #include <vector>
-#include <ComStatic/ComStatic.h>
+#include <ComLib/ComLib.h>
 #include <ComLib/ComLib.h>
 #include "ViewBase.h"
 

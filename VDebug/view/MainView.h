@@ -1,8 +1,8 @@
 #ifndef MAINVIEW_VDEBUG_H_H_
 #define MAINVIEW_VDEBUG_H_H_
-#include <ComStatic/ComStatic.h>
+#include <ComLib/ComLib.h>
 #include <SyntaxHlpr/SyntaxView.h>
-#include <ComStatic/GlobalDef.h>
+#include <ComLib/GlobalDef.h>
 #include "DbgCtrlService.h"
 #include "ProcView.h"
 

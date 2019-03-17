@@ -1,7 +1,7 @@
 #ifndef DBGCOMMON_DBG_H_H_
 #define DBGCOMMON_DBG_H_H_
 #include <Windows.h>
-#include <ComStatic/mstring.h>
+#include <ComLib/mstring.h>
 
 class CDbgCommon {
 public:

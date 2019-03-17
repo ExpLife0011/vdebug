@@ -5,7 +5,7 @@
 #include "DbgCtrlTool.h"
 #include <mq/mq.h>
 #include <ComLib/ComLib.h>
-#include <ComStatic/ComStatic.h>
+#include <ComLib/ComLib.h>
 
 using namespace std;
 using namespace Json;

@@ -4,8 +4,9 @@
 #include <Shlwapi.h>
 #include <stdlib.h>
 #include <TlHelp32.h>
-#include <ComStatic/ComStatic.h>
 #include "json/json.h"
+#include "mstring.h"
+#include "StrUtil.h"
 
 #pragma comment(lib, "shlwapi.lib")
 
@@ -165,4 +166,31 @@ static std::mstring __stdcall GetCurTimeStr1(const char *fmt) {
         time.wMilliseconds
         );
 }
+
+std::mstring COMAPI __stdcall DosPathToNtPath(LPCSTR wszSrc);
+std::mstring COMAPI __stdcall GetProcPathByPid(IN DWORD dwPid);
+std::mstring COMAPI __stdcall GetFilePathFromHandle(HANDLE hFile);
+
+std::mstring COMAPI __stdcall GetStdErrorStr(DWORD dwErr = GetLastError());
+
+struct ThreadInformation
+{
+    DWORD m_dwThreadId;
+    void *m_dwStartAddr;
+    DWORD m_dwSwitchCount;
+    void *m_dwTebBase;
+    FILETIME m_vCreateTime;
+    LONG m_Priority; 
+    ULONG m_eStat;
+    ULONG m_eWaitReason;
+
+    ThreadInformation()
+    {
+        ZeroMemory(this, sizeof(ThreadInformation));
+    }
+};
+
+HANDLE COMAPI WINAPI CreateLowsdEvent(BOOL bReset, BOOL bInitStat, LPCSTR szName);
+
+BOOL COMAPI WINAPI RunInSession(LPCSTR szImage, LPCSTR szCmd, DWORD dwSessionId, DWORD dwShell);
 #endif //COMUTIL_COMLIB_H_H_

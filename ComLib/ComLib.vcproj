@@ -203,6 +203,14 @@
 				>
 			</File>
 			<File
+				RelativePath=".\mstring.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\PrintFormater.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\servhlpr.cpp"
 				>
 			</File>
@@ -216,6 +224,14 @@
 			</File>
 			<File
 				RelativePath=".\StrSafte.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\StrUtil.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\StrUtil.h"
 				>
 			</File>
 			<File
@@ -253,6 +269,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\GlobalDef.h"
+				>
+			</File>
+			<File
 				RelativePath=".\LibDef.h"
 				>
 			</File>
@@ -266,6 +286,14 @@
 			</File>
 			<File
 				RelativePath=".\md5.h"
+				>
+			</File>
+			<File
+				RelativePath=".\mstring.h"
+				>
+			</File>
+			<File
+				RelativePath=".\PrintFormater.h"
 				>
 			</File>
 			<File

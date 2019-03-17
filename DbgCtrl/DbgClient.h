@@ -1,6 +1,6 @@
 #ifndef DBGCLIENT_DBGCTRL_H_H_
 #define DBGCLIENT_DBGCTRL_H_H_
-#include <ComStatic/ComStatic.h>
+#include <ComLib/ComLib.h>
 #include "DbgCtrlCom.h"
 
 typedef CtrlReply (__stdcall *pfnDbgClientProc)(const CtrlRequest &request, void *param);

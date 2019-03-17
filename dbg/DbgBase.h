@@ -4,7 +4,7 @@
 #include <DbgHelp.h>
 #include <map>
 #include <list>
-#include <ComStatic/ComStatic.h>
+#include <ComLib/ComLib.h>
 #include <DbgCtrl/DbgCtrl.h>
 #include "TitanEngine/TitanEngine.h"
 

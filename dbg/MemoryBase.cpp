@@ -1,5 +1,5 @@
 #include <Windows.h>
-#include <ComStatic/ComStatic.h>
+#include <ComLib/ComLib.h>
 #include "MemoryBase.h"
 
 using namespace std;

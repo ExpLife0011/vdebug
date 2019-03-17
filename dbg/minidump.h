@@ -4,7 +4,7 @@
 #include <DbgHelp.h>
 #include <list>
 #include <vector>
-#include <ComStatic/ComStatic.h>
+#include <ComLib/ComLib.h>
 #include <ComLib/ComLib.h>
 
 using namespace std;

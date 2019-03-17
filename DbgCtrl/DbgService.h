@@ -1,6 +1,6 @@
 #ifndef DBGSERVICE_DBGCTRL_H_H_
 #define DBGSERVICE_DBGCTRL_H_H_
-#include <ComStatic/ComStatic.h>
+#include <ComLib/ComLib.h>
 #include "DbgCtrlCom.h"
 
 typedef void (__stdcall *pfnDbgEventProc)(const EventInfo &eventInfo, void *param);

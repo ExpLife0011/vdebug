@@ -1,5 +1,5 @@
 #include <Windows.h>
-#include <ComStatic/ComStatic.h>
+#include <ComLib/ComLib.h>
 #include "DescPrinter.h"
 #include "DescParser.h"
 #include "DescCache.h"

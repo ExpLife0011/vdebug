@@ -1,6 +1,6 @@
 #include <Windows.h>
 #include <shlobj.h>
-#include <ComStatic/ComStatic.h>
+#include <ComLib/ComLib.h>
 #include "DbProxy.h"
 
 using namespace std;

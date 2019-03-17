@@ -3,7 +3,7 @@
 #include <Windows.h>
 #include <vector>
 #include <set>
-#include <ComStatic/ComStatic.h>
+#include <ComLib/ComLib.h>
 
 //命令控件上下翻页缓存
 //算法：

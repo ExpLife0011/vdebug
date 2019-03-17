@@ -6,7 +6,7 @@
 #include <set>
 #include <list>
 
-#include <ComStatic/ComStatic.h>
+#include <ComLib/ComLib.h>
 #include <ComLib/ComLib.h>
 
 typedef DWORD HProcListener;

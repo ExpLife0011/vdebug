@@ -4,7 +4,7 @@
 #include "SyntaxHlpr/SyntaxParser.h"
 #include <runner/runner.h>
 #include <ComLib/ComLib.h>
-#include <ComStatic/ComStatic.h>
+#include <ComLib/ComLib.h>
 #include <Shlwapi.h>
 #include "DbgCtrlService.h"
 #include "OpenView.h"

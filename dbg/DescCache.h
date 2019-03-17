@@ -3,7 +3,7 @@
 #include <Windows.h>
 #include <map>
 #include <ComLib/ComLib.h>
-#include <ComStatic/ComStatic.h>
+#include <ComLib/ComLib.h>
 #include "DescParser.h"
 
 using namespace std;

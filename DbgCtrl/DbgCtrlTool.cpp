@@ -2,7 +2,7 @@
 #include <Iphlpapi.h>
 #include <set>
 #include <ComLib/ComLib.h>
-#include <ComStatic/ComStatic.h>
+#include <ComLib/ComLib.h>
 #include "DbgCtrlTool.h"
 
 #pragma comment(lib, "Iphlpapi.lib")

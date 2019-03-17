@@ -1,7 +1,7 @@
 #include <Windows.h>
 #include <Shlwapi.h>
 #include <DbgCtrl/DbgCtrl.h>
-#include <ComStatic/ComStatic.h>
+#include <ComLib/ComLib.h>
 #include <ComLib/ComLib.h>
 #include <runner/runner.h>
 #include <DbgCtrl/DbgStat.h>

@@ -2,7 +2,7 @@
 #define DBGSTATUS_DBGCTRL_H_H_
 #include <Windows.h>
 #include <list>
-#include <ComStatic/ComStatic.h>
+#include <ComLib/ComLib.h>
 #include "DbgCtrlCom.h"
 
 struct DbgStat {

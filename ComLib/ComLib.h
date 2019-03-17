@@ -14,6 +14,9 @@
 #include "TransferEncoder.h"
 #include "servhlpr.h"
 #include "SyntaxDef.h"
+#include "mstring.h"
+#include "GlobalDef.h"
+#include "PrintFormater.h"
 
 #ifndef COMLIB_EXPORTS
     #if _WIN64 || WIN64

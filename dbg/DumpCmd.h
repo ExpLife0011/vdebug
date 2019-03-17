@@ -1,6 +1,6 @@
 #ifndef DUMP_CMD_DBG_H_H_
 #define DUMP_CMD_DBG_H_H_
-#include <ComStatic/ComStatic.h>
+#include <ComLib/ComLib.h>
 #include <DbgCtrl/DbgCtrl.h>
 #include "CmdBase.h"
 

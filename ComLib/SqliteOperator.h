@@ -4,7 +4,7 @@
 #include <Windows.h>
 #include <map>
 #include <list>
-#include <ComStatic/mstring.h>
+#include <ComLib/mstring.h>
 #include <ComLib/sqlite3.h>
 #include "LibDef.h"
 

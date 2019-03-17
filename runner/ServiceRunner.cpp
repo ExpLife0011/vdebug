@@ -2,7 +2,7 @@
 #include <Shlwapi.h>
 #include <list>
 #include <string>
-#include <ComStatic/ComStatic.h>
+#include <ComLib/ComLib.h>
 #include "ServiceRunner.h"
 #include "runner.h"
 

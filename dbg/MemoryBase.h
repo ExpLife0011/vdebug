@@ -1,7 +1,7 @@
 #ifndef MEMORYBASE_DBG_H_H_
 #define MEMORYBASE_DBG_H_H_
 #include <Windows.h>
-#include <ComStatic/mstring.h>
+#include <ComLib/mstring.h>
 
 class CMemoryBase {
 public:

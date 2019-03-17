@@ -3,7 +3,7 @@
 #include <map>
 #include <list>
 #include <ComLib/ComLib.h>
-#include <ComStatic/ComStatic.h>
+#include <ComLib/ComLib.h>
 #include "DbgProtocol.h"
 #include "DbgService.h"
 #include "DbgCtrlTool.h"

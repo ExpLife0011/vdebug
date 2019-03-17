@@ -1,7 +1,7 @@
 #ifndef COMMON_DBGCTRL_H_H_
 #define COMMON_DBGCTRL_H_H_
 #include <ComLib/ComLib.h>
-#include <ComStatic/ComStatic.h>
+#include <ComLib/ComLib.h>
 
 enum DbggerType {
     em_dbg_proc86,

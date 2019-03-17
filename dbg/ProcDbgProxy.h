@@ -1,7 +1,7 @@
 #ifndef PROCDBGPROXY_DBG_H_H_
 #define PROCDBGPROXY_DBG_H_H_
 #include <Windows.h>
-#include <ComStatic/ComStatic.h>
+#include <ComLib/ComLib.h>
 #include <DbgCtrl/DbgCtrl.h>
 #include "ProcDbg.h"
 #include "ProcCmd.h"

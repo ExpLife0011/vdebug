@@ -152,48 +152,12 @@
 			Filter="cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx"
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
-			<File
-				RelativePath=".\ComStatic.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\mstring.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\PrintFormater.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\StrUtil.cpp"
-				>
-			</File>
 		</Filter>
 		<Filter
 			Name="头文件"
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
-			<File
-				RelativePath=".\ComStatic.h"
-				>
-			</File>
-			<File
-				RelativePath=".\GlobalDef.h"
-				>
-			</File>
-			<File
-				RelativePath=".\mstring.h"
-				>
-			</File>
-			<File
-				RelativePath=".\PrintFormater.h"
-				>
-			</File>
-			<File
-				RelativePath=".\StrUtil.h"
-				>
-			</File>
 		</Filter>
 		<Filter
 			Name="资源文件"

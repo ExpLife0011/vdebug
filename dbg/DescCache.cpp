@@ -1,7 +1,7 @@
 #include <Windows.h>
 #include <Shlwapi.h>
 #include <ComLib/ComLib.h>
-#include <ComStatic/StrUtil.h>
+#include <ComLib/StrUtil.h>
 #include "DescCache.h"
 
 using namespace std;

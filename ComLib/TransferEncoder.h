@@ -2,9 +2,9 @@
 #define TRANSFERENCODER_COMLIB_H_H_
 #include <Windows.h>
 #include <list>
-#include <ComStatic/ComStatic.h>
 #include <dbg/TitanEngine/TitanEngine.h>
 #include "LibDef.h"
+#include "GlobalDef.h"
 
 struct ProcInfoSet {
     std::list<ProcMonInfo> mAddSet;

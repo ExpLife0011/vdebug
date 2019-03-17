@@ -5,7 +5,7 @@
 #include <list>
 #include <map>
 #include <set>
-#include <ComStatic/ComStatic.h>
+#include <ComLib/ComLib.h>
 
 using namespace std;
 

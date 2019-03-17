@@ -3,7 +3,7 @@
 #include <Windows.h>
 #include "ViewBase.h"
 #include <ComLib/ComLib.h>
-#include <ComStatic/ComStatic.h>
+#include <ComLib/ComLib.h>
 
 using namespace std;
 

@@ -1,7 +1,7 @@
 #ifndef MEMORY_VDEBUG_H_H_
 #define MEMORY_VDEBUG_H_H_
 #include <Windows.h>
-#include <ComStatic/ComStatic.h>
+#include <ComLib/ComLib.h>
 #include "MemoryBase.h"
 
 using namespace std;

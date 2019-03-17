@@ -3,7 +3,7 @@
 #include <Windows.h>
 #include <vector>
 #include "capstone/capstone.h"
-#include <ComStatic/ComStatic.h>
+#include <ComLib/ComLib.h>
 
 using namespace std;
 

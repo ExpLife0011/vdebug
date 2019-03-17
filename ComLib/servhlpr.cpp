@@ -1,6 +1,6 @@
 #include <Windows.h>
 #include <Shlwapi.h>
-#include <ComStatic/StrUtil.h>
+#include "StrUtil.h"
 #include "ComUtil.h"
 
 //初始化服务

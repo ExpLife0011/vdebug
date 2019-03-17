@@ -2,7 +2,7 @@
 #define SYNTAXCFG_H_H_
 #include <Windows.h>
 #include <string>
-#include <ComStatic/ComStatic.h>
+#include <ComLib/ComLib.h>
 #include "SyntaxParser.h"
 #include "SyntaxView.h"
 

@@ -5,7 +5,7 @@
 #include <map>
 #include <string>
 #include <DbgCtrl/DbgCtrlCom.h>
-#include <ComStatic/ComStatic.h>
+#include <ComLib/ComLib.h>
 
 using namespace std;
 

@@ -3,7 +3,7 @@
 #include <string>
 #include <fstream>
 #include "SyntaxParser.h"
-#include <ComStatic/ComStatic.h>
+#include <ComLib/ComLib.h>
 #include "SyntaxCfg.h"
 #include <ComLib/ComLib.h>
 

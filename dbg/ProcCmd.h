@@ -1,7 +1,7 @@
 #ifndef PROCCMD_DBG_H_H_
 #define PROCCMD_DBG_H_H_
 #include <Windows.h>
-#include <ComStatic/ComStatic.h>
+#include <ComLib/ComLib.h>
 #include "CmdBase.h"
 #include "ProcDbg.h"
 

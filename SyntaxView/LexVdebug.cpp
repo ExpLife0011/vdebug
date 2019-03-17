@@ -10,7 +10,7 @@ LexVdebug Syntax Rule by lougd 2018-12-6
 #include <list>
 #include <map>
 #include <ComLib/ComLib.h>
-#include <ComStatic/ComStatic.h>
+#include <ComLib/ComLib.h>
 #include "ILexer.h"
 #include "Scintilla.h"
 #include "SciLexer.h"
