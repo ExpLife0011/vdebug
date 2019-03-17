@@ -4,6 +4,9 @@
 #include <ComLib/StrUtil.h>
 #include "ScriptHlpr.h"
 #include "ScriptExpression.h"
+#include "ScriptAccessor.h"
+#include "../memory.h"
+#include "../ProcDbg.h"
 
 CScriptParser *CScriptParser::GetInst() {
     static CScriptParser *s_ptr = NULL;
@@ -104,6 +107,9 @@ bool CScriptParser::parser(const mstring &script) {
 
     LogicNode *it = root;
     CScriptExpReader::GetInst()->SetCache(&mScriptCache);
+
+    CMemoryProc memoryOpt(CProcDbgger::GetInstance()->GetDbgProc());
+    CScriptAccessor::GetInst()->SetContext(&memoryOpt, CProcDbgger::GetInstance());
 
     //run script
     VariateDesc *desc = NULL;
