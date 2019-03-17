@@ -127,11 +127,14 @@ public:
         }
         return strOut;
     }
+
+    virtual TITAN_ENGINE_CONTEXT_t GetCurrentContext() {
+        return TITAN_ENGINE_CONTEXT_t();
+    }
+
 protected:
     BOOL ReadMemory(DWORD64 dwAddr, IN OUT DWORD dwLength, LPSTR pBuffer);
     BOOL WriteMemory(DWORD64 dwAddr, LPCSTR pBuffer, DWORD dwLength);
-
-protected:
     virtual INT_PTR OnDebugEvent(LPDEBUG_EVENT pDbgEvent)
     {
         return 0;

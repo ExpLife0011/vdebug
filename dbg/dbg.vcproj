@@ -425,6 +425,14 @@
 			Name="ScriptEngine"
 			>
 			<File
+				RelativePath=".\ScriptEngine\ScriptAccessor.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\ScriptEngine\ScriptAccessor.h"
+				>
+			</File>
+			<File
 				RelativePath=".\ScriptEngine\ScriptCompiler.h"
 				>
 			</File>
