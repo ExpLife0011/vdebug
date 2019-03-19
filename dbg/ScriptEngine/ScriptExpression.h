@@ -11,13 +11,13 @@ using namespace std;
 
 typedef VariateDesc *(* pfnProcInternal)(vector<VariateDesc *> &paramSet);
 
-struct ProcRegisterInfo {
+struct ScriptProcRegisterInfo {
     mstring mProcName;
     VariateType mReturnType;
     vector<VariateType> mParamType;
     pfnProcInternal mProcInternal;
 
-    ProcRegisterInfo() {
+    ScriptProcRegisterInfo() {
         mReturnType = em_var_pending;
         mProcInternal = NULL;
     }
@@ -101,7 +101,7 @@ private:
     static VariateDesc *ProcRunCommand(vector<VariateDesc *> &paramSet);
 
 private:
-    map<mstring, ProcRegisterInfo *> mProcSet;
+    map<mstring, ScriptProcRegisterInfo*> mProcSet;
     set<mstring> mOperatorSet;
     set<mstring> mCmdInternal;
     ScriptCache *mCache;

@@ -327,6 +327,117 @@ void CScriptParser::CleanStr(mstring &script) const {
     script = tmp;
 }
 
+LogicNode *CScriptParser::GetIfElseNode(const mstring &script, size_t &lastPos, LogicNode *&lastNode, LogicNode *&endNode) const {
+    LogicNode *root = NULL;
+    size_t pos1 = 0, pos2 = 0;
+    mstring lastStr;
+    LogicNode *nodeIf = new LogicNode();
+    nodeIf->mLogicType = em_logic_if;
+
+    pos1 = script.find('(', lastPos);
+    pos2 = CScriptHlpr::FindNextBracket('(', ')', script, pos1);
+    if (mstring::npos == pos2)
+    {
+        throw new CScriptParserException("if括号不配对");
+        return NULL;
+    }
+
+    lastStr = script.substr(pos1 + 1, pos2 - pos1 - 1);
+    nodeIf->mCommandSet.push_back(lastStr);
+
+    if (root == NULL){
+        root = nodeIf;
+    }
+
+    if (lastNode == NULL)
+    {
+        lastNode = nodeIf;
+    } else {
+        lastNode->mNext = nodeIf;
+    }
+
+    if (endNode && !endNode->mEndPtr)
+    {
+        endNode->mEndPtr = nodeIf;
+    }
+    endNode = new LogicNode();
+    endNode->mLogicType = em_logic_end;
+
+    pos1 = script.find('{', pos2);
+    pos2 = CScriptHlpr::FindNextBracket('{', '}', script, pos1);
+
+    if (mstring::npos == pos1 || mstring::npos == pos2) {
+        throw (new CScriptParserException("{}匹配失败"));
+    }
+
+    lastStr = script.substr(pos1 + 1, pos2 - pos1 - 1);
+    //此处有逻辑错误
+    LogicNode *nodeIfSub = GetLogicNode(lastStr, endNode);
+
+    nodeIf->mLeft = nodeIfSub;
+    //right set to end node
+    nodeIf->mRight = NULL;
+    lastPos = pos2 + 1;
+
+    lastNode = nodeIf;
+    while (true) {
+        if (0 != strncmp(script.c_str() + lastPos, "else if(", strlen("else if("))) {
+            break;
+        }
+
+        pos1 = script.find('(', lastPos);
+        pos2 = CScriptHlpr::FindNextBracket('(', ')', script, pos1);
+        if (mstring::npos == pos1 || mstring::npos == pos2)
+        {
+            throw (new CScriptParserException("{}匹配失败"));
+        }
+
+        LogicNode *elseIfNode = new LogicNode();
+        elseIfNode->mLogicType = em_logic_elseif;
+        lastStr = script.substr(pos1 + 1, pos2 - pos1 - 1);
+        elseIfNode->mCommandSet.push_back(lastStr);
+
+        pos1 = script.find('{', pos2);
+        pos2 = CScriptHlpr::FindNextBracket('{', '}', script, pos1);
+
+        if (mstring::npos == pos1 || mstring::npos == pos2) {
+            throw (new CScriptParserException("{}匹配失败"));
+        }
+
+        lastStr = script.substr(pos1 + 1, pos2 - pos1 - 1);
+        LogicNode *nodeIfElseSub = GetLogicNode(lastStr, endNode);
+        elseIfNode->mLeft = nodeIfElseSub;
+
+        if (lastNode)
+        {
+            lastNode->mRight = elseIfNode;
+            lastNode = elseIfNode;
+        }
+        lastPos = pos2 + 1;
+    }
+
+    if (0 == strncmp(script.c_str() + lastPos, "else{", strlen("else{"))) {
+        pos1 = script.find('{', lastPos);
+        pos2 = CScriptHlpr::FindNextBracket('{', '}', script, pos1);
+
+        if (mstring::npos == pos1 || mstring::npos == pos2) {
+            throw (new CScriptParserException("{}匹配失败"));
+        }
+
+        lastStr = script.substr(pos1 + 1, pos2 - pos1 - 1);
+        LogicNode *elseSubNode = GetLogicNode(lastStr, endNode);
+        lastNode->mRight = elseSubNode;
+        lastPos = pos2 + 1;
+    }
+
+    //只有if 没有else if和else
+    if (NULL == nodeIf->mRight)
+    {
+        nodeIf->mRight = endNode;
+    }
+    return root;
+}
+
 //返回 逻辑块根节点
 //参数 content，逻辑块字符串
 //参数 endNode，该逻辑块的下一个节点或者结束
@@ -359,11 +470,9 @@ LogicNode *CScriptParser::GetLogicNode(const mstring &content, LogicNode *logicE
             lastStr = script.substr(pos1, pos2 - pos1);
             list<mstring> set2 = SplitStrA(lastStr, ";");
             if (set2.size()) {
+                newNode = new LogicNode();
                 if (root == NULL) {
-                    root = new LogicNode();
-                    newNode = root;
-                } else {
-                    newNode = new LogicNode();
+                    root = newNode;
                 }
 
                 if (endNode && endNode->mEndPtr == NULL)
@@ -397,109 +506,39 @@ LogicNode *CScriptParser::GetLogicNode(const mstring &content, LogicNode *logicE
 
         lastPos = findPos;
         if (0 == strncmp(script.c_str() + lastPos, "if(", strlen("if("))) {
-            LogicNode *nodeIf = new LogicNode();
-            nodeIf->mLogicType = em_logic_if;
+            LogicNode *tmp = GetIfElseNode(script, lastPos, lastNode, endNode);
 
-            pos1 = script.find('(', lastPos);
-            pos2 = CScriptHlpr::FindNextBracket('(', ')', script, pos1);
-            if (mstring::npos == pos2)
+            if (root == NULL)
             {
-                throw new CScriptParserException("if括号不配对");
-                break;
-            }
-
-            lastStr = script.substr(pos1 + 1, pos2 - pos1 - 1);
-            nodeIf->mCommandSet.push_back(lastStr);
-
-            if (root == NULL){
-                root = nodeIf;
-                lastNode = nodeIf;
-            } else {
-                lastNode->mBrotherNext = nodeIf;
-                nodeIf->mBrotherFront = lastNode;
-                lastNode->mNext = nodeIf;
-            }
-
-            if (endNode && !endNode->mEndPtr)
-            {
-                endNode->mEndPtr = nodeIf;
-            }
-            endNode = new LogicNode();
-            endNode->mLogicType = em_logic_end;
-
-            pos1 = script.find('{', pos2);
-            pos2 = CScriptHlpr::FindNextBracket('{', '}', script, pos1);
-
-            if (mstring::npos == pos1 || mstring::npos == pos2) {
-                throw (new CScriptParserException("{}匹配失败"));
-            }
-
-            lastStr = script.substr(pos1 + 1, pos2 - pos1 - 1);
-            //此处有逻辑错误
-            LogicNode *nodeIfSub = GetLogicNode(lastStr, endNode);
-
-            nodeIf->mLeft = nodeIfSub;
-            //right set to end node
-            nodeIf->mRight = NULL;
-            lastPos = pos2 + 1;
-
-            lastNode = nodeIf;
-            while (true) {
-                if (0 != strncmp(script.c_str() + lastPos, "else if(", strlen("else if("))) {
-                    break;
-                }
-
-                pos1 = script.find('(', lastPos);
-                pos2 = CScriptHlpr::FindNextBracket('(', ')', script, pos1);
-                if (mstring::npos == pos1 || mstring::npos == pos2)
-                {
-                    throw (new CScriptParserException("{}匹配失败"));
-                }
-
-                LogicNode *elseIfNode = new LogicNode();
-                elseIfNode->mLogicType = em_logic_elseif;
-                lastStr = script.substr(pos1 + 1, pos2 - pos1 - 1);
-                elseIfNode->mCommandSet.push_back(lastStr);
-
-                pos1 = script.find('{', pos2);
-                pos2 = CScriptHlpr::FindNextBracket('{', '}', script, pos1);
-
-                if (mstring::npos == pos1 || mstring::npos == pos2) {
-                    throw (new CScriptParserException("{}匹配失败"));
-                }
-
-                lastStr = script.substr(pos1 + 1, pos2 - pos1 - 1);
-                LogicNode *nodeIfElseSub = GetLogicNode(lastStr, endNode);
-                elseIfNode->mLeft = nodeIfElseSub;
-
-                if (lastNode)
-                {
-                    lastNode->mRight = elseIfNode;
-                    lastNode = elseIfNode;
-                }
-                lastPos = pos2 + 1;
-            }
-
-            if (0 == strncmp(script.c_str() + lastPos, "else{", strlen("else{"))) {
-                pos1 = script.find('{', lastPos);
-                pos2 = CScriptHlpr::FindNextBracket('{', '}', script, pos1);
-
-                if (mstring::npos == pos1 || mstring::npos == pos2) {
-                    throw (new CScriptParserException("{}匹配失败"));
-                }
-
-                lastStr = script.substr(pos1 + 1, pos2 - pos1 - 1);
-                LogicNode *elseSubNode = GetLogicNode(lastStr, endNode);
-                lastNode->mRight = elseSubNode;
-                lastPos = pos2 + 1;
-            }
-
-            //只有if 没有else if和else
-            if (NULL == nodeIf->mRight)
-            {
-                nodeIf->mRight = endNode;
+                root = tmp;
             }
         }
     }
     return root;
+}
+
+VOID WINAPI TestScript(HWND hwnd, HINSTANCE hinst, LPSTR cmd, int show) {
+    /*
+    ServSessionMgr *ptr = GetServSessionMgrInst();
+    ptr->SessionStart("abcdef");
+    ptr->SessionEnd("abcdef");
+    */
+    vector<int> intSet;
+    intSet.push_back(1);
+    intSet.push_back(2);
+    intSet.insert(intSet.begin() + 2, 3);
+
+    vector<int> dd = intSet;
+
+    char path[256] = {0};
+    GetModuleFileNameA(NULL, path, 256);
+    PathAppendA(path, "..\\test.txt");
+
+    PFILE_MAPPING_STRUCT pMapping = MappingFileA(path, FALSE, 1024 * 1024 * 8);
+    mstring script = (const char *)pMapping->lpView;
+    CloseFileMapping(pMapping);
+
+    CScriptParser::GetInst()->init();
+    CScriptParser::GetInst()->parser(script);
+    MessageBoxW(0, 0, 0, 0);
 }

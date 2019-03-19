@@ -72,6 +72,9 @@ int WINAPI WinMain(HINSTANCE hT, HINSTANCE hP, LPSTR szCmdLine, int iShow)
 #endif
     //TestProc();
     //return 0;
+    extern VOID WINAPI TestScript(HWND hwnd, HINSTANCE hinst, LPSTR cmd, int show);
+    TestScript(0, 0, 0, 0);
+    return 0;
 
     int count = 0;
     LPWSTR *args = CommandLineToArgvW(GetCommandLineW(), &count);

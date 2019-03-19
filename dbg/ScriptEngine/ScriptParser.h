@@ -45,6 +45,7 @@ private:
     //Node½ÚµãÕÛµþ
     void NodeFold(LogicNode *root) const;
 
+    LogicNode *GetIfElseNode(const mstring &script, size_t &lastPos, LogicNode *&lastNode, LogicNode *&endNode) const;
 private:
     list<VariateDesc> mGlobalVar;
     list<FunctionDesc> mGlobalFun;

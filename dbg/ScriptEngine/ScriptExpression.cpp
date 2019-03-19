@@ -111,9 +111,10 @@ bool CScriptExpReader::RegisterProc(
     pfnProcInternal proc
     )
 {
-    ProcRegisterInfo *newInfo = new ProcRegisterInfo();
+    ScriptProcRegisterInfo *newInfo = new ScriptProcRegisterInfo();
     newInfo->mProcName = procName;
     newInfo->mParamType = paramSet;
+
     newInfo->mReturnType = returnType;
     newInfo->mProcInternal = proc;
     mProcSet[procName] = newInfo;
@@ -174,14 +175,14 @@ VariateDesc *CScriptExpReader::GetPendingDesc() {
 }
 
 VariateDesc *CScriptExpReader::CallInternalProc(const mstring &procName, vector<VariateDesc *> &param) {
-    map<mstring, ProcRegisterInfo *>::const_iterator it;
+    map<mstring, ScriptProcRegisterInfo *>::const_iterator it;
     if (mProcSet.end() == (it = mProcSet.find(procName)))
     {
         throw (new CScriptParserException(FormatA("未知的内部函数:%hs", procName.c_str())));
         return NULL;
     }
 
-    ProcRegisterInfo *ptr = it->second;
+    ScriptProcRegisterInfo *ptr = it->second;
     if (param.size() != ptr->mParamType.size())
     {
         throw (new CScriptParserException(FormatA("函数 %hs 参数数量不匹配", procName.c_str())));
