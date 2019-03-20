@@ -44,7 +44,8 @@ private:
     void AllNodeFold(LogicNode *root) const;
     //Node节点折叠
     void NodeFold(LogicNode *root) const;
-
+    //返回逻辑节点起始位置
+    size_t GetLogicStart(const mstring &script, size_t pos, mstring &startStr) const;
     LogicNode *GetIfElseNode(const mstring &script, size_t &lastPos, LogicNode *&lastNode, LogicNode *&endNode) const;
 private:
     list<VariateDesc> mGlobalVar;

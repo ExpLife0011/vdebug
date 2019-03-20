@@ -104,6 +104,16 @@ enum LogicNodeType {
     em_logic_end        //end node
 };
 
+struct LogicNode;
+struct ScriptCmdContext {
+    mstring mCommand;
+    LogicNode *mLogicRoot;
+
+    ScriptCmdContext() {
+        mLogicRoot = NULL;
+    }
+};
+
 struct LogicNode {
     LogicNodeType mLogicType;   //logic type
 
@@ -118,8 +128,8 @@ struct LogicNode {
     LogicNode *mLeft;           //logic for right eg:if, else if, 
     LogicNode *mRight;          //logic for wrong
 
-    LogicNode *mEndPtr;         //end类型的指针对应的对象
-    list<mstring> mCommandSet;  //commmand set for parser.
+    LogicNode *mEndPtr;                  //end类型的指针对应的对象
+    list<ScriptCmdContext> mCommandSet;  //commmand set for parser.
 
     LogicNode() {
         mLogicType = em_logic_order;

@@ -113,10 +113,12 @@ bool CScriptParser::parser(const mstring &script) {
 
     //run script
     VariateDesc *desc = NULL;
+    mstring scriptCmd;
     while (true) {
         if (it->mLogicType == em_logic_if || it->mLogicType == em_logic_elseif)
         {
-            desc = CScriptExpReader::GetInst()->ParserExpression(*(it->mCommandSet.begin()));
+            scriptCmd = (it->mCommandSet.begin())->mCommand;
+            desc = CScriptExpReader::GetInst()->ParserExpression(scriptCmd);
             if (desc->mVarType != em_var_int)
             {
                 throw (new CScriptParserException("if语句执行错误"));
@@ -131,9 +133,10 @@ bool CScriptParser::parser(const mstring &script) {
             }
         } else if (it->mLogicType == em_logic_order)
         {
-            for (list<mstring>::const_iterator ij = it->mCommandSet.begin() ; ij != it->mCommandSet.end() ; ij++)
+            for (list<ScriptCmdContext>::const_iterator ij = it->mCommandSet.begin() ; ij != it->mCommandSet.end() ; ij++)
             {
-                CScriptExpReader::GetInst()->ParserExpression(*ij);
+                scriptCmd = (it->mCommandSet.begin())->mCommand;
+                CScriptExpReader::GetInst()->ParserExpression(scriptCmd);
             }
             it = it->mNext;
         } else if (it->mLogicType == em_logic_end)
@@ -343,7 +346,9 @@ LogicNode *CScriptParser::GetIfElseNode(const mstring &script, size_t &lastPos, 
     }
 
     lastStr = script.substr(pos1 + 1, pos2 - pos1 - 1);
-    nodeIf->mCommandSet.push_back(lastStr);
+    ScriptCmdContext ctx;
+    ctx.mCommand = lastStr;
+    nodeIf->mCommandSet.push_back(ctx);
 
     if (root == NULL){
         root = nodeIf;
@@ -371,7 +376,6 @@ LogicNode *CScriptParser::GetIfElseNode(const mstring &script, size_t &lastPos, 
     }
 
     lastStr = script.substr(pos1 + 1, pos2 - pos1 - 1);
-    //此处有逻辑错误
     LogicNode *nodeIfSub = GetLogicNode(lastStr, endNode);
 
     nodeIf->mLeft = nodeIfSub;
@@ -395,7 +399,10 @@ LogicNode *CScriptParser::GetIfElseNode(const mstring &script, size_t &lastPos, 
         LogicNode *elseIfNode = new LogicNode();
         elseIfNode->mLogicType = em_logic_elseif;
         lastStr = script.substr(pos1 + 1, pos2 - pos1 - 1);
-        elseIfNode->mCommandSet.push_back(lastStr);
+
+        ScriptCmdContext ctx;
+        ctx.mCommand = lastStr;
+        elseIfNode->mCommandSet.push_back(ctx);
 
         pos1 = script.find('{', pos2);
         pos2 = CScriptHlpr::FindNextBracket('{', '}', script, pos1);
@@ -438,6 +445,34 @@ LogicNode *CScriptParser::GetIfElseNode(const mstring &script, size_t &lastPos, 
     return root;
 }
 
+//返回逻辑节点起始位置
+size_t CScriptParser::GetLogicStart(const mstring &script, size_t pos, mstring &startStr) const {
+    size_t pos1 = mstring::npos, pos2 = mstring::npos;
+    pos2 = script.find('{', pos);
+
+    if (mstring::npos == pos2)
+    {
+        return mstring::npos;
+    }
+
+    for (size_t i = pos2 - 1 ; i != pos ; i--) {
+        if (script[i] == ';')
+        {
+            pos1 = i;
+            break;
+        }
+    }
+
+    if (pos1 == mstring::npos)
+    {
+        pos1 = pos;
+    } else {
+        pos1 += 1;
+    }
+    startStr = script.substr(pos1, pos2 - pos1);
+    return pos1;
+}
+
 //返回 逻辑块根节点
 //参数 content，逻辑块字符串
 //参数 endNode，该逻辑块的下一个节点或者结束
@@ -456,7 +491,8 @@ LogicNode *CScriptParser::GetLogicNode(const mstring &content, LogicNode *logicE
     while (true)
     {
         bool end = false;
-        findPos = script.find("if(", lastPos);
+        mstring startStr;
+        findPos = GetLogicStart(script, lastPos, startStr);
         pos1 = lastPos;
         if (mstring::npos == findPos) {
             end = true;
@@ -482,7 +518,9 @@ LogicNode *CScriptParser::GetLogicNode(const mstring &content, LogicNode *logicE
 
                 for (it = set2.begin() ; it != set2.end() ; it++)
                 {
-                    newNode->mCommandSet.push_back(*it);
+                    ScriptCmdContext ctx;
+                    ctx.mCommand = *it;
+                    newNode->mCommandSet.push_back(ctx);
                 }
                 lastNode = newNode;
             }
@@ -495,23 +533,27 @@ LogicNode *CScriptParser::GetLogicNode(const mstring &content, LogicNode *logicE
                 if (endNode) {
                     endNode->mEndPtr = logicEnd;
                 } else {
-                    LogicNode *empty = new LogicNode();
-                    empty->mLogicType = em_logic_end;
-                    empty->mEndPtr = logicEnd;
-                    return empty;
+                    root = new LogicNode();
+                    root->mLogicType = em_logic_end;
+                    root->mEndPtr = logicEnd;
                 }
             }
             break;
         }
 
         lastPos = findPos;
-        if (0 == strncmp(script.c_str() + lastPos, "if(", strlen("if("))) {
+        if (startStr.startwith("if(")) {
             LogicNode *tmp = GetIfElseNode(script, lastPos, lastNode, endNode);
 
             if (root == NULL)
             {
                 root = tmp;
             }
+        } else if (startStr.startwith("while("))
+        {
+        }
+        //命令逻辑段
+        else {
         }
     }
     return root;
@@ -523,6 +565,8 @@ VOID WINAPI TestScript(HWND hwnd, HINSTANCE hinst, LPSTR cmd, int show) {
     ptr->SessionStart("abcdef");
     ptr->SessionEnd("abcdef");
     */
+    mstring aaa = "abf1";
+
     vector<int> intSet;
     intSet.push_back(1);
     intSet.push_back(2);
