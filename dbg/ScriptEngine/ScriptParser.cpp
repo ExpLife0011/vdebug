@@ -135,7 +135,7 @@ bool CScriptParser::parser(const mstring &script) {
         {
             for (list<ScriptCmdContext>::const_iterator ij = it->mCommandSet.begin() ; ij != it->mCommandSet.end() ; ij++)
             {
-                scriptCmd = (it->mCommandSet.begin())->mCommand;
+                scriptCmd = ij->mCommand;
                 CScriptExpReader::GetInst()->ParserExpression(scriptCmd);
             }
             it = it->mNext;
@@ -330,7 +330,7 @@ void CScriptParser::CleanStr(mstring &script) const {
     script = tmp;
 }
 
-LogicNode *CScriptParser::GetIfElseNode(const mstring &script, size_t &lastPos, LogicNode *&lastNode, LogicNode *&endNode) const {
+LogicNode *CScriptParser::GetIfElseNode(const mstring &script, size_t &lastPos, LogicNode *&endNode) const {
     LogicNode *root = NULL;
     size_t pos1 = 0, pos2 = 0;
     mstring lastStr;
@@ -354,17 +354,8 @@ LogicNode *CScriptParser::GetIfElseNode(const mstring &script, size_t &lastPos, 
         root = nodeIf;
     }
 
-    if (lastNode == NULL)
-    {
-        lastNode = nodeIf;
-    } else {
-        lastNode->mNext = nodeIf;
-    }
-
-    if (endNode && !endNode->mEndPtr)
-    {
-        endNode->mEndPtr = nodeIf;
-    }
+    LogicNode *lastNode = new LogicNode();
+    lastNode = nodeIf;
     endNode = new LogicNode();
     endNode->mLogicType = em_logic_end;
 
@@ -437,12 +428,25 @@ LogicNode *CScriptParser::GetIfElseNode(const mstring &script, size_t &lastPos, 
         lastPos = pos2 + 1;
     }
 
+    if (NULL == lastNode->mRight)
+    {
+        lastNode->mRight = endNode;
+    }
+
     //只有if 没有else if和else
     if (NULL == nodeIf->mRight)
     {
         nodeIf->mRight = endNode;
     }
     return root;
+}
+
+LogicNode *CScriptParser::GetWhileNode(const mstring &script, size_t &lastPos, LogicNode *&endNode) const {
+    return NULL;
+}
+
+LogicNode *CScriptParser::GetForNode(const mstring &script, size_t &lastPos, LogicNode *&endNode) const {
+    return NULL;
 }
 
 //返回逻辑节点起始位置
@@ -473,6 +477,32 @@ size_t CScriptParser::GetLogicStart(const mstring &script, size_t pos, mstring &
     return pos1;
 }
 
+LogicNode *CScriptParser::GetCommandNode(const mstring &command, const mstring &script, size_t &lastPos, LogicNode *&endNode) const {
+    size_t pos1 = 0, pos2 = 0;
+    mstring lastStr;
+    LogicNode *nodeStart = NULL;
+
+    pos1 = script.find('{', lastPos);
+    pos2 = CScriptHlpr::FindNextBracket('{', '}', script, pos1);
+    lastStr = script.substr(pos1 + 1, pos2 - pos1 - 1);
+    nodeStart = new LogicNode();
+    nodeStart->mLogicType = em_logic_order;
+
+    ScriptCmdContext ctx;
+    ctx.mCommand = command;
+
+    //命令对应的独立的逻辑块
+    LogicNode *end2 = new LogicNode();
+    end2->mLogicType = em_logic_end;
+    ctx.mLogicRoot = GetLogicNode(lastStr, end2);
+    nodeStart->mCommandSet.push_back(ctx);
+    endNode = new LogicNode();
+    endNode->mLogicType = em_logic_end;
+    nodeStart->mNext = endNode;
+    lastPos = pos2 + 1;
+    return nodeStart;
+}
+
 //返回 逻辑块根节点
 //参数 content，逻辑块字符串
 //参数 endNode，该逻辑块的下一个节点或者结束
@@ -480,7 +510,6 @@ LogicNode *CScriptParser::GetLogicNode(const mstring &content, LogicNode *logicE
     size_t lastPos = 0;
     LogicNode *root = NULL;
     LogicNode *newNode = NULL;
-    LogicNode *lastNode = NULL;
     mstring script = content;
     list<mstring>::const_iterator it;
     size_t pos1 = 0, pos2 = 0;
@@ -522,7 +551,6 @@ LogicNode *CScriptParser::GetLogicNode(const mstring &content, LogicNode *logicE
                     ctx.mCommand = *it;
                     newNode->mCommandSet.push_back(ctx);
                 }
-                lastNode = newNode;
             }
         }
 
@@ -541,19 +569,43 @@ LogicNode *CScriptParser::GetLogicNode(const mstring &content, LogicNode *logicE
             break;
         }
 
-        lastPos = findPos;
-        if (startStr.startwith("if(")) {
-            LogicNode *tmp = GetIfElseNode(script, lastPos, lastNode, endNode);
-
-            if (root == NULL)
-            {
-                root = tmp;
-            }
-        } else if (startStr.startwith("while("))
+        //首次进行初始化操作
+        if (endNode == NULL)
         {
+            endNode = new LogicNode();
+            endNode->mLogicType = em_logic_end;
+
+            if (newNode)
+            {
+                newNode->mNext = endNode;
+            }
+        }
+
+        lastPos = findPos;
+
+        LogicNode *nodeStart = NULL;
+        LogicNode *lastEnd = endNode;
+        if (startStr.startwith("if(")) {
+            lastEnd = endNode;
+            nodeStart = GetIfElseNode(script, lastPos, endNode);
+        }
+        //while 循环
+        else if (startStr.startwith("while(")) {
+        }
+        //for 循环
+        else if (startStr.startwith("for(")){
         }
         //命令逻辑段
         else {
+            nodeStart = GetCommandNode(startStr, script, lastPos, endNode);
+        }
+
+        if (lastEnd->mEndPtr == NULL) {
+            lastEnd->mEndPtr = nodeStart;
+        }
+
+        if (root == NULL) {
+            root = nodeStart;
         }
     }
     return root;

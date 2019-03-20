@@ -101,6 +101,10 @@ enum LogicNodeType {
     em_logic_order,     //order
     em_logic_if,        //if
     em_logic_elseif,    //else if
+    em_logic_while,     //while—≠ª∑
+    em_logic_for,       //for—≠ª∑
+    em_logic_break,     //break”Ôæ‰
+    em_logic_continue,  //continue”Ôæ‰
     em_logic_end        //end node
 };
 

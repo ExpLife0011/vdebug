@@ -46,7 +46,11 @@ private:
     void NodeFold(LogicNode *root) const;
     //返回逻辑节点起始位置
     size_t GetLogicStart(const mstring &script, size_t pos, mstring &startStr) const;
-    LogicNode *GetIfElseNode(const mstring &script, size_t &lastPos, LogicNode *&lastNode, LogicNode *&endNode) const;
+
+    LogicNode *GetIfElseNode(const mstring &script, size_t &lastPos, LogicNode *&endNode) const;
+    LogicNode *GetCommandNode(const mstring &command, const mstring &script, size_t &lastPos, LogicNode *&endNode) const;
+    LogicNode *GetWhileNode(const mstring &script, size_t &lastPos, LogicNode *&endNode) const;
+    LogicNode *GetForNode(const mstring &script, size_t &lastPos, LogicNode *&endNode) const;
 private:
     list<VariateDesc> mGlobalVar;
     list<FunctionDesc> mGlobalFun;
