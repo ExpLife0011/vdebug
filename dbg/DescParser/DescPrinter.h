@@ -2,7 +2,7 @@
 #define PROCPRINTER_PARSER_H_H_
 #include <Windows.h>
 #include "DescParser.h"
-#include "MemoryBase.h"
+#include "../MemoryBase.h"
 
 struct PrinterNode {
     mstring mOffset;

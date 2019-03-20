@@ -9,8 +9,8 @@
 #include "DumpDbgProxy.h"
 #include "symbol.h"
 #include "procmon.h"
-#include "DescCache.h"
-#include "DescParser.h"
+#include "./DescParser/DescCache.h"
+#include "./DescParser/DescParser.h"
 
 using namespace std;
 

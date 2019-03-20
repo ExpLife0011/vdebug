@@ -4,9 +4,9 @@
 #include <mq/mq.h>
 #include "ProcDbgProxy.h"
 #include "ProcDbg.h"
-#include "DescParser.h"
-#include "DescPrinter.h"
-#include "DescCache.h"
+#include "./DescParser/DescParser.h"
+#include "./DescParser/DescPrinter.h"
+#include "./DescParser/DescCache.h"
 
 using namespace std;
 

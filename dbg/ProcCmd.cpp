@@ -4,7 +4,7 @@
 #include "memory.h"
 #include "BreakPoint.h"
 #include "DbgCommon.h"
-#include "DescPrinter.h"
+#include "./DescParser/DescPrinter.h"
 
 CProcCmd *CProcCmd::GetInst() {
     static CProcCmd *s_ptr = NULL;

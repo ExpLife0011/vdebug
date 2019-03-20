@@ -397,27 +397,27 @@
 			Name="DescParser"
 			>
 			<File
-				RelativePath=".\DescCache.cpp"
+				RelativePath=".\DescParser\DescCache.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\DescCache.h"
+				RelativePath=".\DescParser\DescCache.h"
 				>
 			</File>
 			<File
-				RelativePath=".\DescParser.cpp"
+				RelativePath=".\DescParser\DescParser.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\DescParser.h"
+				RelativePath=".\DescParser\DescParser.h"
 				>
 			</File>
 			<File
-				RelativePath=".\DescPrinter.cpp"
+				RelativePath=".\DescParser\DescPrinter.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\DescPrinter.h"
+				RelativePath=".\DescParser\DescPrinter.h"
 				>
 			</File>
 		</Filter>
