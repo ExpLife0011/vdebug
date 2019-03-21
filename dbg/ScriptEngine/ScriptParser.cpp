@@ -96,22 +96,8 @@ void CScriptParser::AllNodeFold(LogicNode *root) const {
     }
 }
 
-bool CScriptParser::parser(const mstring &script) {
-    mstring tmp = script;
-    CleanStr(tmp);
-    tmp.trim();
-
-    LogicNode *endNode = new LogicNode();
-    endNode->mLogicType = em_logic_end;
-    LogicNode *root = GetLogicNode(tmp, endNode);
-    AllNodeFold(root);
-
+bool CScriptParser::RunLogic(LogicNode *root) {
     LogicNode *it = root;
-    CScriptExpReader::GetInst()->SetCache(&mScriptCache);
-
-    CMemoryProc memoryOpt(CProcDbgger::GetInstance()->GetDbgProc());
-    CScriptAccessor::GetInst()->SetContext(&memoryOpt, CProcDbgger::GetInstance());
-
     //run script
     VariateDesc *desc = NULL;
     ScriptCmdContext ctx;
@@ -156,6 +142,26 @@ bool CScriptParser::parser(const mstring &script) {
 
         dp(L"%hs", i2->second->toString().c_str());
     }
+    return true;
+}
+
+bool CScriptParser::parser(const mstring &script) {
+    mstring tmp = script;
+    CleanStr(tmp);
+    tmp.trim();
+
+    LogicNode *endNode = new LogicNode();
+    endNode->mLogicType = em_logic_end;
+    LogicNode *root = GetLogicNode(tmp, endNode);
+    AllNodeFold(root);
+
+    LogicNode *it = root;
+    CScriptExpReader::GetInst()->SetCache(&mScriptCache);
+
+    CMemoryProc memoryOpt(CProcDbgger::GetInstance()->GetDbgProc());
+    CScriptAccessor::GetInst()->SetContext(&memoryOpt, CProcDbgger::GetInstance());
+
+    RunLogic(root);
     return true;
 }
 
@@ -450,9 +456,16 @@ void CScriptParser::PushExpression(LogicNode *logicNode, const mstring &content,
     ScriptCmdContext context;
     context.mCommand = content;
     context.mLogicRoot = cmdLogic;
-    if (mCmdEngine->IsCommand(content))
+    if (mstring::npos != content.find("bp "))
+    {
+        int dd = 1234;
+    }
+
+    CmdHandlerInfo cmdInfo;
+    if (mCmdEngine->IsCommand(content, cmdInfo))
     {
         context.isDbggerCmd = true;
+        context.mCmdType = cmdInfo.mCmdType;
     }
 
     logicNode->mCommandSet.push_back(context);
@@ -640,6 +653,7 @@ VOID WINAPI TestScript(HWND hwnd, HINSTANCE hinst, LPSTR cmd, int show) {
     mstring script = (const char *)pMapping->lpView;
     CloseFileMapping(pMapping);
 
+    CProcCmd::GetInst()->InitProcCmd(CProcDbgger::GetInstance());
     CScriptParser::GetInst()->init(CProcCmd::GetInst());
     CScriptParser::GetInst()->parser(script);
     MessageBoxW(0, 0, 0, 0);

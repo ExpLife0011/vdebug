@@ -4,6 +4,7 @@
 #include <map>
 #include <string>
 #include <ComLib/ComLib.h>
+#include "../CmdBase.h"
 
 using namespace std;
 
@@ -110,12 +111,15 @@ enum LogicNodeType {
 
 struct LogicNode;
 struct ScriptCmdContext {
-    bool isDbggerCmd;
+    bool isDbggerCmd;       //是否是调试命令
+    CmdDbgType mCmdType;    //命令类型 同步还是异步
+
     mstring mCommand;
     LogicNode *mLogicRoot;
 
     ScriptCmdContext() {
         isDbggerCmd = false;
+        mCmdType = em_cmd_sync;
         mLogicRoot = NULL;
     }
 };

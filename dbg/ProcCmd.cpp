@@ -27,107 +27,36 @@ CProcCmd::~CProcCmd() {
 
 void CProcCmd::InitProcCmd(CProcDbgger *pDbgger) {
     mProcDbgger = pDbgger;
+
+    RegisterHandler("bp", em_cmd_async, OnCmdBp);
+    RegisterHandler("bl", em_cmd_sync, OnCmdBl);
+    RegisterHandler("bk", em_cmd_sync, OnBreak);
+    RegisterHandler("bc", em_cmd_sync, OnCmdBc);
+    RegisterHandler("bu", em_cmd_sync, OnCmdBu);
+    RegisterHandler("be", em_cmd_sync, OnCmdBe);
+    RegisterHandler("tc", em_cmd_sync, OnCmdTc);
+    RegisterHandler("ts", em_cmd_sync, OnCmdTs);
+    RegisterHandler("lm", em_cmd_sync, OnCmdLm);
+    RegisterHandler("u", em_cmd_sync, OnCmdDisass);
+    RegisterHandler("ub", em_cmd_sync, OnCmdUb);
+    RegisterHandler("uf", em_cmd_sync, OnCmdUf);
+    RegisterHandler("g", em_cmd_sync, OnCmdGo);
+    RegisterHandler("gu", em_cmd_sync, OnCmdGu);
+    RegisterHandler("kv", em_cmd_sync, OnCmdKv);
+    RegisterHandler("db", em_cmd_sync, OnCmdDb);
+    RegisterHandler("dd", em_cmd_sync, OnCmdDd);
+    RegisterHandler("du", em_cmd_sync, OnCmdDu);
+    RegisterHandler("da", em_cmd_sync, OnCmdDa);
+    RegisterHandler("r", em_cmd_sync, OnCmdReg);
+    RegisterHandler("sc", em_cmd_sync, OnCmdScript);
+    RegisterHandler("pf", em_cmd_sync, OnCmdPf);
+    RegisterHandler("help", em_cmd_sync, OnCmdHelp);
+    RegisterHandler("h", em_cmd_sync, OnCmdHelp);
 }
 
-CtrlReply CProcCmd::OnCommand(const mstring &cmd, const mstring &cmdParam, HUserCtx ctx) {
-    if (cmd == "bp")
-    {
-        return OnCmdBp(cmdParam, ctx);
-    }
-    else if (cmd == "bl")
-    {
-        return OnCmdBl(cmdParam, ctx);
-    }
-    else if (cmd == "bk")
-    {
-        DebugBreakProcess(mProcDbgger->GetDbgProc());
-    }
-    else if (cmd == "bc")
-    {
-        return OnCmdBc(cmdParam, ctx);
-    }
-    else if (cmd == "bu")
-    {
-        return OnCmdBu(cmdParam, ctx);
-    }
-    else if (cmd == "be")
-    {
-        return OnCmdBe(cmdParam, ctx);
-    }
-    //切换到指定线程
-    else if (cmd == "tc")
-    {
-        return OnCmdTc(cmdParam, ctx);
-    }
-    //展示指定线程
-    else if (cmd == "ts")
-    {
-        return OnCmdTs(cmdParam, ctx);
-    }
-    //展示模块信息
-    else if (cmd == "lm")
-    {
-        return OnCmdLm(cmdParam, ctx);
-    }
-    else if (cmd == "u")
-    {
-        return OnCmdDisass(cmdParam, ctx);
-    }
-    else if (cmd == "ub")
-    {
-        return OnCmdUb(cmdParam, ctx);
-    }
-    else if (cmd == "uf")
-    {
-        return OnCmdUf(cmdParam, ctx);
-    }
-    else if (cmd == "g")
-    {
-        return OnCmdGo(cmdParam, ctx);
-    }
-    //执行到调用返回
-    else if (cmd == "gu")
-    {
-        return OnCmdGu(cmdParam, ctx);
-    }
-    else if (cmd == "kv")
-    {
-        return OnCmdKv(cmdParam, ctx);
-    }
-    else if (cmd == "db")
-    {
-        return OnCmdDb(cmdParam, ctx);
-    }
-    else if (cmd == "dd")
-    {
-        return OnCmdDd(cmdParam, ctx);
-    }
-    else if (cmd == "du")
-    {
-        return OnCmdDu(cmdParam, ctx);
-    } else if (cmd == "da")
-    {
-        return OnCmdDa(cmdParam, ctx);
-    }
-    else if (cmd == "r")
-    {
-        return OnCmdReg(cmdParam, ctx);
-    }
-    else if (cmd == "sc")
-    {
-        return OnCmdScript(cmdParam, ctx);
-    } else if (cmd == "pf")
-    {
-        return OnCmdPf(cmdParam, ctx);
-    }
-    else if (cmd == "help" || cmd == "h")
-    {
-        return OnCmdHelp(cmdParam, ctx);
-    }
-
-    CtrlReply reply;
-    reply.mShow = mstring("不支持的命令:") + cmd + "\n";
-    return reply;
+CtrlReply CProcCmd::OnBreak(const mstring &cmd, HUserCtx ctx) {
+    DebugBreakProcess(mProcDbgger->GetDbgProc());
+    return CtrlReply();
 }
 
 CtrlReply CProcCmd::OnCmdBp(const mstring &param, HUserCtx ctx)

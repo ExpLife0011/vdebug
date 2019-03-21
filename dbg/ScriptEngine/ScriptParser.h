@@ -33,6 +33,9 @@ private:
     virtual ~CScriptParser();
 
 private:
+    friend class CScriptExpReader;
+    //Ö´ÐÐµ÷ÊÔ½Å±¾Âß¼­
+    bool RunLogic(LogicNode *root);
     //½âÎö×Ö·û´®Âß¼­¿é
     LogicNode *ParserStrNode(const mstring &content) const;
     //½Å±¾´®ÇåÏ´

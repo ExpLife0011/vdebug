@@ -12,7 +12,7 @@
 
 using namespace std;
 
-typedef VariateDesc *(* pfnProcInternal)(vector<VariateDesc *> &paramSet);
+typedef VariateDesc *(* pfnProcInternal)(vector<VariateDesc *> &paramSet, void *param);
 
 struct ScriptProcRegisterInfo {
     mstring mProcName;
@@ -92,16 +92,16 @@ private:
         const vector<VariateType> &paramSet,
         pfnProcInternal proc
         );
-    VariateDesc *CallInternalProc(const mstring &procName, vector<VariateDesc *> &param);
+    VariateDesc *CallInternalProc(const mstring &procName, vector<VariateDesc *> &param, void *p = NULL);
 
     //internal proc
-    static VariateDesc *ProcStrStartWithA(vector<VariateDesc *> &paramSet);
-    static VariateDesc *ProcStrStartWithW(vector<VariateDesc *> &paramSet);
-    static VariateDesc *ProcStrSubStrA(vector<VariateDesc *> &paramSet);
-    static VariateDesc *ProcStrSubStrW(vector<VariateDesc *> &paramSet);
-    static VariateDesc *ProcStrCatA(vector<VariateDesc *> &paramSet);
-    static VariateDesc *ProcStrCatW(vector<VariateDesc *> &paramSet);
-    static VariateDesc *ProcRunCommand(vector<VariateDesc *> &paramSet);
+    static VariateDesc *ProcStrStartWithA(vector<VariateDesc *> &paramSet, void *p);
+    static VariateDesc *ProcStrStartWithW(vector<VariateDesc *> &paramSet, void *p);
+    static VariateDesc *ProcStrSubStrA(vector<VariateDesc *> &paramSet, void *p);
+    static VariateDesc *ProcStrSubStrW(vector<VariateDesc *> &paramSet, void *p);
+    static VariateDesc *ProcStrCatA(vector<VariateDesc *> &paramSet, void *p);
+    static VariateDesc *ProcStrCatW(vector<VariateDesc *> &paramSet, void *p);
+    static VariateDesc *ProcRunCommand(vector<VariateDesc *> &paramSet, void *p);
 
 private:
     map<mstring, ScriptProcRegisterInfo*> mProcSet;
@@ -111,4 +111,5 @@ private:
 
     static DWORD msVarSerial;
     map<mstring, VariateDesc *> mTempVarSet;    //临时变量缓存，解析用
+    static ThreadPoolBase *sThreadPool;         //表达式执行线程池
 };

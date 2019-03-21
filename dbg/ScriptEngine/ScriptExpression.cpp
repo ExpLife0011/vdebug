@@ -7,6 +7,7 @@
 #include "ScriptAccessor.h"
 
 DWORD CScriptExpReader::msVarSerial = 0;
+ThreadPoolBase *CScriptExpReader::sThreadPool = NULL;
 
 CScriptExpReader *CScriptExpReader::GetInst() {
     static CScriptExpReader *s_ptr = NULL;
@@ -182,7 +183,7 @@ VariateDesc *CScriptExpReader::GetPendingDesc() {
     return desc;
 }
 
-VariateDesc *CScriptExpReader::CallInternalProc(const mstring &procName, vector<VariateDesc *> &param) {
+VariateDesc *CScriptExpReader::CallInternalProc(const mstring &procName, vector<VariateDesc *> &param, void *p) {
     map<mstring, ScriptProcRegisterInfo *>::const_iterator it;
     if (mProcSet.end() == (it = mProcSet.find(procName)))
     {
@@ -205,10 +206,10 @@ VariateDesc *CScriptExpReader::CallInternalProc(const mstring &procName, vector<
             return NULL;
         }
     }
-    return it->second->mProcInternal(param);
+    return it->second->mProcInternal(param, p);
 }
 
-VariateDesc *CScriptExpReader::ProcStrStartWithA(vector<VariateDesc *> &paramSet) {
+VariateDesc *CScriptExpReader::ProcStrStartWithA(vector<VariateDesc *> &paramSet, void *p) {
     if (paramSet.size() != 2) {
         throw(new CScriptParserException("Call StrStartWithError，param Err1"));
         return NULL;
@@ -227,7 +228,7 @@ VariateDesc *CScriptExpReader::ProcStrStartWithA(vector<VariateDesc *> &paramSet
     return GetInst()->GetIntDesc(b);
 }
 
-VariateDesc *CScriptExpReader::ProcStrStartWithW(vector<VariateDesc *> &paramSet) {
+VariateDesc *CScriptExpReader::ProcStrStartWithW(vector<VariateDesc *> &paramSet, void *p) {
     if (paramSet.size() != 2) {
         throw(new CScriptParserException("Call StrStartWithError，param Err1"));
         return NULL;
@@ -246,7 +247,7 @@ VariateDesc *CScriptExpReader::ProcStrStartWithW(vector<VariateDesc *> &paramSet
     return GetInst()->GetIntDesc(b);
 }
 
-VariateDesc *CScriptExpReader::ProcStrSubStrA(vector<VariateDesc *> &paramSet) {
+VariateDesc *CScriptExpReader::ProcStrSubStrA(vector<VariateDesc *> &paramSet, void *p) {
     if (paramSet.size() != 3) {
         throw(new CScriptParserException("调用StrSubStrA参数数量不匹配"));
         return NULL;
@@ -265,7 +266,7 @@ VariateDesc *CScriptExpReader::ProcStrSubStrA(vector<VariateDesc *> &paramSet) {
     return GetInst()->GetGbkDesc(sub);
 }
 
-VariateDesc *CScriptExpReader::ProcStrSubStrW(vector<VariateDesc *> &paramSet) {
+VariateDesc *CScriptExpReader::ProcStrSubStrW(vector<VariateDesc *> &paramSet, void *p) {
     if (paramSet.size() != 3) {
         throw(new CScriptParserException("调用StrSubStrW参数数量不匹配"));
         return NULL;
@@ -284,7 +285,7 @@ VariateDesc *CScriptExpReader::ProcStrSubStrW(vector<VariateDesc *> &paramSet) {
     return GetInst()->GetUnicodeDesc(sub);
 }
 
-VariateDesc *CScriptExpReader::ProcStrCatA(vector<VariateDesc *> &paramSet) {
+VariateDesc *CScriptExpReader::ProcStrCatA(vector<VariateDesc *> &paramSet, void *p) {
     if (paramSet.size() != 2) {
         throw(new CScriptParserException("调用StrCatA参数数量不匹配"));
         return NULL;
@@ -300,7 +301,7 @@ VariateDesc *CScriptExpReader::ProcStrCatA(vector<VariateDesc *> &paramSet) {
     return GetInst()->GetGbkDesc(sub);
 }
 
-VariateDesc *CScriptExpReader::ProcStrCatW(vector<VariateDesc *> &paramSet) {
+VariateDesc *CScriptExpReader::ProcStrCatW(vector<VariateDesc *> &paramSet, void *p) {
     if (paramSet.size() != 3) {
         throw(new CScriptParserException("调用StrCatW参数数量不匹配"));
         return NULL;
@@ -315,9 +316,47 @@ VariateDesc *CScriptExpReader::ProcStrCatW(vector<VariateDesc *> &paramSet) {
     return GetInst()->GetUnicodeDesc(sub);
 }
 
-VariateDesc *CScriptExpReader::ProcRunCommand(vector<VariateDesc *> &paramSet) {
+VariateDesc *CScriptExpReader::ProcRunCommand(vector<VariateDesc *> &paramSet, void *p) {
+    ScriptCmdContext *cmdContext = (ScriptCmdContext *)p;
     VariateDesc *ret = new VariateDesc();
     ret->mVarType = em_var_int;
+
+    CUserContextMgr *pNotifyHlpr = CUserContextMgr::GetInst();
+    HUserCtx notify = pNotifyHlpr->GetUserCtx();
+    if (cmdContext->mCmdType == em_cmd_sync)
+    {
+        pNotifyHlpr->WaitNotify(notify);
+        pNotifyHlpr->Close(notify);
+    } else {
+        class CAsycCmdRunable : public ThreadRunable {
+        public:
+            CAsycCmdRunable(HUserCtx ctx, ScriptCmdContext *p) {
+                mNotify = ctx;
+                mScriptContext = p;
+            }
+
+            virtual ~CAsycCmdRunable() {}
+
+            void run() {
+                CUserContextMgr::GetInst()->WaitNotify(mNotify);
+
+                //执行断点出发后后逻辑
+                if (mScriptContext->mLogicRoot)
+                {
+                    CScriptParser::GetInst()->RunLogic(mScriptContext->mLogicRoot);
+                }
+                delete mScriptContext;
+            }
+
+        private:
+            HUserCtx mNotify;
+            ScriptCmdContext *mScriptContext;
+        };
+
+        ScriptCmdContext *pThreadParam = new ScriptCmdContext();
+        *pThreadParam = *cmdContext;
+        sThreadPool->exec(new CAsycCmdRunable(notify, pThreadParam));
+    }
     return ret;
 }
 
@@ -1019,6 +1058,11 @@ bool CScriptExpReader::IsOperator(const mstring &script, size_t pos, mstring &op
 }
 
 void CScriptExpReader::InitReader() {
+    if (sThreadPool == NULL)
+    {
+        sThreadPool = GetThreadPool(4, 64);
+    }
+
     msVarSerial = 0xff12;
     mOperatorSet.insert("+"), mOperatorSet.insert("-"), mOperatorSet.insert("*");
     mOperatorSet.insert("/"), mOperatorSet.insert("%"), mOperatorSet.insert("^");

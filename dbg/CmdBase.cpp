@@ -95,7 +95,7 @@ CtrlReply CCmdBase::RunCommand(const mstring &cmd, HUserCtx ctx)
     return result;
 }
 
-bool CCmdBase::IsCommand(const mstring &command) const {
+bool CCmdBase::IsCommand(const mstring &command, CmdHandlerInfo &info) const {
     mstring str = command;
     size_t pos = command.find(" ");
     if (mstring::npos != pos)
@@ -103,7 +103,12 @@ bool CCmdBase::IsCommand(const mstring &command) const {
         str = command.substr(0, pos);
     }
 
-    return (mCmdHandler.end() != mCmdHandler.find(str));
+    map<mstring, CmdHandlerInfo>::const_iterator it = mCmdHandler.find(str);
+    if (mCmdHandler.end() != it) {
+        info = it->second;
+        return true;
+    }
+    return false;
 }
 
 DWORD64 CCmdBase::GetFunAddr(const mstring &wstr)
@@ -359,11 +364,25 @@ DWORD64 CCmdBase::GetSizeAndParam(const mstring &strParam, mstring &strOut)
     return dwSize;
 }
 
-CtrlReply CCmdBase::OnCommand(const mstring &wstrCmd, const mstring &wstrCmdParam, HUserCtx ctx)
+CtrlReply CCmdBase::OnCommand(const mstring &cmd, const mstring &param, HUserCtx ctx)
 {
-    return CtrlReply();
+    CScopedLocker locker(this);
+    map<mstring, CmdHandlerInfo>::const_iterator it = mCmdHandler.find(param);
+
+    if (it == mCmdHandler.end())
+    {
+        CtrlReply reply;
+        reply.mShow = mstring("不支持的命令:") + cmd + "\n";
+        return reply;
+    } else {
+        return it->second.mHandler(param, ctx);
+    }
 }
 
-void CCmdBase::RegisterHandler(const mstring &cmd, pfnCmdHandler handler) {
-    mCmdHandler[cmd] = handler;
+void CCmdBase::RegisterHandler(const mstring &cmd, CmdDbgType type, pfnCmdHandler handler) {
+    CmdHandlerInfo info;
+    info.mCommand = cmd;
+    info.mCmdType = type;
+    info.mHandler = handler;
+    mCmdHandler[cmd] = info;
 }

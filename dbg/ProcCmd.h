@@ -12,7 +12,6 @@ public:
     static CProcCmd *GetInst();
     virtual ~CProcCmd();
     void InitProcCmd(CProcDbgger *pDbgger);
-    virtual CtrlReply OnCommand(const mstring &cmd, const mstring &param, HUserCtx ctx);
 
 private:
     static CtrlReply OnCmdBp(const mstring &cmd, HUserCtx ctx);
@@ -20,6 +19,7 @@ private:
     static CtrlReply OnCmdBc(const mstring &cmd, HUserCtx ctx);
     static CtrlReply OnCmdBu(const mstring &cmd, HUserCtx ctx);
     static CtrlReply OnCmdBe(const mstring &cmd, HUserCtx ctx);
+    static CtrlReply OnBreak(const mstring &cmd, HUserCtx ctx);
     static CtrlReply OnCmdDisass(const mstring &cmd, HUserCtx ctx);
     static CtrlReply OnCmdUb(const mstring &cmd, HUserCtx ctx);
     static CtrlReply OnCmdUf(const mstring &cmd, HUserCtx ctx);

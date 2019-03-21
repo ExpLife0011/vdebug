@@ -37,7 +37,19 @@ struct WordNode
 
 typedef CtrlReply (* pfnCmdHandler)(const mstring &, HUserCtx);
 
-class CCmdBase
+enum CmdDbgType {
+    em_cmd_sync,    //同步的命令
+    em_cmd_async    //异步的命令
+};
+
+//命令缓存
+struct CmdHandlerInfo {
+    mstring mCommand;           //调试命令名称
+    CmdDbgType mCmdType;        //同步还是异步执行,先在只有断点命令是异步的
+    pfnCmdHandler mHandler;     //命令执行函数
+};
+
+class CCmdBase : public CCriticalSectionLockable
 {
 public:
     CCmdBase();
@@ -48,7 +60,7 @@ public:
     BOOL InsertFunMsg(const mstring &strIndex, const DbgFunInfo &vProcInfo);
     //eg: kernel32!createfilew+0x1234
     static DWORD64 GetFunAddr(const mstring &wstr);
-    bool IsCommand(const mstring &command) const;
+    bool IsCommand(const mstring &command, CmdHandlerInfo &cmdInfo) const;
 public:
     static bool IsNumber(const mstring &str);
     static bool IsKeyword(const mstring &str);
@@ -60,9 +72,9 @@ protected:
     static bool IsHightStr(mstring &strData, mstring &strHight);
     static DWORD64 GetSizeAndParam(const mstring &strParam, mstring &strOut);
 
-    virtual CtrlReply OnCommand(const mstring &strCmd, const mstring &strCmdParam, HUserCtx ctx);
-    void RegisterHandler(const mstring &cmd, pfnCmdHandler handler);
+    virtual CtrlReply OnCommand(const mstring &cmd, const mstring &param, HUserCtx ctx);
+    void RegisterHandler(const mstring &cmd, CmdDbgType type, pfnCmdHandler handler);
 private:
-    map<mstring, pfnCmdHandler> mCmdHandler;
+    map<mstring, CmdHandlerInfo> mCmdHandler;
 };
 #endif
