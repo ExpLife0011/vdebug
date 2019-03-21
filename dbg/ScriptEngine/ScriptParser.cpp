@@ -113,12 +113,12 @@ bool CScriptParser::parser(const mstring &script) {
 
     //run script
     VariateDesc *desc = NULL;
-    mstring scriptCmd;
+    ScriptCmdContext ctx;
     while (true) {
         if (it->mLogicType == em_logic_if || it->mLogicType == em_logic_elseif)
         {
-            scriptCmd = (it->mCommandSet.begin())->mCommand;
-            desc = CScriptExpReader::GetInst()->ParserExpression(scriptCmd);
+            ctx = (*it->mCommandSet.begin());
+            desc = CScriptExpReader::GetInst()->ParserExpression(ctx);
             if (desc->mVarType != em_var_int)
             {
                 throw (new CScriptParserException("if语句执行错误"));
@@ -135,8 +135,8 @@ bool CScriptParser::parser(const mstring &script) {
         {
             for (list<ScriptCmdContext>::const_iterator ij = it->mCommandSet.begin() ; ij != it->mCommandSet.end() ; ij++)
             {
-                scriptCmd = ij->mCommand;
-                CScriptExpReader::GetInst()->ParserExpression(scriptCmd);
+                ctx = *ij;
+                CScriptExpReader::GetInst()->ParserExpression(ctx);
             }
             it = it->mNext;
         } else if (it->mLogicType == em_logic_end)
@@ -489,6 +489,7 @@ LogicNode *CScriptParser::GetCommandNode(const mstring &command, const mstring &
     nodeStart->mLogicType = em_logic_order;
 
     ScriptCmdContext ctx;
+    ctx.isDbggerCmd = true;
     ctx.mCommand = command;
 
     //命令对应的独立的逻辑块

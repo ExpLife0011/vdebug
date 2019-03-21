@@ -110,10 +110,12 @@ enum LogicNodeType {
 
 struct LogicNode;
 struct ScriptCmdContext {
+    bool isDbggerCmd;
     mstring mCommand;
     LogicNode *mLogicRoot;
 
     ScriptCmdContext() {
+        isDbggerCmd = false;
         mLogicRoot = NULL;
     }
 };

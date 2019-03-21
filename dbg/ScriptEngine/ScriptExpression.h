@@ -42,7 +42,7 @@ class CScriptExpReader {
 public:
     static CScriptExpReader *GetInst();
     void SetCache(ScriptCache *cache);
-    VariateDesc *ParserExpression(const mstring &expression);
+    VariateDesc *ParserExpression(const ScriptCmdContext &ctx);
 
 private:
     CScriptExpReader();

@@ -30,9 +30,17 @@ VariateDesc *CScriptExpReader::GetVarByName(const mstring &name) const {
     return mCache->GetVarByName(name);
 }
 
-VariateDesc *CScriptExpReader::ParserExpression(const mstring &expression) {
+VariateDesc *CScriptExpReader::ParserExpression(const ScriptCmdContext &ctx) {
     mTempVarSet.clear();
-    return ParserStr(expression);
+    if (ctx.isDbggerCmd)
+    {
+        VariateDesc *param = GetGbkDesc(ctx.mCommand);
+        vector<VariateDesc *> paramSet;
+        paramSet.push_back(param);
+        return CallInternalProc("RunCommand", paramSet);
+    } else {
+        return ParserStr(ctx.mCommand);
+    }
 }
 
 //变量或者数字判定可能会重合，优先数字判定
@@ -896,11 +904,10 @@ VariateDesc *CScriptExpReader::ParserStr(const mstring &str) {
     mstring strCopy = str;
     size_t pos1 = 0, pos2 = 0;
     VariateDesc *desc = NULL;
-    if (str.empty())
+    if (strCopy.empty())
     {
         return GetPendingDesc();
     }
-
     mstring lastStr;
     if (strCopy.startwith("var ")) {
         pos1 = strlen("var ");
@@ -959,26 +966,6 @@ VariateDesc *CScriptExpReader::ParserStr(const mstring &str) {
             mTempVarSet[desc->mVarName] = desc;
             strCopy.replace(pos1, pos2 - pos1 + 1, desc->mVarName);
         }
-
-        //is command internal ?
-        bool isCmd = false;
-        for (set<mstring>::const_iterator it = mCmdInternal.begin() ; it != mCmdInternal.end() ; it++)
-        {
-            if (strCopy == *it || strCopy.startwith((*it + " ").c_str()))
-            {
-                isCmd = true;
-                break;
-            }
-        }
-
-        if (isCmd)
-        {
-            VariateDesc *param = GetGbkDesc(strCopy);
-            vector<VariateDesc *> paramSet;
-            paramSet.push_back(param);
-            return CallInternalProc("RunCommand", paramSet);
-        }
-
         //express eg: a + b + 1234, StrStartWithW, a + StrStrlenA();
         desc = ProcessSimpleStr(strCopy);
     }
