@@ -6,24 +6,9 @@
 #include <string>
 #include <DbgCtrl/DbgCtrlCom.h>
 #include <ComLib/ComLib.h>
+#include "UserContext.h"
 
 using namespace std;
-
-typedef void (WINAPI *pfnUserNotifyCallback)(LPVOID pParam, LPVOID pContext);
-
-struct CmdUserParam
-{
-    pfnUserNotifyCallback m_pfnCallback;
-    LPVOID m_pParam;
-
-    CmdUserParam() : m_pParam(NULL), m_pfnCallback(NULL)
-    {}
-
-    bool operator==(const CmdUserParam &other) const
-    {
-        return true;
-    }
-};
 
 enum DbgCmdStatus
 {
@@ -50,31 +35,34 @@ struct WordNode
     mstring m_strContent;
 };
 
+typedef CtrlReply (* pfnCmdHandler)(const mstring &, HUserCtx);
+
 class CCmdBase
 {
 public:
     CCmdBase();
     virtual ~CCmdBase();
-    CtrlReply RunCommand(const mstring &request, const CmdUserParam *pParam = NULL);
+
+    CtrlReply RunCommand(const mstring &request, HUserCtx ctx);
+
     BOOL InsertFunMsg(const mstring &strIndex, const DbgFunInfo &vProcInfo);
     //eg: kernel32!createfilew+0x1234
-    DWORD64 GetFunAddr(const mstring &wstr);
-
-    //Tools
+    static DWORD64 GetFunAddr(const mstring &wstr);
+    bool IsCommand(const mstring &command) const;
 public:
-    bool IsNumber(const mstring &str) const;
-    bool IsKeyword(const mstring &str) const;
-    vector<WordNode> GetWordSet(const mstring &strStr) const;
-    BOOL GetNumFromStr(const mstring &strNumber, DWORD64 &dwNumber) const;
+    static bool IsNumber(const mstring &str);
+    static bool IsKeyword(const mstring &str);
+    static vector<WordNode> GetWordSet(const mstring &strStr);
+    static BOOL GetNumFromStr(const mstring &strNumber, DWORD64 &dwNumber);
 
 protected:
-    bool IsFilterStr(mstring &strData, mstring &strFilter) const;
-    //bool OnFilter(SyntaxDesc &desc, const mstring &strFilter) const;
-    bool IsHightStr(mstring &strData, mstring &strHight) const;
-    //bool OnHight(SyntaxDesc &desc, const mstring &strHight) const;
-    DWORD64 GetSizeAndParam(const mstring &strParam, mstring &strOut) const;
+    static bool IsFilterStr(mstring &strData, mstring &strFilter);
+    static bool IsHightStr(mstring &strData, mstring &strHight);
+    static DWORD64 GetSizeAndParam(const mstring &strParam, mstring &strOut);
 
-protected:
-    virtual CtrlReply OnCommand(const mstring &strCmd, const mstring &strCmdParam, const CmdUserParam *pParam);
+    virtual CtrlReply OnCommand(const mstring &strCmd, const mstring &strCmdParam, HUserCtx ctx);
+    void RegisterHandler(const mstring &cmd, pfnCmdHandler handler);
+private:
+    map<mstring, pfnCmdHandler> mCmdHandler;
 };
 #endif

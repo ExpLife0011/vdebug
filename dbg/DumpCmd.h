@@ -11,21 +11,21 @@ public:
     static CDumpCmd *GetInst();
     virtual ~CDumpCmd();
     void InitProcCmd();
-    virtual CtrlReply OnCommand(const std::mstring &cmd, const std::mstring &param, const CmdUserParam *pParam);
+    virtual CtrlReply OnCommand(const std::mstring &cmd, const std::mstring &param, HUserCtx ctx);
 
 private:
-    CtrlReply OnCmdDisass(const std::mstring &cmd, const CmdUserParam *pParam);
-    CtrlReply OnCmdUb(const std::mstring &cmd, const CmdUserParam *pParam);
-    CtrlReply OnCmdUf(const std::mstring &cmd, const CmdUserParam *pParam);
-    CtrlReply OnCmdKv(const std::mstring &cmd, const CmdUserParam *pParam);
-    CtrlReply OnCmdDb(const std::mstring &cmd, const CmdUserParam *pParam);
-    CtrlReply OnCmdDd(const std::mstring &cmd, const CmdUserParam *pParam);
-    CtrlReply OnCmdDu(const std::mstring &cmd, const CmdUserParam *pParam);
-    CtrlReply OnCmdDa(const std::mstring &cmd, const CmdUserParam *pParam);
-    CtrlReply OnCmdReg(const std::mstring &cmd, const CmdUserParam *pParam);
-    CtrlReply OnCmdTs(const std::mstring &cmd, const CmdUserParam *pParam);
-    CtrlReply OnCmdTc(const std::mstring &cmd, const CmdUserParam *pParam);
-    CtrlReply OnCmdLm(const std::mstring &cmd, const CmdUserParam *pParam);
-    CtrlReply OnCmdHelp(const std::mstring &param, const CmdUserParam *pParam);
+    CtrlReply OnCmdDisass(const std::mstring &cmd, HUserCtx ctx);
+    CtrlReply OnCmdUb(const std::mstring &cmd, HUserCtx ctx);
+    CtrlReply OnCmdUf(const std::mstring &cmd, HUserCtx ctx);
+    CtrlReply OnCmdKv(const std::mstring &cmd, HUserCtx ctx);
+    CtrlReply OnCmdDb(const std::mstring &cmd, HUserCtx ctx);
+    CtrlReply OnCmdDd(const std::mstring &cmd, HUserCtx ctx);
+    CtrlReply OnCmdDu(const std::mstring &cmd, HUserCtx ctx);
+    CtrlReply OnCmdDa(const std::mstring &cmd, HUserCtx ctx);
+    CtrlReply OnCmdReg(const std::mstring &cmd, HUserCtx ctx);
+    CtrlReply OnCmdTs(const std::mstring &cmd, HUserCtx ctx);
+    CtrlReply OnCmdTc(const std::mstring &cmd, HUserCtx ctx);
+    CtrlReply OnCmdLm(const std::mstring &cmd, HUserCtx ctx);
+    CtrlReply OnCmdHelp(const std::mstring &param, HUserCtx ctx);
 };
 #endif //DUMP_CMD_DBG_H_H_

@@ -212,6 +212,10 @@
 				RelativePath=".\symbol.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\UserContext.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Í·ÎÄ¼þ"
@@ -248,6 +252,10 @@
 			</File>
 			<File
 				RelativePath=".\symbol.h"
+				>
+			</File>
+			<File
+				RelativePath=".\UserContext.h"
 				>
 			</File>
 		</Filter>

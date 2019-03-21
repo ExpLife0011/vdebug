@@ -78,7 +78,7 @@ CtrlReply ProcDbgProxy::RunCmd(const CtrlRequest &request, void *param) {
         return reply;
     }
 
-    return GetInstance()->m_pCmdRunner->RunCommand(data);
+    return GetInstance()->m_pCmdRunner->RunCommand(data, HUserCtx());
 }
 
 /*
@@ -128,7 +128,7 @@ CtrlReply ProcDbgProxy::DetachProc(const CtrlRequest &request, void *param) {
 CtrlReply ProcDbgProxy::BreakDebugger(const CtrlRequest &request, void *param) {
     if (GetInstance()->m_pProcDbgger->GetDbggerStatus() == em_dbg_status_busy)
     {
-        return GetInstance()->m_pCmdRunner->RunCommand("bk");
+        return GetInstance()->m_pCmdRunner->RunCommand("bk", HUserCtx());
     } else {
     }
     return CtrlReply();

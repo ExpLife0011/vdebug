@@ -58,7 +58,7 @@ bool CCmdBase::OnHight(SyntaxDesc &desc, const mstring &wstrHight) const
 }
 */
 
-CtrlReply CCmdBase::RunCommand(const mstring &cmd, const CmdUserParam *pParam)
+CtrlReply CCmdBase::RunCommand(const mstring &cmd, HUserCtx ctx)
 {
     CtrlReply result;
     mstring str(cmd);
@@ -91,8 +91,19 @@ CtrlReply CCmdBase::RunCommand(const mstring &cmd, const CmdUserParam *pParam)
         strParam.trim();
     }
 
-    result = OnCommand(strStart, strParam, pParam);
+    result = OnCommand(strStart, strParam, ctx);
     return result;
+}
+
+bool CCmdBase::IsCommand(const mstring &command) const {
+    mstring str = command;
+    size_t pos = command.find(" ");
+    if (mstring::npos != pos)
+    {
+        str = command.substr(0, pos);
+    }
+
+    return (mCmdHandler.end() != mCmdHandler.find(str));
 }
 
 DWORD64 CCmdBase::GetFunAddr(const mstring &wstr)
@@ -129,7 +140,7 @@ DWORD64 CCmdBase::GetFunAddr(const mstring &wstr)
 //0x12abcd
 //0n115446
 //323ffabc
-bool CCmdBase::IsNumber(const mstring &str) const
+bool CCmdBase::IsNumber(const mstring &str)
 {
     if (str.empty())
     {
@@ -172,7 +183,7 @@ bool CCmdBase::IsNumber(const mstring &str) const
     return bResult;
 }
 
-bool CCmdBase::IsKeyword(const mstring &wstr) const
+bool CCmdBase::IsKeyword(const mstring &wstr)
 {
     static set<mstring> *s_ptr = NULL;
     if (!s_ptr)
@@ -187,7 +198,7 @@ bool CCmdBase::IsKeyword(const mstring &wstr) const
     return (s_ptr->end() != s_ptr->find(wstrLow));
 }
 
-vector<WordNode> CCmdBase::GetWordSet(const mstring &strStr) const
+vector<WordNode> CCmdBase::GetWordSet(const mstring &strStr)
 {
     static set<mstring> *s_ptr = NULL;
     if (!s_ptr)
@@ -252,7 +263,7 @@ vector<WordNode> CCmdBase::GetWordSet(const mstring &strStr) const
 //0x43fdad12
 //0n12232433
 //5454546455
-BOOL CCmdBase::GetNumFromStr(const mstring &strNumber, DWORD64 &dwResult) const
+BOOL CCmdBase::GetNumFromStr(const mstring &strNumber, DWORD64 &dwResult)
 {
     mstring str(strNumber);
     str.makelower();
@@ -270,7 +281,7 @@ BOOL CCmdBase::GetNumFromStr(const mstring &strNumber, DWORD64 &dwResult) const
     }
 }
 
-bool CCmdBase::IsFilterStr(mstring &strData, mstring &strFilter) const
+bool CCmdBase::IsFilterStr(mstring &strData, mstring &strFilter)
 {
     mstring str(strData);
     str.makelower();
@@ -298,7 +309,7 @@ bool CCmdBase::IsFilterStr(mstring &strData, mstring &strFilter) const
     return true;
 }
 
-bool CCmdBase::IsHightStr(mstring &strData, mstring &strHight) const
+bool CCmdBase::IsHightStr(mstring &strData, mstring &strHight)
 {
     mstring str(strData);
     str.makelower();
@@ -326,7 +337,7 @@ bool CCmdBase::IsHightStr(mstring &strData, mstring &strHight) const
     return true;
 }
 
-DWORD64 CCmdBase::GetSizeAndParam(const mstring &strParam, mstring &strOut) const
+DWORD64 CCmdBase::GetSizeAndParam(const mstring &strParam, mstring &strOut)
 {
     mstring str(strParam);
     str.makelower();
@@ -348,7 +359,11 @@ DWORD64 CCmdBase::GetSizeAndParam(const mstring &strParam, mstring &strOut) cons
     return dwSize;
 }
 
-CtrlReply CCmdBase::OnCommand(const mstring &wstrCmd, const mstring &wstrCmdParam, const CmdUserParam *pParam)
+CtrlReply CCmdBase::OnCommand(const mstring &wstrCmd, const mstring &wstrCmdParam, HUserCtx ctx)
 {
     return CtrlReply();
+}
+
+void CCmdBase::RegisterHandler(const mstring &cmd, pfnCmdHandler handler) {
+    mCmdHandler[cmd] = handler;
 }

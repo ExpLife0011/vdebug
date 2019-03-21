@@ -27,7 +27,7 @@ struct BreakPointInfo
     BreakPointType mBpType;
     DWORD64 mBpAddr;
     mstring mSymbol;
-    CmdUserParam mUserContext;
+    HUserCtx mUserContext;
     ProcDbgBreakPointStat mBpStat;
 
     BreakPointInfo() : mBpAddr(0), mBpType(em_breakpoint_int3) {
@@ -51,7 +51,7 @@ public:
     CBreakPointMgr();
     virtual ~CBreakPointMgr();
 
-    BOOL SetBreakPoint(DWORD64 dwAddr, const CmdUserParam *pUserContext = NULL);
+    BOOL SetBreakPoint(DWORD64 dwAddr, HUserCtx ctx);
     BOOL DeleteBpByIndex(int index);
     BOOL DeleteAllBp();
     BOOL EnableBpByIndex(int index);

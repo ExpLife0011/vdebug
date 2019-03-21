@@ -4,6 +4,7 @@
 #include "BreakPoint.h"
 #include "ProcDbg.h"
 #include "DbgCommon.h"
+#include "UserContext.h"
 
 DWORD CBreakPointMgr::msSerial = 0;
 
@@ -46,6 +47,8 @@ void CBreakPointMgr::Int3BpCallback()
         CProcDbgger::GetInstance()->Wait();
         stat.mDbggerStatus = em_dbg_status_busy;
         CDbgStatMgr::GetInst()->ReportDbgStatus(stat);
+
+        GetBreakPointMgr()->OnBreakPoint(context.cip);
     } else {
     }
 }
@@ -93,7 +96,7 @@ bool CBreakPointMgr::PushBreakPoint(const BreakPointInfo &info)
     return true;
 }
 
-BOOL CBreakPointMgr::SetBreakPoint(DWORD64 dwAddr, const CmdUserParam *pUserContxt)
+BOOL CBreakPointMgr::SetBreakPoint(DWORD64 dwAddr, HUserCtx ctx)
 {
     if (IsBpInCache(dwAddr))
     {
@@ -111,10 +114,7 @@ BOOL CBreakPointMgr::SetBreakPoint(DWORD64 dwAddr, const CmdUserParam *pUserCont
         point.mSerial = msSerial++;
         point.mBpType = em_breakpoint_int3;
 
-        if (pUserContxt)
-        {
-            memcpy(&point.mUserContext, pUserContxt, sizeof(CmdUserParam));
-        }
+        point.mUserContext = ctx;
         PushBreakPoint(point);
         return TRUE;
     }
@@ -189,12 +189,9 @@ BOOL CBreakPointMgr::OnBreakPoint(DWORD64 dwAddr)
     {
         if (dwAddr == it->mBpAddr)
         {
-            //GetSyntaxView()->AppendText(SCI_LABEL_DEFAULT, FormatA("¶Ïµã%lsÒÑ´¥·¢", it->m_wstrName.c_str()));
-            //GetCurrentDbgger()->RunCommand("r");
-
-            if (it->mUserContext.m_pfnCallback)
+            if (it->mUserContext)
             {
-                it->mUserContext.m_pfnCallback(it->mUserContext.m_pParam, NULL);
+                CUserContextMgr::GetInst()->SetUserCtx(it->mUserContext);
             }
             return TRUE;
         }

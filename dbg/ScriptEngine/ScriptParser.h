@@ -1,7 +1,11 @@
+/*
+调试脚本编译器
+*/
 #pragma once
 #include <string>
 #include <ComLib/mstring.h>
 #include "ScriptDef.h"
+#include "../CmdBase.h"
 
 using namespace std;
 
@@ -21,7 +25,7 @@ private:
 class CScriptParser {
 public:
     static CScriptParser *GetInst();
-    void init();
+    void init(CCmdBase *cmdEngine);
     bool parser(const mstring &script);
 
 private:
@@ -51,8 +55,11 @@ private:
     LogicNode *GetCommandNode(const mstring &command, const mstring &script, size_t &lastPos, LogicNode *&endNode) const;
     LogicNode *GetWhileNode(const mstring &script, size_t &lastPos, LogicNode *&endNode) const;
     LogicNode *GetForNode(const mstring &script, size_t &lastPos, LogicNode *&endNode) const;
+    //逻辑节点中追加一条表达式
+    void PushExpression(LogicNode *logicNode, const mstring &content, LogicNode *cmdLogic = NULL) const;
 private:
     list<VariateDesc> mGlobalVar;
     list<FunctionDesc> mGlobalFun;
     ScriptCache mScriptCache;
+    CCmdBase *mCmdEngine;
 };

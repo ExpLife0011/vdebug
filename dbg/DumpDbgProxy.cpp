@@ -121,5 +121,5 @@ CtrlReply DumpDbgProxy::RunCmd(const CtrlRequest &request, void *param) {
         return reply;
     }
 
-    return GetInstance()->mCmdRunner->RunCommand(data);
+    return GetInstance()->mCmdRunner->RunCommand(data, HUserCtx());
 }

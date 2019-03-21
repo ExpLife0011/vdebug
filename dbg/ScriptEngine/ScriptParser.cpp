@@ -18,9 +18,10 @@ CScriptParser *CScriptParser::GetInst() {
     return s_ptr;
 }
 
-void CScriptParser::init() {
+void CScriptParser::init(CCmdBase *cmdEngine) {
     CScriptExpReader::GetInst()->InitReader();
     CScriptExpReader::GetInst()->SetCache(&mScriptCache);
+    mCmdEngine = cmdEngine;
 }
 
 void CScriptParser::NodeFold(LogicNode *root) const {
@@ -346,9 +347,7 @@ LogicNode *CScriptParser::GetIfElseNode(const mstring &script, size_t &lastPos, 
     }
 
     lastStr = script.substr(pos1 + 1, pos2 - pos1 - 1);
-    ScriptCmdContext ctx;
-    ctx.mCommand = lastStr;
-    nodeIf->mCommandSet.push_back(ctx);
+    PushExpression(nodeIf, lastStr);
 
     if (root == NULL){
         root = nodeIf;
@@ -391,9 +390,7 @@ LogicNode *CScriptParser::GetIfElseNode(const mstring &script, size_t &lastPos, 
         elseIfNode->mLogicType = em_logic_elseif;
         lastStr = script.substr(pos1 + 1, pos2 - pos1 - 1);
 
-        ScriptCmdContext ctx;
-        ctx.mCommand = lastStr;
-        elseIfNode->mCommandSet.push_back(ctx);
+        PushExpression(elseIfNode, lastStr);
 
         pos1 = script.find('{', pos2);
         pos2 = CScriptHlpr::FindNextBracket('{', '}', script, pos1);
@@ -449,6 +446,18 @@ LogicNode *CScriptParser::GetForNode(const mstring &script, size_t &lastPos, Log
     return NULL;
 }
 
+void CScriptParser::PushExpression(LogicNode *logicNode, const mstring &content, LogicNode *cmdLogic) const {
+    ScriptCmdContext context;
+    context.mCommand = content;
+    context.mLogicRoot = cmdLogic;
+    if (mCmdEngine->IsCommand(content))
+    {
+        context.isDbggerCmd = true;
+    }
+
+    logicNode->mCommandSet.push_back(context);
+}
+
 //返回逻辑节点起始位置
 size_t CScriptParser::GetLogicStart(const mstring &script, size_t pos, mstring &startStr) const {
     size_t pos1 = mstring::npos, pos2 = mstring::npos;
@@ -488,15 +497,11 @@ LogicNode *CScriptParser::GetCommandNode(const mstring &command, const mstring &
     nodeStart = new LogicNode();
     nodeStart->mLogicType = em_logic_order;
 
-    ScriptCmdContext ctx;
-    ctx.isDbggerCmd = true;
-    ctx.mCommand = command;
-
     //命令对应的独立的逻辑块
     LogicNode *end2 = new LogicNode();
     end2->mLogicType = em_logic_end;
-    ctx.mLogicRoot = GetLogicNode(lastStr, end2);
-    nodeStart->mCommandSet.push_back(ctx);
+    LogicNode *pp = GetLogicNode(lastStr, end2);
+    PushExpression(nodeStart, command, pp);
     endNode = new LogicNode();
     endNode->mLogicType = em_logic_end;
     nodeStart->mNext = endNode;
@@ -548,9 +553,7 @@ LogicNode *CScriptParser::GetLogicNode(const mstring &content, LogicNode *logicE
 
                 for (it = set2.begin() ; it != set2.end() ; it++)
                 {
-                    ScriptCmdContext ctx;
-                    ctx.mCommand = *it;
-                    newNode->mCommandSet.push_back(ctx);
+                    PushExpression(newNode, *it);
                 }
             }
         }
@@ -612,6 +615,8 @@ LogicNode *CScriptParser::GetLogicNode(const mstring &content, LogicNode *logicE
     return root;
 }
 
+#include "../ProcCmd.h"
+
 VOID WINAPI TestScript(HWND hwnd, HINSTANCE hinst, LPSTR cmd, int show) {
     /*
     ServSessionMgr *ptr = GetServSessionMgrInst();
@@ -635,7 +640,7 @@ VOID WINAPI TestScript(HWND hwnd, HINSTANCE hinst, LPSTR cmd, int show) {
     mstring script = (const char *)pMapping->lpView;
     CloseFileMapping(pMapping);
 
-    CScriptParser::GetInst()->init();
+    CScriptParser::GetInst()->init(CProcCmd::GetInst());
     CScriptParser::GetInst()->parser(script);
     MessageBoxW(0, 0, 0, 0);
 }

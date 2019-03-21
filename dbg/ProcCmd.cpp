@@ -4,7 +4,10 @@
 #include "memory.h"
 #include "BreakPoint.h"
 #include "DbgCommon.h"
+#include "ProcDbg.h"
 #include "./DescParser/DescPrinter.h"
+
+CProcDbgger *CProcCmd::mProcDbgger = NULL;
 
 CProcCmd *CProcCmd::GetInst() {
     static CProcCmd *s_ptr = NULL;
@@ -16,7 +19,7 @@ CProcCmd *CProcCmd::GetInst() {
     return s_ptr;
 }
 
-CProcCmd::CProcCmd() : mProcDbgger(NULL) {
+CProcCmd::CProcCmd() {
 }
 
 CProcCmd::~CProcCmd() {
@@ -26,14 +29,14 @@ void CProcCmd::InitProcCmd(CProcDbgger *pDbgger) {
     mProcDbgger = pDbgger;
 }
 
-CtrlReply CProcCmd::OnCommand(const mstring &cmd, const mstring &cmdParam, const CmdUserParam *pParam) {
+CtrlReply CProcCmd::OnCommand(const mstring &cmd, const mstring &cmdParam, HUserCtx ctx) {
     if (cmd == "bp")
     {
-        return OnCmdBp(cmdParam, pParam);
+        return OnCmdBp(cmdParam, ctx);
     }
     else if (cmd == "bl")
     {
-        return OnCmdBl(cmdParam, pParam);
+        return OnCmdBl(cmdParam, ctx);
     }
     else if (cmd == "bk")
     {
@@ -41,85 +44,85 @@ CtrlReply CProcCmd::OnCommand(const mstring &cmd, const mstring &cmdParam, const
     }
     else if (cmd == "bc")
     {
-        return OnCmdBc(cmdParam, pParam);
+        return OnCmdBc(cmdParam, ctx);
     }
     else if (cmd == "bu")
     {
-        return OnCmdBu(cmdParam, pParam);
+        return OnCmdBu(cmdParam, ctx);
     }
     else if (cmd == "be")
     {
-        return OnCmdBe(cmdParam, pParam);
+        return OnCmdBe(cmdParam, ctx);
     }
     //切换到指定线程
     else if (cmd == "tc")
     {
-        return OnCmdTc(cmdParam, pParam);
+        return OnCmdTc(cmdParam, ctx);
     }
     //展示指定线程
     else if (cmd == "ts")
     {
-        return OnCmdTs(cmdParam, pParam);
+        return OnCmdTs(cmdParam, ctx);
     }
     //展示模块信息
     else if (cmd == "lm")
     {
-        return OnCmdLm(cmdParam, pParam);
+        return OnCmdLm(cmdParam, ctx);
     }
     else if (cmd == "u")
     {
-        return OnCmdDisass(cmdParam, pParam);
+        return OnCmdDisass(cmdParam, ctx);
     }
     else if (cmd == "ub")
     {
-        return OnCmdUb(cmdParam, pParam);
+        return OnCmdUb(cmdParam, ctx);
     }
     else if (cmd == "uf")
     {
-        return OnCmdUf(cmdParam, pParam);
+        return OnCmdUf(cmdParam, ctx);
     }
     else if (cmd == "g")
     {
-        return OnCmdGo(cmdParam, pParam);
+        return OnCmdGo(cmdParam, ctx);
     }
     //执行到调用返回
     else if (cmd == "gu")
     {
-        return OnCmdGu(cmdParam, pParam);
+        return OnCmdGu(cmdParam, ctx);
     }
     else if (cmd == "kv")
     {
-        return OnCmdKv(cmdParam, pParam);
+        return OnCmdKv(cmdParam, ctx);
     }
     else if (cmd == "db")
     {
-        return OnCmdDb(cmdParam, pParam);
+        return OnCmdDb(cmdParam, ctx);
     }
     else if (cmd == "dd")
     {
-        return OnCmdDd(cmdParam, pParam);
+        return OnCmdDd(cmdParam, ctx);
     }
     else if (cmd == "du")
     {
-        return OnCmdDu(cmdParam, pParam);
+        return OnCmdDu(cmdParam, ctx);
     } else if (cmd == "da")
     {
-        return OnCmdDa(cmdParam, pParam);
+        return OnCmdDa(cmdParam, ctx);
     }
     else if (cmd == "r")
     {
-        return OnCmdReg(cmdParam, pParam);
+        return OnCmdReg(cmdParam, ctx);
     }
     else if (cmd == "sc")
     {
-        return OnCmdScript(cmdParam, pParam);
+        return OnCmdScript(cmdParam, ctx);
     } else if (cmd == "pf")
     {
-        return OnCmdPf(cmdParam, pParam);
+        return OnCmdPf(cmdParam, ctx);
     }
     else if (cmd == "help" || cmd == "h")
     {
-        return OnCmdHelp(cmdParam, pParam);
+        return OnCmdHelp(cmdParam, ctx);
     }
 
     CtrlReply reply;
@@ -127,7 +130,7 @@ CtrlReply CProcCmd::OnCommand(const mstring &cmd, const mstring &cmdParam, const
     return reply;
 }
 
-CtrlReply CProcCmd::OnCmdBp(const mstring &param, const CmdUserParam *pParam)
+CtrlReply CProcCmd::OnCmdBp(const mstring &param, HUserCtx ctx)
 {
     CtrlReply result;
     mstring str(param);
@@ -140,14 +143,14 @@ CtrlReply CProcCmd::OnCmdBp(const mstring &param, const CmdUserParam *pParam)
     }
 
     DWORD64 dwProcAddr = 0;
-    if (!GetNumFromStr(str, dwProcAddr))
+    if (GetInst()->GetNumFromStr(str, dwProcAddr))
     {
-        dwProcAddr = GetFunAddr(str);
+        dwProcAddr = GetInst()->GetFunAddr(str);
     }
 
     if (dwProcAddr)
     {
-        if (GetBreakPointMgr()->SetBreakPoint(dwProcAddr, pParam))
+        if (GetBreakPointMgr()->SetBreakPoint(dwProcAddr, ctx))
         {
             result.mShow = "设置断点成功\n";
         } else {
@@ -159,7 +162,7 @@ CtrlReply CProcCmd::OnCmdBp(const mstring &param, const CmdUserParam *pParam)
     return result;
 }
 
-CtrlReply CProcCmd::OnCmdBl(const mstring &param, const CmdUserParam *pParam)
+CtrlReply CProcCmd::OnCmdBl(const mstring &param, HUserCtx ctx)
 {
     vector<BreakPointInfo> bpSet = GetBreakPointMgr()->GetBpSet();
 
@@ -192,7 +195,7 @@ CtrlReply CProcCmd::OnCmdBl(const mstring &param, const CmdUserParam *pParam)
     return result;
 }
 
-CtrlReply CProcCmd::OnCmdBc(const mstring &cmdParam, const CmdUserParam *pParam)
+CtrlReply CProcCmd::OnCmdBc(const mstring &cmdParam, HUserCtx ctx)
 {
     CtrlReply tmp;
     mstring str(cmdParam);
@@ -204,7 +207,7 @@ CtrlReply CProcCmd::OnCmdBc(const mstring &cmdParam, const CmdUserParam *pParam)
         return tmp;
     }
 
-    if (!IsNumber(str))
+    if (!GetInst()->IsNumber(str))
     {
         tmp.mStatus = DBG_CMD_SYNTAX_ERR;
         tmp.mShow = "bc 语法错误";
@@ -224,7 +227,7 @@ CtrlReply CProcCmd::OnCmdBc(const mstring &cmdParam, const CmdUserParam *pParam)
     return tmp;
 }
 
-CtrlReply CProcCmd::OnCmdBu(const mstring &cmdParam, const CmdUserParam *pParam) {
+CtrlReply CProcCmd::OnCmdBu(const mstring &cmdParam, HUserCtx ctx) {
     CtrlReply result;
     mstring str(cmdParam);
     str.makelower();
@@ -251,7 +254,7 @@ CtrlReply CProcCmd::OnCmdBu(const mstring &cmdParam, const CmdUserParam *pParam)
     return result;
 }
 
-CtrlReply CProcCmd::OnCmdBe(const mstring &cmdParam, const CmdUserParam *pParam) {
+CtrlReply CProcCmd::OnCmdBe(const mstring &cmdParam, HUserCtx ctx) {
     CtrlReply result;
     mstring str(cmdParam);
     str.makelower();
@@ -278,7 +281,7 @@ CtrlReply CProcCmd::OnCmdBe(const mstring &cmdParam, const CmdUserParam *pParam)
     return result;
 }
 
-CtrlReply CProcCmd::OnCmdDisass(const mstring &wstrCmdParam, const CmdUserParam *pParam)
+CtrlReply CProcCmd::OnCmdDisass(const mstring &wstrCmdParam, HUserCtx ctx)
 {
     mstring wstr(wstrCmdParam);
     wstr.makelower();
@@ -324,7 +327,7 @@ CtrlReply CProcCmd::OnCmdDisass(const mstring &wstrCmdParam, const CmdUserParam 
     return result;
 }
 
-CtrlReply CProcCmd::OnCmdUb(const mstring &param, const CmdUserParam *pParam)
+CtrlReply CProcCmd::OnCmdUb(const mstring &param, HUserCtx ctx)
 {
     mstring str(param);
     str.makelower();
@@ -371,7 +374,7 @@ CtrlReply CProcCmd::OnCmdUb(const mstring &param, const CmdUserParam *pParam)
     return reply;
 }
 
-CtrlReply CProcCmd::OnCmdUf(const mstring &param, const CmdUserParam *pParam)
+CtrlReply CProcCmd::OnCmdUf(const mstring &param, HUserCtx ctx)
 {
     mstring str(param);
     str.makelower();
@@ -412,7 +415,7 @@ CtrlReply CProcCmd::OnCmdUf(const mstring &param, const CmdUserParam *pParam)
     return reply;
 }
 
-CtrlReply CProcCmd::OnCmdGo(const mstring &param, const CmdUserParam *pParam)
+CtrlReply CProcCmd::OnCmdGo(const mstring &param, HUserCtx ctx)
 {
     mProcDbgger->Run();
     CtrlReply result;
@@ -420,7 +423,7 @@ CtrlReply CProcCmd::OnCmdGo(const mstring &param, const CmdUserParam *pParam)
     return result;
 }
 
-CtrlReply CProcCmd::OnCmdGu(const mstring &param, const CmdUserParam *pParam)
+CtrlReply CProcCmd::OnCmdGu(const mstring &param, HUserCtx ctx)
 {
     mProcDbgger->RunExitProc();
 
@@ -429,7 +432,7 @@ CtrlReply CProcCmd::OnCmdGu(const mstring &param, const CmdUserParam *pParam)
     return reply;
 }
 
-CtrlReply CProcCmd::OnCmdReg(const mstring &cmdParam, const CmdUserParam *pParam)
+CtrlReply CProcCmd::OnCmdReg(const mstring &cmdParam, HUserCtx userCtx)
 {
     RegisterContent ctx;
     ctx.mContext = mProcDbgger->GetCurrentContext();
@@ -455,12 +458,12 @@ CtrlReply CProcCmd::OnCmdReg(const mstring &cmdParam, const CmdUserParam *pParam
     return result;
 }
 
-CtrlReply CProcCmd::OnCmdScript(const mstring &cmdParam, const CmdUserParam *pParam)
+CtrlReply CProcCmd::OnCmdScript(const mstring &cmdParam, HUserCtx ctx)
 {
     return CtrlReply();
 }
 
-CtrlReply CProcCmd::OnCmdHelp(const mstring &param, const CmdUserParam *pParam)
+CtrlReply CProcCmd::OnCmdHelp(const mstring &param, HUserCtx ctx)
 {
     mstring strParam(param);
     strParam.makelower();
@@ -599,7 +602,7 @@ CtrlReply CProcCmd::OnCmdHelp(const mstring &param, const CmdUserParam *pParam)
     return result;
 }
 
-CtrlReply CProcCmd::OnCmdDb(const mstring &cmdParam, const CmdUserParam *pParam)
+CtrlReply CProcCmd::OnCmdDb(const mstring &cmdParam, HUserCtx ctx)
 {
     DWORD64 dwDataSize = 64;
     DWORD64 dwAddr = 0;
@@ -669,7 +672,7 @@ CtrlReply CProcCmd::OnCmdDb(const mstring &cmdParam, const CmdUserParam *pParam)
     return result;
 }
 
-CtrlReply CProcCmd::OnCmdDd(const mstring &cmdParam, const CmdUserParam *pParam)
+CtrlReply CProcCmd::OnCmdDd(const mstring &cmdParam, HUserCtx ctx)
 {
     CScriptEngine script;
     script.SetContext(mProcDbgger->GetCurrentContext(), CProcDbgger::ReadDbgProcMemory, CProcDbgger::WriteDbgProcMemory);
@@ -710,7 +713,7 @@ CtrlReply CProcCmd::OnCmdDd(const mstring &cmdParam, const CmdUserParam *pParam)
     return result;
 }
 
-CtrlReply CProcCmd::OnCmdDu(const mstring &strCmdParam, const CmdUserParam *pParam)
+CtrlReply CProcCmd::OnCmdDu(const mstring &strCmdParam, HUserCtx ctx)
 {
     CScriptEngine script;
     script.SetContext(mProcDbgger->GetCurrentContext(), CProcDbgger::ReadDbgProcMemory, CProcDbgger::WriteDbgProcMemory);
@@ -734,7 +737,7 @@ CtrlReply CProcCmd::OnCmdDu(const mstring &strCmdParam, const CmdUserParam *pPar
     return result;
 }
 
-CtrlReply CProcCmd::OnCmdDa(const mstring &strCmdParam, const CmdUserParam *pParam) {
+CtrlReply CProcCmd::OnCmdDa(const mstring &strCmdParam, HUserCtx ctx) {
     CScriptEngine script;
     script.SetContext(mProcDbgger->GetCurrentContext(), CProcDbgger::ReadDbgProcMemory, CProcDbgger::WriteDbgProcMemory);
 
@@ -757,7 +760,7 @@ CtrlReply CProcCmd::OnCmdDa(const mstring &strCmdParam, const CmdUserParam *pPar
     return result;
 }
 
-CtrlReply CProcCmd::OnCmdKv(const mstring &cmdParam, const CmdUserParam *pParam)
+CtrlReply CProcCmd::OnCmdKv(const mstring &cmdParam, HUserCtx ctx)
 {
     list<STACKFRAME64> vStack = mProcDbgger->GetStackFrame(cmdParam);
     CtrlReply result;
@@ -791,7 +794,7 @@ CtrlReply CProcCmd::OnCmdKv(const mstring &cmdParam, const CmdUserParam *pParam)
     return result;
 }
 
-CtrlReply CProcCmd::OnCmdTc(const mstring &param, const CmdUserParam *pParam)
+CtrlReply CProcCmd::OnCmdTc(const mstring &param, HUserCtx ctx)
 {
     mstring str(param);
     str.trim();
@@ -810,7 +813,7 @@ CtrlReply CProcCmd::OnCmdTc(const mstring &param, const CmdUserParam *pParam)
     return reply;
 }
 
-CtrlReply CProcCmd::OnCmdLm(const mstring &param, const CmdUserParam *pParam)
+CtrlReply CProcCmd::OnCmdLm(const mstring &param, HUserCtx ctx)
 {
     list<DbgModuleInfo> moduleSet = mProcDbgger->GetModuleInfo();
 
@@ -832,7 +835,7 @@ CtrlReply CProcCmd::OnCmdLm(const mstring &param, const CmdUserParam *pParam)
     return result;
 }
 
-CtrlReply CProcCmd::OnCmdPf(const mstring &param, const CmdUserParam *pParam) {
+CtrlReply CProcCmd::OnCmdPf(const mstring &param, HUserCtx userCtx) {
     CtrlReply result;
     TITAN_ENGINE_CONTEXT_t ctx = mProcDbgger->GetCurrentContext();
     DbgModuleInfo module = mProcDbgger->GetModuleFromAddr(ctx.cip);
@@ -873,7 +876,7 @@ CtrlReply CProcCmd::OnCmdPf(const mstring &param, const CmdUserParam *pParam) {
     return result;
 }
 
-CtrlReply CProcCmd::OnCmdTs(const mstring &param, const CmdUserParam *pParam)
+CtrlReply CProcCmd::OnCmdTs(const mstring &param, HUserCtx ctx)
 {
     vector<DbgProcThreadInfo> threadSet = mProcDbgger->GetThreadCache();
 

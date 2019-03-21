@@ -21,60 +21,60 @@ CDumpCmd *CDumpCmd::GetInst() {
 void CDumpCmd::InitProcCmd() {
 }
 
-CtrlReply CDumpCmd::OnCommand(const std::mstring &cmd, const std::mstring &cmdParam, const CmdUserParam *pParam) {
+CtrlReply CDumpCmd::OnCommand(const std::mstring &cmd, const std::mstring &cmdParam, HUserCtx ctx) {
     //切换到指定线程
     if (cmd == "tc")
     {
-        return OnCmdTc(cmdParam, pParam);
+        return OnCmdTc(cmdParam, ctx);
     }
     //展示指定线程
     else if (cmd == "ts")
     {
-        return OnCmdTs(cmdParam, pParam);
+        return OnCmdTs(cmdParam, ctx);
     }
     //展示模块信息
     else if (cmd == "lm")
     {
-        return OnCmdLm(cmdParam, pParam);
+        return OnCmdLm(cmdParam, ctx);
     }
     else if (cmd == "u")
     {
-        return OnCmdDisass(cmdParam, pParam);
+        return OnCmdDisass(cmdParam, ctx);
     }
     else if (cmd == "ub")
     {
-        return OnCmdUb(cmdParam, pParam);
+        return OnCmdUb(cmdParam, ctx);
     }
     else if (cmd == "uf")
     {
-        return OnCmdUf(cmdParam, pParam);
+        return OnCmdUf(cmdParam, ctx);
     }
     else if (cmd == "kv")
     {
-        return OnCmdKv(cmdParam, pParam);
+        return OnCmdKv(cmdParam, ctx);
     }
     else if (cmd == "db")
     {
-        return OnCmdDb(cmdParam, pParam);
+        return OnCmdDb(cmdParam, ctx);
     }
     else if (cmd == "dd")
     {
-        return OnCmdDd(cmdParam, pParam);
+        return OnCmdDd(cmdParam, ctx);
     }
     else if (cmd == "du")
     {
-        return OnCmdDu(cmdParam, pParam);
+        return OnCmdDu(cmdParam, ctx);
     } else if (cmd == "da")
     {
-        return OnCmdDa(cmdParam, pParam);
+        return OnCmdDa(cmdParam, ctx);
     }
     else if (cmd == "r")
     {
-        return OnCmdReg(cmdParam, pParam);
+        return OnCmdReg(cmdParam, ctx);
     }
     else if (cmd == "help" || cmd == "h")
     {
-        return OnCmdHelp(cmdParam, pParam);
+        return OnCmdHelp(cmdParam, ctx);
     }
 
     CtrlReply reply;
@@ -82,22 +82,22 @@ CtrlReply CDumpCmd::OnCommand(const std::mstring &cmd, const std::mstring &cmdPa
     return reply;
 }
 
-CtrlReply CDumpCmd::OnCmdDisass(const std::mstring &cmd, const CmdUserParam *pParam) {
+CtrlReply CDumpCmd::OnCmdDisass(const std::mstring &cmd, HUserCtx ctx) {
     CtrlReply reply;
     return reply;
 }
 
-CtrlReply CDumpCmd::OnCmdUb(const std::mstring &cmd, const CmdUserParam *pParam) {
+CtrlReply CDumpCmd::OnCmdUb(const std::mstring &cmd, HUserCtx ctx) {
     CtrlReply reply;
     return reply;
 }
 
-CtrlReply CDumpCmd::OnCmdUf(const std::mstring &cmd, const CmdUserParam *pParam) {
+CtrlReply CDumpCmd::OnCmdUf(const std::mstring &cmd, HUserCtx ctx) {
     CtrlReply reply;
     return reply;
 }
 
-CtrlReply CDumpCmd::OnCmdKv(const std::mstring &cmd, const CmdUserParam *pParam) {
+CtrlReply CDumpCmd::OnCmdKv(const std::mstring &cmd, HUserCtx ctx) {
     list<STACKFRAME64> callStack = CMiniDumpHlpr::GetInst()->GetCurrentStackFrame();
 
     CtrlReply result;
@@ -131,27 +131,27 @@ CtrlReply CDumpCmd::OnCmdKv(const std::mstring &cmd, const CmdUserParam *pParam)
     return result;
 }
 
-CtrlReply CDumpCmd::OnCmdDb(const std::mstring &cmd, const CmdUserParam *pParam) {
+CtrlReply CDumpCmd::OnCmdDb(const std::mstring &cmd, HUserCtx ctx) {
     CtrlReply reply;
     return reply;
 }
 
-CtrlReply CDumpCmd::OnCmdDd(const std::mstring &cmd, const CmdUserParam *pParam) {
+CtrlReply CDumpCmd::OnCmdDd(const std::mstring &cmd, HUserCtx ctx) {
     CtrlReply reply;
     return reply;
 }
 
-CtrlReply CDumpCmd::OnCmdDu(const std::mstring &cmd, const CmdUserParam *pParam) {
+CtrlReply CDumpCmd::OnCmdDu(const std::mstring &cmd, HUserCtx ctx) {
     CtrlReply reply;
     return reply;
 }
 
-CtrlReply CDumpCmd::OnCmdDa(const std::mstring &cmd, const CmdUserParam *pParam) {
+CtrlReply CDumpCmd::OnCmdDa(const std::mstring &cmd, HUserCtx ctx) {
     CtrlReply reply;
     return reply;
 }
 
-CtrlReply CDumpCmd::OnCmdReg(const std::mstring &cmd, const CmdUserParam *pParam) {
+CtrlReply CDumpCmd::OnCmdReg(const std::mstring &cmd, HUserCtx ctx) {
     DumpThreadInfo curThread = CMiniDumpHlpr::GetInst()->GetCurThread();
 
     CONTEXTx64 *pContext = curThread.m_context.mFullContext;
@@ -175,7 +175,7 @@ CtrlReply CDumpCmd::OnCmdReg(const std::mstring &cmd, const CmdUserParam *pParam
     return result;
 }
 
-CtrlReply CDumpCmd::OnCmdTs(const std::mstring &cmd, const CmdUserParam *pParam) {
+CtrlReply CDumpCmd::OnCmdTs(const std::mstring &cmd, HUserCtx ctx) {
     vector<DumpThreadInfo> threadSet = CMiniDumpHlpr::GetInst()->GetThreadSet();
 
     PrintFormater pf;
@@ -194,7 +194,7 @@ CtrlReply CDumpCmd::OnCmdTs(const std::mstring &cmd, const CmdUserParam *pParam)
     return result;
 }
 
-CtrlReply CDumpCmd::OnCmdTc(const std::mstring &param, const CmdUserParam *pParam) {
+CtrlReply CDumpCmd::OnCmdTc(const std::mstring &param, HUserCtx ctx) {
     mstring str(param);
     str.trim();
 
@@ -214,7 +214,7 @@ CtrlReply CDumpCmd::OnCmdTc(const std::mstring &param, const CmdUserParam *pPara
     return reply;
 }
 
-CtrlReply CDumpCmd::OnCmdLm(const std::mstring &cmd, const CmdUserParam *pParam) {
+CtrlReply CDumpCmd::OnCmdLm(const std::mstring &cmd, HUserCtx ctx) {
     list<DumpModuleInfo> moduleSet = CMiniDumpHlpr::GetInst()->GetModuleSet();
 
     PrintFormater pf;
@@ -234,7 +234,7 @@ CtrlReply CDumpCmd::OnCmdLm(const std::mstring &cmd, const CmdUserParam *pParam)
     return result;
 }
 
-CtrlReply CDumpCmd::OnCmdHelp(const std::mstring &param, const CmdUserParam *pParam) {
+CtrlReply CDumpCmd::OnCmdHelp(const std::mstring &param, HUserCtx ctx) {
     CtrlReply reply;
     return reply;
 }
