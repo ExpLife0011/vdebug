@@ -441,10 +441,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\ScriptEngine\ScriptCompiler.h"
-				>
-			</File>
-			<File
 				RelativePath=".\ScriptEngine\ScriptDef.h"
 				>
 			</File>
@@ -470,6 +466,10 @@
 			</File>
 			<File
 				RelativePath=".\ScriptEngine\ScriptParser.h"
+				>
+			</File>
+			<File
+				RelativePath=".\ScriptRunner.h"
 				>
 			</File>
 		</Filter>
