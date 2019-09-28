@@ -72,7 +72,7 @@ CtrlReply CProcCmd::OnCmdBp(const mstring &param, HUserCtx ctx)
     }
 
     DWORD64 dwProcAddr = 0;
-    if (GetInst()->GetNumFromStr(str, dwProcAddr))
+    if (!GetInst()->GetNumFromStr(str, dwProcAddr))
     {
         dwProcAddr = GetInst()->GetFunAddr(str);
     }

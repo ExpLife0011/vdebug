@@ -72,13 +72,15 @@ bool DbgCtrlService::InitCtrlService() {
     CDbgStatMgr::GetInst()->RegisterStatusNotify(DbgStatusNotifyProc, NULL);
     CreateEventA(NULL, FALSE, FALSE, FormatA(SERVICE_EVENT, m_unique.c_str()).c_str());
 
-#ifdef _DEBUG
-#else
     char image[256];
     GetModuleFileNameA(NULL, image, 256);
     PathAppendA(image, "..\\x32\\dbg32.exe");
 
-    mstring cmd = FormatA(RUNNER_EVENT32, m_unique.c_str());
+    mstring param = FormatA(RUNNER_EVENT32, m_unique.c_str());
+    mstring command = FormatA("\"%hs\" \"%hs\"", image, param.c_str());
+#ifdef _DEBUG
+    //ExecProcessA(command.c_str(), NULL, TRUE);
+#else
     DWORD session = 0;
     ProcessIdToSessionId(GetCurrentProcessId(), &session);
     RunProcInUser(image, cmd.c_str(), session);

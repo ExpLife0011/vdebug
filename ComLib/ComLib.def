@@ -73,3 +73,6 @@ sqlite3_exec
 sqlite3_close
 
 SetListColumnAutoSet
+
+ExecProcessA
+ExecProcessW

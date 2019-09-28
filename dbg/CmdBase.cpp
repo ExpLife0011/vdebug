@@ -367,7 +367,7 @@ DWORD64 CCmdBase::GetSizeAndParam(const mstring &strParam, mstring &strOut)
 CtrlReply CCmdBase::OnCommand(const mstring &cmd, const mstring &param, HUserCtx ctx)
 {
     CScopedLocker locker(this);
-    map<mstring, CmdHandlerInfo>::const_iterator it = mCmdHandler.find(param);
+    map<mstring, CmdHandlerInfo>::const_iterator it = mCmdHandler.find(cmd);
 
     if (it == mCmdHandler.end())
     {

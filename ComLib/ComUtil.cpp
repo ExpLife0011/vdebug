@@ -2229,3 +2229,42 @@ BOOL WINAPI RunInSession(LPCSTR szImage, LPCSTR szCmd, DWORD dwSessionId, DWORD 
     }
     return TRUE;
 }
+
+HANDLE ExecProcessW(LPCWSTR cmdLine, DWORD* procId, BOOL bShowWindow)
+{
+    if (!cmdLine)
+    {
+        return NULL;
+    }
+
+    STARTUPINFOW si = {sizeof(si)};
+    if (!bShowWindow)
+    {
+        si.wShowWindow = SW_HIDE;
+        si.dwFlags = STARTF_USESHOWWINDOW;
+    }
+
+    PROCESS_INFORMATION pi;
+
+    LPWSTR wszCmdLine = (LPWSTR)malloc((MAX_PATH + lstrlenW(cmdLine)) * sizeof(WCHAR));
+    lstrcpyW(wszCmdLine, cmdLine);
+    if (CreateProcessW(NULL, wszCmdLine, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi))
+    {
+        CloseHandle(pi.hThread);
+
+        if (procId)
+        {
+            *procId = pi.dwProcessId;
+        }
+
+        free((void*)wszCmdLine);
+        return pi.hProcess;
+    }
+
+    free((void*)wszCmdLine);
+    return NULL;
+}
+
+HANDLE ExecProcessA(LPCSTR cmdLine, DWORD* procId, BOOL bShowWindow) {
+    return ExecProcessW(AtoW(cmdLine).c_str(), procId, bShowWindow);
+}

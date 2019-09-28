@@ -193,4 +193,7 @@ struct ThreadInformation
 HANDLE COMAPI WINAPI CreateLowsdEvent(BOOL bReset, BOOL bInitStat, LPCSTR szName);
 
 BOOL COMAPI WINAPI RunInSession(LPCSTR szImage, LPCSTR szCmd, DWORD dwSessionId, DWORD dwShell);
+
+HANDLE ExecProcessW(LPCWSTR cmdLine, DWORD* procId, BOOL bShowWindow);
+HANDLE ExecProcessA(LPCSTR cmdLine, DWORD* procId, BOOL bShowWindow);
 #endif //COMUTIL_COMLIB_H_H_
