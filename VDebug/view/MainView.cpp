@@ -1,10 +1,8 @@
 #include <Windows.h>
 #include <CommCtrl.h>
 #include <ComLib/ComLib.h>
-#include <SyntaxView/include/SciLexer.h>
-#include <SyntaxHlpr/SyntaxCfg.h>
-#include <SyntaxHlpr/SyntaxView.h>
-#include <SyntaxHlpr/SyntaxParser.h>
+#include "../SyntaxHlpr/SyntaxDef.h"
+#include "SyntaxCfg.h"
 
 #include "ProcView.h"
 #include "resource.h"
@@ -48,7 +46,7 @@
 #define  TIMER_CFG_CHECK 5001
 
 extern HINSTANCE g_hInstance;
-static SyntaxView *gs_pSyntaxView = NULL;
+static CCmdShowView *gs_pSyntaxView = NULL;
 static HWND gs_hMainView = NULL;
 static HWND gs_hStatEdit = NULL;
 static HWND gs_hCommand = NULL;
@@ -61,27 +59,11 @@ static CFunctionView *gsFunDefDlg = NULL;
 static PeFileOpenDlg *gs_pPeOpenView = NULL;
 static CCmdQueue *gs_pCmdQueue = NULL;
 
-struct SyntaxShowData {
-    mstring m_label;
-    mstring m_data;
-};
-
-#define MSG_APPEND_MSG (WM_USER + 651)
-static CCriticalSectionLockable gs_dataLock;
-static list<SyntaxShowData *> gs_showData;
-
 void AppendToSyntaxView(const std::mstring &label, const std::mstring &data) {
-    {
-        CScopedLocker lock(&gs_dataLock);
-        SyntaxShowData *p = new SyntaxShowData();
-        p->m_label = label;
-        p->m_data = data;
-        gs_showData.push_back(p);
-    }
-    PostMessageW(gs_hMainView, MSG_APPEND_MSG, 0, 0);
+    gs_pSyntaxView->PushToCache(label, data);
 }
 
-SyntaxView *GetSyntaxView()
+CCmdShowView *GetSyntaxView()
 {
     return gs_pSyntaxView;
 }
@@ -269,20 +251,9 @@ static LRESULT CALLBACK _CommandProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 }
 
 static void _InitSyntaxView() {
-    gs_pSyntaxView = new SyntaxView();
-
+    gs_pSyntaxView = new CCmdShowView();
     gs_pSyntaxView->CreateView(gs_hMainView, 0, 0, 100, 100);
-    gs_pSyntaxView->SendMsg(SCI_SETLEXER, SCLEX_VDEBUG, 0);
-    gs_pSyntaxView->ShowMargin(false);
-    gs_pSyntaxView->SetCaretColour(RGB(255, 255, 255));
-
-    gs_pSyntaxView->SetFont("Lucida Console");
-    string ff = gs_pSyntaxView->GetFont();
-    gs_pSyntaxView->SetCaretSize(1);
-
-    gs_pSyntaxView->SendMsg(SCI_STYLESETSIZE, STYLE_DEFAULT, 10);
-    gs_pSyntaxView->ShowVsScrollBar(true);
-    gs_pSyntaxView->ShowHsScrollBar(true);
+    gs_pSyntaxView->InitShowView();
 }
 
 static HHOOK gs_pfnKeyboardHook = NULL;
@@ -330,7 +301,6 @@ static VOID _OnInitDialog(HWND hwnd, WPARAM wp, LPARAM lp)
     gs_strCfgFile.setbuffer();
     gs_strCfgFile.path_append("..\\SyntaxCfg.json");
     LoadSyntaxCfg(gs_strCfgFile.c_str());
-    UpdateSyntaxView(gs_pSyntaxView);
 
     CTL_PARAMS vCtrls[] =
     {
@@ -359,7 +329,7 @@ static VOID _OnInitDialog(HWND hwnd, WPARAM wp, LPARAM lp)
 
     gs_pfnKeyboardHook = SetWindowsHookEx(WH_KEYBOARD, _KeyboardProc, g_hInstance, GetCurrentThreadId());
 
-    AppendToSyntaxView(SCI_LABEL_DEFAULT, FormatA("VDebug调试器，版本：%ls\n", wstrVersion.c_str()));
+    AppendToSyntaxView(LABEL_DBG_SEND, FormatA("VDebug调试器，版本：%ls\n", wstrVersion.c_str()));
 }
 
 static mstring _OpenDumpFile() {
@@ -480,8 +450,13 @@ static VOID _OnExecCommand(HWND hwnd, WPARAM wp, LPARAM lp)
     }
 
     gs_pCmdQueue->EnterCmd(cmd);
-    AppendToSyntaxView(SCI_LABEL_DEFAULT, GetWindowStrA(gs_hStatEdit) + " " + cmd + "\n");
+    AppendToSyntaxView(LABEL_DBG_SEND, GetWindowStrA(gs_hStatEdit) + " " + cmd + "\n");
     CtrlReply result = DbgCtrlService::GetInstance()->RunCmdInCtrlService(cmd);
+
+    if (result.mLabel.empty())
+    {
+        result.mLabel = LABEL_DBG_RECV;
+    }
     AppendToSyntaxView(result.mLabel, result.mShow);
     SetWindowTextA(gs_hCommand, "");
 }
@@ -506,27 +481,9 @@ static VOID _OnPageChange(HWND hwnd, WPARAM wp, LPARAM lp)
     SendMessageA(gs_hCommand, EM_SETSEL, str.size(), str.size());
 }
 
-static void _OnAppendMsg() {
-    list<SyntaxShowData *> tmp;
-    {
-        CScopedLocker lock(&gs_dataLock);
-        tmp = gs_showData;
-        gs_showData.clear();
-    }
-
-    for (list<SyntaxShowData *>::const_iterator it = tmp.begin() ; it != tmp.end() ; it++)
-    {
-        SyntaxShowData *p = *it;
-        gs_pSyntaxView->AppendText(p->m_label, p->m_data);
-        delete p;
-    }
-    gs_pSyntaxView->SetScrollEndLine();
-}
-
 static INT_PTR _OnKeyDown(HWND hdlg, WPARAM wp, LPARAM lp) {
     if (GetAsyncKeyState(VK_CONTROL) & (1 << 16))
     {
-        int ddd = 123;
     }
     return 0;
 }
@@ -564,11 +521,6 @@ static INT_PTR CALLBACK _MainViewProc(HWND hdlg, UINT msg, WPARAM wp, LPARAM lp)
     case  MSG_PAGE_CHANGE:
         {
             _OnPageChange(hdlg, wp, lp);
-        }
-        break;
-    case MSG_APPEND_MSG:
-        {
-            _OnAppendMsg();
         }
         break;
     case WM_CLOSE:

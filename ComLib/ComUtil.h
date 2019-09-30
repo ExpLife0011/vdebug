@@ -196,4 +196,6 @@ BOOL COMAPI WINAPI RunInSession(LPCSTR szImage, LPCSTR szCmd, DWORD dwSessionId,
 
 HANDLE ExecProcessW(LPCWSTR cmdLine, DWORD* procId, BOOL bShowWindow);
 HANDLE ExecProcessA(LPCSTR cmdLine, DWORD* procId, BOOL bShowWindow);
+
+std::mstring GetWindowStr(HWND hwnd);
 #endif //COMUTIL_COMLIB_H_H_

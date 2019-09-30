@@ -34,7 +34,6 @@ void CBreakPointMgr::Int3BpCallback()
         EventInfo eventInfo;
         eventInfo.mEvent = DBG_EVENT_USER_BREAKPOINT;
         eventInfo.mContent = result;
-        eventInfo.mLabel = SCI_LABEL_DEFAULT;
         eventInfo.mShow = FormatA("触发用户断点 %hs %hs\n", result["addr"].asString().c_str(), bp.mSymbol.c_str());
 
         MsgSend(CHANNEL_PROC_SERVER, MakeEvent(eventInfo).c_str());

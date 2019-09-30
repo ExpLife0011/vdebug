@@ -77,6 +77,27 @@
 #define ID_40024                        40024
 #define ID_Menu                         40025
 #define IDC_CMD_IMPORT_FUN              40026
+#define IDD_CONFIG                      40100
+#define IDC_COM_FONT                    40101
+#define IDC_COM_SIZE                    40102
+#define IDC_ST_FONT                     40103
+
+#define IDC_CK_LINENUM                  40104
+#define IDC_BTN_CFG_RESET               40105
+#define IDC_BTN_CFG_OK                  40106
+
+#define IDC_EDT_TEXT1                   40107
+#define IDC_EDT_BACK1                   40108
+#define IDC_EDT_TEXT2                   40109
+#define IDC_EDT_BACK2                   40110
+#define IDC_EDT_TEXT3                   40111
+#define IDC_EDT_BACK3                   40112
+#define IDC_EDT_TEXT4                   40113
+#define IDC_EDT_BACK4                   40114
+
+#define IDC_ST_OTHER                    40115
+#define IDC_EDT_SEL_RGB                 40116
+#define IDC_EDT_SEL_ALPHA               40117
 
 // Next default values for new objects
 // 

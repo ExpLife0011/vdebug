@@ -81,7 +81,6 @@ void CProcDbgger::GuCmdCallback()
     EventInfo eventInfo;
     eventInfo.mEvent = DBG_EVENT_USER_BREAKPOINT;
     eventInfo.mContent = result;
-    eventInfo.mLabel = SCI_LABEL_DEFAULT;
     eventInfo.mShow = FormatA("触发用户断点 %hs %hs\n", result["addr"].asString().c_str(), strSymbol.c_str());
 
     MsgSend(CHANNEL_PROC_SERVER, MakeEvent(eventInfo).c_str());
@@ -499,7 +498,6 @@ void CProcDbgger::OnSystemBreakpoint(void* ExceptionData)
     }
 
     EventInfo eventInfo;
-    eventInfo.mLabel = SCI_LABEL_DEFAULT;
     eventInfo.mEvent = DBG_EVENT_SYSTEM_BREAKPOINT;
     eventInfo.mContent["tid"] = (int)dwId;
     eventInfo.mShow = "系统断点触发调试器中断\n";
@@ -537,7 +535,6 @@ bool CProcDbgger::LoadModuleInfo(HANDLE hFile, DWORD64 dwBaseOfModule)
 
     EventInfo eventInfo;
     eventInfo.mEvent = DBG_EVENT_MODULE_LOAD;
-    eventInfo.mLabel = SCI_LABEL_DEFAULT;
     eventInfo.mShow = FormatA("模块加载  %hs  %hs  %hs\n", dllInfo.mBaseAddr.c_str(), dllInfo.mEndAddr.c_str(), dllInfo.mDllName.c_str());
 
     MsgSend(CHANNEL_PROC_SERVER, MakeEvent(eventInfo).c_str());

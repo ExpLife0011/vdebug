@@ -79,7 +79,7 @@ bool DbgCtrlService::InitCtrlService() {
     mstring param = FormatA(RUNNER_EVENT32, m_unique.c_str());
     mstring command = FormatA("\"%hs\" \"%hs\"", image, param.c_str());
 #ifdef _DEBUG
-    //ExecProcessA(command.c_str(), NULL, TRUE);
+    ExecProcessA(command.c_str(), NULL, TRUE);
 #else
     DWORD session = 0;
     ProcessIdToSessionId(GetCurrentProcessId(), &session);
@@ -283,7 +283,7 @@ CtrlReply DbgCtrlService::RunCmdInCtrlService(const std::mstring &command) {
 }
 
 void DbgCtrlService::OnProcCreate(const EventInfo &eventInfo, void *param) {
-    AppendToSyntaxView(SCI_LABEL_DEFAULT, eventInfo.mShow);
+    AppendToSyntaxView(LABEL_DBG_RECV, eventInfo.mShow);
 }
 
 void DbgCtrlService::OnSystemBreakpoint(const EventInfo &eventInfo, void *param) {

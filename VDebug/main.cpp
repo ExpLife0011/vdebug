@@ -1,7 +1,6 @@
 #include <WinSock2.h>
 #include <Windows.h>
 #include "view.h"
-#include "SyntaxHlpr/SyntaxParser.h"
 #include <runner/runner.h>
 #include <ComLib/ComLib.h>
 #include <ComLib/ComLib.h>
@@ -29,7 +28,6 @@ static BOOL _StartViewProc() {
         return FALSE;
     }
 
-    SyntaxParser::GetInstance()->InitParser();
     CoInitialize(NULL);
     ShowMainView();
     CoUninitialize();

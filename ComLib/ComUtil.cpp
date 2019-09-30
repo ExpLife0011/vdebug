@@ -2268,3 +2268,24 @@ HANDLE ExecProcessW(LPCWSTR cmdLine, DWORD* procId, BOOL bShowWindow)
 HANDLE ExecProcessA(LPCSTR cmdLine, DWORD* procId, BOOL bShowWindow) {
     return ExecProcessW(AtoW(cmdLine).c_str(), procId, bShowWindow);
 }
+
+mstring GetWindowStr(HWND hwnd) {
+    if (!IsWindow(hwnd))
+    {
+        return "";
+    }
+
+    char buffer[256];
+    buffer[0] = 0;
+    int size = GetWindowTextLength(hwnd);
+    if (size < 256)
+    {
+        GetWindowTextA(hwnd, buffer, 256);
+        return buffer;
+    } else {
+        MemoryAlloc<char> alloc;
+        char *ptr = alloc.GetMemory(size + 4);
+        GetWindowTextA(hwnd, ptr, size + 4);
+        return ptr;
+    }
+}

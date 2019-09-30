@@ -1,7 +1,6 @@
 #ifndef COMMON_DBGCTRL_H_H_
 #define COMMON_DBGCTRL_H_H_
 #include <ComLib/ComLib.h>
-#include <ComLib/ComLib.h>
 
 enum DbggerType {
     em_dbg_proc86,
@@ -40,7 +39,6 @@ struct CtrlReply {
 
     CtrlReply() {
         mStatus = 0;
-        mLabel = SCI_LABEL_DEFAULT;
     }
 };
 
@@ -56,7 +54,6 @@ struct EventInfo {
     Json::Value mContent;
 
     EventInfo() {
-        mLabel = SCI_LABEL_DEFAULT;
     }
 };
 std::mstring __stdcall MakeEvent(const EventInfo &eventInfo);

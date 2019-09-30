@@ -76,3 +76,5 @@ SetListColumnAutoSet
 
 ExecProcessA
 ExecProcessW
+
+GetWindowStr

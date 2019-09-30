@@ -2,7 +2,7 @@
 #define FUNVIEW_VDEBUG_H_H_
 #include <Windows.h>
 #include "ViewBase.h"
-#include "SyntaxView.h"
+#include "FunSyntaxView.h"
 
 class CFunctionView : public CWindowBase {
 public:
@@ -24,8 +24,8 @@ private:
 
 private:
     HWND mParent;
-    SyntaxView mEditView;
-    SyntaxView mStatView;
+    CFunSyntaxView mEditView;
+    CFunSyntaxView mStatView;
     HWND mComModule;
     HWND mBtnCheck;
     HWND mBtnOk;

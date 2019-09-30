@@ -13,7 +13,6 @@
 #include "DbProxy.h"
 #include "TransferEncoder.h"
 #include "servhlpr.h"
-#include "SyntaxDef.h"
 #include "mstring.h"
 #include "GlobalDef.h"
 #include "PrintFormater.h"

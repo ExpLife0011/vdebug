@@ -390,6 +390,38 @@
 				>
 			</File>
 			<File
+				RelativePath=".\view\CmdShowView.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\view\CmdShowView.h"
+				>
+			</File>
+			<File
+				RelativePath=".\view\ConfigView.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\view\ConfigView.h"
+				>
+			</File>
+			<File
+				RelativePath=".\view\DialogBase.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\view\DialogBase.h"
+				>
+			</File>
+			<File
+				RelativePath=".\view\FunSyntaxView.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\view\FunSyntaxView.h"
+				>
+			</File>
+			<File
 				RelativePath=".\view\FunView.cpp"
 				>
 			</File>
@@ -422,6 +454,22 @@
 				>
 			</File>
 			<File
+				RelativePath=".\view\StyleConfigMgr.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\view\StyleConfigMgr.h"
+				>
+			</File>
+			<File
+				RelativePath=".\view\SyntaxCfg.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\view\SyntaxCfg.h"
+				>
+			</File>
+			<File
 				RelativePath=".\view\ViewBase.cpp"
 				>
 			</File>
@@ -434,29 +482,61 @@
 			Name="SyntaxHlpr"
 			>
 			<File
-				RelativePath=".\SyntaxHlpr\SyntaxCfg.cpp"
+				RelativePath=".\SyntaxHlpr\export.h"
 				>
 			</File>
 			<File
-				RelativePath=".\SyntaxHlpr\SyntaxCfg.h"
+				RelativePath=".\SyntaxHlpr\SyntaxCache.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\SyntaxHlpr\SyntaxParser.cpp"
+				RelativePath=".\SyntaxHlpr\SyntaxCache.h"
 				>
 			</File>
 			<File
-				RelativePath=".\SyntaxHlpr\SyntaxParser.h"
+				RelativePath=".\SyntaxHlpr\SyntaxDef.h"
 				>
 			</File>
 			<File
-				RelativePath=".\SyntaxHlpr\SyntaxView.cpp"
+				RelativePath=".\SyntaxHlpr\SyntaxEditView.h"
 				>
 			</File>
 			<File
-				RelativePath=".\SyntaxHlpr\SyntaxView.h"
+				RelativePath=".\SyntaxHlpr\SyntaxTextView.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\SyntaxHlpr\SyntaxTextView.h"
+				>
+			</File>
+			<Filter
+				Name="include"
+				>
+				<File
+					RelativePath=".\SyntaxHlpr\include\BoostRegexSearch.h"
+					>
+				</File>
+				<File
+					RelativePath=".\SyntaxHlpr\include\ILexer.h"
+					>
+				</File>
+				<File
+					RelativePath=".\SyntaxHlpr\include\Platform.h"
+					>
+				</File>
+				<File
+					RelativePath=".\SyntaxHlpr\include\SciLexer.h"
+					>
+				</File>
+				<File
+					RelativePath=".\SyntaxHlpr\include\Scintilla.h"
+					>
+				</File>
+				<File
+					RelativePath=".\SyntaxHlpr\include\ScintillaWidget.h"
+					>
+				</File>
+			</Filter>
 		</Filter>
 	</Files>
 	<Globals>
