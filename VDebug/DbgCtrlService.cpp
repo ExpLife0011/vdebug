@@ -83,7 +83,7 @@ bool DbgCtrlService::InitCtrlService() {
 #else
     DWORD session = 0;
     ProcessIdToSessionId(GetCurrentProcessId(), &session);
-    RunProcInUser(image, cmd.c_str(), session);
+    RunProcInUser(image, command.c_str(), session);
 #endif
     //Debug Event Register
     m_pCtrlService->RegisterDbgEvent(DBG_EVENT_MSG, OnDbgMessage, this);
