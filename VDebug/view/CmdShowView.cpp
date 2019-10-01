@@ -22,9 +22,13 @@ bool CCmdShowView::InitShowView() {
     InitCache(50);
     SetAutoScroll(true);
 
+    //当前选中行
+    ShowCaretLine(true, RGB(0xff, 0xff, 0xff), 50);
+
     RegisterParser(LABEL_DBG_SEND, SendDefaultParser, NULL);
     RegisterParser(LABEL_DBG_RECV, RecvDefaultParser, NULL);
     RegisterParser(LABEL_DBG_MODULE, ModuleLoadedParser, NULL);
+    RegisterParser(LABEL_DBG_CALLSTACK, CallStackParser, NULL);
     return true;
 }
 
@@ -89,6 +93,19 @@ void CCmdShowView::RecvDefaultParser(
 }
 
 void CCmdShowView::ModuleLoadedParser(
+    int initStyle,
+    unsigned int startPos,
+    const char *ptr,
+    int length,
+    StyleContextBase *s,
+    void *param
+    )
+{
+    s->SetState(STYLE_DBG_RECV_DEFAULT);
+    s->ForwardBytes(length);
+}
+
+void CCmdShowView::CallStackParser(
     int initStyle,
     unsigned int startPos,
     const char *ptr,
