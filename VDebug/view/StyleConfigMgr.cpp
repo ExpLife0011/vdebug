@@ -54,8 +54,10 @@ bool CStyleConfig::LoadCache(const mstring &filePath) {
         return false;
     }
 
+    mstring content;
+    getline(fp, content, (char)EOF);
     Value root;
-    Reader().parse(fp, root);
+    Reader().parse(UtoA(content), root);
     if (root.type() != objectValue || root["global"].type() != objectValue)
     {
         return false;
@@ -145,7 +147,7 @@ bool CStyleConfig::SaveCache(const mstring &filePath) const {
         return false;
     }
 
-    fp << StyledWriter().write(content);
+    fp << AtoU(StyledWriter().write(content));
     fp.close();
     return true;
 }

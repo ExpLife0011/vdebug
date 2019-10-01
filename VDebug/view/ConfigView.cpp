@@ -1,6 +1,7 @@
 #include "ConfigView.h"
 #include "../../ComLib/ComUtil.h"
 #include "../../ComLib/StrUtil.h"
+#include "../install/DbgInstall.h"
 #include "../../ComLib/deelx.h"
 #include "../resource.h"
 #include "MainView.h"
@@ -230,8 +231,8 @@ INT_PTR CConfigDlg::OnCommand(WPARAM wp, LPARAM lp) {
             {
                 mStyleCfg.UpdateStyleConfig(cfg);
 
-                //mstring cfgPath = WtoA(CCmdInstall::GetInst()->GetStyleCfgPath());
-                //mStyleCfg.SaveCache(cfgPath);
+                mstring cfgPath = CDbgInstall::GetInst()->GetSytleCfgPath();
+                mStyleCfg.SaveCache(cfgPath);
                 EndDialog(mHwnd, 1);
             }
         }

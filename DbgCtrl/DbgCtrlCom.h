@@ -49,7 +49,6 @@ CtrlReply __stdcall ParserReply(const std::mstring &reply);
 
 struct EventInfo {
     std::mstring mEvent;
-    std::mstring mLabel;
     std::mstring mShow;
     Json::Value mContent;
 

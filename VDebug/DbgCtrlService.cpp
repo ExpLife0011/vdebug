@@ -287,14 +287,14 @@ void DbgCtrlService::OnProcCreate(const EventInfo &eventInfo, void *param) {
 }
 
 void DbgCtrlService::OnSystemBreakpoint(const EventInfo &eventInfo, void *param) {
-    AppendToSyntaxView(eventInfo.mLabel, eventInfo.mShow);
+    AppendToSyntaxView(LABEL_DBG_RECV, eventInfo.mShow);
 }
 
 void DbgCtrlService::OnUserBreakpoint(const EventInfo &eventInfo, void *param) {
-    AppendToSyntaxView(eventInfo.mLabel, eventInfo.mShow);
+    AppendToSyntaxView(LABEL_DBG_RECV, eventInfo.mShow);
 
     CtrlReply result = GetInstance()->RunCmdInCtrlService("r");
-    AppendToSyntaxView(result.mLabel, result.mShow);
+    AppendToSyntaxView(LABEL_DBG_RECV, result.mShow);
 }
 
 void DbgCtrlService::OnDbgMessage(const EventInfo &eventInfo, void *param) {
@@ -304,18 +304,18 @@ void DbgCtrlService::OnProcExit(const EventInfo &eventInfo, void *param) {
 }
 
 void DbgCtrlService::OnModuleLoad(const EventInfo &eventInfo, void *param) {
-    AppendToSyntaxView(eventInfo.mLabel, eventInfo.mShow);
+    AppendToSyntaxView(LABEL_DBG_MODULE, eventInfo.mShow);
 }
 
 void DbgCtrlService::OnModuleUnLoad(const EventInfo &eventInfo, void *param) {
 }
 
 void DbgCtrlService::OnDetachDbgger(const EventInfo &eventInfo, void *param) {
-    AppendToSyntaxView(eventInfo.mLabel, eventInfo.mShow);
+    AppendToSyntaxView(LABEL_DBG_RECV, eventInfo.mShow);
 }
 
 void DbgCtrlService::OnProgramException(const EventInfo &eventInfo, void *param) {
-    AppendToSyntaxView(eventInfo.mLabel, eventInfo.mShow);
+    AppendToSyntaxView(LABEL_DBG_RECV, eventInfo.mShow);
 }
 
 void DbgCtrlService::OnProcChanged(const EventInfo &eventInfo, void *param) {

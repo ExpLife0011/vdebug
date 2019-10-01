@@ -410,7 +410,11 @@ static VOID _OnCommand(HWND hwnd, WPARAM wp, LPARAM lp)
         break;
     case IDC_CMD_SET_STYLE:
         {
-            CConfigDlg::GetInst()->DoModule(gs_hMainView, IDD_CONFIG);
+            if (1 == CConfigDlg::GetInst()->DoModule(gs_hMainView, IDD_CONFIG))
+            {
+                *gsStyleCfg = CConfigDlg::GetInst()->GetStyleCfg();
+                gs_pSyntaxView->LoadUserCfg(*gsStyleCfg);
+            }
         }
         break;
     default:

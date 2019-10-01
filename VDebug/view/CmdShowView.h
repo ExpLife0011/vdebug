@@ -11,6 +11,14 @@ public:
     bool InitShowView();
     bool LoadUserCfg(const CStyleConfig &cfg);
 private:
+    static void __stdcall ModuleLoadedParser(
+        int initStyle,
+        unsigned int startPos,
+        const char *ptr,
+        int length,
+        StyleContextBase *s,
+        void *param
+        );
     static void __stdcall SendDefaultParser(
         int initStyle,
         unsigned int startPos,

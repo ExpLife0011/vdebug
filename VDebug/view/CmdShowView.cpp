@@ -24,6 +24,7 @@ bool CCmdShowView::InitShowView() {
 
     RegisterParser(LABEL_DBG_SEND, SendDefaultParser, NULL);
     RegisterParser(LABEL_DBG_RECV, RecvDefaultParser, NULL);
+    RegisterParser(LABEL_DBG_MODULE, ModuleLoadedParser, NULL);
     return true;
 }
 
@@ -75,6 +76,19 @@ void CCmdShowView::SendDefaultParser(
 }
 
 void CCmdShowView::RecvDefaultParser(
+    int initStyle,
+    unsigned int startPos,
+    const char *ptr,
+    int length,
+    StyleContextBase *s,
+    void *param
+    )
+{
+    s->SetState(STYLE_DBG_RECV_DEFAULT);
+    s->ForwardBytes(length);
+}
+
+void CCmdShowView::ModuleLoadedParser(
     int initStyle,
     unsigned int startPos,
     const char *ptr,

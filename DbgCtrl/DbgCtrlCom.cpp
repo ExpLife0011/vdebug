@@ -83,7 +83,6 @@ std::mstring __stdcall MakeEvent(const EventInfo &eventInfo) {
     Value root;
     root["type"] = "event";
     root["event"] = eventInfo.mEvent;
-    root["label"] = eventInfo.mLabel;
     root["show"] = eventInfo.mShow;
     root["content"] = eventInfo.mContent;
 
@@ -96,7 +95,6 @@ EventInfo __stdcall ParserEvent(const std::mstring &reply) {
     Reader().parse(reply, root);
     EventInfo result;
     result.mEvent = root["event"].asString();
-    result.mLabel = root["label"].asString();
     result.mShow = root["show"].asString();
     result.mContent = root["content"];
 

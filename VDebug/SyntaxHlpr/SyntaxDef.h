@@ -61,6 +61,7 @@ STYLE 用于设置字体的颜色等属性，需要注意,最大的STYLE值是256,
 #define LABEL_DBG_SEND          "DbgSend"
 #define LABEL_DBG_RECV          "DbgRecv"
 #define LABEL_DBG_CALLSTACK     "DbgCallStack"
+#define LABEL_DBG_MODULE        "DbgModule"
 #define LABEL_DBG_HEX1          "DbgHex1"
 #define LABEL_DBG_HEX2          "DbgHex2"
 #define LABEL_DBG_HEX3          "DbgHex3"
