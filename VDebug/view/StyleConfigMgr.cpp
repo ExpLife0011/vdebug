@@ -167,25 +167,25 @@ void CStyleConfig::SetDefault() {
     node.mStyleDesc = "default";
     node.mRgbText = RGB(255, 236, 1);
     node.mRgbBack = RGB(0, 0, 0);
-    node.mSyntaxStyle = STYLE_CMD_DEFAULT;
+    node.mSyntaxStyle = 32;
     mStyleInfo.mCfgSet[node.mStyleDesc] = node;
 
-    node.mStyleDesc = "cmdSend";
+    node.mStyleDesc = "sendData";
     node.mRgbText = RGB(187, 255, 255);
     node.mRgbBack = RGB(0, 0, 0);
-    node.mSyntaxStyle = STYLE_CMD_SEND;
+    node.mSyntaxStyle = STYLE_DBG_SEND_DEFAULT;
     mStyleInfo.mCfgSet[node.mStyleDesc] = node;
 
-    node.mStyleDesc = "cmdRecv";
+    node.mStyleDesc = "recvData";
     node.mRgbText = RGB(255, 236, 1);
     node.mRgbBack = RGB(0, 0, 0);
-    node.mSyntaxStyle = STYLE_CMD_RECV;
+    node.mSyntaxStyle = STYLE_DBG_RECV_DEFAULT;
     mStyleInfo.mCfgSet[node.mStyleDesc] = node;
 
-    node.mStyleDesc = "cmdHight";
+    node.mStyleDesc = "hight";
     node.mRgbText = RGB(0, 245, 255);
     node.mRgbBack = RGB(0, 0, 0);
-    node.mSyntaxStyle = STYLE_CMD_HIGHT;
+    node.mSyntaxStyle = STYLE_DBG_HIGHT;
     mStyleInfo.mCfgSet[node.mStyleDesc] = node;
 
     mStyleInfo.mSelColour = RGB(255, 255, 255);

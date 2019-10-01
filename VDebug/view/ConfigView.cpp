@@ -103,19 +103,19 @@ void CConfigDlg::LoadStyleConfig() {
             SetWindowTextA(mEditText1, textStr1.c_str());
             SetStaticBackColour(mEditBack1, info.mRgbBack);
             SetWindowTextA(mEditBack1, textStr2.c_str());
-        } else if (info.mStyleDesc == "cmdSend")
+        } else if (info.mStyleDesc == "sendData")
         {
             SetStaticBackColour(mEditText2, info.mRgbText);
             SetWindowTextA(mEditText2, textStr1.c_str());
             SetStaticBackColour(mEditBack2, info.mRgbBack);
             SetWindowTextA(mEditBack2, textStr2.c_str());
-        } else if (info.mStyleDesc == "cmdRecv")
+        } else if (info.mStyleDesc == "recvData")
         {
             SetStaticBackColour(mEditText3, info.mRgbText);
             SetWindowTextA(mEditText3, textStr1.c_str());
             SetStaticBackColour(mEditBack3, info.mRgbBack);
             SetWindowTextA(mEditBack3, textStr2.c_str());
-        } else if (info.mStyleDesc == "cmdHight")
+        } else if (info.mStyleDesc == "hight")
         {
             SetStaticBackColour(mEditText4, info.mRgbText);
             SetWindowTextA(mEditText4, textStr1.c_str());
@@ -180,13 +180,13 @@ INT_PTR CConfigDlg::OnInitDialog(WPARAM wp, LPARAM lp) {
     int h = rtButton.top - 5 - y;
     mStyleView.CreateView(mHwnd, x, y, w, h);
     mStyleView.InitShowView();
-    //mStyleCfg = CMainView::GetInst()->GetStyleCfg();
+    mStyleCfg = *GetMainStyleCfg();
     mStyleView.LoadUserCfg(mStyleCfg);
 
     LoadFonts();
     LoadStyleConfig();
-    mStyleView.AppendText(LABEL_CMD_SEND, "发送数据 >> ps\n");
-    mStyleView.AppendText(LABEL_CMD_RECV, "收到数据 >> explorer.exe\n");
+    mStyleView.AppendText(LABEL_DBG_SEND, "发送数据 >> ps\n");
+    mStyleView.AppendText(LABEL_DBG_RECV, "收到数据 >> explorer.exe\n");
     SetFocus(mBtnOk);
     SetTimer(mHwnd, TIMER_UPDATE_STYLE, 50, NULL);
     return 0;

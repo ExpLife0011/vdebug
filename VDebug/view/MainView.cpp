@@ -10,7 +10,9 @@
 #include "CmdQueue.h"
 #include "OpenView.h"
 #include "FunView.h"
+#include "ConfigView.h"
 #include "DbgCtrlService.h"
+#include "../install/DbgInstall.h"
 
 #pragma comment(lib, "comctl32.lib")
 
@@ -58,6 +60,7 @@ static CProcSelectView *gs_pProcSelect = NULL;
 static CFunctionView *gsFunDefDlg = NULL;
 static PeFileOpenDlg *gs_pPeOpenView = NULL;
 static CCmdQueue *gs_pCmdQueue = NULL;
+static CStyleConfig *gsStyleCfg = NULL;
 
 void AppendToSyntaxView(const std::mstring &label, const std::mstring &data) {
     gs_pSyntaxView->PushToCache(label, data);
@@ -66,6 +69,10 @@ void AppendToSyntaxView(const std::mstring &label, const std::mstring &data) {
 CCmdShowView *GetSyntaxView()
 {
     return gs_pSyntaxView;
+}
+
+const CStyleConfig *GetMainStyleCfg() {
+    return gsStyleCfg;
 }
 
 CProcSelectView *GetProcView() {
@@ -297,10 +304,12 @@ static VOID _OnInitDialog(HWND hwnd, WPARAM wp, LPARAM lp)
     _LoadDefaultFont();
     _MoveMainWndCtrl();
 
-    GetModuleFileNameA(NULL, gs_strCfgFile.alloc(MAX_PATH), MAX_PATH);
-    gs_strCfgFile.setbuffer();
-    gs_strCfgFile.path_append("..\\SyntaxCfg.json");
-    LoadSyntaxCfg(gs_strCfgFile.c_str());
+    gsStyleCfg = new CStyleConfig();
+    if (!gsStyleCfg->LoadCache(CDbgInstall::GetInst()->GetSytleCfgPath()))
+    {
+        gsStyleCfg->SetDefault();
+    }
+    gs_pSyntaxView->LoadUserCfg(*gsStyleCfg);
 
     CTL_PARAMS vCtrls[] =
     {
@@ -328,8 +337,7 @@ static VOID _OnInitDialog(HWND hwnd, WPARAM wp, LPARAM lp)
     wstrVersion.setbuffer();
 
     gs_pfnKeyboardHook = SetWindowsHookEx(WH_KEYBOARD, _KeyboardProc, g_hInstance, GetCurrentThreadId());
-
-    AppendToSyntaxView(LABEL_DBG_SEND, FormatA("VDebug调试器，版本：%ls\n", wstrVersion.c_str()));
+    AppendToSyntaxView(LABEL_DBG_RECV, FormatA("VDebug调试器，版本：%ls\n", wstrVersion.c_str()));
 }
 
 static mstring _OpenDumpFile() {
@@ -398,6 +406,11 @@ static VOID _OnCommand(HWND hwnd, WPARAM wp, LPARAM lp)
     case IDC_CMD_IMPORT_FUN:
         {
             gsFunDefDlg->ShowFunView(hwnd);
+        }
+        break;
+    case IDC_CMD_SET_STYLE:
+        {
+            CConfigDlg::GetInst()->DoModule(gs_hMainView, IDD_CONFIG);
         }
         break;
     default:

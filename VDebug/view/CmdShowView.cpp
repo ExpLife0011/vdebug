@@ -1,6 +1,8 @@
 #include "CmdShowView.h"
 #include "../SyntaxHlpr/SyntaxDef.h"
 
+using namespace std;
+
 CCmdShowView::CCmdShowView() {
 }
 
@@ -26,6 +28,36 @@ bool CCmdShowView::InitShowView() {
 }
 
 bool CCmdShowView::LoadUserCfg(const CStyleConfig &cfg) {
+    StyleConfigInfo info = cfg.GetStyleConfig();
+
+    //加载用户配置项
+    if (info.mLineNum)
+    {
+        ShowMargin(true);
+        SetLineNum(true);
+    } else {
+        ShowMargin(false);
+        SetLineNum(false);
+    }
+    SetFont(info.mFontName);
+    SendMsg(SCI_STYLESETSIZE, STYLE_DEFAULT, info.mFontSize);
+
+    //选择区域背景色和透明度
+    SendMsg(SCI_SETSELBACK, true, info.mSelColour);
+    SendMsg(SCI_SETSELALPHA, info.mSelAlpha, 0);
+
+    map<mstring, StyleConfigNode>::const_iterator it;
+    for (it = info.mCfgSet.begin() ; it != info.mCfgSet.end() ; it++)
+    {
+        const StyleConfigNode &cur = it->second;
+        if (it->first == "default")
+        {
+            SetDefStyle(cur.mRgbText, cur.mRgbBack);
+        } else {
+            SetStyle(cur.mSyntaxStyle, cur.mRgbText, cur.mRgbBack);
+        }
+    }
+    UpdateView();
     return true;
 }
 

@@ -13,7 +13,7 @@
 #undef APSTUDIO_READONLY_SYMBOLS
 
 /////////////////////////////////////////////////////////////////////////////
-// 中文(中华人民共和国) resources
+// Chinese (P.R.C.) resources
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_CHS)
 #ifdef _WIN32
@@ -247,7 +247,9 @@ BEGIN
     END
     POPUP "配置(&S)"
     BEGIN
-        MENUITEM "颜色配置",                        IDC_CMD_SET_COLOUR
+        MENUITEM "样式配置",                        IDC_CMD_SET_STYLE
+        MENUITEM "导出配置",                        ID_40027
+        MENUITEM "导入配置",                        ID_40028
     END
     POPUP "调试(&D)"
     BEGIN
@@ -262,7 +264,7 @@ BEGIN
     END
 END
 
-#endif    // 中文(中华人民共和国) resources
+#endif    // Chinese (P.R.C.) resources
 /////////////////////////////////////////////////////////////////////////////
 
 

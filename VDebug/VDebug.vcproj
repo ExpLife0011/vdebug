@@ -538,6 +538,18 @@
 				</File>
 			</Filter>
 		</Filter>
+		<Filter
+			Name="install"
+			>
+			<File
+				RelativePath=".\install\DbgInstall.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\install\DbgInstall.h"
+				>
+			</File>
+		</Filter>
 	</Files>
 	<Globals>
 	</Globals>

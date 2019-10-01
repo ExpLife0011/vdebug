@@ -6,6 +6,8 @@
 #include "ProcView.h"
 #include "CmdShowView.h"
 
+//获取主样式配置
+const CStyleConfig *GetMainStyleCfg();
 void AppendToSyntaxView(const std::mstring &label, const std::mstring &data);
 CProcSelectView *GetProcView();
 CCmdShowView *GetSyntaxView();

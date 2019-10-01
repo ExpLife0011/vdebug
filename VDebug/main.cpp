@@ -7,6 +7,7 @@
 #include <Shlwapi.h>
 #include "DbgCtrlService.h"
 #include "OpenView.h"
+#include "install/DbgInstall.h"
 
 #pragma comment(lib, "Ws2_32.lib")
 
@@ -118,6 +119,7 @@ int WINAPI WinMain(HINSTANCE m, HINSTANCE p, LPSTR cmd, int show)
     LoadLibraryW(L"mq32.dll");
     LoadLibraryW(L"DbgCtrl32.dll");
 
+    CDbgInstall::GetInst()->InitInstall();
     DbProxy::GetInstance()->InitDbEnv();
 
     _StartService();
