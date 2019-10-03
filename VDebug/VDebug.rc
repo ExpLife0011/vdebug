@@ -143,6 +143,27 @@ BEGIN
     EDITTEXT        IDC_EDT_SEL_ALPHA,212,137,31,12,ES_AUTOHSCROLL
 END
 
+IDD_ABOUT DIALOGEX 0, 0, 347, 262
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "关于vdebug调试器"
+FONT 8, "微软雅黑", 400, 0, 0x0
+BEGIN
+    ICON            "",IDC_ABOUT_ICO,54,9,18,16
+    EDITTEXT        IDC_ABOUT_EDT_VERSION,100,15,216,15,ES_MULTILINE | ES_AUTOHSCROLL | ES_READONLY | ES_WANTRETURN | NOT WS_BORDER
+    LTEXT           "本项目源码:",IDC_STATIC,94,199,46,11
+    LTEXT           "作者主页:",IDC_STATIC,94,214,46,11
+    CONTROL         "<a>https://gitee.com/lougd/vdebug</a>",IDC_LINK_VDEBUG,
+                    "SysLink",WS_TABSTOP,146,198,106,11,WS_EX_TRANSPARENT
+    CONTROL         "<a>https://gitee.com/lougd</a>",IDC_LINK_HOMEPAGE,
+                    "SysLink",WS_TABSTOP,146,215,106,11
+    EDITTEXT        IDC_ABOUT_EDT_DESC,6,36,333,126,ES_MULTILINE | ES_AUTOHSCROLL | ES_READONLY | ES_WANTRETURN
+    CONTROL         126,IDC_STATIC1,"Static",SS_BITMAP | SS_CENTERIMAGE | SS_REALSIZEIMAGE,4,175,89,82
+    CONTROL         127,IDC_STATIC2,"Static",SS_BITMAP | SS_CENTERIMAGE,252,175,89,82
+    LTEXT           "微信",IDC_STATIC,37,165,17,8
+    LTEXT           "支付宝",IDC_STATIC,285,165,25,8
+    LTEXT           "捐助请扫码, 感谢!",IDC_STATIC,127,234,69,8
+END
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -189,6 +210,8 @@ IDI_MAIN                ICON                    "res\\main.ico"
 //
 
 IDB_TOOLBAR             BITMAP                  "res\\toolbar.bmp"
+IDB_BITMAP1             BITMAP                  "res\\111.bmp"
+IDB_BITMAP2             BITMAP                  "res\\222.bmp"
 
 /////////////////////////////////////////////////////////////////////////////
 //

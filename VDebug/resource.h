@@ -10,11 +10,15 @@
 #define IDR_MAIN                        107
 #define IDD_PROC_OPEN                   108
 #define IDD_IMPORT_FUNDEF               117
+#define IDD_ABOUT                       118
+#define IDB_BITMAP1                     126
+#define IDB_BITMAP2                     127
 #define IDC_EDIT1                       1001
 #define IDC_EDT_COMMAND                 1001
 #define IDC_EDT_MSG                     1001
 #define IDC_EDT_PEOPEN_PATH             1001
 #define IDC_PROC_EDT_INFO               1001
+#define IDC_ABOUT_EDT_VERSION           1001
 #define IDC_EDT_STATUS                  1002
 #define IDC_EDIT3                       1002
 #define IDC_EDT_PEOPEN_CMD              1002
@@ -38,6 +42,7 @@
 #define IDC_EDT_FILTER                  1008
 #define IDC_EDT_PEOPEN_STATUS           1008
 #define IDC_PROC_EDT_FLT                1008
+#define IDC_ABOUT_EDT_DESC              1008
 #define IDC_BUTTON1                     1009
 #define IDC_BTN_PEOPEN_SELECT           1009
 #define IDC_BUTTON2                     1010
@@ -51,6 +56,11 @@
 #define IDC_IMPORT_BTN_CANCEL           1019
 #define IDC_IMPORT_BTN_OK2              1020
 #define IDC_IMPORT_BTN_CHECK            1020
+#define IDC_ABOUT_ICO                   1024
+#define IDC_LINK_VDEBUG                 1027
+#define IDC_LINK_HOMEPAGE               1028
+#define IDC_STATIC1                     1029
+#define IDC_STATIC2                     1030
 #define ID_40001                        40001
 #define ID_40002                        40002
 #define ID_40003                        40003
@@ -103,9 +113,9 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        118
+#define _APS_NEXT_RESOURCE_VALUE        128
 #define _APS_NEXT_COMMAND_VALUE         40030
-#define _APS_NEXT_CONTROL_VALUE         1020
+#define _APS_NEXT_CONTROL_VALUE         1031
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

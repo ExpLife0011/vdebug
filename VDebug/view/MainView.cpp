@@ -11,6 +11,7 @@
 #include "OpenView.h"
 #include "FunView.h"
 #include "ConfigView.h"
+#include "AboutDlg.h"
 #include "DbgCtrlService.h"
 #include "../install/DbgInstall.h"
 
@@ -415,6 +416,12 @@ static VOID _OnCommand(HWND hwnd, WPARAM wp, LPARAM lp)
                 *gsStyleCfg = CConfigDlg::GetInst()->GetStyleCfg();
                 gs_pSyntaxView->LoadUserCfg(*gsStyleCfg);
             }
+        }
+        break;
+    case IDC_CMD_ABOUT:
+        {
+            CAboutDlg dlg;
+            dlg.DoModule(gs_hMainView, IDD_ABOUT);
         }
         break;
     default:

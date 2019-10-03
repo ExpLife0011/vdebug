@@ -366,6 +366,22 @@
 			UniqueIdentifier="{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}"
 			>
 			<File
+				RelativePath=".\res\111.bmp"
+				>
+			</File>
+			<File
+				RelativePath=".\res\222.bmp"
+				>
+			</File>
+			<File
+				RelativePath=".\res\bitmap1.bmp"
+				>
+			</File>
+			<File
+				RelativePath=".\res\bitmap3.bmp"
+				>
+			</File>
+			<File
 				RelativePath=".\res\main.ico"
 				>
 			</File>
@@ -381,6 +397,14 @@
 		<Filter
 			Name="view"
 			>
+			<File
+				RelativePath=".\view\AboutDlg.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\view\AboutDlg.h"
+				>
+			</File>
 			<File
 				RelativePath=".\view\CmdQueue.cpp"
 				>
