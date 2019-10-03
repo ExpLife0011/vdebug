@@ -77,14 +77,22 @@ bool DbgCtrlService::InitCtrlService() {
     PathAppendA(image, "..\\x32\\dbg32.exe");
 
     mstring param = FormatA(RUNNER_EVENT32, m_unique.c_str());
-    mstring command = FormatA("\"%hs\" \"%hs\"", image, param.c_str());
-#ifdef _DEBUG
-    ExecProcessA(command.c_str(), NULL, TRUE);
-#else
-    DWORD session = 0;
-    ProcessIdToSessionId(GetCurrentProcessId(), &session);
-    RunProcInUser(image, command.c_str(), session);
-#endif
+    mstring command = FormatA("\"%hs\" \"%hs\" %d", image, param.c_str(), GetCurrentProcessId());
+
+    HANDLE h = ExecProcessA(command.c_str(), NULL, TRUE);
+    if (h)
+    {
+        CloseHandle(h);
+    }
+
+    //此处通过服务态启动时是为了让调试器提权到system,用于直接调试服务进程,先屏蔽掉
+    //#ifdef _DEBUG
+    //    ExecProcessA(command.c_str(), NULL, TRUE);
+    //#else
+    //    DWORD session = 0;
+    //    ProcessIdToSessionId(GetCurrentProcessId(), &session);
+    //    RunProcInUser(image, command.c_str(), session);
+    //#endif
     //Debug Event Register
     m_pCtrlService->RegisterDbgEvent(DBG_EVENT_MSG, OnDbgMessage, this);
     m_pCtrlService->RegisterDbgEvent(DBG_EVENT_DBG_PROC_CREATE, OnProcCreate, this);

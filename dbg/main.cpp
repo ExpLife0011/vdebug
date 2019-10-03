@@ -22,23 +22,6 @@ using namespace std;
 #pragma comment(lib, "capstone/capstone_x86.lib")
 #endif
 
-static void _KeepAlive(const mstring &unique) {
-    while (TRUE) {
-        HANDLE service = OpenEventA(EVENT_ALL_ACCESS, FALSE, FormatA(SERVICE_EVENT, unique.c_str()).c_str());
-
-        if (!service)
-        {
-            break;
-        }
-
-        CloseHandle(service);
-        Sleep(5000);
-    }
-
-    //clean cache
-    SHDeleteValueA(HKEY_LOCAL_MACHINE, REG_VDEBUG_CACHE, unique.c_str());
-}
-
 static void _TestProc() {
     class TestProcMon : public ProcListener {
         virtual void OnProcChanged(HProcListener listener, const list<const ProcMonInfo *> &added, const list<DWORD> &killed) {
@@ -49,12 +32,11 @@ static void _TestProc() {
     ProcMonitor::GetInstance()->RegisterListener(new TestProcMon());
 }
 
-extern void TestProc();
-
 int WINAPI WinMain(HINSTANCE hT, HINSTANCE hP, LPSTR szCmdLine, int iShow)
 {
     char path[256];
     GetModuleFileNameA(NULL, path, 256);
+    //延迟加载的模块进行动态加载
 #if WIN64 || _WIN64
     PathAppendA(path, "..\\..\\ComLib64.dll");
     LoadLibraryA(path);
@@ -70,23 +52,17 @@ int WINAPI WinMain(HINSTANCE hT, HINSTANCE hP, LPSTR szCmdLine, int iShow)
     PathAppendA(path, "..\\DbgCtrl32.dll");
     LoadLibraryA(path);
 #endif
-    //TestProc();
-    //return 0;
-    //extern VOID WINAPI TestScript(HWND hwnd, HINSTANCE hinst, LPSTR cmd, int show);
-    //TestScript(0, 0, 0, 0);
-    //return 0;
 
     int count = 0;
     LPWSTR *args = CommandLineToArgvW(GetCommandLineW(), &count);
 
-    if (count != 2)
+    if (count != 3)
     {
         LocalFree(args);
         return 0;
     }
 
     mstring cmd = WtoA(args[1]);
-    LocalFree(args);
     if (!cmd.startwith("dbg"))
     {
         return 0;
@@ -104,11 +80,12 @@ int WINAPI WinMain(HINSTANCE hT, HINSTANCE hP, LPSTR szCmdLine, int iShow)
     CDbgStatMgr::GetInst()->InitStatMgr(unique);
     ProcDbgProxy::GetInstance()->InitProcDbgProxy(unique.c_str());
     DumpDbgProxy::GetInstance()->InitDumpDbgProxy(unique.c_str());
-#ifdef _DEBUG
-    MessageBoxA(0, "DbgTest", "dbg", 0);
-#else
-    _KeepAlive(unique);
-#endif;
+
+    DWORD parentProcess = atoi(WtoA(args[2]).c_str());
+    HANDLE proc = OpenProcess(SYNCHRONIZE, FALSE, parentProcess);
+    WaitForSingleObject(proc, INFINITE);
+    CloseHandle(proc);
+    LocalFree(args);
     WSACleanup();
     return 0;
 }
