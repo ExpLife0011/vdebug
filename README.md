@@ -48,3 +48,6 @@ deelx 正则表达式引擎
 ```
 
 #### 作者信息
+![输入图片说明](https://images.gitee.com/uploads/images/2019/1005/135224_1fe10ac0_498054.png "3333.png")
+
+qq:412776488 mail:lougdhr@126.com
